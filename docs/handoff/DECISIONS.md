@@ -357,3 +357,32 @@ Chọn 4 câu dài nhất mỗi video + 4 câu dài nhất còn lại; **không 
 ### V1847.C — Không làm
 Không dùng lại số V1846.A2 hay mở lại `C_lo`; không chạy dài; không đổi production;
 không động ONNX; không UTMOS; không cấy ghép frame; không đưa hậu xử lý mel vào production.
+
+## V18.48 — Agent 0 (26/10/2026, pilot mượt tần số)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước khi chạy probe. Không đổi production.
+> V1848 thay thế phần thiết kế pilot của V1847.A3; chỗ mâu thuẫn theo V1848.
+> **Không amend/force-push**; mọi sửa là commit mới trước kết quả đầu tiên.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1848.A0 | Ghi nhận V1847.A2 **ĐẠT** (CR trung vị 0,7067; CI [0,6899; 0,7324]; 40/40 CR<1; ρ 0,4096; CI [0,1202; 0,6407]). Duyệt TỰ QUYẾT V18.47. Chất lượng acoustic **RÃ ĐÔNG CÓ GIỚI HẠN**: chỉ cho pilot vòng này. | Không |
+| V1848.A1 | Loss mới: trên mel dự đoán P và mel gốc T, chỉ 66 bin ≤4 kHz, chỉ frame hữu thanh. `contrast_f(X) = trung bình theo bin của [max−min trong cửa sổ 5 bin] tại frame f`. `L_con = trung bình theo frame |contrast_f(P)−contrast_f(T)|`. Khớp **thống kê mức tương phản theo frame**, không khớp từng bin. Dùng max/min trực tiếp (subgradient); nếu probe gradient bất ổn thì được thay logsumexp nhiệt độ 0,1, ghi lại. | Có unit test: P=T ⇒ L_con=0; P=T làm mượt tần số ⇒ L_con>0; gradient hữu hạn. Test hỏng ⇒ dừng. |
+| V1848.A2 | Hai lượt **PILOT** (P2 EMA + 2.000 bước + L_con) và **CONTROL** (P2 EMA + 2.000 bước, không L_con). Cùng seed, dữ liệu, thứ tự batch, lr, cấu hình adversarial như P2, EMA decay. Đánh giá bằng **trọng số EMA** tại bước 2.000. | Không |
+| V1848.A3 | Probe 100 bước có L_con, chọn w để L_con chiếm **15–30 %** tổng loss (trung bình 50 bước cuối probe). Ghi w vào DECISIONS + commit **trước** khi chạy pilot. | NaN, RAM vượt máy, hoặc không có w trong 15–30 % ⇒ dừng, báo. |
+| V1848.A4 | Cổng chính trên 40 câu V1847.A2, TF thời lượng, −16 LUFS. `ΔBAK = BAK(PILOT) − BAK(CONTROL)`, bootstrap theo câu 10.000. | **ĐẠT** khi đủ: (1) ΔBAK ≥0,05 và cận dưới CI95 >0; (2) CR trung vị PILOT > CONTROL và CI95 hiệu số >0; (3) CR trung vị PILOT ≤1,05. Báo thêm BAK/CR của P2. TRƯỢT: ΔBAK cận trên CI95 <0 ⇒ **ĐÓNG hướng mượt tần số**, đóng băng lại. Không kết luận (CI chứa 0) ⇒ đóng băng lại, báo, **không tự thử w khác**. |
+| V1848.A5 | Phụ ở đường sản phẩm: 40 câu qua CLI chunk mode (dự đoán thời lượng), `BAK(PILOT)−BAK(CONTROL)` + CI95; L1 mel TF PILOT vs CONTROL. | Chỉ báo cáo, không phải cổng. **LẠ, dừng** khi: TF tăng nhưng chunk giảm với cận trên CI <0; L1 mel PILOT tăng >10 % so CONTROL; CR PILOT >1,05; CONTROL tự tăng BAK ≥0,05 so P2. |
+| V1848.A6 | Nếu A4 ĐẠT và A5 không lạ: **CHƯA đổi production**. Vòng sau: nghe mù PILOT vs CONTROL ở chunk mode (28 lượt như V1844.A5), regression golden set, OOV/số/dấu câu. Chạy dài (trần 60.000) cần duyệt riêng sau nghe mù. | Theo luật V1844.A5 |
+
+### V1848.B — Việc giao Agent 2
+1. Commit V1848.* (không amend).
+2. Viết L_con + unit test; chạy suite; commit.
+3. Probe 100 bước, chốt w, commit w.
+4. Chạy PILOT rồi CONTROL (nối tiếp, không song song).
+5. Chấm A4 rồi A5; bảng P2/CONTROL/PILOT × (BAK TF, BAK chunk, CR median, L1 mel), ΔBAK + CI, verdict.
+6. Nếu ĐẠT: dừng, chờ A0; chuẩn bị 16 câu nghe mù nhưng **chưa dựng trang**.
+7. Report + `git log --oneline`.
+
+### V1848.C — Không làm
+Không đổi production; không quá 2.000 bước; không thử w thứ hai sau kết quả; không UTMOS;
+không động ONNX; không cấy ghép frame.

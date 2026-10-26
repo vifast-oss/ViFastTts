@@ -7,17 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.47 (26/10/2026) — DỪNG — CHỜ DUYỆT PILOT.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1847_agent0.md` + `DECISIONS.md` mục V18.47. **Commit gốc**: `7d39ae2`.
-> **Code cuối trước hồ sơ**: `da95507`. Báo cáo: `V1847_agent2.md`.
-> - **A1**: ghi hồ sơ cổng Δac ≥0,15 của V1846 là **lỗi thiết kế của A0**; từ nay dùng CI hiệu ứng;
->   số V1846.A2 **không** mở lại gì.
-> - **A2 ĐẠT**: CR trung vị **0,7067** (CI [0,6899; 0,7324]), 40/40 câu CR<1;
->   ρ `(1−CR)` vs `BAK(B)−BAK(C)` = **0,4096** (CI [0,1202; 0,6407]).
-> - **A3 CHƯA CHẠY**: A2 ĐẠT ⇒ dừng, chờ người dùng duyệt pilot 2.000 bước (~15 phút).
+> **V18.48 (26/10/2026) — ĐANG LÀM.** Pilot mượt tần số; **không đổi production**.
+> **Tệp đặc tả**: `V1848_agent0.md` + `DECISIONS.md` mục V18.48. **Commit gốc**: `5598514`.
+> Chất lượng acoustic **rã đông có giới hạn** chỉ cho pilot này. PILOT = P2 EMA + 2.000 bước + L_con;
+> CONTROL = P2 EMA + 2.000 bước không L_con. Cổng: ΔBAK ≥0,05 (CI dưới >0), CR PILOT > CONTROL
+> (CI hiệu >0), CR PILOT ≤1,05. Không thử w thứ hai.
 >
-> **V18.46 (26/10/2026, lịch sử)** — A2 sát ngưỡng đóng `C_lo`; A4 mượt tần số; A5 không đủ;
-> **đóng băng chất lượng acoustic**. Báo cáo: `V1846_agent2.md`.
+> **V18.47 (26/10/2026, lịch sử)** — A2 ĐẠT: CR 0,7067; ρ 0,4096; chờ duyệt pilot.
+> Báo cáo: `V1847_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -48,15 +45,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.47** · **Tệp đặc tả**: `V1847_agent0.md` + `DECISIONS.md` mục V18.47 ·
-**Commit gốc của vòng**: `7d39ae2` · **Code cuối trước hồ sơ**: `da95507` ·
-**Trạng thái**: **DỪNG — CHỜ DUYỆT PILOT** — không train, giữ P2, ONNX đóng băng.
+**Vòng hiện hành**: **V18.48** · **Tệp đặc tả**: `V1848_agent0.md` + `DECISIONS.md` mục V18.48 ·
+**Commit gốc của vòng**: `5598514` · **Trạng thái**: **ĐANG LÀM** — pilot, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: người dùng duyệt/không duyệt pilot 2.000 bước; nếu duyệt mới chạy probe 100 → pilot.
+**Việc tiếp**: L_con + test → probe 100 chốt w → PILOT/CONTROL 2.000 → A4/A5 → report.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `7d39ae2..<commit cuối>`,
-> đối chiếu `V1847_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5598514..<commit cuối>`,
+> đối chiếu `V1848_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -92,7 +88,16 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.47 — kết quả
+### 4.1 V18.48 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1848.A1 | L_con + unit test | ⏳ |
+| V1848.A3 | Probe 100, chốt w | ⏳ |
+| V1848.A2 | PILOT + CONTROL 2.000 bước | ⏳ |
+| V1848.A4/A5 | Chấm BAK/CR/L1 TF + chunk | ⏳ |
+| — | Báo cáo `V1848_agent2.md` | ⏳ |
+
+### 4.2 V18.47 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1847.A2 | CR độ tương phản ≤4 kHz trên 40 câu dài + Spearman BAK | ✅ **ĐẠT** — CR 0,7067; ρ 0,4096; `da95507` |
