@@ -396,3 +396,79 @@ không động ONNX; không cấy ghép frame.
   (`w·contrast / (rec + eff·adv + w·contrast)`).
 - File probe: `runs/v1848_probe/`; log `train_log.csv`.
 - Chưa chạy PILOT/CONTROL tại thời điểm ghi mục này.
+
+## V18.49 — Agent 0 (26/10/2026, sau report V18.48)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.49. **Không train, không đổi production, không thử w khác.**
+> Không amend/force-push; mọi sửa là commit mới trước kết quả đầu tiên.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1849.A0 | Chấp nhận V18.48: A4 **không kết luận** theo luật; production giữ P2. Duyệt TỰ QUYẾT V18.48. | Không |
+| V1849.A1 | Ghi hồ sơ **lỗi thiết kế A0 thứ hai**: (1) cổng chính đặt ở TF trong khi hợp đồng sản phẩm là chunk (V1844.A2); (2) ngưỡng ΔBAK 0,05 chưa hiệu chỉnh theo liều (CR chỉ lấp ~1/3 thiếu hụt, kỳ vọng ~0,03). Luật mới: cổng chất lượng đo **CHÍNH ở chunk mode**; TF chỉ chẩn đoán; ngưỡng hiệu ứng phải kèm ước lượng kỳ vọng trước khi chạy. Số V18.48 **không** dùng đổi production. | Không sửa hồi tố |
+| V1849.A2 | Tái lập trên 40 câu held-out **mới** (chưa dùng V18.43–V18.48; ≥3 s, ≥12 âm tiết; tối đa 5/video; chọn không xem BAK). Dùng nguyên checkpoint EMA 2.000 của `runs/v1848_pilot` và `runs/v1848_control`, **không train lại**. CLI chunk mode, −16 LUFS. `ΔBAK = BAK(PILOT)−BAK(CONTROL)`, bootstrap câu 10.000. Báo CR trung vị (TF). Kỳ vọng đăng ký trước: ΔBAK chunk **+0,03 đến +0,06**. | **ĐẠT** khi cận dưới CI95 ΔBAK >0 **VÀ** ΔCR trung vị >0 với CI95 >0. **Cận trên CI95 ΔBAK <0 ⇒ ĐÓNG L_con.** CI chứa 0 ⇒ không tái lập, đóng băng, không thử thêm. ΔCR ≤0 ⇒ lạ, dừng (checkpoint sai). |
+| V1849.A3 | Nghe mù PILOT vs CONTROL ở chunk mode, chạy **song song** A2. 28 lượt: 16 cặp PILOT vs CONTROL trên **16 câu mới** (chọn ngẫu nhiên seed 1849 từ 40 câu A2, không xem BAK; danh sách ghi trước); 4 dương (CONTROL vs CONTROL+trắng SNR 30 dB); 4 âm (CONTROL vs CONTROL); 4 lặp (đảo A/B). −16 LUFS, peak, ngẫu nhiên, ẩn tên, key ngoài thư mục phục vụ. Câu hỏi: "Bản nào ít rè nền hơn?" | Phiên hợp lệ: dương ≥3/4, âm ≥3/4, lặp ≥3/4. **PILOT thắng** khi binomial một phía p<0,05 trên lượt không hòa, tối thiểu 10 lượt. Không hợp lệ ⇒ làm lại ngày khác. <10 lượt không hòa ⇒ "tai không phân biệt", báo. **CONTROL thắng rõ (p<0,05 phía CONTROL) ⇒ ĐÓNG L_con.** |
+| V1849.A4 | Kết hợp: **ỨNG VIÊN** khi A2 ĐẠT **và** A3 PILOT thắng. Khi đó V18.50: regression golden set (full 20 câu, hash cập nhật kèm mã), OOV/số/viết tắt/dấu câu, rồi người dùng duyệt đổi production sang PILOT 2k. Chạy dài (trần 60.000) vẫn cần duyệt riêng, không là điều kiện đổi production. Chỉ một trong hai đạt ⇒ không đổi production, báo A0. Cả hai không đạt ⇒ **đóng L_con, đóng băng chất lượng acoustic, kết thúc dòng chẩn đoán rè**. | Theo A2, A3 |
+
+### V1849.A2 — 40 câu dài mới (chưa dùng)
+
+Nguồn holdout; loại 160 câu V18.43–V18.48; ≥3 s, ≥12 âm tiết; tối đa 5/video; chọn 4 câu dài nhất/video
++ 4 câu dài nhất còn lại; **không xem BAK**. Còn 8 video (VeU không còn câu dài chưa dùng).
+
+| # | id | giây | âm tiết | # | id | giây | âm tiết |
+|---:|---|---:|---:|---:|---|---:|---:|
+| 1 | `2b65WyiFC9k_0299__s00` | 9,73 | 41 | 21 | `o8RjAmBtyZo_0088__s02` | 5,94 | 25 |
+| 2 | `2b65WyiFC9k_0093__s00` | 9,65 | 48 | 22 | `o8RjAmBtyZo_0194__s01` | 5,79 | 19 |
+| 3 | `2b65WyiFC9k_0151__s00` | 9,54 | 45 | 23 | `o8RjAmBtyZo_0110__s01` | 5,72 | 24 |
+| 4 | `2b65WyiFC9k_0165__s00` | 9,54 | 44 | 24 | `o8RjAmBtyZo_0099__s01` | 5,27 | 22 |
+| 5 | `4ITcvEa_Acc_0098__s02` | 9,57 | 39 | 25 | `vEtfty4Cc6Y_0102__s00` | 8,62 | 36 |
+| 6 | `4ITcvEa_Acc_0029__s00` | 9,46 | 42 | 26 | `vEtfty4Cc6Y_0257__s01` | 7,95 | 40 |
+| 7 | `4ITcvEa_Acc_0097__s01` | 9,38 | 43 | 27 | `vEtfty4Cc6Y_0033__s01` | 7,94 | 27 |
+| 8 | `4ITcvEa_Acc_0214__s00` | 9,32 | 47 | 28 | `vEtfty4Cc6Y_0030__s00` | 7,75 | 28 |
+| 9 | `BD83pScFukQ_0045__s00` | 9,69 | 48 | 29 | `z0zSgR_oie4_0056__s00` | 9,96 | 40 |
+| 10 | `BD83pScFukQ_0037__s00` | 9,37 | 44 | 30 | `z0zSgR_oie4_0078__s00` | 9,93 | 42 |
+| 11 | `BD83pScFukQ_0300__s00` | 9,11 | 35 | 31 | `z0zSgR_oie4_0246__s00` | 9,90 | 48 |
+| 12 | `BD83pScFukQ_0161__s00` | 8,94 | 43 | 32 | `z0zSgR_oie4_0099__s00` | 9,87 | 46 |
+| 13 | `EM_ObHWvd94_0345__s00` | 9,61 | 44 | 33 | `EUNlJU1BuzE_0272__s00` | 10,06 | 51 |
+| 14 | `EM_ObHWvd94_0349__s00` | 9,42 | 46 | 34 | `z0zSgR_oie4_0239__s00` | 9,86 | 48 |
+| 15 | `EM_ObHWvd94_0006__s00` | 9,28 | 40 | 35 | `2b65WyiFC9k_0035__s00` | 9,50 | 38 |
+| 16 | `EM_ObHWvd94_0114__s00` | 9,26 | 49 | 36 | `EM_ObHWvd94_0087__s01` | 9,25 | 37 |
+| 17 | `EUNlJU1BuzE_0224__s00` | 10,15 | 44 | 37 | `4ITcvEa_Acc_0092__s01` | 9,23 | 35 |
+| 18 | `EUNlJU1BuzE_0113__s01` | 10,14 | 38 | 38 | `BD83pScFukQ_0082__s01` | 8,89 | 42 |
+| 19 | `EUNlJU1BuzE_0181__s00` | 10,13 | 38 | 39 | `vEtfty4Cc6Y_0008__s02` | 7,67 | 24 |
+| 20 | `EUNlJU1BuzE_0101__s00` | 10,12 | 47 | 40 | `o8RjAmBtyZo_0084__s01` | 5,10 | 16 |
+
+### V1849.A3 — 16 câu nghe mù (seed 1849)
+
+Chọn ngẫu nhiên 16/40 câu A2, seed 1849, không xem BAK; ghi trước khi dựng trang.
+
+| # | id | # | id |
+|---:|---|---:|---|
+| 1 | `2b65WyiFC9k_0093__s00` | 9 | `vEtfty4Cc6Y_0257__s01` |
+| 2 | `4ITcvEa_Acc_0029__s00` | 10 | `vEtfty4Cc6Y_0033__s01` |
+| 3 | `4ITcvEa_Acc_0097__s01` | 11 | `z0zSgR_oie4_0078__s00` |
+| 4 | `EM_ObHWvd94_0349__s00` | 12 | `z0zSgR_oie4_0246__s00` |
+| 5 | `EUNlJU1BuzE_0181__s00` | 13 | `z0zSgR_oie4_0099__s00` |
+| 6 | `EUNlJU1BuzE_0101__s00` | 14 | `EUNlJU1BuzE_0272__s00` |
+| 7 | `o8RjAmBtyZo_0099__s01` | 15 | `4ITcvEa_Acc_0092__s01` |
+| 8 | `vEtfty4Cc6Y_0102__s00` | 16 | `vEtfty4Cc6Y_0008__s02` |
+
+### V1849.B — Việc giao Agent 2
+1. Commit V1849.* + danh sách 40 + 16 (commit mới).
+2. Sinh audio chunk PILOT/CONTROL trên 40; kiểm hash checkpoint khớp V18.48.
+3. Dựng trang A3, gửi link **trước** khi chấm BAK A2.
+4. Chấm A2: BAK chunk, ΔBAK + CI, ΔCR + CI, verdict.
+5. Có CSV: chấm A3 bằng `tools/v1844_a5_score.py` hoặc bản đổi nhãn.
+6. Report + `git log --oneline`.
+
+### V1849.C — Không làm
+Không train, không thử w khác, không chạy dài; không đổi production dù cả hai cổng đạt;
+không dùng lại số V18.48 để tuyên bố; không UTMOS; không động ONNX.
+
+### V1849.D — Rủi ro
+Hiệu ứng nhỏ (~0,03–0,05 BAK) có thể dưới ngưỡng nghe; "tai không phân biệt" là kết quả có khả năng cao,
+khi đó PILOT không đáng đổi production. Một người nghe; không suy rộng.
+
+### V1849.E — Giả định
+Checkpoint EMA PILOT/CONTROL 2.000 còn lưu; còn ≥25 câu held-out dài chưa dùng; chi phí ~1 giờ máy
+cộng ~15 phút nghe.

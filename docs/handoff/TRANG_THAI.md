@@ -7,18 +7,15 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.48 (26/10/2026) — DỪNG — ĐÓNG BĂNG LẠI.** Không đổi production; P2 vẫn production.
-> **Tệp đặc tả**: `V1848_agent0.md` + `DECISIONS.md` mục V18.48. **Commit gốc**: `5598514`.
-> **Code cuối trước hồ sơ**: `338bd47`. Báo cáo: `V1848_agent2.md`.
-> - **A1**: L_con + 5 unit test; `finetune_adv --contrast-weight`.
-> - **A3**: probe 100; **w=1,0338** (L_con 22,5 % tổng loss), commit trước pilot.
-> - **A2**: PILOT + CONTROL 2.000 bước, cùng seed/config.
-> - **A4 KHÔNG KẾT LUẬN**: ΔBAK TF **+0,0229**, CI [−0,0198; 0,0600]; CR tăng rõ (+0,0895) nhưng cổng BAK trượt.
-> - **A5**: chunk **+0,0537** (CI [0,0143; 0,0939]) — tín hiệu phụ, không phải cổng; L1 +0,14 %.
-> - **A6**: không mở; **đóng băng lại**, không thử w khác.
+> **V18.49 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49. **Commit gốc**: `74ed53c`.
+> **A1 (ghi hồ sơ)**: lỗi thiết kế A0 thứ hai — cổng chính đặt ở TF trong khi hợp đồng là chunk;
+> ngưỡng ΔBAK 0,05 chưa hiệu chỉnh theo liều. Từ nay cổng chất lượng đo **chính ở chunk**, TF chỉ chẩn đoán.
+> **A2**: tái lập chunk trên 40 câu mới, checkpoint PILOT/CONTROL V18.48; kỳ vọng ΔBAK +0,03…+0,06.
+> **A3**: nghe mù 28 lượt, 16 câu mới seed 1849. Không đổi production dù cả hai đạt.
 >
-> **V18.47 (26/10/2026, lịch sử)** — A2 ĐẠT: CR 0,7067; ρ 0,4096; chờ duyệt pilot.
-> Báo cáo: `V1847_agent2.md`.
+> **V18.48 (26/10/2026, lịch sử)** — pilot L_con: A4 không kết luận, đóng băng lại.
+> Báo cáo: `V1848_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -49,15 +46,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.48** · **Tệp đặc tả**: `V1848_agent0.md` + `DECISIONS.md` mục V18.48 ·
-**Commit gốc của vòng**: `5598514` · **Code cuối trước hồ sơ**: `338bd47` ·
-**Trạng thái**: **DỪNG — ĐÓNG BĂNG LẠI** — giữ P2, ONNX đóng băng.
+**Vòng hiện hành**: **V18.49** · **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49 ·
+**Commit gốc của vòng**: `74ed53c` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: không train, không thử w khác; chunk +0,054 chỉ là tín hiệu phụ, muốn theo phải đăng ký vòng mới.
+**Việc tiếp**: sinh chunk 40 câu → dựng trang A3/gửi link → chấm A2 → chờ CSV A3.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5598514..<commit cuối>`,
-> đối chiếu `V1848_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `74ed53c..<commit cuối>`,
+> đối chiếu `V1849_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -93,7 +89,15 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.48 — kết quả
+### 4.1 V18.49 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1849.A2 | Chunk 40 câu mới, PILOT vs CONTROL, ΔBAK + ΔCR | ⏳ |
+| V1849.A3 | Trang nghe mù 28 lượt, 16 câu seed 1849 | ⏳ |
+| V1849.A4 | Kết hợp A2 + A3 | ⏳ |
+| — | Báo cáo `V1849_agent2.md` | ⏳ |
+
+### 4.2 V18.48 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1848.A1 | L_con + 5 unit test | ✅ `8a0ec8a` |
