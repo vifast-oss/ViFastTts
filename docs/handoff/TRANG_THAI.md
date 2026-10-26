@@ -7,6 +7,13 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
+> **N0 (27/10/2026) — ĐANG LÀM — dataset mới `ngochuyen_voice` (single speaker, 24 kHz).**
+> **Không đổi production/ONNX; không ghi đè `data/codelung`, cache cũ, runs cũ.**
+> Nguồn CC-BY-NC-4.0 (phi thương mại); 21,57 h gốc → lọc **19,89 h** (6.989 clip).
+> Split 90/5/5: train **17,89 h** · val **1,014 h** · holdout **0,985 h**.
+> MFA 6.989/6.989 TextGrid; chain dữ liệu + cache + train small v2_slot5 60k.
+> Hồ sơ: `docs/handoff/NGUYEN_DATA.md`; log `artifacts/ngochuyen/chain.log`.
+>
 > **V18.52 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production, không ghi đè dữ liệu.
 > **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52. **Commit gốc**: `e915b11`.
 > **Bộ dò đuôi không ASR**: hữu thanh ≥0,12 s + đỉnh RMS ≥−15 dB; 3 unit test pass.
@@ -45,11 +52,12 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.52** · **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52 ·
-**Commit gốc của vòng**: `e915b11` · **Trạng thái**: **DỪNG — CHỜ NGƯỜI NGHE** — không train, không đổi production.
+**Vòng hiện hành**: **N0** · **Tệp đặc tả**: `docs/handoff/NGUYEN_DATA.md` (dataset/recipe) ·
+**Commit gốc của vòng**: `8a2b94f` · **Trạng thái**: **ĐANG LÀM — dữ liệu + train small mới**.
+> **V18.52 tạm dừng** (chờ CSV nghe); không xoá kết quả A1–A3.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: nghe 48 mục + gửi CSV; A2 ĐẠT mới tổng hợp A3/A4; scan toàn bộ đang chạy nền.
+**Việc tiếp**: chain `tools/nguyen_chain.sh` — S1 segment → stats → cache → train 60k; chưa đổi production.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `0fa26e2..<commit cuối>`,
 > đối chiếu `V1851_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.

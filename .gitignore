@@ -9,6 +9,7 @@ artifacts/
 cache/
 data/wavs/
 data/codelung/
+data/ngochuyen/
 data/youtube/
 *.pt
 *.onnx
