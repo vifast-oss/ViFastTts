@@ -7,13 +7,14 @@
 > 4. ONNX đã **đóng băng**; nhánh chất lượng đang tìm đúng nguồn rè trước khi train.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.45 (26/10/2026) — DỪNG, CHỜ ĐỌC.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1845_agent0.md` + `DECISIONS.md` mục V18.45. **Commit gốc**: `244c40e`.
-> **Code cuối trước hồ sơ**: `66f2ac2`. Báo cáo: `V1845_agent2.md`.
-> - **A4 TRƯỢT**: Δac bộ mới **0,0568 < 0,15**; `C_lo` recovery 1,08 nhưng CI95 [−0,77; 2,90] ⇒ không xác nhận.
-> - **A5 TRƯỢT (điều kiện 3)**: cửa sổ 5; `C_lo_s/C_lo` = **0,789** ⇒ **không phải over-smoothing**.
-> - **A6 KHÔNG ĐẠT**: ρ cao độ 0,021–0,088; CI đều chứa 0 ⇒ không chỉ số liên quan.
-> - **A7 ĐÓNG**: (2) A4 trượt; (3) A5/A6 trượt; (4) chưa duyệt ngân sách.
+> **V18.46 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1846_agent0.md` + `DECISIONS.md` mục V18.46. **Commit gốc**: `2306062`.
+> **Luật mới**: commit đăng ký trước **không amend/force-push**; sửa phải bằng commit "sửa đăng ký"
+> trước commit kết quả đầu tiên. `C_lo` **không đóng**, đang chờ xác nhận trên 40 câu dài.
+> **Cổng train**: (1) A2 dài ĐẠT; (2) A4 có cơ chế chính; (3) duyệt ngân sách.
+>
+> **V18.45 (26/10/2026, lịch sử)** — A4 Δac 0,057; A5 không over-smoothing; A6 không cao độ; cổng train đóng.
+> Báo cáo: `V1845_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -44,16 +45,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.45** · **Tệp đặc tả**: `V1845_agent0.md` + `DECISIONS.md` mục V18.45 ·
-**Commit gốc của vòng**: `244c40e` · **Code cuối trước hồ sơ**: `66f2ac2` ·
-**Trạng thái**: **DỪNG, CHỜ ĐỌC** — không train, giữ P2, ONNX đóng băng.
+**Vòng hiện hành**: **V18.46** · **Tệp đặc tả**: `V1846_agent0.md` + `DECISIONS.md` mục V18.46 ·
+**Commit gốc của vòng**: `2306062` · **Trạng thái**: **ĐANG LÀM** — không train, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A0 quyết `C_lo` (không xác nhận); hướng còn lại là phổ/buzz dải thấp hoặc đường chunk;
-V18.45-train vẫn đóng, chưa duyệt ngân sách.
+**Việc tiếp**: A2 40 câu dài → A4 cửa sổ tần số + 120 câu → A3 độ dài → A5 đường chunk → report.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `244c40e..<commit cuối>`,
-> đối chiếu `V1845_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `2306062..<commit cuối>`,
+> đối chiếu `V1846_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -89,7 +88,17 @@ V18.45-train vẫn đóng, chưa duyệt ngân sách.
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.45 — kết quả
+### 4.1 V18.46 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1846.A2 | Xác nhận `C_lo` trên 40 câu dài (đã chốt danh sách) | ⏳ |
+| V1846.A4 | Cửa sổ tần số `C_lo_f` (commit trước) + `C_lo_m` trên 120 câu | ⏳ |
+| V1846.A3 | Spearman độ dài câu | ⏳ |
+| V1846.A5 | C vs P (chunk mode) trên 40 câu dài | ⏳ |
+| V1846.A6 | Cổng train | ⛔ chưa mở |
+| — | Báo cáo `V1846_agent2.md` | ⏳ |
+
+### 4.2 V18.45 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1845.A4 | Xác nhận `C_lo` trên 40 câu mới | ❌ **TRƯỢT** — Δac 0,0568 < 0,15; CI [−0,77; 2,90]; `9e03ed6` |

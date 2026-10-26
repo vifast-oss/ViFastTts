@@ -241,3 +241,59 @@ không dùng UTMOS; không đưa hậu xử lý mel vào production; không đ�
 - Dải >4 kHz giữ của C; chỉ dải ≤4 kHz lấy từ B (làm mượt) cho `C_lo_s`.
 - `C_lo` (không làm mượt) dùng B thô ở dải ≤4 kHz.
 - File: `artifacts/bench/v1845_a5/window.json`; mels: `artifacts/bench/v1845_a5/mels.npz`.
+
+## V18.46 — Agent 0 (26/10/2026, sau report V18.45)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.46. Không train, không đổi production.
+> **Luật mới (V1846.A0)**: commit đăng ký trước **không được amend/force-push**; muốn sửa phải thêm
+> commit "sửa đăng ký" trước commit kết quả đầu tiên.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1846.A0 | Duyệt TỰ QUYẾT V18.45 (gồm sửa danh sách câu trước vocode). Từ nay: commit đăng ký trước **không amend/force-push**; sửa bằng commit mới "sửa đăng ký" trước commit kết quả đầu tiên. | `git log` trong report; không force-push. Vi phạm ⇒ kết quả vòng đó "không đăng ký hợp lệ". |
+| V1846.A1 | `C_lo`: **KHÔNG ĐÓNG**, giữ "chưa xác nhận". V1845.A4 trượt vì Δac <0,15 (thiếu lực kiểm), không phải bị bác bỏ. Ghi rõ 0,97 trên bộ cũ chưa tái lập. | Xem A2 |
+| V1846.A2 | Xác nhận `C_lo` trên **40 câu DÀI độc lập**: chưa dùng trong A4 V18.43/V18.45; mỗi câu **≥3 s và ≥12 âm tiết**; **tối đa 5 câu/video**; chỉ chọn theo độ dài + video, không xem BAK; ghi danh sách trước khi vocode. Giữ pipeline/cách tính/cổng V1845.A4. | **ĐẠT** khi Δac ≥0,15; Recovery(`C_lo`) ≥0,5; cận dưới CI95 ≥0,3; lo+hi ∈[0,5;1,5]. **Δac <0,15 ⇒ ĐÓNG `C_lo` và toàn bộ hướng "rè do acoustic dải thấp"; không thử bộ câu khác.** `C_all`/`C_none` lệch >0,02 ⇒ lạ, dừng. Thiếu câu đạt: tối thiểu 25, báo rõ. |
+| V1846.A3 | Đo phụ độ dài trên **120 câu** (80 cũ + 40 dài): Spearman giữa `BAK(B)−BAK(C)` theo câu và thời lượng câu, bootstrap CI95. | "Liên quan" khi ρ ≥0,3 và CI95 không chứa 0. Chỉ giải thích, không phải cổng. |
+| V1846.A4 | Tách cơ chế dải thấp trên 120 câu; chỉ dải ≤4 kHz đổi, >4 kHz giữ C. (a) `C_lo_f`: dải thấp lấy từ B nhưng **làm mượt trục tần số** (trung bình trượt qua bin, cửa sổ lẻ); cửa sổ chọn sao cho **độ tương phản phổ** của B sau mượt khớp C, sai số ≤5% tương đối. Độ tương phản = trung bình (max−min) log-mel trong cửa sổ 5 bin, chỉ frame hữu thanh. Chọn theo độ tương phản, **không theo BAK**; commit trước khi chấm. (b) `C_lo_m`: dải thấp lấy từ C nhưng cộng **độ lệch trung bình theo bin** `mean_t(B)−mean_t(C)` từng câu; chỉ sửa mức năng lượng cố định. | Gọi R = Recovery. Mượt tần số **CHÍNH** khi `R(C_lo_f) ≤ 0,3×R(C_lo)`. Lệch mức **CHÍNH** khi `R(C_lo_m) ≥ 0,7×R(C_lo)`. Cả hai cùng đạt ⇒ báo đủ. Không cái nào ⇒ "không xác định", nguồn còn lại là chi tiết phổ khác. `R(C_lo_f) > R(C_lo)+0,1` hoặc `R(C_lo_m) > R(C_lo)+0,1` ⇒ lạ, dừng. Không cửa sổ nào khớp 5% ⇒ dùng gần nhất, đánh dấu "xấp xỉ". |
+| V1846.A5 | Kiểm đường sản phẩm trên 40 câu dài: so BAK của **C** (P2 TF, không qua chunk) với **P** (CLI chunk mode mặc định, thời lượng dự đoán, fade/ghép/loudness). Cả hai −16 LUFS. Báo `BAK(C)−BAK(P)` + CI95. | Đường chunk gây rè THÊM khi hiệu ≥0,10 và cận dưới CI95 >0. Hiệu ≤−0,10 (chunk sạch hơn TF) ⇒ lạ, báo. |
+| V1846.A6 | Cổng mở train (thay V1845.A7). Đủ cả: (1) A2 ĐẠT; (2) A4 xác định ≥1 cơ chế CHÍNH; (3) duyệt ngân sách. Ngân sách: probe 100 → pilot 2.000 có cổng BAK TF → trần 60.000. Hướng train do A0 chọn theo cơ chế (mượt tần số ⇒ loss/discriminator độ tương phản phổ dải thấp; lệch mức ⇒ hiệu chỉnh mức/loss theo mức). Nếu A5 ĐẠT ⇒ mở thêm vòng sửa đường chunk, không train, độc lập cổng này. | Thiếu điều kiện nào ⇒ không train. Nếu A2 trượt và A5 không đạt ⇒ **ĐÓNG BĂNG chất lượng acoustic**, chỉ sửa regression, giữ P2. |
+
+### V1846.A2 — 40 câu DÀI, chọn trước khi vocode
+
+Nguồn holdout; loại 40 câu A4 V18.43 + 40 câu A4 V18.45; điều kiện ≥3 s, ≥12 âm tiết,
+audio tồn tại, tối đa 5 câu/video; chọn 4 câu dài nhất mỗi video + 4 câu dài nhất còn lại.
+Không xem BAK. Danh sách ghi **trước** khi vocode.
+
+| # | id | giây | âm tiết | # | id | giây | âm tiết |
+|---:|---|---:|---:|---:|---|---:|---:|
+| 1 | `2b65WyiFC9k_0169__s02` | 10,50 | 43 | 21 | `VeU_85bZlrY_0126__s01` | 6,69 | 34 |
+| 2 | `2b65WyiFC9k_0006__s00` | 10,47 | 47 | 22 | `VeU_85bZlrY_0034__s03` | 5,05 | 21 |
+| 3 | `2b65WyiFC9k_0203__s00` | 10,25 | 48 | 23 | `VeU_85bZlrY_0034__s02` | 4,73 | 17 |
+| 4 | `2b65WyiFC9k_0144__s00` | 10,23 | 46 | 24 | `VeU_85bZlrY_0037__s01` | 4,06 | 16 |
+| 5 | `4ITcvEa_Acc_0125__s00` | 10,57 | 47 | 25 | `o8RjAmBtyZo_0075__s03` | 8,54 | 32 |
+| 6 | `4ITcvEa_Acc_0174__s00` | 10,46 | 47 | 26 | `o8RjAmBtyZo_0178__s00` | 8,31 | 38 |
+| 7 | `4ITcvEa_Acc_0196__s00` | 10,34 | 46 | 27 | `o8RjAmBtyZo_0174__s01` | 8,28 | 28 |
+| 8 | `4ITcvEa_Acc_0057__s02` | 10,19 | 36 | 28 | `o8RjAmBtyZo_0136__s00` | 7,81 | 38 |
+| 9 | `BD83pScFukQ_0203__s00` | 10,54 | 41 | 29 | `vEtfty4Cc6Y_0083__s01` | 10,24 | 43 |
+| 10 | `BD83pScFukQ_0169__s00` | 10,13 | 49 | 30 | `vEtfty4Cc6Y_0016__s00` | 9,32 | 43 |
+| 11 | `BD83pScFukQ_0322__s00` | 10,13 | 35 | 31 | `vEtfty4Cc6Y_0272__s01` | 9,16 | 32 |
+| 12 | `BD83pScFukQ_0096__s01` | 10,10 | 47 | 32 | `vEtfty4Cc6Y_0017__s00` | 9,03 | 35 |
+| 13 | `EM_ObHWvd94_0195__s00` | 10,34 | 45 | 33 | `z0zSgR_oie4_0231__s00` | 10,63 | 51 |
+| 14 | `EM_ObHWvd94_0084__s00` | 10,17 | 48 | 34 | `z0zSgR_oie4_0122__s01` | 10,53 | 46 |
+| 15 | `EM_ObHWvd94_0069__s00` | 10,12 | 49 | 35 | `z0zSgR_oie4_0269__s00` | 10,50 | 46 |
+| 16 | `EM_ObHWvd94_0106__s00` | 10,03 | 44 | 36 | `z0zSgR_oie4_0043__s00` | 10,38 | 42 |
+| 17 | `EUNlJU1BuzE_0239__s01` | 10,54 | 39 | 37 | `EUNlJU1BuzE_0189__s00` | 10,44 | 47 |
+| 18 | `EUNlJU1BuzE_0156__s00` | 10,53 | 52 | 38 | `z0zSgR_oie4_0211__s01` | 10,35 | 46 |
+| 19 | `EUNlJU1BuzE_0039__s00` | 10,46 | 49 | 39 | `2b65WyiFC9k_0185__s00` | 10,19 | 47 |
+| 20 | `EUNlJU1BuzE_0067__s00` | 10,44 | 50 | 40 | `BD83pScFukQ_0184__s00` | 10,10 | 45 |
+
+### V1846.B — Việc giao Agent 2
+1. Ghi V1846.* + 40 câu dài bằng **commit mới**, không amend.
+2. A2: đối chứng trước, rồi `C_lo`/`C_hi`; verdict.
+3. A4: chọn cửa sổ `C_lo_f`, commit trước khi chấm BAK; rồi chấm `C_lo_f`/`C_lo_m` trên 120 câu.
+4. A3 và A5.
+5. Report kèm `git log --oneline` của vòng.
+
+### V1846.C — Không làm
+Không train/probe; không thử bộ câu khác cho `C_lo` ngoài bộ dài A2; không chọn cửa sổ theo BAK;
+không UTMOS; không cấy ghép frame; không động ONNX; không đưa hậu xử lý mel vào production.
