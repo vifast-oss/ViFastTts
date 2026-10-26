@@ -7,17 +7,15 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.46 (26/10/2026) — DỪNG — ĐÓNG BĂNG CHẤT LƯỢNG ACOUSTIC.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1846_agent0.md` + `DECISIONS.md` mục V18.46. **Commit gốc**: `2306062`.
-> **Code cuối trước hồ sơ**: `90ceda1`. Báo cáo: `V1846_agent2.md`.
-> - **A2 ĐÓNG `C_lo`**: Δac **0,149456 < 0,15** (thiếu **0,000544**); recovery 0,943, CI [0,7502; 1,1083].
-> - **A4**: mượt tần số chính (R_f −1,969; R_m −0,535) — chỉ thông tin vì A2 đã đóng.
-> - **A3**: ρ độ dài 0,0788, CI [−0,1135; 0,2676] — không liên quan.
-> - **A5**: chunk − TF = +0,0328, CI [−0,0260; 0,0919] — không đủ bằng chứng chunk gây rè.
-> - **A6**: A2 trượt + A5 không đạt ⇒ **đóng băng chất lượng acoustic**, chỉ sửa regression, giữ P2.
+> **V18.47 (26/10/2026) — ĐANG LÀM.** Không đổi production.
+> **Tệp đặc tả**: `V1847_agent0.md` + `DECISIONS.md` mục V18.47. **Commit gốc**: `7d39ae2`.
+> **A1 (ghi hồ sơ)**: cổng Δac ≥0,15 của V1846 là **lỗi thiết kế của A0**; từ nay cổng xác nhận dùng
+> **CI của hiệu ứng**, lực kiểm chỉ quyết "đủ/không đủ dữ liệu". Số V1846.A2 **không** mở lại gì.
+> **Đo mới A2**: giả thuyết "P2 làm nhòe họa âm theo trục tần số ≤4 kHz"; 40 câu dài chưa dùng.
+> Nếu A2 ĐẠT: **dừng, chờ duyệt pilot**; không tự train.
 >
-> **V18.45 (26/10/2026, lịch sử)** — A4 Δac 0,057; A5 không over-smoothing; A6 không cao độ; cổng train đóng.
-> Báo cáo: `V1845_agent2.md`.
+> **V18.46 (26/10/2026, lịch sử)** — A2 sát ngưỡng đóng `C_lo`; A4 mượt tần số; A5 không đủ;
+> **đóng băng chất lượng acoustic**. Báo cáo: `V1846_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -48,15 +46,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.46** · **Tệp đặc tả**: `V1846_agent0.md` + `DECISIONS.md` mục V18.46 ·
-**Commit gốc của vòng**: `2306062` · **Code cuối trước hồ sơ**: `90ceda1` ·
-**Trạng thái**: **DỪNG — ĐÓNG BĂNG CHẤT LƯỢNG ACOUSTIC** — giữ P2, ONNX đóng băng.
+**Vòng hiện hành**: **V18.47** · **Tệp đặc tả**: `V1847_agent0.md` + `DECISIONS.md` mục V18.47 ·
+**Commit gốc của vòng**: `7d39ae2` · **Trạng thái**: **ĐANG LÀM** — không đổi production, không train.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: chỉ sửa regression; không train; `C_lo` đã đóng; muốn mở lại cần cơ chế mới + đăng ký trước + ngân sách.
+**Việc tiếp**: A2 đo CR ≤4 kHz trên 40 câu dài; nếu ĐẠT thì dừng chờ duyệt pilot.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `2306062..<commit cuối>`,
-> đối chiếu `V1846_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `7d39ae2..<commit cuối>`,
+> đối chiếu `V1847_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -92,7 +89,14 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.46 — kết quả
+### 4.1 V18.47 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1847.A2 | CR độ tương phản ≤4 kHz trên 40 câu dài + Spearman BAK | ⏳ |
+| V1847.A3 | Pilot 2.000 bước (chỉ sau khi A2 ĐẠT + duyệt) | ⛔ chưa mở |
+| — | Báo cáo `V1847_agent2.md` | ⏳ |
+
+### 4.2 V18.46 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1846.A2 | `C_lo` trên 40 câu dài | ❌ **ĐÓNG** — Δac 0,149456 < 0,15 (thiếu 0,000544); `7f181fa` |

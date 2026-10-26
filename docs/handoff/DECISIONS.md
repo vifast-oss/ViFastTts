@@ -306,3 +306,54 @@ không UTMOS; không cấy ghép frame; không động ONNX; không đưa hậu 
 - Cửa sổ làm mượt trục tần số được chọn: **3**; đạt **0,972691**; sai số tương đối **0,077561**.
 - Không cửa sổ nào đạt ≤5% ⇒ dùng gần nhất, đánh dấu **"xấp xỉ"** (đúng luật).
 - Chọn **chỉ theo độ tương phản**, chưa chấm BAK. File: `artifacts/bench/v1846_a4_mechanism/window.json`.
+
+## V18.47 — Agent 0 (26/10/2026, sau report V18.46)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.47. Không đổi production.
+> **Không amend/force-push**; mọi sửa đăng ký phải là commit mới trước commit kết quả đầu tiên.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1847.A0 | Chấp nhận V18.46: `C_lo` đóng theo luật, chất lượng acoustic **ĐÓNG BĂNG**, production giữ P2. Duyệt toàn bộ TỰ QUYẾT V18.46. | Không |
+| V1847.A1 | Ghi hồ sơ: cổng **Δac ≥0,15 là LỖI THIẾT KẾ của A0** (dùng tiền điều kiện lực kiểm làm cổng loại bỏ). Từ nay cổng xác nhận dùng **CI của hiệu ứng** (vd. cận dưới CI Recovery); lực kiểm chỉ quyết "đủ/không đủ dữ liệu", không quyết "đóng". Số V1846.A2 **không** dùng để mở lại gì. | Không; không sửa luật hồi tố |
+| V1847.A2 | Mở vòng ĐO (không train) cho giả thuyết **"P2 làm nhòe họa âm theo trục tần số ở dải ≤4 kHz"**. Đo TRỰC TIẾP trên mel, không cấy ghép. 40 câu held-out **chưa từng dùng V18.43–V18.46** (≥3 s, ≥12 âm tiết, tối đa 5/video, chọn không xem BAK; thiếu thì tối thiểu 25, báo). Chỉ số: độ tương phản phổ dải ≤4 kHz (trung bình max−min log-mel trong cửa sổ 5 bin, frame hữu thanh) của C (P2 TF) và B. `CR = contrast(C)/contrast(B)` theo câu. Spearman giữa `(1−CR)` và `BAK(B)−BAK(C)`; bootstrap CI95 10.000. | **ĐẠT** khi đủ: (a) trung vị CR ≤0,95 và CI95 trung vị <1; (b) ρ ≥0,3 và CI95 không chứa 0. **CR trung vị >1,0 ⇒ lạ, dừng.** Chỉ (a) đạt ⇒ báo "model mượt nhưng không giải thích BAK", giữ đóng băng. |
+| V1847.A3 | Nếu A2 ĐẠT và người dùng duyệt: **chỉ pilot**, không chạy dài. Probe 100 bước, rồi pilot 2.000 bước từ P2 EMA, thêm loss độ tương phản phổ ≤4 kHz (khớp contrast cửa sổ 5 bin giữa mel dự đoán và mel gốc; trọng số do Agent 2 chọn qua probe để loss mới ≤30% tổng loss, ghi trước pilot). Mọi thứ khác giữ P2. | Pilot ĐẠT khi trên 40 câu A2: BAK TF tăng ≥0,05 so P2, cận dưới CI95 >0, và CR trung vị tăng. Đạt chưa đổi production; cần nghe mù + regression, chạy dài cần duyệt riêng. Probe NaN/RAM vượt máy ⇒ dừng. Pilot BAK giảm, cận trên CI <0 ⇒ đóng hướng mượt tần số, giữ đóng băng. |
+
+### V1847.A2 — 40 câu DÀI mới, chọn trước khi đo
+
+Nguồn holdout; loại 120 câu đã dùng V18.43–V18.46; ≥3 s, ≥12 âm tiết; tối đa 5/video.
+Chọn 4 câu dài nhất mỗi video + 4 câu dài nhất còn lại; **không xem BAK**.
+
+| # | id | giây | âm tiết | # | id | giây | âm tiết |
+|---:|---|---:|---:|---:|---|---:|---:|
+| 1 | `2b65WyiFC9k_0032__s00` | 10,10 | 48 | 21 | `VeU_85bZlrY_0034__s01` | 4,04 | 16 |
+| 2 | `2b65WyiFC9k_0202__s01` | 9,93 | 44 | 22 | `VeU_85bZlrY_0129__s04` | 3,66 | 12 |
+| 3 | `2b65WyiFC9k_0080__s01` | 9,87 | 36 | 23 | `VeU_85bZlrY_0126__s00` | 3,23 | 16 |
+| 4 | `2b65WyiFC9k_0322__s01` | 9,82 | 40 | 24 | `o8RjAmBtyZo_0177__s01` | 7,36 | 27 |
+| 5 | `4ITcvEa_Acc_0046__s00` | 10,09 | 45 | 25 | `o8RjAmBtyZo_0208__s02` | 6,52 | 21 |
+| 6 | `4ITcvEa_Acc_0204__s00` | 10,07 | 37 | 26 | `o8RjAmBtyZo_0208__s00` | 6,39 | 24 |
+| 7 | `4ITcvEa_Acc_0219__s00` | 10,06 | 45 | 27 | `o8RjAmBtyZo_0065__s00` | 6,15 | 22 |
+| 8 | `4ITcvEa_Acc_0165__s02` | 9,97 | 34 | 28 | `vEtfty4Cc6Y_0277__s00` | 8,74 | 37 |
+| 9 | `BD83pScFukQ_0038__s00` | 9,94 | 52 | 29 | `vEtfty4Cc6Y_0063__s01` | 8,73 | 38 |
+| 10 | `BD83pScFukQ_0162__s00` | 9,91 | 45 | 30 | `vEtfty4Cc6Y_0190__s00` | 8,71 | 32 |
+| 11 | `BD83pScFukQ_0014__s00` | 9,90 | 40 | 31 | `vEtfty4Cc6Y_0059__s00` | 8,66 | 31 |
+| 12 | `BD83pScFukQ_0094__s00` | 9,78 | 43 | 32 | `z0zSgR_oie4_0141__s00` | 10,12 | 46 |
+| 13 | `EM_ObHWvd94_0017__s00` | 9,99 | 53 | 33 | `z0zSgR_oie4_0050__s00` | 10,10 | 44 |
+| 14 | `EM_ObHWvd94_0140__s00` | 9,89 | 45 | 34 | `z0zSgR_oie4_0230__s00` | 10,07 | 49 |
+| 15 | `EM_ObHWvd94_0090__s01` | 9,87 | 46 | 35 | `z0zSgR_oie4_0241__s00` | 10,02 | 46 |
+| 16 | `EM_ObHWvd94_0159__s00` | 9,75 | 49 | 36 | `EUNlJU1BuzE_0223__s00` | 10,22 | 44 |
+| 17 | `EUNlJU1BuzE_0095__s00` | 10,39 | 50 | 37 | `z0zSgR_oie4_0218__s00` | 9,98 | 48 |
+| 18 | `EUNlJU1BuzE_0262__s00` | 10,30 | 49 | 38 | `4ITcvEa_Acc_0226__s00` | 9,94 | 44 |
+| 19 | `EUNlJU1BuzE_0044__s01` | 10,30 | 36 | 39 | `2b65WyiFC9k_0089__s00` | 9,76 | 46 |
+| 20 | `EUNlJU1BuzE_0116__s00` | 10,27 | 48 | 40 | `BD83pScFukQ_0222__s00` | 9,72 | 48 |
+
+### V1847.B — Việc giao Agent 2
+1. Commit V1847.* + 40 câu mới (commit mới, không amend).
+2. A2: bảng CR từng câu, trung vị + CI, ρ + CI, verdict.
+3. A2 không đạt: dừng, report, giữ đóng băng.
+4. A2 đạt: **DỪNG, chờ người dùng duyệt pilot**; có duyệt mới chạy A3.
+5. Report: số liệu / verdict / lạ / TỰ QUYẾT / commit / `git log --oneline`.
+
+### V1847.C — Không làm
+Không dùng lại số V1846.A2 hay mở lại `C_lo`; không chạy dài; không đổi production;
+không động ONNX; không UTMOS; không cấy ghép frame; không đưa hậu xử lý mel vào production.
