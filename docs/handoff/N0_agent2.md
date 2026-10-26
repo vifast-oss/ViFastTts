@@ -160,3 +160,14 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   `"pause_mode":"fixed"`; `--steady` chỉ là alias cũ (ẩn), mặc định tắt.
 - Fixed chặn pause model (gate 1.01), chèn 0,25 s sau phẩy và 0,55 s sau chấm/hỏi/than.
 - Không đổi hành vi mặc định của P2/ONNX cũ; N0 mặc định model-pause.
+
+## 11. Research release (27/10/2026)
+
+- Tag: `n0-ngochuyen-small-research-v1`
+- URL: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-small-research-v1
+- Asset: `n0_ngochuyen_small_research_v1.zip` (129.508.079 B; sha256 `98689c76…fd375`)
+  + `SHA256SUMS`.
+- Gói gồm acoustic 60k, config/stats, Vocos pretrained, 10 demo, model card/license/inference.
+  **Không** kèm data gốc; **không** kèm Vocos fine-tune.
+- **Research/non-commercial — không production**, dataset CC-BY-NC-4.0.
+- Đã tải lại asset từ GitHub và chạy `inference.py` CPU thành công.
