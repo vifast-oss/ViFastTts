@@ -96,20 +96,22 @@ def main() -> None:
     metrics = [
         ("19,89 h", "dữ liệu sạch"),
         ("17,9 h", "train"),
-        ("5 h 46", "60k bước trên M6"),
+        ("5 h 46", "60k bước M6"),
         ("4,0 dB", "holdout mel"),
         ("24/24", "A/B tai người"),
+        ("RTF 0,045", "CPU end-to-end"),
+        ("ONNX", "acoustic + vocoder"),
         ("0 lỗi", "bất biến dữ liệu"),
     ]
-    mw, mh = 320, 72
+    mw, mh = 250, 68
     mx, my = 80, 1268
     for i, (value, label) in enumerate(metrics):
-        col, row = i % 3, i // 3
-        x = mx + col * (mw + 30)
-        yy = my + row * (mh + 14)
+        col, row = i % 4, i // 4
+        x = mx + col * (mw + 16)
+        yy = my + row * (mh + 12)
         box(d, (x, yy, x + mw, yy + mh), WHITE, radius=10, outline=LINE)
-        d.text((x + 14, yy + 9), value, font=font(26, True), fill=TEAL_D)
-        d.text((x + 14, yy + 44), label, font=font(16), fill=MUTED)
+        d.text((x + 14, yy + 7), value, font=font(23, True), fill=TEAL_D)
+        d.text((x + 14, yy + 41), label, font=font(15), fill=MUTED)
 
     # footer
     d.rectangle((0, 1440, W, H), fill=(19, 44, 47))

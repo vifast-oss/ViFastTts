@@ -1,10 +1,12 @@
-# Đưa model lên Hugging Face — trạng thái & cách làm
+# Hugging Face — đã upload
 
-> Hiện **chưa upload** vì máy chưa có token Hugging Face. Khi có username/token, có thể đưa
-> model lên trong 1 lần chạy. Dataset gốc là **CC BY-NC 4.0**, nên model phải để
-> **research/non-commercial**, không dùng production thương mại.
+- Repo: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
+- Commit: `6cfd13e16be700aaec68175086ee44be929bc01b`
+- License metadata: `cc-by-nc-4.0`; model chỉ dùng research/non-commercial.
+- Đã có: checkpoint, config, mel/f0 stats, Vocos, ONNX FP32, 10 demo, model card, license.
+- Đã kiểm tra `model_info` + tải thử `onnx/acoustic.onnx` (HTTP 200, 31.626.168 byte).
 
-## Gợi ý repo
+## Gợi ý repo (đã dùng)
 
 - `dvchd/vifasttts-ngochuyen-small` (model)
 - License metadata: `cc-by-nc-4.0`
@@ -24,10 +26,10 @@
 
 Không đưa audio/transcript gốc của dataset.
 
-## Cách upload khi có token
+## Cách upload lại khi cần cập nhật
 
 ```bash
-export HF_TOKEN=...                 # không commit token
+export HF_TOKEN=...                 # đặt trong shell, không commit token
 python - <<'PY'
 from huggingface_hub import HfApi
 api = HfApi()

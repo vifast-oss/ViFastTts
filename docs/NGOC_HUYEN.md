@@ -11,6 +11,8 @@
 git clone https://github.com/dvchd/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
+# Windows PowerShell:
+# powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1
 # mở http://127.0.0.1:8090
 ```
 
@@ -26,6 +28,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 ## Demo online
 
 - Web: **https://vifasttts.hoctuthien.com/**
+- Hugging Face: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
 - Health: https://vifasttts.hoctuthien.com/healthz
 - Giới hạn: 300 ký tự · 6 request/phút/IP · không lưu text/audio.
 
@@ -42,6 +45,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 | Free-run 80 câu | mel **16,57 dB**; length 0,999; pause F1 0,825 |
 | Thanh điệu | thật 0,9835 · copy 0,9784 · free **0,9743** |
 | A/B tai người | **24/24** chọn model mới so P2 zero-shot |
+| RTF thực tế | **0,045** end-to-end trên VPS CPU (5 câu, 22,44 s audio / 1,01 s xử lý) |
 
 ## Mặc định
 
@@ -49,6 +53,11 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 - **Vocos pretrained** — fine-tune 10k đã bị loại vì còn rè.
 - **Model tự ngắt nghỉ** (`pause_mode="model"`); fixed pause chỉ khi
   `--fixed-pauses` / `pause_mode="fixed"`, mặc định tắt.
+
+## Hai luồng
+
+- **Dùng model:** chỉ cần ONNX + script, không torch, không train.
+- **Train model:** cài `.[dev,audio,train,onnx]`, làm dữ liệu/MFA/cache, xem `TRAINING_N0.md`.
 
 ## File
 

@@ -102,3 +102,28 @@ Large ≈ 32M.
 Không có con số “đúng” nếu không cố định: chất lượng dữ liệu, số speaker, độ dài segment, batch,
 cache, early-stop và mục tiêu metric. Luôn ghi rõ **giờ sau lọc**, **số bước**, **batch**, **thời
 gian thực** khi báo cáo.
+
+## 7. RTF thực tế của service (27/10/2026)
+
+Đo trên VPS Nhật, container ONNX CPU, HTTP loopback, 5 câu, không tính mạng từ trình duyệt:
+
+- Tổng audio: **22,44 s**
+- Tổng thời gian xử lý: **1,01 s**
+- **RTF = 0,045** (khoảng 22 lần nhanh hơn thời gian thực)
+- Từng câu: 0,032–0,092; câu đầu 0,092 do warm-up.
+
+Đây là end-to-end (frontend + acoustic + Vocos + postprocess), không phải chỉ acoustic.
+
+
+## 8. Windows
+
+Demo ONNX có script PowerShell: `scripts/run_ngochuyen_demo.ps1` (xem README mục 0).
+Training đầy đủ nên chạy trên Linux/macOS hoặc WSL; nếu dùng Windows native:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev,audio,train,onnx]"
+```
+
+MFA/aligner và một số tool dòng lệnh có thể cần WSL/conda; phần train PyTorch chạy native được.

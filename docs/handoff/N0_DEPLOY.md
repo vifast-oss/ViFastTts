@@ -39,6 +39,9 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
 - Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 300 ký tự,
   không lưu text/audio.
+- **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
+  (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
+  Chưa tính độ trễ mạng từ trình duyệt.
 
 ## 3. Deploy / cập nhật
 
@@ -61,6 +64,12 @@ curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
   -H 'Content-Type: application/json' \
   -d '{"text":"Xin chào, đây là demo.","speed":1.0,"fixed_pauses":false}' -o demo.wav
 ```
+
+## 3.1 Hugging Face
+
+- Model: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
+- License metadata `cc-by-nc-4.0`; có checkpoint, config/stats, Vocos, ONNX, demo, model card.
+- Commit upload: `6cfd13e16be700aaec68175086ee44be929bc01b`.
 
 ## 4. ONNX trong release
 

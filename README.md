@@ -9,6 +9,7 @@ hay audio mẫu.
 [![ONNX](https://img.shields.io/badge/runtime-ONNX%20CPU-0f766e)](docs/DEPLOYMENT.md)
 [![Code MIT](https://img.shields.io/badge/code-MIT-18212b)](LICENSE)
 [![Model research](https://img.shields.io/badge/model-research%20%2F%20non--commercial-b45309)](docs/NGOC_HUYEN.md)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow)](https://huggingface.co/dvchd/vifasttts-ngochuyen-small)
 
 ## 0. Chạy demo Ngọc Huyền trong 2 phút
 
@@ -16,6 +17,8 @@ hay audio mẫu.
 git clone https://github.com/dvchd/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
+# Windows PowerShell:
+# powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1
 # mở http://127.0.0.1:8090
 ```
 
@@ -23,9 +26,18 @@ Script tự tải ONNX FP32 (có kiểm sha256), tạo `.venv-demo`, cài `onnxr
 và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 
 - **Demo online:** https://vifasttts.hoctuthien.com/
+- **Hugging Face:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
   [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1)
+
+### Chọn đúng luồng
+
+**A. Người dùng model (không train, không cần torch):** chạy script ở trên, mở web, hoặc gọi
+`synthesize-onnx`; dùng checkpoint/ONNX có sẵn. Không cần MFA, không cần dữ liệu.
+
+**B. Người train model:** cài `.[dev,audio,train,onnx]`, chuẩn bị audio + transcript, chạy MFA,
+cache, train, eval, export. Bắt đầu ở `docs/TRAINING_N0.md` (N0) hoặc `docs/TRAINING.md` (tổng quát).
 
 > **Giấy phép model mẫu:** dataset `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0**.
 > Model Ngọc Huyền chỉ dùng **nghiên cứu/phi thương mại**; không dùng giả giọng, lừa đảo
@@ -84,6 +96,7 @@ Muốn train giọng khác, xem `docs/TRAINING.md` + `docs/TRAINING_N0.md`.
 | Free-run | **16,57 dB**; length 0,999; pause F1 **0,825** |
 | Thanh điệu | thật 0,9835 · copy 0,9784 · free **0,9743** |
 | A/B tai | **24/24** chọn model mới so P2 zero-shot |
+| Tốc độ thực tế | **RTF 0,045** end-to-end, ONNX CPU trên VPS (5 câu, 22,44 s audio / 1,01 s xử lý) |
 
 Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
 
@@ -115,6 +128,8 @@ Yêu cầu Python ≥ 3.11.
 git clone https://github.com/dvchd/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
+# Windows:
+# powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1
 # http://127.0.0.1:8090
 ```
 
@@ -133,7 +148,9 @@ Bản tối thiểu (frontend/CLI, không cần torch): `pip install -e .`.
 ```bash
 # Demo web Ngọc Huyền (tải ONNX lần đầu, chạy local)
 ./scripts/run_ngochuyen_demo.sh
-# hoặc: make demo-ngochuyen
+# Windows PowerShell:
+# powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1
+# hoặc macOS/Linux: make demo-ngochuyen
 
 # Xem một câu được tách thành âm tiết và 5 thành phần thế nào
 vifasttts parse "Hôm nay trời đẹp."
@@ -277,7 +294,7 @@ Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 | | `docs/TRAINING_N0.md` | **Run N0 Ngọc Huyền**: pipeline, thời gian, chọn 5–20 h small / 30–50 h base |
 | | `docs/NGOC_HUYEN.md` | Model card model mẫu, license, quickstart |
 | | `docs/N0_DEPLOY.md` | ONNX + service `vifasttts.hoctuthien.com` |
-| | `docs/HUGGINGFACE.md` | Chuẩn bị/upload Hugging Face (cần token) |
+| | `docs/HUGGINGFACE.md` | Hugging Face đã upload, model card + repo |
 | | `docs/TRAINING_RUN_CODELUNG.md` | **Run thật `small` trên kênh @codelung**: số đo MPS, cách chạy lại, triển khai |
 | | `docs/REVISION_PLAN_V2.md` | **Kế hoạch sửa nền tảng** trước khi lên base (A1 mel loss, A2 f0 contour, A3 SIL, MFA, mel log-magnitude) |
 | | `docs/ARCH_DISCUSSION_M6.md` | **Hồ sơ thảo luận kiến trúc/ngân sách** cho Mac mini M6 32GB + đặc thù dữ liệu @codelung (gửi chuyên gia vòng 4) |
