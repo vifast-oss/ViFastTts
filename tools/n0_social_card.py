@@ -73,7 +73,7 @@ def main() -> None:
         ("06", "WAV 24 kHz", "nghe / tải trên web demo", (231, 246, 237), GREEN),
     ]
     y = 350
-    bh, gap = 118, 34
+    bh, gap = 112, 28
     for index, (num, title, detail, fill, ink) in enumerate(stages):
         top = y + index * (bh + gap)
         box(d, (x0, top, x0 + bw, top + bh), fill, outline=LINE)
