@@ -99,6 +99,16 @@ train dừng; đã thay bằng `r5b_segment_stats.py` (schema `r5b-v2`) trước
 **Demo A/B** (24 câu holdout, audio thật + model mới + P2 zero-shot, Vocos pretrained):
 `artifacts/listen_ngochuyen/ab/index.html` · key `artifacts/ngochuyen/ab_key.json`.
 
-**Vocos fine-tune** trên 17,9 h giọng mới đang chạy (10k bước, MPS); sẽ báo riêng nếu
-checkpoint mới thắng pretrained trên copy-synthesis. Không đổi production/ONNX.
+**Vocos fine-tune** trên 17,9 h giọng mới (10k bước, MPS, `runs/vocoder_ngochuyen/last.pt`):
+copy-synthesis 100 holdout clip **mel L1 0,1167** so pretrained **0,1432** (−18,5%);
+F0 85,2 vs 88,9 cents; VUV 0,0223 vs 0,0206; clipping ~0. Thanh điệu free-run với Vocos
+fine-tune **0,9749** (A 0,9835 · B 0,9784). Dùng bản fine-tune cho demo; **không đổi
+production/ONNX**.
+
+**Nghe**:
+- A/B mù (thật · mới · P2; Vocos pretrained): `/ab/index.html`
+- Model mới + Vocos pretrained: `/new/index.html`
+- Model mới + Vocos fine-tune 10k: `/new_vocos/index.html`
+- P2 zero-shot: `/p2/index.html`
+- Link public: `https://instant-weblogs-reductions-separated.trycloudflare.com/`
 

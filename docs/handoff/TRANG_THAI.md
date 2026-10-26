@@ -7,12 +7,15 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **N0 (27/10/2026) — ĐANG LÀM — dataset mới `ngochuyen_voice` (single speaker, 24 kHz).**
+> **N0 (27/10/2026) — ĐÃ TRAIN XONG — CHỜ NGHE.** Dataset mới `ngochuyen_voice` (single speaker, 24 kHz).
 > **Không đổi production/ONNX; không ghi đè `data/codelung`, cache cũ, runs cũ.**
-> Nguồn CC-BY-NC-4.0 (phi thương mại); 21,57 h gốc → lọc **19,89 h** (6.989 clip).
+> Nguồn **CC-BY-NC-4.0** (phi thương mại); 21,57 h gốc → lọc **19,89 h** (6.989 clip).
 > Split 90/5/5: train **17,89 h** · val **1,014 h** · holdout **0,985 h**.
-> MFA 6.989/6.989 TextGrid; chain dữ liệu + cache + train small v2_slot5 60k.
-> Hồ sơ: `docs/handoff/NGUYEN_DATA.md`; log `artifacts/ngochuyen/chain.log`.
+> MFA 6.989/6.989 TextGrid. Train small v2_slot5 60k từ đầu: **val mel 0,2634 · nét 0,7624**;
+> **holdout 4,0 dB**; free-run 80 holdout **16,57 dB** (P2 zero-shot 28,31 dB); thanh **0,9743**
+> (thật 0,9835); Vocos fine-tune 10k mel **0,1167** (pretrained 0,1432).
+> Hồ sơ: `docs/handoff/NGUYEN_DATA.md`; báo cáo `docs/handoff/N0_agent2.md`.
+> **Nghe**: https://instant-weblogs-reductions-separated.trycloudflare.com/
 >
 > **V18.52 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production, không ghi đè dữ liệu.
 > **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52. **Commit gốc**: `e915b11`.
@@ -53,11 +56,12 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **N0** · **Tệp đặc tả**: `docs/handoff/NGUYEN_DATA.md` (dataset/recipe) ·
-**Commit gốc của vòng**: `8a2b94f` · **Trạng thái**: **ĐANG LÀM — dữ liệu + train small mới**.
+**Commit gốc của vòng**: `8a2b94f` · **Trạng thái**: **ĐÃ TRAIN XONG — CHỜ NGHE**; không đổi production.
 > **V18.52 tạm dừng** (chờ CSV nghe); không xoá kết quả A1–A3.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: chain `tools/nguyen_chain.sh` — S1 segment → stats → cache → train 60k; chưa đổi production.
+**Việc tiếp**: nghe 3 trang (A/B, new, new_vocos); nếu đạt, chốt checkpoint/Vocos. Dùng thương mại
+phải xử lý license CC-BY-NC-4.0 trước.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `0fa26e2..<commit cuối>`,
 > đối chiếu `V1851_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
