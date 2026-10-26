@@ -7,11 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.51 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **V18.51 (27/10/2026) — DỪNG — A4 CHƯA CHẠY; A5 TRƯỢT TỰ ĐỘNG.** Không train, không đổi production.
 > **Tệp đặc tả**: `V1851_agent0.md` + `DECISIONS.md` mục V18.51. **Commit gốc**: `0fa26e2`.
-> Audit nhãn/segment bằng ASR (faster-whisper small 1.2.1, int8) trên 20 câu V18.50 → toàn bộ data;
-> A3 truy nguyên code; A5 sửa thử 40 clip với đệm **0,05 s**, trang tai 3 nút.
-> Ghi nhận mismatch V18.50: A 18/20, B 20/20, P2 1/21, PILOT 1/21 (một người nghe).
+> **Code cuối**: `b603baf`. Báo cáo: `V1851_agent2.md`.
+> - **A1**: key cấy khớp ASR 0–0,15 s; người dùng không bấm burst ⇒ invalid do phản hồi, không do key.
+> - **A2**: 18/20 tai–ASR cùng kết luận, nhưng **0/18** dư cuối khớp segment kế (CER≤0,3) ⇒ chưa đủ cổng.
+> - **A3**: **9/20** câu dư cuối >0,1 s; offset không drift (corr −0,027); code giữ đuôi trong `gaps[-1]`/`frame_range`.
+> - **A4**: **chưa chạy** (18,54 h audio, ước tính 3–4 h CPU) ⇒ **chưa phân loại P0**.
+> - **A5**: sửa thử 40 clip **trượt tự động** (CER≤0,1: 0/40; 16/40 mất âm cuối) ⇒ không áp.
 >
 > **V18.50 (27/10/2026, lịch sử)** — phiên không hợp lệ; A/B mismatch 18/20 + 20/20; không kết luận.
 > Báo cáo: `V1850_agent2.md`.
@@ -46,10 +49,10 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.51** · **Tệp đặc tả**: `V1851_agent0.md` + `DECISIONS.md` mục V18.51 ·
-**Commit gốc của vòng**: `0fa26e2` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
+**Commit gốc của vòng**: `0fa26e2` · **Trạng thái**: **DỪNG — A4 CHƯA CHẠY; A5 TRƯỢT TỰ ĐỘNG** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A1/A2 20 câu → A3 code → A4 toàn bộ/mẫu → A5 sửa 40 clip + trang tai.
+**Việc tiếp**: A4 quét toàn bộ (3–4 h) hoặc chờ A0 đổi luật mẫu; A5 cần align lại mốc cuối; không train.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `0fa26e2..<commit cuối>`,
 > đối chiếu `V1851_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -88,15 +91,15 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.51 — đang thực thi
+### 4.1 V18.51 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1851.A1 | Kiểm click 3 mục cấy bằng ASR timestamp | ⏳ |
-| V1851.A2 | ASR 20 câu V18.50, dư đầu/giữa/cuối | ⏳ |
-| V1851.A3 | Truy nguyên code segment | ⏳ |
-| V1851.A4 | Quét train + held-out (mẫu nếu >12h) | ⏳ |
-| V1851.A5 | Sửa 40 clip + trang tai 3 nút | ⏳ |
-| — | Báo cáo `V1851_agent2.md` | ⏳ |
+| V1851.A1 | Key cấy vs ASR | ✅ key khớp 0–0,15 s; invalid do không bấm burst |
+| V1851.A2 | ASR 20 câu | ⚪ 18/20 tai–ASR đồng thuận; **0/18** dư cuối khớp segment kế |
+| V1851.A3 | Code + offset | ✅ **9/20** dư cuối >0,1 s; offset không drift; code `gaps[-1]`/`frame_range` |
+| V1851.A4 | Quét toàn bộ | ⏳ **CHƯA CHẠY** — 18,54 h audio, ước tính 3–4 h |
+| V1851.A5 | Sửa 40 clip | ❌ **TRƯỢT TỰ ĐỘNG** — CER≤0,1 0/40; 16/40 mất âm cuối |
+| — | Báo cáo `V1851_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.50 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
