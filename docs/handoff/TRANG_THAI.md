@@ -12,7 +12,7 @@
 > **Bộ dò đuôi không ASR**: hữu thanh ≥0,12 s + đỉnh RMS ≥−15 dB; 3 unit test pass.
 > **A2**: 40 segment (20+/20−/10 sát ngưỡng) + 8 đối chứng; trang 48 mục, chờ CSV.
 > **Link nghe**: https://centers-alt-higher-leaders.trycloudflare.com/
-> **A3**: quét toàn bộ đang chạy nền, **chưa tổng hợp**; chỉ báo nếu A2 ĐẠT.
+> **A3**: quét xong 20.837 segment, **chưa tổng hợp**; chỉ báo nếu A2 ĐẠT.
 >
 > **V18.51 (27/10/2026, lịch sử)** — A3 đuôi gap; A5 trượt auto; A4 chưa chạy. Báo cáo: `V1851_agent2.md`.
 >
@@ -93,7 +93,7 @@
 |---|---|---|
 | V1852.A1 | Bộ dò đuôi + 3 unit test | ✅ xong |
 | V1852.A2 | 40 segment + 8 đối chứng, trang 48 mục | ⏳ **CHỜ CSV** |
-| V1852.A3 | Quét toàn bộ đang chạy nền, chưa tổng hợp | 🔄 |
+| V1852.A3 | Quét toàn bộ **xong 20.837 segment**, chưa tổng hợp | ✅ scan — chờ A2 |
 | V1852.A4 | Manifest loại bỏ (chỉ khi P0) | ⛔ chờ |
 | — | Báo cáo `V1852_agent2.md` | ✅ commit hồ sơ |
 

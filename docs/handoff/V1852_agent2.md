@@ -11,7 +11,7 @@
 |---|---|---|
 | V1852.A1 | Bộ dò đuôi: hữu thanh ≥0,12 s + đỉnh RMS ≥−15 dB; 3 unit test pass | **XONG** |
 | V1852.A2 | 40 segment (20+/20−/10 sát ngưỡng) + 8 đối chứng; trang 48 mục | **CHỜ NGHE** |
-| V1852.A3 | Quét toàn bộ đang chạy nền, **chưa tổng hợp** | **ĐANG CHẠY** |
+| V1852.A3 | Quét toàn bộ **đã xong 20.837 segment**, **chưa tổng hợp** | **XONG SCAN — chờ A2** |
 | V1852.A4 | Manifest loại bỏ | **CHƯA** |
 
 - **Link nghe**: https://centers-alt-higher-leaders.trycloudflare.com/
@@ -41,10 +41,9 @@
 
 ## 3. A3 — toàn bộ
 
-- Đang chạy `tools/v1852_tail_scan.py` trên train + held-out (20.837 segment) ở nền,
-  ghi `artifacts/bench/v1852_tail/scan_full.jsonl`.
+- **Đã quét xong 20.837 segment** (train + held-out), ghi `artifacts/bench/v1852_tail/scan_full.jsonl`.
 - **Chưa tổng hợp/báo tỉ lệ** theo V18.52.B3; chỉ tổng hợp nếu A2 ĐẠT.
-- Ước tính ~56 phút (2.000 segment đầu mất 5,4 phút).
+- Thời gian thực tế ~? (2.000 segment đầu 5,4 phút; full file 20.837 dòng).
 
 ## 4. TỰ QUYẾT KHÁC ĐẶC TẢ
 
