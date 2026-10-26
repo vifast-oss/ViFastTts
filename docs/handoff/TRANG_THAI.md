@@ -7,17 +7,13 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.51 (27/10/2026) — DỪNG — A4 CHƯA CHẠY; A5 TRƯỢT TỰ ĐỘNG.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1851_agent0.md` + `DECISIONS.md` mục V18.51. **Commit gốc**: `0fa26e2`.
-> **Code cuối**: `b603baf`. Báo cáo: `V1851_agent2.md`.
-> - **A1**: key cấy khớp ASR 0–0,15 s; người dùng không bấm burst ⇒ invalid do phản hồi, không do key.
-> - **A2**: 18/20 tai–ASR cùng kết luận, nhưng **0/18** dư cuối khớp segment kế (CER≤0,3) ⇒ chưa đủ cổng.
-> - **A3**: **9/20** câu dư cuối >0,1 s; offset không drift (corr −0,027); code giữ đuôi trong `gaps[-1]`/`frame_range`.
-> - **A4**: **chưa chạy** (18,54 h audio, ước tính 3–4 h CPU) ⇒ **chưa phân loại P0**.
-> - **A5**: sửa thử 40 clip **trượt tự động** (CER≤0,1: 0/40; 16/40 mất âm cuối) ⇒ không áp.
+> **V18.52 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production, không ghi đè dữ liệu.
+> **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52. **Commit gốc**: `e915b11`.
+> **Bộ dò đuôi không ASR**: vùng từ cuối âm tiết cuối (MFA) đến hết segment; dương khi hữu thanh
+> ≥0,12 s và đỉnh RMS ≥−15 dB so trung vị hữu thanh. Hiệu chỉnh bằng tai trên 40 segment + 8 đối chứng.
+> **V1851.A4 (ASR full) bị thay**; không dùng CER ASR small làm cổng.
 >
-> **V18.50 (27/10/2026, lịch sử)** — phiên không hợp lệ; A/B mismatch 18/20 + 20/20; không kết luận.
-> Báo cáo: `V1850_agent2.md`.
+> **V18.51 (27/10/2026, lịch sử)** — A3 đuôi gap; A5 trượt auto; A4 chưa chạy. Báo cáo: `V1851_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -48,11 +44,11 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.51** · **Tệp đặc tả**: `V1851_agent0.md` + `DECISIONS.md` mục V18.51 ·
-**Commit gốc của vòng**: `0fa26e2` · **Trạng thái**: **DỪNG — A4 CHƯA CHẠY; A5 TRƯỢT TỰ ĐỘNG** — không train, không đổi production.
+**Vòng hiện hành**: **V18.52** · **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52 ·
+**Commit gốc của vòng**: `e915b11` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A4 quét toàn bộ (3–4 h) hoặc chờ A0 đổi luật mẫu; A5 cần align lại mốc cuối; không train.
+**Việc tiếp**: bộ dò + unit test → 40 segment + trang A2 → chờ CSV; chạy full nhưng chưa tổng hợp.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `0fa26e2..<commit cuối>`,
 > đối chiếu `V1851_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -91,7 +87,16 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.51 — kết quả
+### 4.1 V18.52 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1852.A1 | Bộ dò đuôi + unit test | ⏳ |
+| V1852.A2 | 40 segment + 8 đối chứng, trang tai | ⏳ |
+| V1852.A3 | Áp toàn bộ (chỉ sau A2 ĐẠT) | ⛔ chờ |
+| V1852.A4 | Manifest loại bỏ (chỉ khi P0) | ⛔ chờ |
+| — | Báo cáo `V1852_agent2.md` | ⏳ |
+
+### 4.2 V18.51 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1851.A1 | Key cấy vs ASR | ✅ key khớp 0–0,15 s; invalid do không bấm burst |

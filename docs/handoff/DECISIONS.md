@@ -615,3 +615,28 @@ Chọn 40 segment holdout chưa dùng V18.43–V18.50, ≥3 s, ≥12 âm tiết;
 ### V1851.C — Không làm
 Không train/đổi production/ghi đè dữ liệu gốc; không dùng CER/ASR đánh giá model; không mở C_lo/L_con;
 không UTMOS; không ONNX.
+
+## V18.52 — Agent 0 (27/10/2026, sau report V18.51)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.52. Không train, không đổi production, không ghi đè dữ liệu.
+> **Không amend/force-push**; mọi sửa là commit mới trước kết quả đầu tiên.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1852.A0 | Chấp nhận V18.51, duyệt TỰ QUYẾT. **KHÔNG chạy V1851.A4** (ASR full); thay bằng V1852.A2. Ghi lỗi thiết kế A0 thứ ba: ngưỡng A5 "CER≤0,1" đặt theo ASR small chưa hiệu chỉnh (CER nền ≥0,24), không thể đạt; "16/40 mất âm cuối" có thể lẫn lỗi ASR. Luật mới: mọi ngưỡng dựa công cụ tự động phải hiệu chỉnh trên mẫu tai xác nhận trước khi làm cổng. | Không |
+| V1852.A1 | **Bộ dò tiếng nói ở đuôi**, không ASR. Với mỗi segment: vùng đuôi = từ mốc kết thúc âm tiết cuối (MFA) đến hết segment. Đo: độ dài đuôi; tổng thời lượng frame hữu thanh (pyworld F0>0, cùng extractor repo); RMS 50 ms lớn nhất trong đuôi so với trung vị RMS frame hữu thanh của chính segment (dB). **Dương** khi hữu thanh đuôi **≥0,12 s** VÀ đỉnh năng lượng **≥−15 dB** so trung vị. Chỉ số phụ: tỉ số thời lượng âm tiết cuối / trung vị thời lượng cùng âm tiết ở vị trí không cuối. | Không phải cổng (định nghĩa bộ dò) |
+| V1852.A2 | Hiệu chỉnh bộ dò bằng tai trước khi áp. Chọn **40 segment phân tầng** theo điểm bộ dò (20 dương, 20 âm; 10 ca sát ngưỡng), không nghe trước, seed 1852. Trang chỉ phát **vùng đuôi + 1 s trước**, có vạch báo chỗ bắt đầu đuôi; câu hỏi "Sau vạch có tiếng nói không?" (Có / Không / Không chắc). Thêm **4 đối chứng dương** (chèn 0,4 s tiếng nói từ clip khác vào đuôi) và **4 đối chứng âm** (đuôi thay bằng lặng số 0). Key ngoài thư mục phục vụ. | Phiên hợp lệ: dương ≥3/4 "Có"; âm ≥3/4 "Không". Bộ dò **ĐẠT** khi trên lượt không "Không chắc": độ khớp **≥85%** VÀ precision lớp dương **≥0,8**. Phiên không hợp lệ ⇒ làm lại ngày khác. Trượt ⇒ không áp, báo bảng nhầm lẫn; **không chỉnh luật trong vòng này**. |
+| V1852.A3 | Chỉ khi A2 ĐẠT: áp bộ dò lên toàn bộ train + held-out. Báo tỉ lệ dương theo số lượng và giờ; phân bố video, sNN, segment cuối clip cha; phân bố chỉ số phụ. | **P0** khi ≥10% số segment **hoặc** ≥10% số giờ train là dương. Dưới 10%: lỗi phụ, vẫn loại khỏi held-out. |
+| V1852.A4 | Chỉ khi P0: phương án **LOẠI BỎ** (không cắt lại). Tạo manifest mới `train_clean`, `heldout_clean` (file riêng, không ghi đè); báo số giờ còn lại. | Chấp nhận khi mất **≤20%** số giờ train. >20% ⇒ không áp, A0 cân nhắc align lại ở vòng sau. |
+| V1852.A5 | **Không train** trong vòng này. Nếu A4 chấp nhận, V18.53 mới đề xuất PILOT/CONTROL 2.000 bước trên train_clean/train đầy đủ, cổng chunk trên held-out_clean, nghe mù; train lại 60k cần duyệt riêng. | Theo V18.53 |
+
+### V1852.B — Việc giao Agent 2
+1. Commit V1852.* + luật bộ dò (commit mới).
+2. Viết bộ dò + unit test (đuôi lặng số 0 ⇒ âm; đuôi chèn tiếng nói ⇒ dương). Chạy 40 segment, dựng trang A2, gửi link.
+3. Trong lúc chờ: chạy bộ dò toàn bộ nhưng **chưa tổng hợp/báo tỉ lệ**.
+4. Có CSV: chấm A2. ĐẠT ⇒ báo A3/A4; trượt ⇒ dừng.
+5. Report + `git log --oneline`.
+
+### V1852.C — Không làm
+Không quét ASR full; không dùng CER ASR small làm cổng; không cắt lại audio; không ghi đè dữ liệu/manifest;
+không train/đổi production/ONNX/UTMOS; không mở cổng cũ.
