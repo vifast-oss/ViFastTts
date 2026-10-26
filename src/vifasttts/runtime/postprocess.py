@@ -41,6 +41,31 @@ def postprocess(wav: np.ndarray, sample_rate: int, *, target_db: float | None = 
     return output
 
 
+def sharpen_mel_numpy(mel, alpha: float = 1.5):
+    """Bản numpy của `sharpen_mel` (unsharp 3×3, zero-pad, chia 9) cho runtime ONNX.
+
+    Không cần torch; nhận `[T,F]` hoặc `[B,T,F]`, giữ shape.
+    """
+    if not alpha:
+        return mel
+    x = np.asarray(mel, dtype=np.float32)
+    if x.ndim == 2:
+        padded = np.pad(x, ((1, 1), (1, 1)), mode="constant")
+        blur = sum(
+            padded[1 + di:1 + di + x.shape[0], 1 + dj:1 + dj + x.shape[1]]
+            for di in (-1, 0, 1) for dj in (-1, 0, 1)
+        ) / 9.0
+    elif x.ndim == 3:
+        padded = np.pad(x, ((0, 0), (1, 1), (1, 1)), mode="constant")
+        blur = sum(
+            padded[:, 1 + di:1 + di + x.shape[1], 1 + dj:1 + dj + x.shape[2]]
+            for di in (-1, 0, 1) for dj in (-1, 0, 1)
+        ) / 9.0
+    else:
+        raise ValueError("sharpen_mel_numpy chỉ nhận [T,F] hoặc [B,T,F]")
+    return (x + np.float32(alpha) * (x - blur)).astype(np.float32)
+
+
 def sharpen_mel(mel, alpha: float = 1.5):
     """Làm nét mel trong không gian z (unsharp 3×3 box-blur) — bản "sh25" chính thức của repo.
 

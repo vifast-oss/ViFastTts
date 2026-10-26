@@ -32,3 +32,29 @@ def test_postprocess_combo():
     assert out[0] == 0.0 and out[-1] == 0.0
     target = 10 ** (-3.0 / 20.0)
     assert abs(float(np.max(np.abs(out))) - target) < 1e-5
+
+
+def test_sharpen_mel_numpy_matches_torch_2d():
+    """Bản numpy dùng cho ONNX phải khớp torch (zero-pad 3×3, chia 9)."""
+    import numpy as np
+    import torch
+
+    from vifasttts.runtime.postprocess import sharpen_mel, sharpen_mel_numpy
+
+    rng = np.random.default_rng(0)
+    x = rng.normal(size=(9, 7)).astype(np.float32)
+    expected = sharpen_mel(torch.from_numpy(x), 1.5).numpy()
+    actual = sharpen_mel_numpy(x, 1.5)
+    assert np.allclose(actual, expected, atol=1e-6)
+
+
+def test_sharpen_mel_numpy_batch_shape():
+    """Nhận batch [B,T,F] và alpha=0 trả nguyên bản."""
+    import numpy as np
+
+    from vifasttts.runtime.postprocess import sharpen_mel_numpy
+
+    x = np.arange(3 * 5 * 4, dtype=np.float32).reshape(3, 5, 4)
+    assert sharpen_mel_numpy(x, 0.0).shape == (3, 5, 4)
+    assert np.allclose(sharpen_mel_numpy(x, 0.0), x)
+    assert sharpen_mel_numpy(x, 1.5).shape == x.shape

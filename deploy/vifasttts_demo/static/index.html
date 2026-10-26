@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViFastTTS — Demo giọng Ngọc Huyền</title>
+<style>
+  :root { --ink:#18212b; --muted:#637083; --accent:#0f766e; --line:#dbe3ea; --bg:#f4f7f8; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         color:var(--ink); background:linear-gradient(180deg,#eef5f3 0%,var(--bg) 45%); line-height:1.5; }
+  main { max-width:860px; margin:0 auto; padding:34px 18px 70px; }
+  .badge { display:inline-block; font-size:.76rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+           color:#8a4b00; background:#fff1d6; border:1px solid #ffd89a; padding:5px 9px; border-radius:999px; }
+  h1 { font-size:clamp(1.6rem, 4vw, 2.35rem); letter-spacing:-.03em; margin:16px 0 8px; }
+  h1 span { color:var(--accent); }
+  .sub { color:var(--muted); margin:0 0 22px; max-width:640px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 12px 34px rgba(25,50,60,.06); }
+  label { font-weight:650; font-size:.94rem; }
+  textarea { width:100%; min-height:124px; resize:vertical; margin-top:8px; padding:13px 14px; font:inherit; font-size:1.02rem;
+             border:1px solid #cbd6df; border-radius:12px; outline:none; background:#fbfdfd; }
+  textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(15,118,110,.12); }
+  .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:.82rem; margin-top:6px; }
+  .controls { display:flex; flex-wrap:wrap; gap:16px 22px; align-items:center; margin:15px 0 4px; }
+  .controls label { font-weight:500; color:var(--muted); font-size:.9rem; }
+  input[type=range] { accent-color:var(--accent); vertical-align:middle; }
+  input[type=checkbox] { accent-color:var(--accent); width:17px; height:17px; vertical-align:middle; margin-right:5px; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  button { border:0; border-radius:10px; padding:10px 15px; font:inherit; font-weight:700; cursor:pointer; }
+  .primary { background:var(--accent); color:#fff; padding:12px 20px; font-size:1rem; }
+  .primary:disabled { opacity:.55; cursor:wait; }
+  .ghost { background:#edf3f2; color:#245c57; border:1px solid #d5e5e2; font-weight:600; }
+  .examples { margin:16px 0 0; padding-top:14px; border-top:1px dashed var(--line); }
+  .examples p { margin:0 0 8px; color:var(--muted); font-size:.83rem; }
+  .examples button { background:#f6f9fa; color:#334; border:1px solid var(--line); font-weight:500; font-size:.86rem; padding:7px 10px; }
+  #status { min-height:1.3em; color:var(--muted); font-size:.88rem; margin-top:12px; }
+  #status.err { color:#b42318; }
+  #player { display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+  #player audio { width:100%; }
+  .fine { color:var(--muted); font-size:.79rem; margin:14px 0 0; }
+  .fine a { color:var(--accent); }
+  footer { color:var(--muted); font-size:.78rem; margin-top:24px; }
+  code { background:#eef3f4; padding:1px 5px; border-radius:5px; }
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">Research demo · phi thương mại</span>
+  <h1>ViFastTTS <span>— Ngọc Huyền</span></h1>
+  <p class="sub">Nhập một câu tiếng Việt (tối đa 300 ký tự). Model tự ngắt nghỉ theo dữ liệu;
+    Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
+
+  <section class="card">
+    <label for="text">Câu cần đọc</label>
+    <textarea id="text" maxlength="300" placeholder="Ví dụ: Sáng nay trời đẹp, chúng ta cùng đi dạo nhé."></textarea>
+    <div class="meta"><span id="count">0/300</span><span>Ctrl/⌘ + Enter để tạo</span></div>
+
+    <div class="controls">
+      <label>Tốc độ <input id="speed" type="range" min="0.85" max="1.15" step="0.05" value="1"> <output id="speedOut">1.00×</output></label>
+      <label><input id="fixed" type="checkbox"> Nghỉ cố định <span class="fine">(mặc định tắt)</span></label>
+    </div>
+
+    <div class="row">
+      <button id="go" class="primary">Tạo âm thanh</button>
+      <button id="clear" class="ghost">Xoá</button>
+    </div>
+    <div id="status" role="status"></div>
+
+    <div id="player">
+      <audio id="audio" controls preload="none"></audio>
+      <div class="row"><a id="download" class="ghost" style="text-decoration:none;padding:8px 12px;border-radius:10px" download="vifasttts-demo.wav">Tải WAV</a></div>
+    </div>
+
+    <div class="examples">
+      <p>Thử nhanh:</p>
+      <div class="row">
+        <button data-text="Sáng nay trời đẹp, chúng ta cùng đi dạo quanh hồ nhé.">Đi dạo</button>
+        <button data-text="Cô giáo nhẹ nhàng nhắc học sinh kiểm tra lại bài tập trước khi vào tiết mới.">Lời nhắc</button>
+        <button data-text="Chiếc tàu rời bến từ sớm, mang theo những giỏ cá tươi vừa được đánh bắt ngoài khơi.">Buổi sớm</button>
+      </div>
+    </div>
+    <p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
+      <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
+      <a href="https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1" target="_blank" rel="noopener">research release</a>.</p>
+  </section>
+  <footer>ViFastTts · single-speaker · CC-BY-NC-4.0 · không production</footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const text = $("text"), count = $("count"), status = $("status"), player = $("player");
+let currentUrl = null;
+function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }
+function updateCount() { count.textContent = `${text.value.length}/300`; }
+text.addEventListener("input", updateCount);
+$("speed").addEventListener("input", (e) => { $("speedOut").textContent = Number(e.target.value).toFixed(2) + "×"; });
+document.querySelectorAll("[data-text]").forEach((b) => b.addEventListener("click", () => {
+  text.value = b.dataset.text; updateCount(); text.focus();
+}));
+$("clear").addEventListener("click", () => {
+  text.value = ""; updateCount(); setStatus(""); player.style.display = "none";
+  if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
+});
+async function generate() {
+  const value = text.value.trim();
+  if (!value) { setStatus("Nhập câu cần đọc trước.", true); return; }
+  $("go").disabled = true; setStatus("Đang tạo…");
+  try {
+    const response = await fetch("/api/tts", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text: value, speed: Number($("speed").value), fixed_pauses: $("fixed").checked})
+    });
+    if (!response.ok) {
+      let detail = "Không tạo được âm thanh.";
+      try { const j = await response.json(); if (j.detail) detail = j.detail; } catch (_) {}
+      throw new Error(detail);
+    }
+    const blob = await response.blob();
+    if (currentUrl) URL.revokeObjectURL(currentUrl);
+    currentUrl = URL.createObjectURL(blob);
+    $("audio").src = currentUrl;
+    $("download").href = currentUrl;
+    player.style.display = "block";
+    setStatus("Xong. Bấm play để nghe.");
+    $("audio").play().catch(() => {});
+  } catch (err) {
+    setStatus(err.message || "Lỗi không xác định.", true);
+  } finally {
+    $("go").disabled = false;
+  }
+}
+$("go").addEventListener("click", generate);
+text.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") generate(); });
+updateCount();
+</script>
+</body>
+</html>

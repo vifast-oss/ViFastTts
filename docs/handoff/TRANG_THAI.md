@@ -20,7 +20,8 @@
 > **Nghe**: https://instant-weblogs-reductions-separated.trycloudflare.com/
 > **Releases**: prod candidate nội bộ `n0-ngochuyen-prod-v1` · research
 > `n0-ngochuyen-research-v1` — cả hai CC-BY-NC-4.0, **không production thương mại**;
-> release audio test cũ đã xoá.
+> release audio test cũ đã xoá. Có ONNX FP32 + demo service
+> **https://vifasttts.hoctuthien.com/** (VPS JP).
 >
 > **V18.52 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production, không ghi đè dữ liệu.
 > **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52. **Commit gốc**: `e915b11`.

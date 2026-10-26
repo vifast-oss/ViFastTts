@@ -1,0 +1,38 @@
+services:
+  vifasttts:
+    build: .
+    container_name: vifasttts
+    restart: unless-stopped
+    environment:
+      VIFASTT_SHARPEN_ALPHA: "1.5"
+      VIFASTT_INTRA_THREADS: "2"
+    expose:
+      - "8000"
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.middlewares.vifasttts-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.vifasttts-compress.compress=true"
+      - "traefik.http.routers.vifasttts-http.rule=Host(`vifasttts.hoctuthien.com`)"
+      - "traefik.http.routers.vifasttts-http.entrypoints=http"
+      - "traefik.http.routers.vifasttts-http.middlewares=vifasttts-redirect"
+      - "traefik.http.routers.vifasttts-http.service=vifasttts"
+      - "traefik.http.routers.vifasttts-https.rule=Host(`vifasttts.hoctuthien.com`)"
+      - "traefik.http.routers.vifasttts-https.entrypoints=https"
+      - "traefik.http.routers.vifasttts-https.middlewares=vifasttts-compress"
+      - "traefik.http.routers.vifasttts-https.tls=true"
+      - "traefik.http.routers.vifasttts-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.vifasttts-https.service=vifasttts"
+      - "traefik.http.services.vifasttts.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  coolify:
+    external: true

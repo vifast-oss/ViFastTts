@@ -184,3 +184,14 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   Đo nhanh: alpha 1,5 có HNR cao nhất, glottalization thấp nhất; alpha 0 không xoá rè.
 - **Không đổi alpha toàn cục** vì 9/10 câu còn lại đang tốt; ghi “ấm” là hạn chế cục bộ
   đã biết trong model card. Fine-tune tiếp tục bị loại.
+
+
+## 13. ONNX + demo service (27/10/2026)
+
+- Đã export `artifacts/onnx/n0/acoustic.onnx` (30 MB) và `vocoder.onnx` (52 MB), opset 18,
+  FP32; `synthesize-onnx` smoke-test CPU pass.
+- Demo public: **https://vifasttts.hoctuthien.com/**
+  (VPS `jp` qua Tailscale → LXD `hoctuthien-vps` → Docker `/opt/vifasttts` → Traefik).
+- Service dùng ONNX Runtime, alpha 1.5, Vocos pretrained, model tự nghỉ mặc định;
+  fixed pause là checkbox tắt mặc định. Rate limit 6 request/phút/IP, text 300 ký tự.
+- Release có thêm `n0_onnx_fp32.zip` (sha256 `3521ac2e…c687`).
