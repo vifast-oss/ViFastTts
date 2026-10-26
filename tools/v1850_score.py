@@ -127,7 +127,10 @@ def main() -> None:
     rates_ci = {v: ci(boot[v]) for v in boot}
     diff_ci = {k: ci(v) for k, v in boot_diff.items()}
     r = {v: (rates[v] if rates[v] is not None else float("nan")) for v in rates}
-    if r.get("P2") is not None and r["P2"] < 0.02:
+    conclusive = all(valid.values())
+    if not conclusive:
+        source = "PHIÊN KHÔNG HỢP LỆ — làm lại khác ngày"
+    elif r.get("P2") is not None and r["P2"] < 0.02:
         source = "HIẾM — r(P2) < 2%; báo, không A4"
     elif r.get("A") is not None and r.get("P2") is not None and r["A"] >= 0.7 * r["P2"]:
         source = "ĐẶC ĐIỂM GIỌNG — r(A) ≥ 0,7×r(P2); báo"
@@ -150,7 +153,7 @@ def main() -> None:
         "rates": {v: round(float(r[v]), 4) if r.get(v) is not None and np.isfinite(r[v]) else None
                   for v in r},
         "rates_ci95": rates_ci, "diff_ci95": diff_ci,
-        "source": source,
+        "conclusive": conclusive, "source": source,
     }
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")

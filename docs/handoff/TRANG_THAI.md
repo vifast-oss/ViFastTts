@@ -7,14 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.50 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + **V1850b/c** (sửa đăng ký trước khi nghe).
-> **Commit gốc**: `3dc3ae2` · **Code cuối**: `8ba7b71`. Báo cáo: `V1850_agent2.md`.
-> **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang **86 mục**
-> (20 câu × A/B/P2/PILOT + 3 lặp + 3 cấy click), chọn âm tiết + ô "văn bản không khớp";
-> A3 tách nguồn (A/B/P2/PILOT), A4 đặc trưng + creak. Không train; chưa đổi production.
-> **Link nghe**: https://texture-start-mixing-advertiser.trycloudflare.com/
-> **V18.51 dự kiến** (audit nhãn bằng ASR) đã ghi đăng ký, **chưa chạy**.
+> **V18.50 (27/10/2026) — DỪNG — PHIÊN KHÔNG HỢP LỆ.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + V1850b/c. **Commit gốc**: `3dc3ae2`.
+> **Code cuối**: `8ba7b71`. Báo cáo: `V1850_agent2.md`.
+> - **Validity TRƯỢT**: cấy click **0/3** (cần ≥2/3); lặp 2/3; đủ 86 mục.
+> - **Mismatch**: **A 18/20 câu**, **B 20/20 câu** bị tick "không khớp" — audio gốc/GT đọc dư từ cuối;
+>   P2/PILOT chỉ 1 mỗi bên. Chỉ 2/20 câu dùng được ⇒ **không kết luận A3/A4**.
+> - **A4 không chấm**; bảng đặc trưng 765 âm tiết đã dựng sẵn.
+> - **V18.51** (ASR audit) đã đăng ký, **chưa chạy**; đây là ưu tiên trước khi làm lại trang.
 >
 > **V18.49 (26/10/2026, lịch sử)** — A2 tái lập +0,1121; A3 tai không phân biệt; giữ P2.
 > Báo cáo: `V1849_agent2.md`.
@@ -49,10 +49,10 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.50** · **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + V1850b/c ·
-**Commit gốc của vòng**: `3dc3ae2` · **Trạng thái**: **DỪNG — CHỜ NGƯỜI NGHE** — không train, không đổi production.
+**Commit gốc của vòng**: `3dc3ae2` · **Trạng thái**: **DỪNG — PHIÊN KHÔNG HỢP LỆ** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: nghe 86 mục + gửi CSV; A3/A4 chấm sau khi kiểm phiên hợp lệ; V18.51 chưa chạy.
+**Việc tiếp**: ưu tiên V18.51 audit nhãn (A/B mismatch 18/20 + 20/20); làm lại trang sau khi sửa nhãn.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `3dc3ae2..<commit cuối>`,
 > đối chiếu `V1850_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -91,13 +91,13 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.50 — đang thực thi
+### 4.1 V18.50 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1850.A2 | Trang 86 mục + link + mismatch | ✅ **CHỜ NGHE** |
-| V1850.A3 | Tỉ lệ âm tiết bị bấm theo A/B/P2/PILOT | ⏳ |
-| V1850.A4 | Bảng đặc trưng + creak đã dựng, chưa nối nhãn | ✅ chuẩn bị |
-| V1850.A5 | Hướng xử lý (sau A3/A4) | ⏳ |
+| V1850.A2 | Trang 86 mục + mismatch | ❌ **PHIÊN KHÔNG HỢP LỆ** — cấy 0/3; A 18/20 + B 20/20 mismatch |
+| V1850.A3 | Tỉ lệ âm tiết bị bấm | ⛔ **KHÔNG KẾT LUẬN** |
+| V1850.A4 | Bảng đặc trưng + creak | ⛔ **KHÔNG CHẤM** — phiên invalid |
+| V1850.A5 | Hướng xử lý | ⏳ |
 | — | Báo cáo `V1850_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.49 — kết quả (lịch sử)
