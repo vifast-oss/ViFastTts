@@ -168,7 +168,7 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   (`n0_ngochuyen_prod_v1.zip`, sha256 `3c7673c9…94ea8`).
 - **Research**: `n0-ngochuyen-research-v1`
   https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
-  (`n0_ngochuyen_research_v1.zip`, sha256 `b0c7add9…ee077`).
+  (`n0_ngochuyen_research_v1.zip`, sha256 `152d9059…f0d4fa`).
 - Cả hai gồm acoustic 60k, config/stats, Vocos pretrained, 10 demo; research thêm
   `TRAINING.md`/`REPORT.md`. **Không** kèm data gốc; **không** kèm Vocos fine-tune.
 - **Research/non-commercial — không production thương mại**, dataset CC-BY-NC-4.0.

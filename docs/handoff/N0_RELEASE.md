@@ -20,8 +20,8 @@
 
 - Tag: `n0-ngochuyen-research-v1`
 - URL: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
-- Asset: `n0_ngochuyen_research_v1.zip` (129.514.664 B;
-  sha256 `b0c7add9027e8ff8e8b2dc0f5196e662c5f5ace1bb0565013467f2904d2ee077`)
+- Asset: `n0_ngochuyen_research_v1.zip` (129.515.554 B;
+  sha256 `152d9059aff380e2241e1cc6e995d8e57dbd0ece9688c6d370df352d48f0d4fa`)
   + `research_SHA256SUMS`.
 - Nội dung: như prod + `TRAINING.md` (quá trình, thời gian, khuyến nghị dữ liệu
   small/base) + `REPORT.md` (đo/nghe) + model card.
