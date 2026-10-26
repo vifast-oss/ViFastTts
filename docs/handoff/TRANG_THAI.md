@@ -7,12 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.47 (26/10/2026) — ĐANG LÀM.** Không đổi production.
+> **V18.47 (26/10/2026) — DỪNG — CHỜ DUYỆT PILOT.** Không train, không đổi production.
 > **Tệp đặc tả**: `V1847_agent0.md` + `DECISIONS.md` mục V18.47. **Commit gốc**: `7d39ae2`.
-> **A1 (ghi hồ sơ)**: cổng Δac ≥0,15 của V1846 là **lỗi thiết kế của A0**; từ nay cổng xác nhận dùng
-> **CI của hiệu ứng**, lực kiểm chỉ quyết "đủ/không đủ dữ liệu". Số V1846.A2 **không** mở lại gì.
-> **Đo mới A2**: giả thuyết "P2 làm nhòe họa âm theo trục tần số ≤4 kHz"; 40 câu dài chưa dùng.
-> Nếu A2 ĐẠT: **dừng, chờ duyệt pilot**; không tự train.
+> **Code cuối trước hồ sơ**: `da95507`. Báo cáo: `V1847_agent2.md`.
+> - **A1**: ghi hồ sơ cổng Δac ≥0,15 của V1846 là **lỗi thiết kế của A0**; từ nay dùng CI hiệu ứng;
+>   số V1846.A2 **không** mở lại gì.
+> - **A2 ĐẠT**: CR trung vị **0,7067** (CI [0,6899; 0,7324]), 40/40 câu CR<1;
+>   ρ `(1−CR)` vs `BAK(B)−BAK(C)` = **0,4096** (CI [0,1202; 0,6407]).
+> - **A3 CHƯA CHẠY**: A2 ĐẠT ⇒ dừng, chờ người dùng duyệt pilot 2.000 bước (~15 phút).
 >
 > **V18.46 (26/10/2026, lịch sử)** — A2 sát ngưỡng đóng `C_lo`; A4 mượt tần số; A5 không đủ;
 > **đóng băng chất lượng acoustic**. Báo cáo: `V1846_agent2.md`.
@@ -47,10 +49,11 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.47** · **Tệp đặc tả**: `V1847_agent0.md` + `DECISIONS.md` mục V18.47 ·
-**Commit gốc của vòng**: `7d39ae2` · **Trạng thái**: **ĐANG LÀM** — không đổi production, không train.
+**Commit gốc của vòng**: `7d39ae2` · **Code cuối trước hồ sơ**: `da95507` ·
+**Trạng thái**: **DỪNG — CHỜ DUYỆT PILOT** — không train, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A2 đo CR ≤4 kHz trên 40 câu dài; nếu ĐẠT thì dừng chờ duyệt pilot.
+**Việc tiếp**: người dùng duyệt/không duyệt pilot 2.000 bước; nếu duyệt mới chạy probe 100 → pilot.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `7d39ae2..<commit cuối>`,
 > đối chiếu `V1847_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -89,12 +92,12 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.47 — đang thực thi
+### 4.1 V18.47 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1847.A2 | CR độ tương phản ≤4 kHz trên 40 câu dài + Spearman BAK | ⏳ |
-| V1847.A3 | Pilot 2.000 bước (chỉ sau khi A2 ĐẠT + duyệt) | ⛔ chưa mở |
-| — | Báo cáo `V1847_agent2.md` | ⏳ |
+| V1847.A2 | CR độ tương phản ≤4 kHz trên 40 câu dài + Spearman BAK | ✅ **ĐẠT** — CR 0,7067; ρ 0,4096; `da95507` |
+| V1847.A3 | Pilot 2.000 bước | ⛔ **CHƯA CHẠY — chờ duyệt** |
+| — | Báo cáo `V1847_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.46 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
