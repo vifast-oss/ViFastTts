@@ -7,10 +7,10 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.50 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **V18.50 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production.
 > **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + **V1850b/c** (sửa đăng ký trước khi nghe).
-> **Commit gốc**: `3dc3ae2`.
-> **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang đánh dấu **86 mục**
+> **Commit gốc**: `3dc3ae2` · **Code cuối**: `8ba7b71`. Báo cáo: `V1850_agent2.md`.
+> **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang **86 mục**
 > (20 câu × A/B/P2/PILOT + 3 lặp + 3 cấy click), chọn âm tiết + ô "văn bản không khớp";
 > A3 tách nguồn (A/B/P2/PILOT), A4 đặc trưng + creak. Không train; chưa đổi production.
 > **Link nghe**: https://texture-start-mixing-advertiser.trycloudflare.com/
@@ -48,11 +48,11 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.50** · **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 ·
-**Commit gốc của vòng**: `3dc3ae2` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
+**Vòng hiện hành**: **V18.50** · **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + V1850b/c ·
+**Commit gốc của vòng**: `3dc3ae2` · **Trạng thái**: **DỪNG — CHỜ NGƯỜI NGHE** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: sinh 66 mục → dựng trang đánh dấu/gửi link → chuẩn bị bảng A4 → chờ CSV.
+**Việc tiếp**: nghe 86 mục + gửi CSV; A3/A4 chấm sau khi kiểm phiên hợp lệ; V18.51 chưa chạy.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `3dc3ae2..<commit cuối>`,
 > đối chiếu `V1850_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -94,11 +94,11 @@
 ### 4.1 V18.50 — đang thực thi
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1850.A2 | Trang đánh dấu 86 mục, 20 câu (A/B/P2/PILOT) | ⏳ |
+| V1850.A2 | Trang 86 mục + link + mismatch | ✅ **CHỜ NGHE** |
 | V1850.A3 | Tỉ lệ âm tiết bị bấm theo A/B/P2/PILOT | ⏳ |
-| V1850.A4 | Đặc trưng + creak A/B/P2, AUC | ⏳ |
+| V1850.A4 | Bảng đặc trưng + creak đã dựng, chưa nối nhãn | ✅ chuẩn bị |
 | V1850.A5 | Hướng xử lý (sau A3/A4) | ⏳ |
-| — | Báo cáo `V1850_agent2.md` | ⏳ |
+| — | Báo cáo `V1850_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.49 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
