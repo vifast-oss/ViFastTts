@@ -147,3 +147,31 @@ Trường hợp đặc biệt: nếu ΔBAK có CI95 > 0 (sentence ít rè hơn r
 - Nhãn slot onset/nucleus/coda/lặng có sẵn theo frame khi teacher-forcing (nếu không có, ghi rõ và chỉ chạy `C_hi`/`C_lo`).
 - Dữ liệu UTMOS theo từng seed của A2 còn lưu (nếu không còn, A3(a) chấm lại đúng 30 câu chunk với 10 seed, chỉ cho đối chứng âm).
 - Chi phí V18.44 dưới nửa ngày máy, chưa tính thời gian người dùng nghe (tin cậy thấp).
+
+### V1844.A5 — 16 câu chọn TRƯỚC khi dựng trang nghe
+
+Chọn 16 câu có `|BAK(B) − BAK(C)|` lớn nhất trong 40 câu A4 (B = Vocos mel gốc, C = Vocos mel P2 TF).
+Danh sách dưới đây được ghi **trước** khi sinh audio/trang; seed thiết kế = `1844`.
+
+| # | id | index A4 | BAK(B) | BAK(C) | \|diff\| |
+|---:|---|---:|---:|---:|---:|
+| 1 | `vEtfty4Cc6Y_0070__s01` | 31 | 3,9251 | 2,5022 | 1,4229 |
+| 2 | `2b65WyiFC9k_0162__s02` | 3 | 4,0726 | 2,6695 | 1,4031 |
+| 3 | `BD83pScFukQ_0376__s02` | 16 | 3,8826 | 2,4865 | 1,3961 |
+| 4 | `4ITcvEa_Acc_0205__s00` | 8 | 4,1328 | 2,9664 | 1,1664 |
+| 5 | `o8RjAmBtyZo_0194__s02` | 29 | 3,9536 | 2,9616 | 0,9920 |
+| 6 | `vEtfty4Cc6Y_0200__s02` | 33 | 4,0905 | 3,3703 | 0,7202 |
+| 7 | `z0zSgR_oie4_0165__s03` | 38 | 3,2799 | 2,7405 | 0,5394 |
+| 8 | `BD83pScFukQ_0217__s00` | 13 | 3,9768 | 3,5586 | 0,4182 |
+| 9 | `BD83pScFukQ_0016__s02` | 9 | 4,1636 | 3,7745 | 0,3891 |
+| 10 | `2b65WyiFC9k_0236__s01` | 4 | 3,9442 | 3,6261 | 0,3181 |
+| 11 | `z0zSgR_oie4_0048__s05` | 36 | 3,7194 | 4,0043 | 0,2849 |
+| 12 | `EUNlJU1BuzE_0145__s03` | 24 | 3,2099 | 3,4934 | 0,2835 |
+| 13 | `EUNlJU1BuzE_0069__s01` | 23 | 4,0257 | 3,7438 | 0,2819 |
+| 14 | `EM_ObHWvd94_0131__s02` | 19 | 4,1872 | 3,9626 | 0,2246 |
+| 15 | `EM_ObHWvd94_0076__s01` | 18 | 4,1184 | 3,8952 | 0,2232 |
+| 16 | `4ITcvEa_Acc_0142__s01` | 7 | 4,0936 | 3,9004 | 0,1932 |
+
+Thiết kế 28 lượt: 16 B-vs-C + 4 dương (B vs B+trắng SNR 30 dB) + 4 âm (C vs C) + 4 lặp
+(4 cặp B/C đầu, đảo A/B). Chuẩn −16 LUFS; vị trí/thứ tự ngẫu nhiên seed 1844; ẩn tên.
+Câu hỏi duy nhất: "Bản nào ít rè nền hơn?" (A / B / không phân biệt).
