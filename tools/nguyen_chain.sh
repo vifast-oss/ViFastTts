@@ -63,11 +63,6 @@ if [ ! -f "$M/mel_stats.json" ]; then
   $PY tools/compute_mel_stats.py --manifest "$MAN/train_dur.jsonl" --config "$CFG" \
     --out "$M/mel_stats.json" --sample 800 --workers 8 --min-log-energy -6 >> "$LOG" 2>&1
 fi
-if [ ! -f "$M/f0_stats_v2.json" ]; then
-  say "S2 f0 stats"
-  $PY tools/compute_f0_stats.py --manifest "$MAN/train_dur.jsonl" --config "$CFG" \
-    --out "$M/f0_stats_v2.json" --sample 2000 --workers 8 >> "$LOG" 2>&1
-fi
 
 # S3 — cache feature (mỗi clip một lần; segment dùng lại).
 for split in train val holdout; do
@@ -78,6 +73,14 @@ for split in train val holdout; do
     touch "$M/.cache_$split"
   fi
 done
+
+# S3b — f0 stats v2 (schema shape_mean/shape_std, KHÔNG dùng compute_f0_stats).
+if [ ! -f "$M/f0_stats_v2.json" ]; then
+  say "S3b f0 stats (r5b)"
+  $PY tools/r5b_segment_stats.py --manifest "$MAN/train_dur_seg_slot4.jsonl" \
+    --config "$CFG" --cache-dir cache/ngochuyen_v2 --sample 2500 --workers 8 \
+    --report artifacts/ngochuyen/r5b_stats.json --f0-out "$M/f0_stats_v2.json" >> "$LOG" 2>&1
+fi
 
 # S4 — train từ đầu 60k.
 if [ ! -f "$M/.train_done" ]; then
