@@ -7,12 +7,14 @@
 > 4. Nếu ONNX không nhanh/nhẹ hơn đáng kể, nhánh ONNX sẽ đóng; nếu đạt, có thể bật ở V18.45.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.44 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44. **Commit gốc**: `5405188`.
-> **ONNX đóng băng** (V1844.A1); hợp đồng sản phẩm **chốt = chunk mode** (V1844.A2); lead **g1_1k đóng** (V1844.A4).
-> **Sửa A3 (V1844.A1b)**: lý do trượt **duy nhất** là p95 câu ngắn **1,2188× > 1,2×**; vế "ít nhất một trong"
-> đã đạt nhờ peak RSS **0,456× ≤ 0,6×**; cold 0,632 và dung lượng 0,318 **không phải** lý do trượt.
-> CV latency: short **0,9 %**, mid **0,8 %**, long 12,5 % (pooled) — short <15 % nên nhãn vẫn là **trượt**.
+> **V18.44 (26/10/2026) — DỪNG, CHỜ ĐỌC + CHỜ NGHE A5.** Không train, không đổi production.
+> **Code cuối trước hồ sơ**: `161a599`. Báo cáo: `V1844_agent2.md`.
+> - **A1**: ONNX **đóng băng**; 23 test ONNX skip có lý do; suite **2.547 pass / 23 skip**.
+> - **A1b**: A3 trượt **chỉ** vì p95 short **1,2188×**; RSS **0,456×** đã đạt; CV short 0,9 % · mid 0,8 % · long 12,5 %.
+> - **A3**: bootstrap hai tầng **vẫn lệch** (CI [0,0035; 0,1429]) ⇒ **UTMOS bị loại khỏi luật quyết định**, chỉ còn BAK + tai; BAK tất định 10/10.
+> - **A6**: đối chứng C_all/C_none **đạt tuyệt đối**; tổng Recovery frame **−0,85** ⇒ **LẠ, DỪNG**; không chọn `C_lo`.
+> - **A5**: 28 lượt đã dựng, link đã kiểm tra; **chờ CSV**. 16 câu đã ghi vào `DECISIONS.md` trước khi dựng.
+> - **A7**: cổng V18.45 **chưa mở** (A5 chưa có, A6 lạ, chưa duyệt ngân sách).
 >
 > **V18.43 (26/10/2026, lịch sử)** — Vòng đo, không train, không đổi production.
 > - **A3 TRƯỢT** (lý do duy nhất: p95 short 1,2188×); **A2 phép đo hỏng** (đối chứng âm seed UTMOS lệch 0,0729);
@@ -41,10 +43,12 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.44** · **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44 ·
-**Commit gốc của vòng**: `5405188` · **Trạng thái**: **ĐANG LÀM** — không training, giữ P2, ONNX đóng băng.
+**Commit gốc của vòng**: `5405188` · **Code cuối trước hồ sơ**: `161a599` ·
+**Trạng thái**: **DỪNG, CHỜ ĐỌC + CHỜ NGHE A5** — không training, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A1 skip ONNX → A1b CV → A3 hiệu chuẩn → A6 cấy ghép → A5 nghe mù → report.
+**Việc tiếp**: nghe A5 + gửi CSV; A0 đọc A6 lạ; cổng V18.45 chưa mở.
+Link A5: https://reasonably-recipients-selective-solutions.trycloudflare.com/ (quick tunnel).
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5405188..<commit cuối>`,
 > đối chiếu `V1844_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -83,17 +87,18 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.44 — đang thực thi
+### 4.1 V18.44 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1844.A1 | ONNX đóng băng; test ONNX skip có lý do | ⏳ |
-| V1844.A1b | CV latency từ dữ liệu A3; sửa lý do trượt | ⏳ |
-| V1844.A2 | Hợp đồng = chunk (chốt, không đo lại) | ✅ |
-| V1844.A3 | Bootstrap hai tầng đối chứng âm + BAK 2 lần | ⏳ |
-| V1844.A4 | Đóng lead g1_1k | ✅ |
-| V1844.A6 | Cấy ghép oracle (C_all/C_none trước) | ⏳ |
-| V1844.A5 | Chọn 16 câu, trang nghe mù B vs C | ⏳ |
-| — | Báo cáo `V1844_agent2.md` | ⏳ |
+| V1844.A1 | ONNX đóng băng; 23 test ONNX skip có lý do | ✅ `dc4398a` |
+| V1844.A1b | CV latency + sửa lý do trượt A3 | ✅ `3e1ae46` |
+| V1844.A2 | Hợp đồng = chunk (chốt, không đo lại) | ✅ `3e1ae46` |
+| V1844.A3 | Bootstrap hai tầng vẫn lệch; UTMOS bị loại; BAK tất định | ✅ `441b1de` |
+| V1844.A4 | Đóng lead g1_1k | ✅ `3e1ae46` |
+| V1844.A6 | Cấy ghép oracle — đối chứng đạt, tổng frame −0,85 ⇒ LẠ, dừng | ✅ `09cb383` |
+| V1844.A5 | 28 lượt nghe mù + link; chờ CSV | ⏳ **CHỜ NGHE** (`161a599`) |
+| V1844.A7 | Cổng V18.45 | ⛔ **CHƯA MỞ** |
+| — | Báo cáo `V1844_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.43 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
