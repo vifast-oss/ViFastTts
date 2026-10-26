@@ -15,6 +15,8 @@ from vifasttts.models.factory import ARCH_V2, build_model
 from vifasttts.models.vifasttts import ViFastTtsModel
 from vifasttts.runtime.onnx_engine import OnnxAcousticModel, read_metadata
 
+pytestmark = pytest.mark.skip(reason="V1844.A1 đóng băng ONNX")
+
 BASE_MODEL = {
     "component_dim": 8, "hidden_size": 16, "encoder_layers": 1, "decoder_layers": 1,
     "attention_heads": 2, "ffn_size": 32, "conv_kernel_size": 3, "dropout": 0.0,

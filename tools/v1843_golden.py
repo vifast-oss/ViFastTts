@@ -387,7 +387,7 @@ def build_full() -> dict:
     return baseline
 
 
-def check_fast() -> dict:
+def check_fast(skip_onnx: bool = False) -> dict:
     baseline = json.loads(FAST_JSON.read_text(encoding="utf-8"))
     if baseline["environment"] != environment():
         return {"ok": False, "reason": "môi trường đổi, cập nhật baseline kèm mã quyết định",
@@ -398,7 +398,8 @@ def check_fast() -> dict:
     tmp.mkdir(exist_ok=True)
     details = []
     started = time.perf_counter()
-    for runtime in ("pytorch", "onnx"):
+    runtimes = ("pytorch",) if skip_onnx else ("pytorch", "onnx")
+    for runtime in runtimes:
         result = emit_once(runtime, FAST_TEXTS, tmp)
         expected = baseline["runtimes"][runtime]
         for index, row in enumerate(result["rows"]):
@@ -418,9 +419,12 @@ def check_fast() -> dict:
                             "mel_ok": bool(mel_ok), "wav_ok": bool(wav_ok),
                             "bit_exact": expected["bit_exact"]})
     elapsed = time.perf_counter() - started
-    return {"ok": all(item["mel_ok"] and item["wav_ok"] for item in details),
-            "elapsed_seconds": round(elapsed, 2), "details": details,
-            "under_30s": elapsed < 30.0}
+    result = {"ok": all(item["mel_ok"] and item["wav_ok"] for item in details),
+              "elapsed_seconds": round(elapsed, 2), "details": details,
+              "under_30s": elapsed < 30.0}
+    if skip_onnx:
+        result["onnx_skipped"] = "V1844.A1 đóng băng ONNX"
+    return result
 
 
 def emit_once_cli(runtime: str, out_json: Path) -> None:
@@ -440,6 +444,8 @@ def main() -> None:
     group.add_argument("--check-fast", action="store_true")
     group.add_argument("--build-full", action="store_true")
     group.add_argument("--emit-once", choices=("pytorch", "onnx"))
+    parser.add_argument("--skip-onnx", action="store_true",
+                        help="V1844.A1: bỏ phần ONNX trong fast test")
     parser.add_argument("out_json", nargs="?")
     args = parser.parse_args()
     if args.determinism:
@@ -450,7 +456,7 @@ def main() -> None:
         print(json.dumps({"built": str(FAST_JSON)}, ensure_ascii=False, indent=1))
         build_fast()
     elif args.check_fast:
-        print(json.dumps(check_fast(), ensure_ascii=False, indent=1))
+        print(json.dumps(check_fast(skip_onnx=args.skip_onnx), ensure_ascii=False, indent=1))
     elif args.build_full:
         print(json.dumps({"built": str(FULL_JSON)}, ensure_ascii=False, indent=1))
         build_full()

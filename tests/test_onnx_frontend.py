@@ -9,6 +9,8 @@ from vifasttts.frontend.pipeline import parse_text
 from vifasttts.frontend.vocab import ComponentVocabs
 from vifasttts.runtime.onnx_engine import OnnxAcousticModel
 
+pytestmark = pytest.mark.skip(reason="V1844.A1 đóng băng ONNX")
+
 
 def _features(items) -> np.ndarray:
     vocabs = ComponentVocabs.default()

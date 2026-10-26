@@ -5,8 +5,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
+
+pytestmark = pytest.mark.skip(reason="V1844.A1 đóng băng ONNX")
 
 from v1840_onnx_parity import (
     CRITERIA,

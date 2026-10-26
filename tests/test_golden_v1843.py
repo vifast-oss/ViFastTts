@@ -32,11 +32,13 @@ pytestmark = pytest.mark.skipif(
 
 def test_golden_fast_outputs() -> None:
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "tools/v1843_golden.py"), "--check-fast"],
+        [sys.executable, str(ROOT / "tools/v1843_golden.py"), "--check-fast", "--skip-onnx"],
         cwd=ROOT, capture_output=True, text=True, timeout=120, check=False,
     )
     assert proc.returncode == 0, proc.stderr[-2000:]
     result = json.loads(proc.stdout)
     assert result["ok"], json.dumps(result, ensure_ascii=False, indent=1)
     assert result["under_30s"], f"fast test quá 30 s: {result['elapsed_seconds']} s"
+    assert result.get("onnx_skipped") == "V1844.A1 đóng băng ONNX"
+    assert all(item["runtime"] == "pytorch" for item in result["details"])
     assert all(item["mel_ok"] and item["wav_ok"] for item in result["details"])

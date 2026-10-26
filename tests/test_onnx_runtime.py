@@ -23,6 +23,8 @@ from vifasttts.models.vifasttts import ViFastTtsModel
 from vifasttts.runtime.onnx_engine import OnnxAcousticModel, read_metadata, synthesize_onnx
 from vifasttts.train import train_reference, train_vocoder_reference
 
+pytestmark = pytest.mark.skip(reason="V1844.A1 đóng băng ONNX")
+
 runner = CliRunner()
 
 TINY_CONFIG = {

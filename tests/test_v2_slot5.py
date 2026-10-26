@@ -168,6 +168,7 @@ def _export_wrapper(model: ViFastTtsModelV2) -> torch.nn.Module:
     return _Wrapper().eval()
 
 
+@pytest.mark.skip(reason="V1844.A1 đóng băng ONNX")
 def test_v2_onnx_export_va_parity(tmp_path):
     onnxruntime = pytest.importorskip("onnxruntime")
     pytest.importorskip("onnx")
