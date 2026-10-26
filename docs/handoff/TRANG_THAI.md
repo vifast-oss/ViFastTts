@@ -2,16 +2,19 @@
 
 > **Cho người không kỹ thuật (5 dòng):**
 > 1. Sản phẩm đang chạy bằng **PyTorch** với model **P2**; bản đóng gói ONNX **chưa bật**.
-> 2. Chất lượng giọng được **đóng băng** trong lúc đo xem "rè nền" đến từ dữ liệu, vocoder hay acoustic.
+> 2. Chất lượng giọng **đóng băng**; hướng "rè do acoustic dải thấp" đã đóng, chỉ sửa regression.
 > 3. Chưa train thêm; mọi thay đổi production phải qua cổng đo đã đăng ký trước.
-> 4. ONNX đã **đóng băng**; nhánh chất lượng đang tìm đúng nguồn rè trước khi train.
+> 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.46 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **V18.46 (26/10/2026) — DỪNG — ĐÓNG BĂNG CHẤT LƯỢNG ACOUSTIC.** Không train, không đổi production.
 > **Tệp đặc tả**: `V1846_agent0.md` + `DECISIONS.md` mục V18.46. **Commit gốc**: `2306062`.
-> **Luật mới**: commit đăng ký trước **không amend/force-push**; sửa phải bằng commit "sửa đăng ký"
-> trước commit kết quả đầu tiên. `C_lo` **không đóng**, đang chờ xác nhận trên 40 câu dài.
-> **Cổng train**: (1) A2 dài ĐẠT; (2) A4 có cơ chế chính; (3) duyệt ngân sách.
+> **Code cuối trước hồ sơ**: `90ceda1`. Báo cáo: `V1846_agent2.md`.
+> - **A2 ĐÓNG `C_lo`**: Δac **0,149456 < 0,15** (thiếu **0,000544**); recovery 0,943, CI [0,7502; 1,1083].
+> - **A4**: mượt tần số chính (R_f −1,969; R_m −0,535) — chỉ thông tin vì A2 đã đóng.
+> - **A3**: ρ độ dài 0,0788, CI [−0,1135; 0,2676] — không liên quan.
+> - **A5**: chunk − TF = +0,0328, CI [−0,0260; 0,0919] — không đủ bằng chứng chunk gây rè.
+> - **A6**: A2 trượt + A5 không đạt ⇒ **đóng băng chất lượng acoustic**, chỉ sửa regression, giữ P2.
 >
 > **V18.45 (26/10/2026, lịch sử)** — A4 Δac 0,057; A5 không over-smoothing; A6 không cao độ; cổng train đóng.
 > Báo cáo: `V1845_agent2.md`.
@@ -46,10 +49,11 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.46** · **Tệp đặc tả**: `V1846_agent0.md` + `DECISIONS.md` mục V18.46 ·
-**Commit gốc của vòng**: `2306062` · **Trạng thái**: **ĐANG LÀM** — không train, giữ P2, ONNX đóng băng.
+**Commit gốc của vòng**: `2306062` · **Code cuối trước hồ sơ**: `90ceda1` ·
+**Trạng thái**: **DỪNG — ĐÓNG BĂNG CHẤT LƯỢNG ACOUSTIC** — giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A2 40 câu dài → A4 cửa sổ tần số + 120 câu → A3 độ dài → A5 đường chunk → report.
+**Việc tiếp**: chỉ sửa regression; không train; `C_lo` đã đóng; muốn mở lại cần cơ chế mới + đăng ký trước + ngân sách.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `2306062..<commit cuối>`,
 > đối chiếu `V1846_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -88,15 +92,15 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.46 — đang thực thi
+### 4.1 V18.46 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1846.A2 | Xác nhận `C_lo` trên 40 câu dài (đã chốt danh sách) | ⏳ |
-| V1846.A4 | Cửa sổ tần số `C_lo_f` (commit trước) + `C_lo_m` trên 120 câu | ⏳ |
-| V1846.A3 | Spearman độ dài câu | ⏳ |
-| V1846.A5 | C vs P (chunk mode) trên 40 câu dài | ⏳ |
-| V1846.A6 | Cổng train | ⛔ chưa mở |
-| — | Báo cáo `V1846_agent2.md` | ⏳ |
+| V1846.A2 | `C_lo` trên 40 câu dài | ❌ **ĐÓNG** — Δac 0,149456 < 0,15 (thiếu 0,000544); `7f181fa` |
+| V1846.A4 | Cơ chế dải thấp 120 câu | ✅ **mượt tần số** — R_f −1,969; R_m −0,535; chỉ thông tin; `75399ea`, `67e2401` |
+| V1846.A3 | Spearman độ dài | ❌ **không liên quan** — ρ 0,0788; `1b2462f` |
+| V1846.A5 | C vs P chunk | ⚪ **không đủ bằng chứng** — +0,0328; CI [−0,0260; 0,0919]; `90ceda1` |
+| V1846.A6 | Cổng train | ⛔ **ĐÓNG BĂNG CHẤT LƯỢNG ACOUSTIC** |
+| — | Báo cáo `V1846_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.45 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
