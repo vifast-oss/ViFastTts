@@ -33,3 +33,9 @@
 
 Toàn bộ release audio test cũ (`demo-audio-*`, `demo-giong-clone-*`,
 `n0-ngochuyen-small-research-v1`). `gh release list` hiện chỉ còn 2 tag trên.
+
+## Hugging Face
+
+- https://huggingface.co/dvchd/vifasttts-ngochuyen-small
+- License metadata `cc-by-nc-4.0`; có checkpoint, config/stats, Vocos, ONNX, demo, model card.
+- Commit upload: `6cfd13e16be700aaec68175086ee44be929bc01b`.
