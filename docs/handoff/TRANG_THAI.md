@@ -7,17 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.50 (27/10/2026) — DỪNG — PHIÊN KHÔNG HỢP LỆ.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + V1850b/c. **Commit gốc**: `3dc3ae2`.
-> **Code cuối**: `8ba7b71`. Báo cáo: `V1850_agent2.md`.
-> - **Validity TRƯỢT**: cấy click **0/3** (cần ≥2/3); lặp 2/3; đủ 86 mục.
-> - **Mismatch**: **A 18/20 câu**, **B 20/20 câu** bị tick "không khớp" — audio gốc/GT đọc dư từ cuối;
->   P2/PILOT chỉ 1 mỗi bên. Chỉ 2/20 câu dùng được ⇒ **không kết luận A3/A4**.
-> - **A4 không chấm**; bảng đặc trưng 765 âm tiết đã dựng sẵn.
-> - **V18.51** (ASR audit) đã đăng ký, **chưa chạy**; đây là ưu tiên trước khi làm lại trang.
+> **V18.51 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1851_agent0.md` + `DECISIONS.md` mục V18.51. **Commit gốc**: `0fa26e2`.
+> Audit nhãn/segment bằng ASR (faster-whisper small 1.2.1, int8) trên 20 câu V18.50 → toàn bộ data;
+> A3 truy nguyên code; A5 sửa thử 40 clip với đệm **0,05 s**, trang tai 3 nút.
+> Ghi nhận mismatch V18.50: A 18/20, B 20/20, P2 1/21, PILOT 1/21 (một người nghe).
 >
-> **V18.49 (26/10/2026, lịch sử)** — A2 tái lập +0,1121; A3 tai không phân biệt; giữ P2.
-> Báo cáo: `V1849_agent2.md`.
+> **V18.50 (27/10/2026, lịch sử)** — phiên không hợp lệ; A/B mismatch 18/20 + 20/20; không kết luận.
+> Báo cáo: `V1850_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -48,14 +45,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.50** · **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + V1850b/c ·
-**Commit gốc của vòng**: `3dc3ae2` · **Trạng thái**: **DỪNG — PHIÊN KHÔNG HỢP LỆ** — không train, không đổi production.
+**Vòng hiện hành**: **V18.51** · **Tệp đặc tả**: `V1851_agent0.md` + `DECISIONS.md` mục V18.51 ·
+**Commit gốc của vòng**: `0fa26e2` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: ưu tiên V18.51 audit nhãn (A/B mismatch 18/20 + 20/20); làm lại trang sau khi sửa nhãn.
+**Việc tiếp**: A1/A2 20 câu → A3 code → A4 toàn bộ/mẫu → A5 sửa 40 clip + trang tai.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `3dc3ae2..<commit cuối>`,
-> đối chiếu `V1850_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `0fa26e2..<commit cuối>`,
+> đối chiếu `V1851_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -91,7 +88,17 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.50 — kết quả
+### 4.1 V18.51 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1851.A1 | Kiểm click 3 mục cấy bằng ASR timestamp | ⏳ |
+| V1851.A2 | ASR 20 câu V18.50, dư đầu/giữa/cuối | ⏳ |
+| V1851.A3 | Truy nguyên code segment | ⏳ |
+| V1851.A4 | Quét train + held-out (mẫu nếu >12h) | ⏳ |
+| V1851.A5 | Sửa 40 clip + trang tai 3 nút | ⏳ |
+| — | Báo cáo `V1851_agent2.md` | ⏳ |
+
+### 4.2 V18.50 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1850.A2 | Trang 86 mục + mismatch | ❌ **PHIÊN KHÔNG HỢP LỆ** — cấy 0/3; A 18/20 + B 20/20 mismatch |

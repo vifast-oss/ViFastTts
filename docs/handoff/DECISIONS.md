@@ -560,3 +560,58 @@ refine mel 2 bước) chỉ A0 chốt sau A3/A4.
 | V1851.A3 | Ước lượng tỉ lệ nhãn sai toàn data = (số clip CER>0,3) × precision; báo theo video nguồn. | ≥2% clip hoặc ≥2% giờ ⇒ mở pilot làm sạch (A4). <2% ⇒ ghi hồ sơ, đóng giả thuyết cho rè nền, vẫn loại clip đó khỏi held-out. |
 | V1851.A4 | (Chỉ khi A3 ≥2% + duyệt) PILOT = P2 EMA + 2.000 bước trên data loại clip nghi sai; CONTROL = data đầy đủ; cùng seed/cấu hình V1848. | Cổng chính **chunk**: ΔBAK cận dưới CI95 >0 **và** ΔCR >0; rồi nghe mù đánh dấu âm tiết. Kỳ vọng ước lượng trước khi chạy. |
 | V1851.A5 | Tính lại Δac V18.43/45/46 sau khi loại câu held-out nghi sai nhãn. | Chỉ giải thích; **không** mở lại `C_lo` hay cổng cũ. |
+
+## V18.51 — Agent 0 (27/10/2026, thay bản dự kiến trong V1850c)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.51. Không train, không đổi production.
+> Bản V18.51 dự kiến trong V1850c bị **thay thế toàn bộ**; ngưỡng 2% cũ không còn phù hợp.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1851.A0 | Chấp nhận V18.50: phiên **KHÔNG HỢP LỆ**, A3/A4 không kết luận. Duyệt TỰ QUYẾT. Ghi nhận mismatch A 18/20, B 20/20, P2 1/21, PILOT 1/21 (một người nghe, chưa xác nhận khách quan). | Không |
+| V1851.A1 | Kiểm vị trí click 3 mục cấy: so âm tiết người dùng bấm với âm tiết cấy; xác định lại vị trí click **theo thời gian** và ánh xạ sang âm tiết bằng ASR timestamp, không dùng thời lượng gốc. | Báo lệch bao nhiêu âm tiết; key mới có khớp ±1 không. **Không đổi verdict V18.50.** |
+| V1851.A2 | Xác nhận khách quan trên 20 câu V18.50: ASR có timestamp từng từ (faster-whisper small 1.2.1, `small`, int8, ghi rõ) trên wav gốc. Căn chữ ASR vs nhãn; đếm âm tiết dư đầu/giữa/cuối. Phần dư cuối: so 15 âm tiết đầu của segment kế tiếp cùng parent/video (CER âm tiết). | **LỆCH MỐC CUỐI** khi ≥70% câu mismatch có dư cuối VÀ dư khớp đầu segment kế với CER ≤0,3. Báo tương quan tai–ASR. ASR và tai bất đồng >30% ⇒ báo, chưa quét toàn bộ. |
+| V1851.A3 | Truy nguyên code tạo segment: mốc thời gian, tách sNN, padding/trim đầu/cuối, đơn vị, làm tròn frame/sample. Báo file/dòng và lệch là **offset cố định** hay **drift**. | Có cơ chế + tái hiện trên ≥3 câu A2. Không tìm ra ⇒ báo, tiếp A4. |
+| V1851.A4 | Quét toàn bộ train + held-out bằng ASR như A2: dư đầu/cuối, thiếu, CER; thống kê video/sNN/độ dài. | **P0** khi ≥10% clip có dư cuối ≥2 âm tiết ⇒ **chặn mọi vòng chất lượng acoustic** tới khi sửa. Ước tính >12h ⇒ mẫu phân tầng ≥15%, báo. |
+| V1851.A5 | Đề xuất sửa (chỉ mẫu, không ghi đè gốc). Ưu tiên sửa nguồn A3; nếu không: cắt mốc cuối theo ASR timestamp âm tiết cuối có trong nhãn + **đệm lặng 0,05 s** (chốt trước), áp lên 40 clip ngẫu nhiên chưa dùng. | Tự động: CER ASR vs nhãn ≤0,1 ở ≥90% clip, không cụt âm cuối. Tai: 40 clip, 3 nút khớp/dư/cụt; ĐẠT khi ≥36/40 "khớp" và ≤2 clip "cụt". Trượt ⇒ không áp toàn bộ, báo A0. |
+| V1851.A6 | Ghi hồ sơ: số V18.43–18.49 dùng mel/thời lượng gốc trên held-out được đánh dấu **"có thể nhiễm lệch mốc cắt"**; so sánh chunk ít bị hơn. **Không mở lại cổng cũ.** Dòng rè cục bộ tạm dừng, chỉ làm lại trên held-out đã sửa. | Không |
+| V1851.A7 | **Không train** trong vòng này. Nếu A4 xác nhận P0 và A5 ĐẠT, V18.52 mới đề xuất áp sửa toàn bộ, dựng lại held-out, tính lại alignment, rồi train (ngân sách duyệt riêng). | Theo A4/A5 |
+
+### V1851.A5 — 40 clip ngẫu nhiên (seed 1851), chưa dùng
+
+Chọn 40 segment holdout chưa dùng V18.43–V18.50, ≥3 s, ≥12 âm tiết; 8 video.
+
+| # | id | # | id |
+|---:|---|---:|---|
+| 1 | `2b65WyiFC9k_0009__s00` | 21 | `EM_ObHWvd94_0127__s00` |
+| 2 | `2b65WyiFC9k_0031__s00` | 22 | `EM_ObHWvd94_0241__s00` |
+| 3 | `2b65WyiFC9k_0036__s01` | 23 | `EM_ObHWvd94_0330__s01` |
+| 4 | `2b65WyiFC9k_0065__s02` | 24 | `EM_ObHWvd94_0352__s01` |
+| 5 | `2b65WyiFC9k_0140__s01` | 25 | `EUNlJU1BuzE_0003__s01` |
+| 6 | `2b65WyiFC9k_0155__s01` | 26 | `EUNlJU1BuzE_0029__s00` |
+| 7 | `2b65WyiFC9k_0162__s00` | 27 | `EUNlJU1BuzE_0268__s02` |
+| 8 | `2b65WyiFC9k_0222__s01` | 28 | `EUNlJU1BuzE_0294__s01` |
+| 9 | `4ITcvEa_Acc_0033__s01` | 29 | `o8RjAmBtyZo_0084__s03` |
+| 10 | `4ITcvEa_Acc_0042__s00` | 30 | `vEtfty4Cc6Y_0018__s00` |
+| 11 | `4ITcvEa_Acc_0062__s03` | 31 | `vEtfty4Cc6Y_0057__s02` |
+| 12 | `4ITcvEa_Acc_0098__s01` | 32 | `vEtfty4Cc6Y_0122__s04` |
+| 13 | `4ITcvEa_Acc_0168__s02` | 33 | `z0zSgR_oie4_0015__s02` |
+| 14 | `BD83pScFukQ_0013__s02` | 34 | `z0zSgR_oie4_0037__s00` |
+| 15 | `BD83pScFukQ_0085__s02` | 35 | `z0zSgR_oie4_0059__s00` |
+| 16 | `BD83pScFukQ_0181__s01` | 36 | `z0zSgR_oie4_0135__s04` |
+| 17 | `BD83pScFukQ_0204__s02` | 37 | `z0zSgR_oie4_0143__s03` |
+| 18 | `BD83pScFukQ_0382__s03` | 38 | `z0zSgR_oie4_0166__s01` |
+| 19 | `EM_ObHWvd94_0032__s02` | 39 | `z0zSgR_oie4_0167__s02` |
+| 20 | `EM_ObHWvd94_0102__s01` | 40 | `z0zSgR_oie4_0224__s01` |
+
+### V1851.B — Việc giao Agent 2
+1. Commit V1851.* + 40 clip + đệm 0,05 s (commit mới).
+2. A1 + A2 trên 20 câu V18.50 (chạy trước).
+3. A3 đọc code song song.
+4. A2 không dừng: A4 (ước tính thời gian trước; >12h thì mẫu ≥15%).
+5. A5: sửa 40 clip, chấm tự động, trang 3 nút, gửi link.
+6. Report + `git log --oneline`; phần tai A5 có thể báo sau.
+
+### V1851.C — Không làm
+Không train/đổi production/ghi đè dữ liệu gốc; không dùng CER/ASR đánh giá model; không mở C_lo/L_con;
+không UTMOS; không ONNX.
