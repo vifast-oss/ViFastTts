@@ -7,11 +7,16 @@
 > 4. Nếu ONNX không nhanh/nhẹ hơn đáng kể, nhánh ONNX sẽ đóng; nếu đạt, có thể bật ở V18.45.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.43 (26/10/2026) — ĐANG LÀM.** Vòng đo, **không train, không đổi production**.
-> Thực thi V1842.A2/A3/A4/A6/A7 + V1842b.1–b.4 theo thứ tự: A7 → A3 → A6 → A1c → A2 → A4 → report.
-> Tệp đặc tả: `V1842_agent0.md`. Commit gốc của vòng: `7cd61ef`.
-> Commit code cuối: **chưa có** (sẽ ghi khi kết thúc vòng; HEAD sẽ là commit hồ sơ theo V11S.A3).
-> Nguồn trạng thái duy nhất: tệp này. `DECISIONS.md` chỉ ghi quyết định; `EXCEPTIONS.md` chỉ ghi ngoại lệ.
+> **V18.43 (26/10/2026) — DỪNG, CHỜ ĐỌC.** Vòng đo, **không train, không đổi production**.
+> **Code cuối trước hồ sơ**: `1be3cf6`. Báo cáo: `V1843_agent2.md` (commit hồ sơ này).
+> - **A3 TRƯỢT**: ONNX chậm hơn short **1,2188×** (>1,2), cold **0,632** (>0,5), dung lượng **0,318** (>0,3);
+>   chỉ peak RSS **0,456** đạt ⇒ theo V1842.A3 **đề nghị đóng nhánh ONNX**, trừ khi có nhu cầu không PyTorch.
+> - **A2 phép đo hỏng**: đối chứng âm seed UTMOS lệch **+0,0729** CI [0,0177, 0,1274]; không kết luận,
+>   **hợp đồng giữ chunk**.
+> - **A4 nguồn rè = acoustic**: Δac **0,2481**, Δvoc **−0,0214**; C' g1_1k không tốt hơn C.
+> - **A6**: PyTorch/ONNX CPU **bit-exact**; fast 3 câu 5,1 s; full 20 câu có BAK/UTMOS.
+> - **A1c**: parity đầy đủ **12/12** với `ONNX-EXC-001`, 0 lỗi ngoài ngoại lệ.
+> - Test: **2.570 passed**, ruff sạch.
 >
 > **V18.41 (23/10/2026, lịch sử)** — frontend OOV: ONNX cũ gọi `features_from_text` **không** `resolve_oov` ⇒ `John`/`XYZ` thành fallback trong khi PyTorch production đọc được. Đã sửa mặc định `resolve_oov=True` trong `runtime/onnx_engine.py`, thêm `tests/test_onnx_frontend.py` (9 test); valid **8/8 equal**, smoke **8/8 finite**, `...` báo lỗi đúng. Kết quả v18.40 giữ: acoustic 36/36, E2E 12/12, vocoder 11/12 với **ngoại lệ spectrum A0 chấp nhận có phạm vi** (`ONNX-EXC-001`). **Sẵn sàng chuyển ONNX trong phạm vi chunk mode đã kiểm tra**, config ứng viên `configs/onnx_candidate_v1841.json`; **chưa tự chuyển production**. Chi tiết: `V1841_agent2.md`, `artifacts/bench/v1841_frontend_oov/`.
 > **V18.40 (23/10/2026)** — parity ONNX v1837: **acoustic 36/36**, frontend **12/12**, end-to-end chunk **12/12** (max 2,14e-04; RMSE 7,74e-06; RMS ratio ~1; clipping 0; cả hai runtime tất định). **Vocoder 11/12** — một input (`2b65WyiFC9k_0030__s03`) có spectrum max **0,02336** vượt tiêu chí tuyệt đối **0,02** tại bin (20,66); mean ~1e-05, waveform max 3,23e-04 và end-to-end vẫn đạt. Provenance/mel hash khớp; acoustic 180/181 exact, vocoder 63/63 exact. **Chưa tuyên bố sẵn sàng chuyển ONNX; giữ P2 + PyTorch.** Không sửa runtime/tiêu chí sau kết quả. Chi tiết: `V1840_agent2.md`, `artifacts/bench/v1840_onnx_parity/`.
@@ -35,13 +40,15 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.43** · **Tệp đặc tả**: `V1842_agent0.md` (V18.42 + V18.42b) ·
-**Commit gốc của vòng**: `7cd61ef` · **Trạng thái**: **ĐANG LÀM** — không training, giữ P2, chưa chuyển ONNX.
+**Commit gốc của vòng**: `7cd61ef` · **Code cuối trước hồ sơ**: `1be3cf6` ·
+**Trạng thái**: **DỪNG, CHỜ ĐỌC** — không training, giữ P2, chưa chuyển ONNX.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: theo thứ tự V18.43 ở §4.1; báo cáo cuối vòng là `V1843_agent2.md`.
+**Việc tiếp**: xem `V1843_agent2.md` §8 — A0 quyết đóng nhánh ONNX (A3 trượt); A2 chỉ làm lại nếu cần;
+A4 chỉ ra acoustic, chờ duyệt ngân sách trước V18.45.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `7cd61ef..<commit cuối>`,
-> đối chiếu `V1837_agent2.md` §2–§9. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> đối chiếu `V1843_agent2.md` §2–§9. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -77,16 +84,16 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.43 — đang thực thi
+### 4.1 V18.43 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1842.A7 | hồ sơ: TRANG_THAI + DECISIONS + EXCEPTIONS + archive + đóng mã V11 + phân loại 19 khoảng trống | 🔄 |
-| V1842.A3 | benchmark ONNX vs PyTorch (chạy một mình, máy yên tĩnh) | ⏳ |
-| V1842.A6 | bit-exact → fast test (3 câu) + full baseline (20 câu, `slow`) | ⏳ |
-| V1842.A1c | test parity đọc `EXCEPTIONS.md`; chứng minh input khác vượt 0,02 vẫn FAIL | ⏳ |
-| V1842.A2 | đo chunk vs sentence + đối chứng âm (30 câu, 5 seed) | ⏳ |
-| V1842.A4 | chẩn đoán 3 tầng + C' (40 câu; 2 kiểm tra đầu vào trước) | ⏳ |
-| — | báo cáo `V1843_agent2.md` + cập nhật TRANG_THAI | ⏳ |
+| V1842.A7 | hồ sơ: TRANG_THAI + DECISIONS + EXCEPTIONS + archive + đóng mã V11 + phân loại 19 khoảng trống | ✅ `208b0c2` |
+| V1842.A3 | benchmark ONNX vs PyTorch | ❌ **TRƯỢT** — short 1,2188×; cold 0,632; size 0,318; RSS 0,456; `2e28c55` |
+| V1842.A6 | bit-exact → fast 3 câu (5,1 s) + full 20 câu (BAK/UTMOS) | ✅ `13c3ef6` |
+| V1842.A1c | parity đọc `EXCEPTIONS.md`; 12/12 với ONNX-EXC-001; input khác vẫn FAIL | ✅ `72dc937`, `1be3cf6` |
+| V1842.A2 | chunk vs sentence + đối chứng âm | ⛔ **PHÉP ĐO HỎNG** — seed UTMOS lệch 0,0729; giữ chunk; `49bb2e7` |
+| V1842.A4 | chẩn đoán 3 tầng + C' (40 câu) | ✅ **acoustic** — Δac 0,2481; Δvoc −0,0214; `f78e042` |
+| — | báo cáo `V1843_agent2.md` + cập nhật TRANG_THAI | ✅ commit hồ sơ |
 
 ### 4.2 Mã V11 còn treo — đã đóng (V1842b.1)
 | Mã | Kết luận | Lý do |
@@ -110,7 +117,7 @@
 | # | Khoảng trống | Nhãn | Xử lý |
 |---|---|---|---|
 | 1 | C5/V18 chưa có định nghĩa + 30 câu người thật | P1 | backlog; A5 là bước gần nhất |
-| 2 | RAM inference, cold start, latency first-chunk | **P0** | **A3 đo trong V18.43** |
+| 2 | RAM inference, cold start, latency first-chunk | **P0** | **đã lấp** — A3: cold 0,632; RSS 0,456; p95 short 1,2188× |
 | 3 | Ma trận 2×2 EMA/live cho P2/G1 | P1 | backlog; ghi nhận confound |
 | 4 | Free-run có dấu câu | P1 | eval text giữ dấu câu từ v18.37; chưa chạy lại toàn bộ |
 | 5 | Tỉ lệ crop D chứa padding | P1 | đã sửa `sample_crops(lengths=...)`; ảnh hưởng chưa đo |
@@ -129,7 +136,7 @@
 | 18 | Không có log/commit lần chạy v1831 | P1 | lịch sử |
 | 19 | P2/G1/G2 không log đủ thành phần loss | P1 | muốn có phải sửa logger; không làm khi đóng băng |
 
-- **P0 mở duy nhất: #2** — đang được A3 lấp trong vòng này. #8/#9 đã lấp. Không có P0 nào khác.
+- **Không còn P0 mở**: #2 đã lấp bằng A3 (kết quả TRƯỢT); #8/#9 đã lấp trước đó.
 
 
 ## 4b. A2 đang chạy (số kiểm đầu)
