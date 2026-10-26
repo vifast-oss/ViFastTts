@@ -8,9 +8,10 @@
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
 > **V18.50 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50. **Commit gốc**: `3dc3ae2`.
-> **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang đánh dấu 66 mục
-> (20 câu × P2/PILOT/B + 3 lặp + 3 cấy click), chọn âm tiết; A3 tách nguồn, A4 đặc trưng.
+> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + **V1850b** (sửa đăng ký trước khi nghe).
+> **Commit gốc**: `3dc3ae2`.
+> **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang đánh dấu **86 mục**
+> (20 câu × A/B/P2/PILOT + 3 lặp + 3 cấy click), chọn âm tiết; A3 tách nguồn (A/B/P2/PILOT), A4 đặc trưng + creak.
 > Không train; chưa đổi production.
 >
 > **V18.49 (26/10/2026, lịch sử)** — A2 tái lập +0,1121; A3 tai không phân biệt; giữ P2.
@@ -91,9 +92,9 @@
 ### 4.1 V18.50 — đang thực thi
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1850.A2 | Trang đánh dấu 66 mục, 20 câu | ⏳ |
-| V1850.A3 | Tỉ lệ âm tiết bị bấm theo nguồn | ⏳ |
-| V1850.A4 | Bảng đặc trưng âm tiết P2 + AUC | ⏳ |
+| V1850.A2 | Trang đánh dấu 86 mục, 20 câu (A/B/P2/PILOT) | ⏳ |
+| V1850.A3 | Tỉ lệ âm tiết bị bấm theo A/B/P2/PILOT | ⏳ |
+| V1850.A4 | Đặc trưng + creak A/B/P2, AUC | ⏳ |
 | V1850.A5 | Hướng xử lý (sau A3/A4) | ⏳ |
 | — | Báo cáo `V1850_agent2.md` | ⏳ |
 

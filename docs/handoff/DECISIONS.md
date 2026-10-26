@@ -530,3 +530,17 @@ Căn chỉnh âm tiết trên đường chunk dựa vào thời lượng dự đ
 
 ### V1850.E — Giả định
 Còn ≥20 câu held-out dài chưa dùng (thiếu thì tối thiểu 12, báo). Thời gian nghe 25–35 phút cho 66 mục.
+
+## V18.50b — Agent 0: sửa đăng ký V18.50 (trước khi có dữ liệu nghe)
+
+> **Commit mới "sửa đăng ký V1850", không amend**, trước khi người dùng nghe và trước mọi kết quả.
+> Phạm vi không đổi: không train, không đổi production, không ONNX, không UTMOS.
+
+| Mã | Sửa đổi | Lý do |
+|---|---|---|
+| V1850b.1 | Trang thêm phiên bản **A = wav gốc** cùng 20 câu, −16 LUFS. Tổng **80 mục chính** (A, B, P2, PILOT) + 6 đối chứng = **86 mục**; xáo lại seed 1850. | Phải biết giọng thật có rè/creak ở âm tiết đó không; không có A thì không tách "đặc điểm giọng" với "lỗi vocoder". |
+| V1850b.2 | Luật nguồn A3 thay bản cũ: `r(X)` cho X∈{A,B,P2,PILOT}, bootstrap câu 10.000. **Đặc điểm giọng**: `r(A) ≥0,7×r(P2)` (báo, không sửa). **Vocoder**: `r(A) ≤0,5×r(B)` **và** `r(B) ≥0,7×r(P2)`. **Acoustic**: `r(B) ≤0,5×r(P2)` **và** cận dưới CI95 `r(P2)−r(B) >0`. Không nhánh nào: "hỗn hợp", báo đầy đủ. `r(PILOT)−r(P2)` chỉ tham khảo. | Tách đặc điểm giọng thật khỏi lỗi vocoder/acoustic. |
+| V1850b.3 | A4 thêm **điểm creak theo âm tiết** (dùng `tools/eval_creak.py`, ghi phiên bản) trên **A, B, P2**; tách riêng thanh **NGÃ** và **NẶNG** khỏi các thanh khác; so sánh âm tiết bị bấm ở P2 có creak cao hơn chính âm tiết đó ở A không (hiệu P2−A theo âm tiết, kèm CI). | Kiểm creak — đúng hiện tượng người dùng nghe — không chỉ BAK/flatness. |
+
+**Không đổi**: không train, không đổi production, không ONNX, không UTMOS. Hướng xử lý (GTA, vocoder source-filter,
+refine mel 2 bước) chỉ A0 chốt sau A3/A4.
