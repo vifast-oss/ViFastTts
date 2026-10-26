@@ -47,7 +47,7 @@ ACOUSTIC = "artifacts/onnx/v1837/p2ema_acoustic.onnx"
 VOCODER = "artifacts/onnx/v1837/vocos_pretrained_vocoder.onnx"
 OLD_ACOUSTIC = "artifacts/onnx/v32_adv_p2_2k.onnx"
 OLD_VOCODER = "artifacts/onnx/v32_adv_p2_2k_vocoder.onnx"
-OUT = Path("artifacts/bench/v1840_onnx_parity")
+OUT = Path(os.environ.get("V1840_OUT", "artifacts/bench/v1840_onnx_parity"))
 EXCEPTIONS = Path("docs/handoff/EXCEPTIONS.md")
 
 # Khai báo TRƯỚC khi chạy. Đơn vị: mel z-score / log-F0 / waveform [-1,1].
