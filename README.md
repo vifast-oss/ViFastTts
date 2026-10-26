@@ -1,11 +1,40 @@
 # ViFastTts — Text-to-Speech tiếng Việt
 
-Toolkit nghiên cứu và triển khai **TTS tiếng Việt một giọng**: hiểu văn bản tiếng Việt,
-sinh giọng nói, huấn luyện và xuất ONNX để chạy nhanh trên CPU/GPU. Mỗi checkpoint là
-một người nói, một phương ngữ — không cần `speaker_id`, `dialect_id` hay audio mẫu.
+**TTS tiếng Việt mã nguồn mở: nhỏ, nhanh, tự train được.** Toolkit nghiên cứu + triển khai
+TTS **một giọng**, hiểu văn bản tiếng Việt, sinh giọng 24 kHz và xuất ONNX chạy CPU.
+Mỗi checkpoint là một người nói, một phương ngữ — không cần `speaker_id`, `dialect_id`
+hay audio mẫu.
 
-> **Đọc nhanh:** Muốn biết toàn cảnh trong 1 trang → mục 2–3 bên dưới.
-> Muốn hiểu sâu từng bước → `docs/MODEL_FLOW.md` (model) và `docs/SYLLABLE_GUIDE.md` (âm tiết).
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-0f766e)](https://www.python.org/)
+[![ONNX](https://img.shields.io/badge/runtime-ONNX%20CPU-0f766e)](docs/DEPLOYMENT.md)
+[![Code MIT](https://img.shields.io/badge/code-MIT-18212b)](LICENSE)
+[![Model research](https://img.shields.io/badge/model-research%20%2F%20non--commercial-b45309)](docs/NGOC_HUYEN.md)
+
+## 0. Chạy demo Ngọc Huyền trong 2 phút
+
+```bash
+git clone https://github.com/dvchd/ViFastTts.git
+cd ViFastTts
+./scripts/run_ngochuyen_demo.sh
+# mở http://127.0.0.1:8090
+```
+
+Script tự tải ONNX FP32 (có kiểm sha256), tạo `.venv-demo`, cài `onnxruntime + fastapi + uvicorn`
+và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
+
+- **Demo online:** https://vifasttts.hoctuthien.com/
+- **Model/card:** `docs/NGOC_HUYEN.md`
+- **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
+  [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1)
+
+> **Giấy phép model mẫu:** dataset `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0**.
+> Model Ngọc Huyền chỉ dùng **nghiên cứu/phi thương mại**; không dùng giả giọng, lừa đảo
+> hoặc production thương mại. Code repo là MIT.
+
+![Luồng model N0](https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-research-v1/vifasttts_model_flow.png)
+
+> **Đọc nhanh:** muốn hiểu kiến trúc → mục 2–3; muốn train lại → `docs/TRAINING_N0.md`;
+> muốn triển khai → `docs/N0_DEPLOY.md`.
 
 ## 1. Dự án làm gì?
 
@@ -30,19 +59,33 @@ vị trí, và không có "từ lạ" với tiếng Việt chuẩn.
 
 | Hạng mục | Kết quả |
 | --- | --- |
-| Bộ test | **2264 test pass**; `ruff` + `mypy` sạch |
+| Bộ test | **2.565 test pass / 23 skip**; `ruff` sạch |
 | Parser âm tiết | Vét cạn **49.166 tổ hợp = 0 lỗi**; 39K từ thật: 6.617/6.633 parse OK |
 | Kho âm tiết | 24 âm đầu · 2 âm đệm · 15 âm chính · 11 âm cuối · 6 thanh → **264 vần**, **28.800 âm tiết trừu tượng** |
-| Model | Acoustic **16,4 triệu** tham số; vocoder **3,5 triệu** tham số |
-| Sinh giọng | `vifasttts synthesize` chạy end-to-end (WAV 16-bit, 24 kHz); văn bản dài tự chia câu |
+| Model | Acoustic small **6,1M** (N0) / base **16,4M**; Vocos pretrained **13,5M** |
+| Sinh giọng | Web demo + `vifasttts synthesize` end-to-end (WAV 16-bit, 24 kHz); văn bản dài tự chia câu |
 | Runtime ONNX | `vifasttts synthesize-onnx` chạy acoustic + vocoder ONNX, iSTFT numpy (không cần PyTorch) |
-| Dịch vụ | `vifasttts serve` (HTTP stdlib: `POST /synthesize` → WAV) · `synthesize-batch` (file → nhiều WAV) · streaming qua `iter_synthesize` |
+| Dịch vụ | FastAPI demo (`deploy/vifasttts_demo`, ONNX) · `vifasttts serve` · `synthesize-batch` · streaming |
 | Xuất ONNX | fp32 / fp16 / int8, batch và độ dài **động** (đã kiểm bằng onnxruntime) |
 | Huấn luyện | Train acoustic + train vocoder (GAN tham chiếu) + cache feature |
 | Dữ liệu YouTube | `vifasttts youtube-fetch`: tải audio + phụ đề kênh của bạn → clip 24 kHz mono + manifest + SRT mở + dataset card (CC BY 4.0), báo cáo từ lạ (OOV) + `--overrides` |
 
-⚠️ **Chưa có sẵn trọng số huấn luyện** trong repo. Muốn có giọng nói thật, cần audio + transcript
-và (khuyến nghị) alignment thật bằng MFA — xem `docs/TRAINING.md`.
+**Model mẫu có sẵn:** **Ngọc Huyền small 6,1M** (research/non-commercial) trong GitHub release;
+repo không chứa file `.pt`/`.onnx` để giữ clone nhẹ — script quickstart tự tải ONNX.
+Muốn train giọng khác, xem `docs/TRAINING.md` + `docs/TRAINING_N0.md`.
+
+### Model Ngọc Huyền — số đo chính
+
+| | |
+|---|---|
+| Dữ liệu | 21,57 h raw → **19,89 h sạch**; train 17,9 h |
+| Train | small v2_slot5, **60k bước**, ~5 h 46 trên Mac mini M6 |
+| Holdout | mel L1 **4,0 dB** (z 0,298); duration MAE 1,37 frame |
+| Free-run | **16,57 dB**; length 0,999; pause F1 **0,825** |
+| Thanh điệu | thật 0,9835 · copy 0,9784 · free **0,9743** |
+| A/B tai | **24/24** chọn model mới so P2 zero-shot |
+
+Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
 
 ## 3. Luồng hoạt động trong 30 giây
 
@@ -66,21 +109,32 @@ Chi tiết đầy đủ (tensor shape, công thức loss, số tham số): `docs
 
 Yêu cầu Python ≥ 3.11.
 
+**Chỉ muốn tạo âm thanh ngay (ONNX, không torch):**
+
+```bash
+git clone https://github.com/dvchd/ViFastTts.git
+cd ViFastTts
+./scripts/run_ngochuyen_demo.sh
+# http://127.0.0.1:8090
+```
+
+**Phát triển / train / xuất ONNX:**
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 pip install -e ".[dev,audio,train,onnx]"
 ```
 
-Bản tối thiểu (chỉ frontend/CLI, không cần torch):
-
-```bash
-pip install -e .
-```
+Bản tối thiểu (frontend/CLI, không cần torch): `pip install -e .`.
 
 ## 5. Thử nhanh
 
 ```bash
+# Demo web Ngọc Huyền (tải ONNX lần đầu, chạy local)
+./scripts/run_ngochuyen_demo.sh
+# hoặc: make demo-ngochuyen
+
 # Xem một câu được tách thành âm tiết và 5 thành phần thế nào
 vifasttts parse "Hôm nay trời đẹp."
 vifasttts parse-syllable "quốc"
@@ -184,18 +238,20 @@ src/vifasttts/
   train.py    vòng huấn luyện acoustic + vocoder
   infer.py    text → WAV (PyTorch)
   export.py   ONNX (acoustic + vocoder) + quantization
-configs/      base_24k.yaml + small_24k.yaml + large_24k.yaml + small_codelung.yaml + overrides_tech_vi.json (từ lạ cho youtube-fetch)
-tools/        parser_audit.py, frontend_benchmark.py, compute_mel_stats.py, fallback_review.py, clip_quality.py, reparse_overrides.py, diarize_filter.py, vocoder_milestones.py, train_chunked.py, train_vocoder_chunked.py, dataset_report.py, split_manifest.py
-tests/        2264 test: parser, normalizer, G2P, model, train/infer/export, runtime ONNX, server, youtube
-docs/         toàn bộ tài liệu (xem mục 10)
+configs/      base_24k.yaml + small_24k.yaml + large_24k.yaml + small_ngochuyen.yaml + ...
+tools/        parser_audit, compute_mel_stats, train_chunked, n0_social_card, ... 
+deploy/       vifasttts_demo/ (FastAPI ONNX + Dockerfile + static page)
+scripts/      fetch_ngochuyen_models.sh · run_ngochuyen_demo.sh · run_A2_fixgap.sh
+tests/        2.565 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
+docs/         toàn bộ tài liệu (xem mục 10), gồm TRAINING_N0.md / NGOC_HUYEN.md / N0_DEPLOY.md
 ```
 
 ## 9. Giới hạn hiện tại & việc còn lại
 
-- **Alignment**: chưa có thời lượng thật → mặc định chia theo trọng số (placeholder). Cần MFA/aligner để chất lượng tốt hơn (kể cả khi lấy dữ liệu nhanh từ YouTube của bạn bằng `youtube-fetch` — thời lượng mới ở mức câu).
+- **Alignment**: pipeline N0 dùng **MFA thật** (6.989/6.989 TextGrid). Với dữ liệu mới, nên chạy MFA/aligner; nếu chưa có, code dùng chia theo trọng số (placeholder), chất lượng thấp hơn.
 - **Vocoder**: bản tham chiếu (GAN nhẹ MPD-lite) + **bản nâng cấp MPD đầy đủ 2/3/5/7/11 + MRD + MR-STFT**
   (`discriminator: mpd_mrd`, chạy khối MPS) — xem `docs/REVISION_PLAN_V2.md` §10; GTA fine-tune sẽ làm sau.
-- **ONNX**: đã có runtime đầy đủ (acoustic + vocoder spectrum + iSTFT numpy). Điểm còn để ngỏ: gộp vocoder vào **một graph duy nhất** và calibration INT8 đầy đủ.
+- **ONNX**: đã export N0 FP32 (acoustic + Vocos) và runtime CPU; demo dùng ONNX. Chưa gộp vocoder vào một graph duy nhất/INT8 calibration đầy đủ.
 - **OOV**: từ ngoài tiếng Việt đọc bằng fallback — muốn kiểm soát thì bật `resolve_oov=True`, dùng `--overrides file.json` hoặc thêm override.
 - **Một checkpoint = một giọng, một phương ngữ** (đúng thiết kế; muốn đa giọng phải tách lớp riêng).
 
@@ -218,6 +274,10 @@ Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 | | `docs/YOUTUBE_DATASET.md` | Lấy dataset sạch từ kênh YouTube của bạn (demo + chạy thật, giấy phép mở) — kèm quy trình tái hiện đầy đủ |
 | | `docs/R6_DIARIZATION_RESULTS.md` | **Lọc giọng tự động** (NVIDIA Nemotron 3 Diarization): tách TTS/AI/demo, số liệu + kiểm chứng |
 | | `docs/TRAINING.md` | Hướng dẫn train + cảnh báo alignment |
+| | `docs/TRAINING_N0.md` | **Run N0 Ngọc Huyền**: pipeline, thời gian, chọn 5–20 h small / 30–50 h base |
+| | `docs/NGOC_HUYEN.md` | Model card model mẫu, license, quickstart |
+| | `docs/N0_DEPLOY.md` | ONNX + service `vifasttts.hoctuthien.com` |
+| | `docs/HUGGINGFACE.md` | Chuẩn bị/upload Hugging Face (cần token) |
 | | `docs/TRAINING_RUN_CODELUNG.md` | **Run thật `small` trên kênh @codelung**: số đo MPS, cách chạy lại, triển khai |
 | | `docs/REVISION_PLAN_V2.md` | **Kế hoạch sửa nền tảng** trước khi lên base (A1 mel loss, A2 f0 contour, A3 SIL, MFA, mel log-magnitude) |
 | | `docs/ARCH_DISCUSSION_M6.md` | **Hồ sơ thảo luận kiến trúc/ngân sách** cho Mac mini M6 32GB + đặc thù dữ liệu @codelung (gửi chuyên gia vòng 4) |
@@ -232,8 +292,10 @@ Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 
 ## 11. Giấy phép
 
-MIT cho code trong repo. Dữ liệu giọng nói, lexicon và checkpoint do người dùng tạo có
-giấy phép riêng; các công cụ tham chiếu (sea-g2p, MFA, vPhon...) giữ giấy phép gốc —
-chi tiết ở `docs/LICENSES.md`. Dataset lấy từ kênh YouTube của bạn mặc định ghi giấy phép
-mở **CC BY 4.0** (ghi nguồn kênh khi tái sử dụng); đổi bằng `--license`, ví dụ
-`--license "CC0 1.0"`.
+**Code repo: MIT.** Dữ liệu giọng nói, lexicon, checkpoint và model mẫu có giấy phép riêng;
+các công cụ tham chiếu (sea-g2p, MFA, vPhon...) giữ giấy phép gốc — xem `docs/LICENSES.md`.
+
+**Model Ngọc Huyền:** dataset `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0**; checkpoint/
+ONNX/weights chỉ dùng **nghiên cứu, phi thương mại**, không dùng giả giọng hoặc production
+thương mại. Dataset lấy từ kênh YouTube của bạn mặc định ghi **CC BY 4.0** (ghi nguồn kênh),
+đổi bằng `--license`, ví dụ `--license "CC0 1.0"`.

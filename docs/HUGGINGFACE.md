@@ -1,0 +1,68 @@
+# Đưa model lên Hugging Face — trạng thái & cách làm
+
+> Hiện **chưa upload** vì máy chưa có token Hugging Face. Khi có username/token, có thể đưa
+> model lên trong 1 lần chạy. Dataset gốc là **CC BY-NC 4.0**, nên model phải để
+> **research/non-commercial**, không dùng production thương mại.
+
+## Gợi ý repo
+
+- `dvchd/vifasttts-ngochuyen-small` (model)
+- License metadata: `cc-by-nc-4.0`
+- Tags: `text-to-speech`, `vietnamese`, `onnx`, `vifasttts`, `research`
+
+## File nên đưa
+
+| File | Ghi chú |
+|---|---|
+| `README.md` | model card + license + cách dùng |
+| `best.pt` | acoustic small 60k |
+| `config.yaml` | `configs/small_ngochuyen.yaml` |
+| `mel_stats.json`, `f0_stats_v2.json` | để load/verify |
+| `acoustic.onnx`, `vocoder.onnx` | runtime CPU không torch |
+| `LICENSE.md` | CC-BY-NC + attribution dataset |
+| `sample.wav` (tuỳ chọn) | 1–3 câu demo, ghi rõ research |
+
+Không đưa audio/transcript gốc của dataset.
+
+## Cách upload khi có token
+
+```bash
+export HF_TOKEN=...                 # không commit token
+python - <<'PY'
+from huggingface_hub import HfApi
+api = HfApi()
+api.create_repo("dvchd/vifasttts-ngochuyen-small", repo_type="model", private=False, exist_ok=True)
+api.upload_folder(
+    repo_id="dvchd/vifasttts-ngochuyen-small",
+    repo_type="model",
+    folder_path="release_hf_ngochuyen",
+    commit_message="N0 ngochuyen small research release",
+)
+PY
+```
+
+`release_hf_ngochuyen/` cần có `README.md` (model card), checkpoint, config, stats, ONNX,
+license. Không đưa `.venv`, `runs/`, `cache/`, audio gốc.
+
+## Model card tối thiểu
+
+```yaml
+---
+license: cc-by-nc-4.0
+language: [vi]
+tags: [text-to-speech, vietnamese, onnx, vifasttts]
+library_name: vifasttts
+---
+```
+
+Nội dung nên có: nguồn dataset + revision, kiến trúc, metrics holdout, cách chạy ONNX,
+mặc định alpha/pause, giới hạn, cảnh báo **không production/không giả giọng**, attribution.
+
+## Khi nào upload?
+
+Cần một trong hai:
+1. `HF_TOKEN` (write) + username; hoặc
+2. bạn tạo repo rỗng và cấp quyền, mình chỉ upload file.
+
+Sau khi upload phải kiểm tra bằng `HfApi.model_info(...)` + tải thử một file, giống quy trình
+release GitHub.

@@ -6,12 +6,22 @@ ONNX-only demo (không cần torch):
 - `Dockerfile` / `requirements.txt` / `docker-compose.yml`.
 
 Build context phải có `src/`, `models/{acoustic,vocoder}.onnx`, `app.py`, `static/`.
-Chạy local:
+Trên VPS, staging ở `/opt/vifasttts` dùng `docker compose up -d --build`; container join
+network `coolify`, Traefik label route `vifasttts.hoctuthien.com` → `http://vifasttts:8000`.
+
+## Docker cục bộ
+
+Dockerfile cần context phẳng; tạo staging rồi build:
 
 ```bash
-docker build -t vifasttts-demo .
+./scripts/fetch_ngochuyen_models.sh
+TMP=$(mktemp -d)
+cp -R src app.py static Dockerfile requirements.txt "$TMP/"
+mkdir -p "$TMP/models"
+cp artifacts/onnx/n0/*.onnx "$TMP/models/"
+docker build -t vifasttts-demo "$TMP"
 docker run --rm -p 8090:8000 vifasttts-demo
+# http://127.0.0.1:8090
 ```
 
-Trên VPS dùng `docker compose up -d --build`; container join network `coolify`, Traefik
-file provider route `vifasttts.hoctuthien.com` → `http://vifasttts:8000`.
+Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Docker).
