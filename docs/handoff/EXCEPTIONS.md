@@ -51,3 +51,27 @@ Khi hết hiệu lực: chạy lại parity đầy đủ; ngoại lệ **không*
 - Với **mọi input khác**: `spectrum_max_abs > 0,02` vẫn **FAIL**.
 - Nếu xuất hiện input thứ hai vượt ngưỡng: **không** thêm ngoại lệ; dừng, báo A0.
 - Test phải chứng minh được bằng một ca âm: một input khác vượt 0,02 bị FAIL.
+
+### Dữ liệu máy đọc (test parity đọc khối này)
+
+```json
+{
+  "exceptions": [
+    {
+      "id": "ONNX-EXC-001",
+      "input": "2b65WyiFC9k_0030__s03",
+      "layer": "vocoder_spectrum",
+      "mode": "chunk",
+      "provider": "CPUExecutionProvider",
+      "acoustic_sha256": "ff6844ec8a28b2c17a40d944d9ebe19476a159b8573c22fdd52c932cbfcdf23f",
+      "vocoder_sha256": "ed193b8246ae4078203e2b88fae5bc492b53b9f6ae6fd7652a1278aca02dd3f3",
+      "criterion": 0.02,
+      "observed_max": {
+        "real": 0.023357868194580078,
+        "imag": 0.017773866653442383
+      },
+      "source": "A0 v18.41; xem V1841_agent2.md §1, artifacts/bench/v1840_onnx_parity/result.json"
+    }
+  ]
+}
+```

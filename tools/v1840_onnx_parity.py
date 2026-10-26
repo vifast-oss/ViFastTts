@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -47,6 +48,7 @@ VOCODER = "artifacts/onnx/v1837/vocos_pretrained_vocoder.onnx"
 OLD_ACOUSTIC = "artifacts/onnx/v32_adv_p2_2k.onnx"
 OLD_VOCODER = "artifacts/onnx/v32_adv_p2_2k_vocoder.onnx"
 OUT = Path("artifacts/bench/v1840_onnx_parity")
+EXCEPTIONS = Path("docs/handoff/EXCEPTIONS.md")
 
 # Khai báo TRƯỚC khi chạy. Đơn vị: mel z-score / log-F0 / waveform [-1,1].
 CRITERIA = {
@@ -133,6 +135,64 @@ def select_inputs() -> list[dict]:
     return items
 
 
+def load_exceptions(path: str | Path = EXCEPTIONS) -> dict:
+    """Đọc khối JSON cuối cùng trong EXCEPTIONS.md (nguồn duy nhất của ngoại lệ)."""
+    text = Path(path).read_text(encoding="utf-8")
+    blocks = re.findall(r"```json\s*(.*?)```", text, flags=re.DOTALL)
+    if not blocks:
+        return {"exceptions": []}
+    return json.loads(blocks[-1])
+
+
+def find_exception(item: dict, context: dict, exceptions: dict) -> dict | None:
+    """Chỉ trả ngoại lệ khi đúng input + tầng + mode + provider + hash model."""
+    for entry in exceptions.get("exceptions", []):
+        if (entry.get("id") and entry.get("input") == item.get("id")
+                and entry.get("layer") == "vocoder_spectrum"
+                and entry.get("mode") == context.get("mode")
+                and entry.get("provider") == context.get("provider")
+                and entry.get("acoustic_sha256") == context.get("acoustic_sha256")
+                and entry.get("vocoder_sha256") == context.get("vocoder_sha256")):
+            return entry
+    return None
+
+
+def vocoder_check(row: dict, item: dict, context: dict, exceptions: dict) -> dict:
+    """Tính pass cho vocoder; ngoại lệ chỉ nới đúng input, không đổi ngưỡng chung."""
+    real = row["spectrum_real"]
+    imag = row["spectrum_imag"]
+    wave = row["waveform"]
+    mean_ok = (
+        real.get("mean_abs", 1e9) <= CRITERIA["vocoder"]["spectrum_mean_abs"]
+        and imag.get("mean_abs", 1e9) <= CRITERIA["vocoder"]["spectrum_mean_abs"]
+    )
+    base_ok = (
+        wave.get("shape_equal", False)
+        and wave.get("finite", False)
+        and wave.get("max_abs", 1e9) <= CRITERIA["vocoder"]["waveform_max_abs"]
+        and wave.get("rmse", 1e9) <= CRITERIA["vocoder"]["waveform_rmse"]
+        and mean_ok
+    )
+    exception = find_exception(item, context, exceptions)
+    if exception:
+        allowed = max(CRITERIA["vocoder"]["spectrum_max_abs"],
+                      float(exception["observed_max"]["real"]),
+                      float(exception["observed_max"]["imag"]))
+    else:
+        allowed = CRITERIA["vocoder"]["spectrum_max_abs"]
+    spectrum_ok = (
+        real.get("max_abs", 1e9) <= allowed
+        and imag.get("max_abs", 1e9) <= allowed
+    )
+    return {
+        "pass": bool(base_ok and spectrum_ok),
+        "exception_id": exception["id"] if exception else None,
+        "allowed_spectrum_max": round(float(allowed), 9),
+        "spectrum_ok": bool(spectrum_ok),
+        "base_ok": bool(base_ok),
+    }
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     torch.set_num_threads(2)
@@ -172,6 +232,13 @@ def main() -> None:
     vocoder_results = []
     e2e_results = []
     determinism = {"pytorch": [], "onnx": []}
+    exceptions = load_exceptions()
+    context = {
+        "mode": "chunk",
+        "provider": "CPUExecutionProvider",
+        "acoustic_sha256": sha256(ACOUSTIC),
+        "vocoder_sha256": sha256(VOCODER),
+    }
     for index, item in enumerate(items):
         text = item["text"]
         parsed = parse_text(text, resolve_oov=True)
@@ -231,16 +298,7 @@ def main() -> None:
         spectrum_real = array_stats(ref_real[0].cpu().numpy(), got_real)
         spectrum_imag = array_stats(ref_imag[0].cpu().numpy(), got_imag)
         wave = array_stats(ref_wave, got_wave)
-        wave_ok = (
-            wave.get("shape_equal", False)
-            and wave.get("max_abs", 1e9) <= CRITERIA["vocoder"]["waveform_max_abs"]
-            and wave.get("rmse", 1e9) <= CRITERIA["vocoder"]["waveform_rmse"]
-            and spectrum_real.get("max_abs", 1e9) <= CRITERIA["vocoder"]["spectrum_max_abs"]
-            and spectrum_imag.get("max_abs", 1e9) <= CRITERIA["vocoder"]["spectrum_max_abs"]
-            and spectrum_real.get("mean_abs", 1e9) <= CRITERIA["vocoder"]["spectrum_mean_abs"]
-            and spectrum_imag.get("mean_abs", 1e9) <= CRITERIA["vocoder"]["spectrum_mean_abs"]
-        )
-        vocoder_results.append({
+        row = {
             "id": item["id"], "kind": item["kind"],
             "spectrum_real": spectrum_real, "spectrum_imag": spectrum_imag,
             "waveform": wave,
@@ -250,8 +308,10 @@ def main() -> None:
             "got_peak": round(float(np.max(np.abs(got_wave))), 6),
             "clipping_ref": int(np.sum(np.abs(ref_wave) >= 0.999)),
             "clipping_got": int(np.sum(np.abs(got_wave) >= 0.999)),
-            "pass": bool(wave_ok),
-        })
+        }
+        check = vocoder_check(row, item, context, exceptions)
+        row.update(check)
+        vocoder_results.append(row)
         # C. end-to-end chunk mode, cùng frontend/chunking/pause/fade, không LUFS
         pt_path = OUT / f"{index:02d}_pytorch.wav"
         onnx_path = OUT / f"{index:02d}_onnx.wav"
@@ -348,6 +408,13 @@ def main() -> None:
         ]),
         "deterministic": result["determinism"]["pytorch_all_equal"]
         and result["determinism"]["onnx_all_equal"],
+        "exceptions_applied": sorted({row["exception_id"] for row in vocoder_results
+                                      if row.get("exception_id")}),
+        "unexpected_spectrum_failures": [
+            row["id"] for row in vocoder_results
+            if not row["pass"] and row.get("exception_id") is None
+            and row.get("spectrum_ok") is False
+        ],
     }
     result["ready_to_switch_onnx"] = bool(
         result["summary"]["acoustic_pass"] == result["summary"]["acoustic_total"]
