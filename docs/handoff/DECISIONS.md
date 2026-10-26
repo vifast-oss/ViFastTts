@@ -297,3 +297,12 @@ Không xem BAK. Danh sách ghi **trước** khi vocode.
 ### V1846.C — Không làm
 Không train/probe; không thử bộ câu khác cho `C_lo` ngoài bộ dài A2; không chọn cửa sổ theo BAK;
 không UTMOS; không cấy ghép frame; không động ONNX; không đưa hậu xử lý mel vào production.
+
+### V1846.A4 — cửa sổ `C_lo_f` chốt TRƯỚC khi chấm BAK
+
+- 120 câu (80 cũ + 40 dài); độ tương phản phổ = trung bình (max−min) log-mel trong cửa sổ 5 bin,
+  chỉ frame hữu thanh; dải ≤4 kHz (66 bin).
+- Độ tương phản C mục tiêu: **1,054477**.
+- Cửa sổ làm mượt trục tần số được chọn: **3**; đạt **0,972691**; sai số tương đối **0,077561**.
+- Không cửa sổ nào đạt ≤5% ⇒ dùng gần nhất, đánh dấu **"xấp xỉ"** (đúng luật).
+- Chọn **chỉ theo độ tương phản**, chưa chấm BAK. File: `artifacts/bench/v1846_a4_mechanism/window.json`.
