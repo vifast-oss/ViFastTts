@@ -141,3 +141,10 @@ chính dùng Vocos pretrained mặc định; **không đổi production/ONNX**.
   (chỉnh `--pause-comma/--pause-period/--pause-default`).
 - Test: `tests/test_steady_mode.py` kiểm mặc định model, fixed opt-in, invalid mode;
   `tests/test_server.py` kiểm payload mặc định/fixed.
+
+## 11. Xác nhận 10 câu mới (27/10/2026)
+
+- **10/10** câu: Vocos pretrained mặc định ít rè hơn fine-tune.
+- `fresh04` chữ **“ấm”**: bản mặc định hơi rè cục bộ; fine-tune rè âm + nền.
+- Đã thử alpha 0/0,75/1,0/1,5; không thấy alpha thấp xoá rè; giữ 1,5 toàn cục.
+- Kết luận: Vocos pretrained mặc định; fine-tune chỉ đối chiếu.

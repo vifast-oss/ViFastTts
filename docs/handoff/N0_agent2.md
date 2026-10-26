@@ -171,3 +171,13 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   **Không** kèm data gốc; **không** kèm Vocos fine-tune.
 - **Research/non-commercial — không production**, dataset CC-BY-NC-4.0.
 - Đã tải lại asset từ GitHub và chạy `inference.py` CPU thành công.
+
+## 12. Xác nhận tai trên 10 câu mới (27/10/2026)
+
+- Người dùng: **cả 10/10 câu bản Vocos mặc định ít rè hơn** bản fine-tune.
+- `fresh04` (chữ **“ấm”**) ở bản mặc định vẫn hơi rè cục bộ; fine-tune rè cả âm lẫn nền.
+- Đã thử `sharpen_alpha` 0 / 0,75 / 1,0 / 1,5 trên đúng câu + cụm chứa “ấm”:
+  `https://instant-weblogs-reductions-separated.trycloudflare.com/fresh04_alpha/`
+  Đo nhanh: alpha 1,5 có HNR cao nhất, glottalization thấp nhất; alpha 0 không xoá rè.
+- **Không đổi alpha toàn cục** vì 9/10 câu còn lại đang tốt; ghi “ấm” là hạn chế cục bộ
+  đã biết trong model card. Fine-tune tiếp tục bị loại.
