@@ -7,16 +7,17 @@
 > 4. Nếu ONNX không nhanh/nhẹ hơn đáng kể, nhánh ONNX sẽ đóng; nếu đạt, có thể bật ở V18.45.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.43 (26/10/2026) — DỪNG, CHỜ ĐỌC.** Vòng đo, **không train, không đổi production**.
-> **Code cuối trước hồ sơ**: `1be3cf6`. Báo cáo: `V1843_agent2.md` (commit hồ sơ này).
-> - **A3 TRƯỢT**: ONNX chậm hơn short **1,2188×** (>1,2), cold **0,632** (>0,5), dung lượng **0,318** (>0,3);
->   chỉ peak RSS **0,456** đạt ⇒ theo V1842.A3 **đề nghị đóng nhánh ONNX**, trừ khi có nhu cầu không PyTorch.
-> - **A2 phép đo hỏng**: đối chứng âm seed UTMOS lệch **+0,0729** CI [0,0177, 0,1274]; không kết luận,
->   **hợp đồng giữ chunk**.
-> - **A4 nguồn rè = acoustic**: Δac **0,2481**, Δvoc **−0,0214**; C' g1_1k không tốt hơn C.
-> - **A6**: PyTorch/ONNX CPU **bit-exact**; fast 3 câu 5,1 s; full 20 câu có BAK/UTMOS.
-> - **A1c**: parity đầy đủ **12/12** với `ONNX-EXC-001`, 0 lỗi ngoài ngoại lệ.
-> - Test: **2.570 passed**, ruff sạch.
+> **V18.44 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44. **Commit gốc**: `5405188`.
+> **ONNX đóng băng** (V1844.A1); hợp đồng sản phẩm **chốt = chunk mode** (V1844.A2); lead **g1_1k đóng** (V1844.A4).
+> **Sửa A3 (V1844.A1b)**: lý do trượt **duy nhất** là p95 câu ngắn **1,2188× > 1,2×**; vế "ít nhất một trong"
+> đã đạt nhờ peak RSS **0,456× ≤ 0,6×**; cold 0,632 và dung lượng 0,318 **không phải** lý do trượt.
+> CV latency: short **0,9 %**, mid **0,8 %**, long 12,5 % (pooled) — short <15 % nên nhãn vẫn là **trượt**.
+>
+> **V18.43 (26/10/2026, lịch sử)** — Vòng đo, không train, không đổi production.
+> - **A3 TRƯỢT** (lý do duy nhất: p95 short 1,2188×); **A2 phép đo hỏng** (đối chứng âm seed UTMOS lệch 0,0729);
+> - **A4 nguồn rè = acoustic** (Δac 0,2481; Δvoc −0,0214); **A6** bit-exact, fast 5,1 s;
+> - **A1c** parity 12/12 với `ONNX-EXC-001`; test **2.570 passed**. Báo cáo: `V1843_agent2.md`.
 >
 > **V18.41 (23/10/2026, lịch sử)** — frontend OOV: ONNX cũ gọi `features_from_text` **không** `resolve_oov` ⇒ `John`/`XYZ` thành fallback trong khi PyTorch production đọc được. Đã sửa mặc định `resolve_oov=True` trong `runtime/onnx_engine.py`, thêm `tests/test_onnx_frontend.py` (9 test); valid **8/8 equal**, smoke **8/8 finite**, `...` báo lỗi đúng. Kết quả v18.40 giữ: acoustic 36/36, E2E 12/12, vocoder 11/12 với **ngoại lệ spectrum A0 chấp nhận có phạm vi** (`ONNX-EXC-001`). **Sẵn sàng chuyển ONNX trong phạm vi chunk mode đã kiểm tra**, config ứng viên `configs/onnx_candidate_v1841.json`; **chưa tự chuyển production**. Chi tiết: `V1841_agent2.md`, `artifacts/bench/v1841_frontend_oov/`.
 > **V18.40 (23/10/2026)** — parity ONNX v1837: **acoustic 36/36**, frontend **12/12**, end-to-end chunk **12/12** (max 2,14e-04; RMSE 7,74e-06; RMS ratio ~1; clipping 0; cả hai runtime tất định). **Vocoder 11/12** — một input (`2b65WyiFC9k_0030__s03`) có spectrum max **0,02336** vượt tiêu chí tuyệt đối **0,02** tại bin (20,66); mean ~1e-05, waveform max 3,23e-04 và end-to-end vẫn đạt. Provenance/mel hash khớp; acoustic 180/181 exact, vocoder 63/63 exact. **Chưa tuyên bố sẵn sàng chuyển ONNX; giữ P2 + PyTorch.** Không sửa runtime/tiêu chí sau kết quả. Chi tiết: `V1840_agent2.md`, `artifacts/bench/v1840_onnx_parity/`.
@@ -39,16 +40,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.43** · **Tệp đặc tả**: `V1842_agent0.md` (V18.42 + V18.42b) ·
-**Commit gốc của vòng**: `7cd61ef` · **Code cuối trước hồ sơ**: `1be3cf6` ·
-**Trạng thái**: **DỪNG, CHỜ ĐỌC** — không training, giữ P2, chưa chuyển ONNX.
+**Vòng hiện hành**: **V18.44** · **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44 ·
+**Commit gốc của vòng**: `5405188` · **Trạng thái**: **ĐANG LÀM** — không training, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: xem `V1843_agent2.md` §8 — A0 quyết đóng nhánh ONNX (A3 trượt); A2 chỉ làm lại nếu cần;
-A4 chỉ ra acoustic, chờ duyệt ngân sách trước V18.45.
+**Việc tiếp**: A1 skip ONNX → A1b CV → A3 hiệu chuẩn → A6 cấy ghép → A5 nghe mù → report.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `7cd61ef..<commit cuối>`,
-> đối chiếu `V1843_agent2.md` §2–§9. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5405188..<commit cuối>`,
+> đối chiếu `V1844_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -84,7 +83,19 @@ A4 chỉ ra acoustic, chờ duyệt ngân sách trước V18.45.
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.43 — kết quả
+### 4.1 V18.44 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1844.A1 | ONNX đóng băng; test ONNX skip có lý do | ⏳ |
+| V1844.A1b | CV latency từ dữ liệu A3; sửa lý do trượt | ⏳ |
+| V1844.A2 | Hợp đồng = chunk (chốt, không đo lại) | ✅ |
+| V1844.A3 | Bootstrap hai tầng đối chứng âm + BAK 2 lần | ⏳ |
+| V1844.A4 | Đóng lead g1_1k | ✅ |
+| V1844.A6 | Cấy ghép oracle (C_all/C_none trước) | ⏳ |
+| V1844.A5 | Chọn 16 câu, trang nghe mù B vs C | ⏳ |
+| — | Báo cáo `V1844_agent2.md` | ⏳ |
+
+### 4.2 V18.43 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1842.A7 | hồ sơ: TRANG_THAI + DECISIONS + EXCEPTIONS + archive + đóng mã V11 + phân loại 19 khoảng trống | ✅ `208b0c2` |

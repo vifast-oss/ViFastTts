@@ -53,7 +53,10 @@ CPU 2 thread (`torch.set_num_threads(2)`, `VIFASTT_INTRA_THREADS=2`, `OMP/MKL=2`
 | Dung lượng cài (venv sạch) | 0,759 GB / 31 gói | 0,241 GB / 22 gói | **0,318** | ≤0,3 | **TRƯỢT** |
 | `.[onnx]` có kéo torch? | — | **Không** | — | phải không | ĐẠT |
 
-- **Kết luận A3: TRƯỢT.** Chỉ peak RSS đạt; p95 ngắn vượt 1,6 điểm %; cold vượt 26 %; dung lượng vượt 6 %.
+- **Kết luận A3: TRƯỢT.** Lý do trượt **duy nhất** là p95 câu ngắn **1,2188× > 1,2×**.
+  Vế "ít nhất một trong" đã **ĐẠT** nhờ peak RSS **0,456× ≤ 0,6×**. Cold start 0,632× và dung lượng 0,318×
+  **không phải** lý do trượt (chỉ là thông tin). CV lặp lại: short **0,9 %**, mid **0,8 %**, long 12,5 % (pooled)
+  — short <15 % nên không đổi nhãn "trượt" (V1844.A1b).
 - **Đề nghị theo V1842.A3**: đóng nhánh ONNX (đóng băng artifact + hash, giữ parity ở trạng thái skip có lý do,
   bỏ khỏi lộ trình), **trừ khi** người dùng xác nhận có nhu cầu triển khai không PyTorch.
 - Hash kiểm trước khi bấm giờ: model khớp `configs/onnx_candidate_v1841.json`; output WAV khớp hash parity

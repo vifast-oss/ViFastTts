@@ -12,6 +12,10 @@
 
 ## ONNX-EXC-001 — outlier phổ vocoder `2b65WyiFC9k_0030__s03`
 
+> **Trạng thái: ĐÌNH CHỈ CÙNG NHÁNH ONNX** (V1844.A1, 26/10/2026). Nhánh ONNX đóng băng do A3 trượt;
+> ngoại lệ này không còn hiệu lực cho quyết định production. Giữ nguyên hồ sơ để audit; nếu ONNX
+> được mở lại thì phải chạy parity + A3 lại từ đầu với hash mới.
+
 ### Quyết định
 - **Nguồn**: A0 v18.41, chấp nhận **sau khi xem kết quả**; không sửa ngưỡng, không sửa runtime.
 - **Mã**: `ONNX-EXC-001`.

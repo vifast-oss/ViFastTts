@@ -98,3 +98,52 @@ Trường hợp đặc biệt: nếu ΔBAK có CI95 > 0 (sentence ít rè hơn r
 5. A2.
 6. A4 (2 kiểm tra đầu vào trước, rồi 3 tầng + C').
 7. Report: đã xong / số liệu / verdict từng cổng / mục lạ / TỰ QUYẾT KHÁC ĐẶC TẢ / commit hash.
+
+## V18.44 — Agent 0 (26/10/2026, sau report V18.43)
+
+> Toàn bộ mục này là **ĐĂNG KÝ TRƯỚC**, có hiệu lực trước khi chạy bất kỳ phép đo nào của V18.44.
+> Phạm vi: không train, không đổi production.
+
+### A. Quyết định
+
+| Mã | Quyết định | Lý do | Cổng đo | Điều kiện dừng |
+|---|---|---|---|---|
+| V1844.A1 | ONNX: **ĐÓNG BĂNG** theo luật A3 (người dùng xác nhận không có nhu cầu triển khai không PyTorch). Giữ code, artefact, hash. Test parity ONNX và phần ONNX trong fast test A6 đánh dấu **skip**, lý do "V1844.A1 đóng băng ONNX". `ONNX-EXC-001` chuyển trạng thái "đình chỉ cùng nhánh". Không xoá gì. | Luật A3 đăng ký trước: trượt thì đóng. Theo V1842b.6, acoustic sắp đổi thì cũng không được bật ONNX. Đóng băng lúc này không mất gì và đảo ngược được. | Suite pass với các test ONNX skip có lý do; không có test nào skip im lặng | Không |
+| V1844.A1b | Sửa hồ sơ A3: lý do trượt **DUY NHẤT** là p95 câu ngắn **1,2188× > 1,2×**. Vế "ít nhất một trong" đã **ĐẠT** nhờ peak RSS **0,456× ≤ 0,6×**. Cold start và dung lượng **không phải** lý do trượt. Bổ sung hệ số biến thiên (CV) latency từng bucket từ dữ liệu **ĐÃ ĐO**, không đo lại. | Hồ sơ phải phản ánh đúng luật. CV là điều kiện "lạ" của A3 nhưng report chưa ghi. | CV có trong TRANG_THAI.md và V1843 report | CV câu ngắn > 15% thì A3 đổi nhãn từ "trượt" sang "lạ, không kết luận". Trạng thái ONNX vẫn đóng băng như A1, không đo lại. |
+| V1844.A2 | Hợp đồng sản phẩm **CHỐT = chunk mode**. Không làm lại A2. Mọi đánh giá chất lượng cuối (nghe, BAK/UTMOS) của acoustic mới từ nay chạy ở **chunk mode**. Ghi chú: ΔBAK +0,099 của sentence có thể do khoảng lặng sạch được chèn vào, không phải bằng chứng ít rè. | Luật V1842b.3: trượt bất kỳ điều kiện nào thì là chunk. Phân xử chunk/sentence không còn ảnh hưởng quyết định nào khi ONNX đã đóng băng. | Không | Không |
+| V1844.A3 | Hiệu chuẩn giám khảo, **không chấm thêm audio mới**. (a) Phân tích lại dữ liệu đối chứng âm A2 có sẵn bằng **bootstrap hai tầng**: lấy mẫu lại cả câu VÀ seed (seed là hiệu ứng ngẫu nhiên). (b) Chấm BAK **hai lần** trên 10 file bất kỳ để xác nhận BAK tất định. | Đối chứng âm A2 hỏng cho thấy CI cũ bỏ qua phương sai theo seed. Các kết luận UTMOS cũ có cùng cỡ với nhiễu này. | (a) **ĐẠT** nếu CI95 đối chứng âm theo bootstrap hai tầng **chứa 0** thì giao thức UTMOS mới = bootstrap hai tầng, **≥ 10 seed**, hai điều kiện dùng chung bộ seed, lần chấm nào cũng kèm đối chứng âm. **TRƯỢT** thì UTMOS bị loại khỏi luật quyết định, chỉ còn BAK + tai. (b) **ĐẠT** nếu hai lần chấm bằng nhau tuyệt đối. | (b) BAK lệch giữa hai lần thì là lạ, dừng, báo (A4 V18.43 cần xem lại). Dù (a) ra sao: đánh dấu g1_1k +0,096 và P2 4k −0,070 là **"chưa phân giải được"** trong hồ sơ. |
+| V1844.A4 | **Đóng lead g1_1k.** | BAK(C') 3,7318 không tốt hơn BAK(C) 3,7419 ở cùng điều kiện teacher-forcing. UTMOS +0,096 nằm trong vùng nhiễu (xem A3). Không còn bằng chứng nào ủng hộ. | Không | Mở lại chỉ khi có giả thuyết mới cụ thể |
+| V1844.A5 | Thay thiết kế nghe mù cũ (P2 vs g1, đã mất ý nghĩa) bằng nghe mù **KIỂM CHỨNG BAK**: tai có nghe thấy tầng C rè hơn tầng B không. 28 lượt: **16 lượt B vs C** (cùng câu, teacher-forcing nên cùng nhịp, chỉ khác phổ); **4 lượt đối chứng dương** (B vs B có thêm nhiễu trắng SNR 30 dB); **4 lượt đối chứng âm** (C vs C giống hệt); **4 lượt lặp** (4 cặp B/C đã nghe, đảo vị trí A/B). Chuẩn −16 LUFS, kiểm peak, vị trí và thứ tự ngẫu nhiên, ẩn tên. Câu hỏi duy nhất: "Bản nào ít rè nền hơn?" (A / B / không phân biệt). Chọn 16 câu có **\|BAK(B) − BAK(C)\| lớn nhất** trong bộ 40 câu A4; ghi danh sách câu vào DECISIONS.md trước khi dựng trang. | BAK chưa từng được kiểm bằng tai. Trước khi tiêu 7 giờ train để kéo BAK lên, phải biết thứ BAK đo có đúng là thứ người dùng gọi là "rè" không. | Phiên hợp lệ khi: đối chứng dương ≥ 3/4 chọn bản không thêm nhiễu; đối chứng âm ≥ 3/4 "không phân biệt"; lặp nhất quán ≥ 3/4. **XÁC NHẬN** khi B thắng, binomial một phía p < 0,05 trên các lượt không hòa (tối thiểu 10 lượt không hòa; 16 lượt thì cần ≥ 12). | Không hợp lệ: làm lại một phiên khác ngày. **KHÔNG XÁC NHẬN** (B không thắng, hoặc < 10 lượt không hòa): không train theo BAK, báo A0; khả năng tiếng rè người dùng nghe nằm ở chỗ khác (chunk/fade/loudness). C thắng rõ: lạ, dừng, báo. |
+| V1844.A6 | Chẩn đoán vị trí rè bằng **cấy ghép oracle**, không train. Lấy mel C (P2, teacher-forcing), thay một phần bằng mel B (gốc), vocode rồi chấm BAK trên đúng 40 câu A4. Biến thể: `C_nuc` (thay frame nucleus), `C_onc` (thay onset + coda), `C_sil` (thay frame lặng), `C_hi` (thay bin mel > 4 kHz ở mọi frame), `C_lo` (thay bin ≤ 4 kHz). Đối chứng: `C_all` (thay toàn bộ) phải ra bằng B; `C_none` (không thay gì) phải ra bằng C. `Recovery(X) = (BAK(X) − BAK(C)) / Δac`. Thêm chỉ số phụ: tỉ số phương sai theo thời gian (GV) của C/A theo 3 dải (< 1 kHz, 1–4 kHz, > 4 kHz), chỉ tính frame hữu thanh. Nếu model hỗ trợ teacher-forcing F0 thì thêm `C_f0` (mel P2 với F0 gốc); không hỗ trợ thì ghi rõ, bỏ qua. | Δac cho biết rè ở acoustic nhưng không cho biết ở đâu. Nhiễu khoảng lặng B→C giảm 1,98 dB nhưng BAK lại xấu đi, nên rè nhiều khả năng nằm trong vùng có tiếng nói. Cấy ghép cho câu trả lời trực tiếp, tất định, chỉ tốn thời gian vocode. | Một thành phần là **CHÍNH** khi Recovery ≥ 0,5. Over-smoothing được hỗ trợ khi **GV ratio < 0,8** ở ít nhất một dải VÀ thành phần chính là dải tần (`C_hi` hoặc `C_lo`). Nhiều thành phần cùng ≥ 0,5 thì báo đủ. Không thành phần nào ≥ 0,5 thì báo "phân tán", kèm bảng đầy đủ. | Lạ, dừng, báo khi: `C_all` lệch BAK(B) > 0,02; `C_none` lệch BAK(C) > 0,02; hoặc tổng Recovery của các cặp bù nhau (`nuc + onc + sil`; `hi + lo`) > 1,5 hoặc < 0,5 (đường nối giữa các frame được ghép gây artefact). |
+| V1844.A7 | Cổng mở V18.45 (vòng có train). Phải ĐỦ: (1) A5 XÁC NHẬN; (2) A6 chỉ ra ít nhất một thành phần chính; (3) người dùng duyệt ngân sách. Ngân sách theo bậc: probe 100 bước → pilot 2.000 bước (~15 phút) có cổng BAK teacher-forcing đặt trước → mới được chạy dài (trần 60.000 bước ≈ 7 giờ). Giả thuyết và kiến trúc cụ thể của V18.45 do A0 chốt **SAU** khi đọc A5 + A6, không chốt bây giờ. | Tránh lặp lại GAN/v3: train khi chưa biết đích. Ngân sách theo bậc giới hạn thiệt hại nếu giả thuyết sai. | Theo từng điều kiện | Thiếu bất kỳ điều kiện nào thì V18.45 không train |
+
+### B. Việc giao Agent 2 (theo thứ tự)
+
+1. Ghi V1844.* vào DECISIONS.md, cập nhật TRANG_THAI.md (ONNX đóng băng, hợp đồng = chunk, g1_1k đóng, sửa lý do trượt A3). Commit riêng.
+2. A1: đánh dấu skip có lý do cho test ONNX; chạy suite, báo số pass/skip.
+3. A1b: tính CV latency từ dữ liệu A3 có sẵn, ghi vào hồ sơ.
+4. A3: bootstrap hai tầng trên dữ liệu A2 có sẵn + BAK chấm hai lần. Báo CI cũ và CI mới cạnh nhau.
+5. A6: viết tool cấy ghép (dùng lại phần tầng C của A4). Chạy các đối chứng C_all/C_none TRƯỚC, đạt thì mới chạy các biến thể. Kiểm khả năng teacher-forcing F0. Đầu ra: bảng BAK + Recovery theo biến thể, bảng GV ratio theo dải, verdict theo luật A6.
+6. A5: chọn 16 câu theo luật, ghi vào DECISIONS.md, dựng trang nghe (chạy `tools/serve_listen_demo.sh` hoặc trang mới), gửi link cho người dùng, chấm theo luật khi có CSV.
+7. Report: đã xong / số liệu / verdict từng cổng / mục lạ / TỰ QUYẾT KHÁC ĐẶC TẢ / commit hash. Bước 6 có thể báo sau, tách khỏi phần còn lại nếu người dùng chưa nghe.
+
+### C. Việc KHÔNG làm trong V18.44
+- Không train, không probe train.
+- Không làm gì thêm cho ONNX (không đo lại A3, không port sentence mode).
+- Không làm lại A2.
+- Không dùng UTMOS cho kết luận nào trước khi A3 (hiệu chuẩn) xong.
+- Không đưa hậu xử lý mel (làm nét, GV) vào production, kể cả khi A6 cho kết quả tốt; chỉ được ghi lại làm ứng viên.
+- Không đổi ngưỡng đã đăng ký sau khi thấy số.
+
+### D. Rủi ro còn lại và điều kiện xem lại
+- Cấy ghép mel có thể tạo artefact ở chỗ nối; đã có đối chứng tổng Recovery, nhưng biến thể `C_sil`/`C_nuc` nhạy nhất với lỗi này.
+- Nghe mù chỉ có một người nghe nên kết luận chỉ đúng với tai người dùng.
+- Nếu A5 không xác nhận, toàn bộ hướng "kéo BAK lên" phải xem lại; khi đó nguồn rè người dùng nghe có thể nằm ở đường chunk (fade, ghép, chuẩn loudness) chứ không ở acoustic.
+- ONNX mở lại khi: người dùng nêu nhu cầu triển khai không PyTorch, hoặc sau khi acoustic mới chốt mà có lý do mới. Mở lại thì phải chạy parity và A3 lại từ đầu với hash mới.
+
+### E. Giả định
+- Người dùng không cần triển khai không PyTorch (người dùng xác nhận khi gửi tệp này).
+- Mel 100 kênh phủ đến 12 kHz nên tách được ranh giới 4 kHz theo bin (Agent 2 ghi chỉ số bin thực tế).
+- Nhãn slot onset/nucleus/coda/lặng có sẵn theo frame khi teacher-forcing (nếu không có, ghi rõ và chỉ chạy `C_hi`/`C_lo`).
+- Dữ liệu UTMOS theo từng seed của A2 còn lưu (nếu không còn, A3(a) chấm lại đúng 30 câu chunk với 10 seed, chỉ cho đối chứng âm).
+- Chi phí V18.44 dưới nửa ngày máy, chưa tính thời gian người dùng nghe (tin cậy thấp).
