@@ -7,11 +7,15 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.48 (26/10/2026) — ĐANG LÀM.** Pilot mượt tần số; **không đổi production**.
+> **V18.48 (26/10/2026) — DỪNG — ĐÓNG BĂNG LẠI.** Không đổi production; P2 vẫn production.
 > **Tệp đặc tả**: `V1848_agent0.md` + `DECISIONS.md` mục V18.48. **Commit gốc**: `5598514`.
-> Chất lượng acoustic **rã đông có giới hạn** chỉ cho pilot này. PILOT = P2 EMA + 2.000 bước + L_con;
-> CONTROL = P2 EMA + 2.000 bước không L_con. Cổng: ΔBAK ≥0,05 (CI dưới >0), CR PILOT > CONTROL
-> (CI hiệu >0), CR PILOT ≤1,05. Không thử w thứ hai.
+> **Code cuối trước hồ sơ**: `338bd47`. Báo cáo: `V1848_agent2.md`.
+> - **A1**: L_con + 5 unit test; `finetune_adv --contrast-weight`.
+> - **A3**: probe 100; **w=1,0338** (L_con 22,5 % tổng loss), commit trước pilot.
+> - **A2**: PILOT + CONTROL 2.000 bước, cùng seed/config.
+> - **A4 KHÔNG KẾT LUẬN**: ΔBAK TF **+0,0229**, CI [−0,0198; 0,0600]; CR tăng rõ (+0,0895) nhưng cổng BAK trượt.
+> - **A5**: chunk **+0,0537** (CI [0,0143; 0,0939]) — tín hiệu phụ, không phải cổng; L1 +0,14 %.
+> - **A6**: không mở; **đóng băng lại**, không thử w khác.
 >
 > **V18.47 (26/10/2026, lịch sử)** — A2 ĐẠT: CR 0,7067; ρ 0,4096; chờ duyệt pilot.
 > Báo cáo: `V1847_agent2.md`.
@@ -46,10 +50,11 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.48** · **Tệp đặc tả**: `V1848_agent0.md` + `DECISIONS.md` mục V18.48 ·
-**Commit gốc của vòng**: `5598514` · **Trạng thái**: **ĐANG LÀM** — pilot, không đổi production.
+**Commit gốc của vòng**: `5598514` · **Code cuối trước hồ sơ**: `338bd47` ·
+**Trạng thái**: **DỪNG — ĐÓNG BĂNG LẠI** — giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: L_con + test → probe 100 chốt w → PILOT/CONTROL 2.000 → A4/A5 → report.
+**Việc tiếp**: không train, không thử w khác; chunk +0,054 chỉ là tín hiệu phụ, muốn theo phải đăng ký vòng mới.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5598514..<commit cuối>`,
 > đối chiếu `V1848_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -88,14 +93,16 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.48 — đang thực thi
+### 4.1 V18.48 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1848.A1 | L_con + unit test | ⏳ |
-| V1848.A3 | Probe 100, chốt w | ⏳ |
-| V1848.A2 | PILOT + CONTROL 2.000 bước | ⏳ |
-| V1848.A4/A5 | Chấm BAK/CR/L1 TF + chunk | ⏳ |
-| — | Báo cáo `V1848_agent2.md` | ⏳ |
+| V1848.A1 | L_con + 5 unit test | ✅ `8a0ec8a` |
+| V1848.A3 | Probe 100, chốt w=1,0338 (22,5 %) | ✅ `8f25e85` |
+| V1848.A2 | PILOT + CONTROL 2.000 bước | ✅ `runs/v1848_{pilot,control}` |
+| V1848.A4 | ΔBAK TF +0,0229; CI [−0,0198; 0,0600] | ❌ **KHÔNG KẾT LUẬN** — đóng băng; `338bd47` |
+| V1848.A5 | Chunk +0,0537 [0,0143; 0,0939]; L1 +0,14 % | ⚪ **tín hiệu phụ** |
+| V1848.A6 | Nghe mù/regression/ngân sách | ⛔ **không mở** |
+| — | Báo cáo `V1848_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.47 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
