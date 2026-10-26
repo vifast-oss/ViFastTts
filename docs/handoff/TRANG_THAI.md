@@ -7,11 +7,12 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.52 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production, không ghi đè dữ liệu.
+> **V18.52 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production, không ghi đè dữ liệu.
 > **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52. **Commit gốc**: `e915b11`.
-> **Bộ dò đuôi không ASR**: vùng từ cuối âm tiết cuối (MFA) đến hết segment; dương khi hữu thanh
-> ≥0,12 s và đỉnh RMS ≥−15 dB so trung vị hữu thanh. Hiệu chỉnh bằng tai trên 40 segment + 8 đối chứng.
-> **V1851.A4 (ASR full) bị thay**; không dùng CER ASR small làm cổng.
+> **Bộ dò đuôi không ASR**: hữu thanh ≥0,12 s + đỉnh RMS ≥−15 dB; 3 unit test pass.
+> **A2**: 40 segment (20+/20−/10 sát ngưỡng) + 8 đối chứng; trang 48 mục, chờ CSV.
+> **Link nghe**: https://centers-alt-higher-leaders.trycloudflare.com/
+> **A3**: quét toàn bộ đang chạy nền, **chưa tổng hợp**; chỉ báo nếu A2 ĐẠT.
 >
 > **V18.51 (27/10/2026, lịch sử)** — A3 đuôi gap; A5 trượt auto; A4 chưa chạy. Báo cáo: `V1851_agent2.md`.
 >
@@ -45,10 +46,10 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.52** · **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52 ·
-**Commit gốc của vòng**: `e915b11` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
+**Commit gốc của vòng**: `e915b11` · **Trạng thái**: **DỪNG — CHỜ NGƯỜI NGHE** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: bộ dò + unit test → 40 segment + trang A2 → chờ CSV; chạy full nhưng chưa tổng hợp.
+**Việc tiếp**: nghe 48 mục + gửi CSV; A2 ĐẠT mới tổng hợp A3/A4; scan toàn bộ đang chạy nền.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `0fa26e2..<commit cuối>`,
 > đối chiếu `V1851_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -87,14 +88,14 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.52 — đang thực thi
+### 4.1 V18.52 — kết quả tạm
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1852.A1 | Bộ dò đuôi + unit test | ⏳ |
-| V1852.A2 | 40 segment + 8 đối chứng, trang tai | ⏳ |
-| V1852.A3 | Áp toàn bộ (chỉ sau A2 ĐẠT) | ⛔ chờ |
+| V1852.A1 | Bộ dò đuôi + 3 unit test | ✅ xong |
+| V1852.A2 | 40 segment + 8 đối chứng, trang 48 mục | ⏳ **CHỜ CSV** |
+| V1852.A3 | Quét toàn bộ đang chạy nền, chưa tổng hợp | 🔄 |
 | V1852.A4 | Manifest loại bỏ (chỉ khi P0) | ⛔ chờ |
-| — | Báo cáo `V1852_agent2.md` | ⏳ |
+| — | Báo cáo `V1852_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.51 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |

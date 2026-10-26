@@ -640,3 +640,38 @@ không UTMOS; không ONNX.
 ### V1852.C — Không làm
 Không quét ASR full; không dùng CER ASR small làm cổng; không cắt lại audio; không ghi đè dữ liệu/manifest;
 không train/đổi production/ONNX/UTMOS; không mở cổng cũ.
+
+### V1852.A2 — 40 segment hiệu chỉnh + 8 đối chứng
+
+40 segment lấy từ 2.000 segment quét đầu (train/holdout), phân tầng 20 dương/20 âm, 10 sát ngưỡng
+(5 dương/5 âm), seed 1852; chưa nghe trước. 4 đối chứng dương chèn 0,4 s tiếng nói từ clip khác;
+4 đối chứng âm thay đuôi bằng lặng số 0.
+
+| # | id | detector | # | id | detector |
+|---:|---|---|---:|---|---|
+| 1 | `4kyqfOypVWI_0437__s00` | + | 21 | `4kyqfOypVWI_0224__s02` | + |
+| 2 | `4kyqfOypVWI_0346__s02` | + | 22 | `5KnS0TGxWLg_0409__s02` | + |
+| 3 | `5KnS0TGxWLg_0314__s01` | + | 23 | `4kyqfOypVWI_0019__s05` | + |
+| 4 | `5KnS0TGxWLg_0117__s00` | + | 24 | `4kyqfOypVWI_0193__s02` | + |
+| 5 | `4kyqfOypVWI_0041__s01` | + | 25 | `5KnS0TGxWLg_0408__s00` | + |
+| 6 | `4kyqfOypVWI_0258__s04` | − | 26 | `5KnS0TGxWLg_0354__s02` | − |
+| 7 | `4kyqfOypVWI_0024__s02` | − | 27 | `4kyqfOypVWI_0369__s02` | − |
+| 8 | `4kyqfOypVWI_0190__s00` | − | 28 | `5KnS0TGxWLg_0380__s01` | − |
+| 9 | `5KnS0TGxWLg_0015__s00` | − | 29 | `5KnS0TGxWLg_0015__s01` | − |
+| 10 | `4kyqfOypVWI_0177__s01` | − | 30 | `5KnS0TGxWLg_0009__s00` | − |
+| 11 | `4kyqfOypVWI_0289__s01` | + | 31 | `4kyqfOypVWI_0336__s04` | − |
+| 12 | `4kyqfOypVWI_0128__s02` | + | 32 | `5KnS0TGxWLg_0078__s00` | − |
+| 13 | `4kyqfOypVWI_0227__s03` | + | 33 | `4kyqfOypVWI_0188__s00` | − |
+| 14 | `5KnS0TGxWLg_0617__s03` | + | 34 | `4kyqfOypVWI_0242__s02` | − |
+| 15 | `4kyqfOypVWI_0354__s01` | + | 35 | `4kyqfOypVWI_0252__s01` | − |
+| 16 | `5KnS0TGxWLg_0326__s00` | + | 36 | `5KnS0TGxWLg_0020__s01` | − |
+| 17 | `5KnS0TGxWLg_0096__s00` | + | 37 | `4kyqfOypVWI_0215__s02` | − |
+| 18 | `4kyqfOypVWI_0166__s02` | + | 38 | `4kyqfOypVWI_0244__s04` | − |
+| 19 | `5KnS0TGxWLg_0309__s02` | + | 39 | `4kyqfOypVWI_0024__s04` | − |
+| 20 | `4kyqfOypVWI_0149__s02` | + | 40 | `5KnS0TGxWLg_0298__s01` | − |
+
+**Đối chứng dương** (base ← speech source): `4kyqfOypVWI_0289__s01` ← `4kyqfOypVWI_0001__s03`;
+`4kyqfOypVWI_0128__s02` ← `4kyqfOypVWI_0002__s05`; `4kyqfOypVWI_0227__s03` ← `4kyqfOypVWI_0004__s00`;
+`5KnS0TGxWLg_0617__s03` ← `4kyqfOypVWI_0004__s01`.
+**Đối chứng âm** (zero tail): `4kyqfOypVWI_0354__s01`, `5KnS0TGxWLg_0326__s00`,
+`5KnS0TGxWLg_0096__s00`, `4kyqfOypVWI_0166__s02`.
