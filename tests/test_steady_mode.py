@@ -13,6 +13,8 @@ class _Stub(Synthesizer):
 
     def __init__(self) -> None:
         self.sample_rate = 1000  # để đếm mẫu = đếm ms
+        self.default_sharpen_alpha = 0.0
+        self.default_pause_mode = "model"
 
     def _render(self, text, dialect, speed, options, gate_threshold=0.5, sharpen_alpha=0.0,
                 chunk_loudness=False, f0_scale=1.0, duration_clamp=False):
@@ -77,11 +79,15 @@ class _DispatchStub(_Stub):
 
     def __init__(self) -> None:
         super().__init__()
+        self.default_sharpen_alpha = 0.0
+        self.default_pause_mode = "model"
         self.calls: list[str] = []
         self.gates: list[float] = []
+        self.sharpen: list[float] = []
 
     def iter_synthesize(self, text, **kwargs):
         self.calls.append("model")
+        self.sharpen.append(float(kwargs.get("sharpen_alpha", -1)))
         yield np.ones(10, dtype=np.float32), self.sample_rate
 
     def iter_synthesize_steady(self, text, **kwargs):
@@ -114,3 +120,11 @@ def test_synthesize_invalid_pause_mode(tmp_path):
         pass
     else:  # pragma: no cover
         raise AssertionError("Phải raise ValueError")
+
+
+def test_synthesize_uses_config_sharpen_default(tmp_path):
+    """N0 config có thể đặt alpha=1.5; API không truyền alpha vẫn dùng default."""
+    engine = _DispatchStub()
+    engine.default_sharpen_alpha = 1.5
+    engine.synthesize("Một", tmp_path / "alpha.wav")
+    assert engine.sharpen == [1.5]

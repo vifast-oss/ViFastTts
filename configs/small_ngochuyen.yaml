@@ -138,3 +138,9 @@ loss_weights:
   tone: 0.1
   pause_gate: 0.5
   pause_gap: 0.5
+
+# Mặc định suy luận cho N0: làm nét 1,5 (người nghe chọn); model tự ngắt nghỉ.
+# CLI/API có thể override từng lần; fixed pause phải bật rõ bằng --fixed-pauses.
+inference:
+  sharpen_alpha: 1.5
+  pause_mode: model

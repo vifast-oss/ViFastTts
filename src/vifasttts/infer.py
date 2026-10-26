@@ -128,6 +128,9 @@ class Synthesizer:
 
         validate_config(config, "acoustic")
         self.config = config
+        inference = config.get("inference", {}) if isinstance(config, dict) else {}
+        self.default_sharpen_alpha = float(inference.get("sharpen_alpha", 0.0) or 0.0)
+        self.default_pause_mode = str(inference.get("pause_mode", "model"))
         self.device = torch.device(resolve_device(device))
         self.sample_rate = int(config.get("sample_rate", 24000))
         self.vocabs = ComponentVocabs.default()
@@ -334,7 +337,7 @@ class Synthesizer:
         dialect: str = "north",
         speed: float = 1.0,
         gate_threshold: float = 0.5,
-        sharpen_alpha: float = 0.0,
+        sharpen_alpha: float | None = None,
         overrides: dict[str, str] | None = None,
         max_chars: int = 400,
         chunk_loudness: bool = False,
@@ -343,6 +346,9 @@ class Synthesizer:
     ) -> Iterator[tuple[np.ndarray, int]]:
         """Yield (waveform, sample_rate) từng đoạn — gồm cả khoảng nghỉ giữa câu."""
         from vifasttts.frontend.normalizer import NormalizerOptions
+
+        if sharpen_alpha is None:
+            sharpen_alpha = self.default_sharpen_alpha
 
         options = NormalizerOptions(dialect=dialect, exact_overrides=dict(overrides or {}))  # type: ignore[arg-type]
         chunks = chunk_text(text, max_chars=max_chars)
@@ -373,7 +379,7 @@ class Synthesizer:
         dialect: str = "north",
         speed: float = 1.0,
         gate_threshold: float = 0.5,
-        sharpen_alpha: float = 0.0,
+        sharpen_alpha: float | None = None,
         overrides: dict[str, str] | None = None,
         peak_normalize: bool = False,
         max_chars: int = 400,
@@ -381,7 +387,7 @@ class Synthesizer:
         chunk_loudness: bool = False,
         f0_scale: float = 1.0,
         duration_clamp: bool = False,
-        pause_mode: str = "model",
+        pause_mode: str | None = None,
         pause_comma: float = STEADY_PAUSE_COMMA,
         pause_period: float = STEADY_PAUSE_PERIOD,
         pause_default: float = STEADY_PAUSE_DEFAULT,
@@ -395,6 +401,10 @@ class Synthesizer:
         """
         from vifasttts.runtime.postprocess import postprocess
 
+        if sharpen_alpha is None:
+            sharpen_alpha = self.default_sharpen_alpha
+        if pause_mode is None:
+            pause_mode = self.default_pause_mode
         if pause_mode not in ("model", "fixed"):
             raise ValueError("pause_mode phải là 'model' hoặc 'fixed'")
         if pause_mode == "fixed":
@@ -425,7 +435,7 @@ class Synthesizer:
         dialect: str = "north",
         speed: float = 1.0,
         gate_threshold: float = 1.01,
-        sharpen_alpha: float = 0.0,
+        sharpen_alpha: float | None = None,
         overrides: dict[str, str] | None = None,
         max_chars: int = 400,
         pause_comma: float = STEADY_PAUSE_COMMA,
@@ -444,6 +454,8 @@ class Synthesizer:
         """
         from vifasttts.frontend.normalizer import NormalizerOptions
 
+        if sharpen_alpha is None:
+            sharpen_alpha = self.default_sharpen_alpha
         options = NormalizerOptions(dialect=dialect, exact_overrides=dict(overrides or {}))  # type: ignore[arg-type]
         chunks = split_clauses(text, max_chars=max_chars)
         if not chunks:
@@ -497,7 +509,7 @@ class Synthesizer:
         dialect: str = "north",
         speed: float = 1.0,
         gate_threshold: float = 1.01,
-        sharpen_alpha: float = 0.0,
+        sharpen_alpha: float | None = None,
         overrides: dict[str, str] | None = None,
         max_chars: int = 400,
         pause_comma: float = STEADY_PAUSE_COMMA,
@@ -515,6 +527,8 @@ class Synthesizer:
         from vifasttts.frontend.normalizer import NormalizerOptions
         from vifasttts.runtime.postprocess import sharpen_mel
 
+        if sharpen_alpha is None:
+            sharpen_alpha = self.default_sharpen_alpha
         options = NormalizerOptions(dialect=dialect, exact_overrides=dict(overrides or {}))  # type: ignore[arg-type]
         hop = 256
         for chunk in chunk_text(text, max_chars=max_chars):
@@ -546,7 +560,7 @@ class Synthesizer:
         dialect: str = "north",
         speed: float = 1.0,
         gate_threshold: float = 1.01,
-        sharpen_alpha: float = 0.0,
+        sharpen_alpha: float | None = None,
         overrides: dict[str, str] | None = None,
         peak_normalize: bool = False,
         max_chars: int = 400,
@@ -557,6 +571,9 @@ class Synthesizer:
     ) -> tuple[int, int]:
         """Ghép các câu đã đọc trọn (pause chèn qua gaps), ghi WAV."""
         from vifasttts.runtime.postprocess import postprocess
+
+        if sharpen_alpha is None:
+            sharpen_alpha = self.default_sharpen_alpha
 
         pieces = [audio for audio, _ in self.iter_synthesize_sentence(
             text, dialect=dialect, speed=speed, gate_threshold=gate_threshold,
@@ -578,7 +595,7 @@ class Synthesizer:
         dialect: str = "north",
         speed: float = 1.0,
         gate_threshold: float = 1.01,
-        sharpen_alpha: float = 0.0,
+        sharpen_alpha: float | None = None,
         overrides: dict[str, str] | None = None,
         peak_normalize: bool = False,
         max_chars: int = 400,
@@ -593,6 +610,8 @@ class Synthesizer:
         """Ghép các mảnh "đọc đều" (pause cố định theo dấu câu), ghi WAV."""
         from vifasttts.runtime.postprocess import postprocess
 
+        if sharpen_alpha is None:
+            sharpen_alpha = self.default_sharpen_alpha
         pieces = [audio for audio, _ in self.iter_synthesize_steady(
             text, dialect=dialect, speed=speed, gate_threshold=gate_threshold,
             sharpen_alpha=sharpen_alpha, overrides=overrides, max_chars=max_chars,

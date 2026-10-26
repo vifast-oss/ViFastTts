@@ -18,8 +18,9 @@
 > **Ngắt nghỉ**: mặc định model tự nghỉ (`pause_mode="model"`); nghỉ cố định chỉ khi
 > `--fixed-pauses` / `pause_mode="fixed"` (mặc định tắt). Vocos fine-tune đã loại vì rè.
 > **Nghe**: https://instant-weblogs-reductions-separated.trycloudflare.com/
-> **Research release**: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-small-research-v1
-> (asset `n0_ngochuyen_small_research_v1.zip`; CC-BY-NC-4.0, không production).
+> **Releases**: prod candidate nội bộ `n0-ngochuyen-prod-v1` · research
+> `n0-ngochuyen-research-v1` — cả hai CC-BY-NC-4.0, **không production thương mại**;
+> release audio test cũ đã xoá.
 >
 > **V18.52 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production, không ghi đè dữ liệu.
 > **Tệp đặc tả**: `V1852_agent0.md` + `DECISIONS.md` mục V18.52. **Commit gốc**: `e915b11`.

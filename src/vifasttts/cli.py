@@ -344,8 +344,8 @@ def synthesize_cmd(
     pause_period: float = typer.Option(0.55, "--pause-period", help="Nghỉ sau chấm/hỏi/than (giây, --steady)"),
     pause_default: float = typer.Option(0.08, "--pause-default",
                                         help="Nghỉ mặc định khi mảnh không có dấu câu (giây, --steady)"),
-    sharpen_alpha: float = typer.Option(0.0, "--sharpen-alpha",
-                                         help="Làm nét mel = sh25 (1.5 = mức người dùng chọn; 0 = tắt)"),
+    sharpen_alpha: float | None = typer.Option(None, "--sharpen-alpha",
+                                                help="Làm nét mel; mặc định lấy config (N0=1.5, cũ=0)"),
     vocoder_checkpoint: str | None = typer.Option(None, help="Checkpoint vocoder (tùy chọn)"),
     overrides: str | None = typer.Option(None, help="File JSON 'mặt chữ: cách đọc'"),
     peak_normalize: bool = typer.Option(False, "--peak-normalize", help="Chuẩn hoá đỉnh -3 dBFS"),
@@ -371,6 +371,8 @@ def synthesize_cmd(
     fixed = bool(steady or fixed_pauses)
     gate = gate_threshold if gate_threshold is not None else (1.01 if fixed else 0.5)
     engine = Synthesizer(load_config(config), checkpoint, vocoder_checkpoint, device=device)
+    if sharpen_alpha is None:
+        sharpen_alpha = engine.default_sharpen_alpha
     overrides_dict = load_overrides(overrides) if overrides else None
     if (fixed and steady_mode == "sentence") or sentence:
         samples, sample_rate = engine.synthesize_sentence(
