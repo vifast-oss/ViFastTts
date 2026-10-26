@@ -23,7 +23,7 @@ def parse_set(text: str) -> set[int]:
 
 def jaccard(a: set[int], b: set[int]) -> float:
     union = a | b
-    return len(a & b) / len(union) if union else 0.0
+    return len(a & b) / len(union) if union else 1.0
 
 
 def ci(values: list[float]) -> list[float]:
