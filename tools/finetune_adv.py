@@ -38,6 +38,7 @@ from torch.utils.data import DataLoader
 
 from vifasttts.data.dataset_v2 import SameNBatchSampler, SlotDataset, collate_slot_batch
 from vifasttts.data.features import mel_filterbank
+from vifasttts.models.contrast_loss import contrast_loss
 from vifasttts.models.discriminators import (
     MultiScaleMelDiscriminator,
     feature_matching_loss,
@@ -188,6 +189,8 @@ def main() -> None:
                         help="E1: L1 trên log tổng năng lượng mel tuyến tính (neo mức to tuyệt đối)")
     parser.add_argument("--lowband-weight", type=float, default=0.0,
                         help="E2: hệ số nhân L1 dải 0–1 kHz (mặc định 2.0 khi bật)")
+    parser.add_argument("--contrast-weight", type=float, default=0.0,
+                        help="V1848: hệ số L_con độ tương phản phổ ≤4 kHz (0 = tắt)")
     parser.add_argument("--ramp-steps", type=int, default=0)
     parser.add_argument("--d-warmup", type=int, default=300)
     parser.add_argument("--lambda-every", type=int, default=50)
@@ -247,6 +250,7 @@ def main() -> None:
     centers = np.array([freqs[bank[i] > 0].mean() if (bank[i] > 0).any() else 0 for i in range(100)])
     band = (centers >= 2000) & (centers <= 6000)
     lowband_idx = torch.tensor(np.where(centers <= 1000.0)[0], device=device, dtype=torch.long)
+    contrast_idx = torch.tensor(np.where(centers <= 4000.0)[0], device=device, dtype=torch.long)
     mel_stats = json.loads(Path("data/codelung/mel_stats.json").read_text(encoding="utf-8"))
     mel_mean_t = torch.tensor(mel_stats["mean"], device=device, dtype=torch.float32)
     mel_std_t = torch.tensor(mel_stats["std"], device=device, dtype=torch.float32)
@@ -275,7 +279,7 @@ def main() -> None:
     val_log = out / "val_log.csv"
     with train_log.open("w", newline="") as fh:
         csv.writer(fh).writerow(["step", "rec", "mel", "mel_pre", "mel_sharp", "adv", "fm", "adv_eff", "lam",
-                                 "grad_ratio", "d_loss", "d_acc", "energy", "lowband", "sec"])
+                                 "grad_ratio", "d_loss", "d_acc", "energy", "lowband", "contrast", "sec"])
     with val_log.open("w", newline="") as fh:
         csv.writer(fh).writerow(["step", "live_val", "live_gv", "live_gv26", "ema_val", "ema_gv", "ema_gv26"])
 
@@ -297,7 +301,9 @@ def main() -> None:
             # E1/E2: neo mức to TUYỆT ĐỐI của từng frame (D chỉ nhìn crop 64 frame nên không thấy).
             energy_loss = torch.zeros((), device=device)
             lowband_loss = torch.zeros((), device=device)
-            if args.energy_weight > 0 or args.lowband_weight > 0:
+            contrast_value = torch.zeros((), device=device)
+            if (args.energy_weight > 0 or args.lowband_weight > 0
+                    or args.contrast_weight > 0):
                 frames_e = min(outputs["mel"].size(1), moved["mel"].size(1))
                 steps_e = torch.arange(frames_e, device=device).view(1, -1)
                 valid_e = steps_e < moved["frame_lengths"].unsqueeze(1)
@@ -310,6 +316,8 @@ def main() -> None:
                     e_real = torch.logsumexp(real_z * mel_std_t + mel_mean_t, dim=-1)
                     energy_loss = (e_pred - e_real).abs()[voice_e].mean()
                     lowband_loss = (pred_z[..., lowband_idx] - real_z[..., lowband_idx]).abs().mean(-1)[voice_e].mean()
+                    if args.contrast_weight > 0:
+                        contrast_value = contrast_loss(pred_z, real_z, voice_e, contrast_idx)
             gap = gap_mask(outputs["slot_durations"])[:, :outputs["mel"].size(1)]
             real_c, fake_c = sample_crops(moved["mel"], outputs["mel"], gap, rng,
                                           lengths=moved["frame_lengths"])
@@ -364,7 +372,8 @@ def main() -> None:
                 weight = args.adv_weight if args.adv_mode == "fixed" else (lam or 0.0)
                 eff = ramp * weight
                 total = (rec + eff * g_adv + ramp * args.fm_weight * g_fm
-                         + args.energy_weight * energy_loss + args.lowband_weight * lowband_loss)
+                         + args.energy_weight * energy_loss + args.lowband_weight * lowband_loss
+                         + args.contrast_weight * contrast_value)
                 opt_g.zero_grad(set_to_none=True)
                 if torch.isfinite(total):
                     total.backward()
@@ -387,7 +396,7 @@ def main() -> None:
                                              f"{float(g_adv):.4f}", f"{float(g_fm):.4f}", f"{eff:.4f}",
                                              f"{(lam or 0.0):.4f}", f"{grad_ratio:.4f}", f"{d_value:.4f}", f"{d_acc:.4f}",
                                              f"{float(energy_loss):.4f}", f"{float(lowband_loss):.4f}",
-                                             f"{time.time() - t0:.0f}"])
+                                             f"{float(contrast_value):.4f}", f"{time.time() - t0:.0f}"])
             if step % args.val_every == 0 or step >= args.max_steps:
                 ev = evaluate_live_and_ema(model, val_batches, band, ema)
                 with val_log.open("a", newline="") as fh:
