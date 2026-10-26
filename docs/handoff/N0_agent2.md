@@ -137,3 +137,17 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 - Nhận xét người nghe: **“model mới đọc như thật, không rè, không nhiễu”**.
 - Kết luận: giữ **Vocos mặc định** cho acoustic mới. Vocos fine-tune 10k chỉ là ứng viên riêng
   (`/new_vocos`), chưa được tai xác nhận; **không đưa vào production**.
+
+## 9. Câu mới ngoài train — kiểm Vocos (27/10/2026)
+
+- 10 câu tự soạn, **không có trong train/val/holdout**; kiểm 5-gram trên toàn bộ manifest:
+  **0 trùng** cho cả 10 câu.
+- Cùng acoustic `best.pt`, chỉ đổi vocoder; trang:
+  `https://instant-weblogs-reductions-separated.trycloudflare.com/fresh/`
+- Người dùng nghe: **Vocos fine-tune 10k còn vị rè**; bản mặc định sạch hơn.
+- Đo lại 10 câu (cùng extractor): fine-tune vs mặc định:
+  jitter mean **0,0664 vs 0,0630** (p95 0,264 vs 0,242);
+  glottalization mean **0,00486 vs 0,00227**; HNR gần nhau (0,755 vs 0,763).
+  Xu hướng khớp tai: fine-tune hơi “rè/ghé” hơn.
+- **Quyết định: giữ Vocos pretrained mặc định**; Vocos fine-tune không đưa vào production/demo chính.
+  File fine-tune vẫn để đối chiếu, không xoá.

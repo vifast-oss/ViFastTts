@@ -119,3 +119,11 @@ production/ONNX**.
 - A/B dùng **Vocos pretrained mặc định**, không dùng Vocos fine-tune.
 - Nhận xét: đọc như thật, không rè, không nhiễu.
 - **Quyết định tạm**: giữ Vocos mặc định; Vocos fine-tune 10k chỉ để nghe riêng, chưa chốt.
+
+## 9. Câu mới ngoài train — chốt Vocos (27/10/2026)
+
+- 10 câu tự soạn, 5-gram trùng với train/val/holdout = **0**.
+- Nghe: **Vocos fine-tune 10k còn rè**; bản pretrained mặc định sạch hơn.
+- Đo 10 câu: jitter mean 0,0664 (fine-tune) vs **0,0630** (mặc định);
+  glottalization 0,00486 vs **0,00227**; HNR 0,755 vs 0,763.
+- **Chốt: dùng Vocos pretrained mặc định**; fine-tune chỉ giữ để đối chiếu.
