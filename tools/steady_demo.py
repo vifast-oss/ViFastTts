@@ -47,6 +47,8 @@ def main() -> None:
     parser.add_argument("--device", default="cpu", help="cpu (mặc định) | mps | cuda")
     parser.add_argument("--sharpen-alpha", type=float, default=0.0,
                         help="làm nét mel (production = 1,5 — sh25, §33)")
+    parser.add_argument("--vocoder", default=None,
+                        help="checkpoint vocoder riêng (mặc định: lấy từ config)")
     parser.add_argument("--gate", type=float, default=0.5, help="Ngưỡng gate của bản normal")
     parser.add_argument("--steady-gate", type=float, default=0.999,
                         help="Ngưỡng gate của bản flat/steady (chặn pause model học)")
@@ -69,7 +71,8 @@ def main() -> None:
     for sub in ("normal", "flat", "steady"):
         (out / sub).mkdir(parents=True, exist_ok=True)
 
-    engine = Synthesizer(config, args.checkpoint, device=args.device)
+    engine = Synthesizer(config, args.checkpoint, vocoder_checkpoint=args.vocoder,
+                         device=args.device)
     sample_rate = engine.sample_rate
     for row in rows:
         rid = str(row["id"])
