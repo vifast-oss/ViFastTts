@@ -7,17 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.49 (26/10/2026) — DỪNG — TAI KHÔNG PHÂN BIỆT.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49. **Commit gốc**: `74ed53c`.
-> **Code cuối trước hồ sơ**: `9d917e7`. Báo cáo: `V1849_agent2.md`.
-> - **A2 ĐẠT**: ΔBAK chunk **+0,1121** (CI [0,0569; 0,1715]); ΔCR **+0,0841** (CI [0,0776; 0,0878]).
-> - **A3**: PILOT **1** · CONTROL **0** · hòa **15**; phiên hợp lệ nhưng chỉ **1 lượt không hòa** ⇒
->   **"TAI KHÔNG PHÂN BIỆT"**; dương 3/4, âm 4/4, lặp 4/4.
-> - **A4**: chỉ A2 đạt ⇒ **không đổi production, không thành ứng viên**; không đóng L_con
->   (CONTROL không thắng rõ).
+> **V18.50 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50. **Commit gốc**: `3dc3ae2`.
+> **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang đánh dấu 66 mục
+> (20 câu × P2/PILOT/B + 3 lặp + 3 cấy click), chọn âm tiết; A3 tách nguồn, A4 đặc trưng.
+> Không train; chưa đổi production.
 >
-> **V18.48 (26/10/2026, lịch sử)** — pilot L_con: A4 không kết luận, đóng băng lại.
-> Báo cáo: `V1848_agent2.md`.
+> **V18.49 (26/10/2026, lịch sử)** — A2 tái lập +0,1121; A3 tai không phân biệt; giữ P2.
+> Báo cáo: `V1849_agent2.md`.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -48,15 +45,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.49** · **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49 ·
-**Commit gốc của vòng**: `74ed53c` · **Code cuối trước hồ sơ**: `9d917e7` ·
-**Trạng thái**: **DỪNG — TAI KHÔNG PHÂN BIỆT** — không train, giữ P2, ONNX đóng băng.
+**Vòng hiện hành**: **V18.50** · **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 ·
+**Commit gốc của vòng**: `3dc3ae2` · **Trạng thái**: **ĐANG LÀM** — không train, không đổi production.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: không đổi production; PILOT không thành ứng viên; muốn tiếp cần thiết kế tai mới + đăng ký trước.
+**Việc tiếp**: sinh 66 mục → dựng trang đánh dấu/gửi link → chuẩn bị bảng A4 → chờ CSV.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `74ed53c..<commit cuối>`,
-> đối chiếu `V1849_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `3dc3ae2..<commit cuối>`,
+> đối chiếu `V1850_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -92,7 +88,16 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.49 — kết quả
+### 4.1 V18.50 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1850.A2 | Trang đánh dấu 66 mục, 20 câu | ⏳ |
+| V1850.A3 | Tỉ lệ âm tiết bị bấm theo nguồn | ⏳ |
+| V1850.A4 | Bảng đặc trưng âm tiết P2 + AUC | ⏳ |
+| V1850.A5 | Hướng xử lý (sau A3/A4) | ⏳ |
+| — | Báo cáo `V1850_agent2.md` | ⏳ |
+
+### 4.2 V18.49 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1849.A2 | Tái lập chunk 40 câu mới | ✅ **ĐẠT** — ΔBAK +0,1121; ΔCR +0,0841; `9e9df51` |

@@ -472,3 +472,61 @@ khi đó PILOT không đáng đổi production. Một người nghe; không suy 
 ### V1849.E — Giả định
 Checkpoint EMA PILOT/CONTROL 2.000 còn lưu; còn ≥25 câu held-out dài chưa dùng; chi phí ~1 giờ máy
 cộng ~15 phút nghe.
+
+## V18.50 — Agent 0 (27/10/2026, sau report V18.49)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.50. **Không train, không đổi production.**
+> Không amend/force-push; mọi sửa là commit mới trước kết quả đầu tiên.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1850.A0 | Chấp nhận V18.49: A2 ĐẠT, A3 "tai không phân biệt", PILOT không thành ứng viên, P2 giữ. **Đóng dòng L_con/rè nền**: không thử thêm w, không chạy dài. Giữ checkpoint PILOT/CONTROL để tham chiếu. Duyệt TỰ QUYẾT V18.49. | Không |
+| V1850.A1 | Ghi nhận quan sát mới: nền đã sạch ở một số câu nhưng **vẫn có rè cục bộ ở một số từ**. Đây là hiện tượng khác rè nền; BAK (toàn câu) và câu hỏi "rè nền" không nhắm tới nó. Mở dòng **"rè cục bộ theo âm tiết"**. | Không |
+| V1850.A2 | Trang **ĐÁNH DẤU** rè cục bộ (không A/B). 20 câu held-out dài chưa dùng V18.43–V18.49 (≥3 s, ≥12 âm tiết, tối đa 4 câu/video, chọn không xem số liệu). Mỗi câu 3 bản: **P2 chunk, PILOT chunk, B** (Vocos mel gốc, thời lượng gốc) = 60 mục, xáo trộn seed 1850, ẩn tên, −16 LUFS. Thêm 6 đối chứng: **3 lặp** (cùng file, xuất hiện 2 lần) + **3 B cấy click/buzz 50 ms** vào 1 âm tiết biết trước. Mỗi mục hiển thị văn bản tách nút theo âm tiết; bấm nhiều hoặc không bấm; nghe lại tự do; CSV (id mục, chỉ số âm tiết). | Phiên hợp lệ khi: cấy nhân tạo bấm đúng ±1 âm tiết ở ≥2/3 mục; lặp có Jaccard tập bấm ≥0,5 ở ≥2/3 cặp. Không hợp lệ ⇒ làm lại khác ngày. |
+| V1850.A3 | Phân tích nguồn: tỉ lệ âm tiết bị bấm `r(X)` cho X∈{B,P2,PILOT}, bootstrap theo câu 10.000. **Acoustic** khi `r(P2)−r(B)` cận dưới CI95 >0 **và** `r(B) ≤0,5×r(P2)`. **Vocoder/dữ liệu** khi `r(B) ≥0,7×r(P2)`. Ở giữa: "hỗn hợp". Báo `r(PILOT)−r(P2)` + CI để tham khảo, không phải cổng. | `r(P2) <2%` ⇒ "hiếm", báo, không làm A4. |
+| V1850.A4 | Đặc trưng âm tiết bị bấm (chỉ P2): HNR, flatness 2–8 kHz, CR cục bộ ≤4 kHz, bước nhảy F0 tại biên, thời lượng (dự đoán/gốc), vị trí so với biên chunk, loại vần (coda tắc p/t/c/ch), thanh điệu, OOV/viết tắt/số. Mỗi đặc trưng AUC + CI95 bootstrap theo câu. | "Liên quan" khi AUC ≥0,70 và cận dưới CI95 >0,55 (hoặc ≤0,30 chiều ngược). **Số âm tiết bị bấm <30 ⇒ chỉ bảng mô tả, không kết luận.** |
+| V1850.A5 | Hướng xử lý chỉ A0 chốt **sau** A3+A4; **không train trong vòng này**. | Không |
+
+### V1850.A2 — 20 câu dài mới
+
+Nguồn holdout; loại 200 câu V18.43–V18.49; ≥3 s, ≥12 âm tiết; tối đa 4/video; chọn 2 câu dài nhất/video
++ 4 câu dài nhất còn lại; không xem số liệu.
+
+| # | id | giây | âm tiết | # | id | giây | âm tiết |
+|---:|---|---:|---:|---:|---|---:|---:|
+| 1 | `2b65WyiFC9k_0175__s01` | 9,44 | 43 | 11 | `o8RjAmBtyZo_0130__s02` | 4,91 | 14 |
+| 2 | `2b65WyiFC9k_0040__s00` | 9,42 | 38 | 12 | `o8RjAmBtyZo_0088__s01` | 4,86 | 17 |
+| 3 | `4ITcvEa_Acc_0216__s01` | 9,13 | 39 | 13 | `vEtfty4Cc6Y_0310__s01` | 7,19 | 34 |
+| 4 | `4ITcvEa_Acc_0099__s00` | 9,10 | 43 | 14 | `vEtfty4Cc6Y_0268__s01` | 7,04 | 32 |
+| 5 | `BD83pScFukQ_0009__s00` | 8,81 | 32 | 15 | `z0zSgR_oie4_0193__s02` | 9,71 | 36 |
+| 6 | `BD83pScFukQ_0093__s00` | 8,73 | 44 | 16 | `z0zSgR_oie4_0051__s01` | 9,65 | 37 |
+| 7 | `EM_ObHWvd94_0243__s00` | 9,24 | 42 | 17 | `EUNlJU1BuzE_0289__s00` | 9,98 | 44 |
+| 8 | `EM_ObHWvd94_0206__s01` | 9,00 | 39 | 18 | `EUNlJU1BuzE_0069__s00` | 9,96 | 48 |
+| 9 | `EUNlJU1BuzE_0196__s00` | 10,05 | 51 | 19 | `z0zSgR_oie4_0245__s00` | 9,60 | 46 |
+| 10 | `EUNlJU1BuzE_0300__s00` | 10,04 | 48 | 20 | `z0zSgR_oie4_0040__s00` | 9,59 | 39 |
+
+**Vị trí cấy nhân tạo** (lưu ngoài thư mục phục vụ, không hiện trên trang):
+
+| Câu | id | âm tiết (1-based) | start (s) | burst |
+|---|---:|---:|---:|---|
+| 1 | `2b65WyiFC9k_0175__s01` | 22 | 4,267 | click/buzz 50 ms |
+| 7 | `EM_ObHWvd94_0243__s00` | 21 | 4,629 | click/buzz 50 ms |
+| 9 | `EUNlJU1BuzE_0196__s00` | 26 | 4,000 | click/buzz 50 ms |
+
+**3 mục lặp** (cùng file, xuất hiện 2 lần): P2 câu 1 · PILOT câu 2 · B câu 3.
+
+### V1850.B — Việc giao Agent 2
+1. Commit V1850.* + danh sách 20 + vị trí cấy (commit mới).
+2. Sinh audio P2/PILOT/B + controls, dựng trang đánh dấu, gửi link.
+3. Chuẩn bị bảng đặc trưng A4 (căn chỉnh theo thời lượng), chưa nối nhãn.
+4. Có CSV: chấm hợp lệ, A3, A4; report + `git log --oneline`.
+
+### V1850.C — Không làm
+Không train, không đổi production, không thử L_con; không UTMOS; không động ONNX.
+
+### V1850.D — Rủi ro
+Một người nghe; đánh dấu theo âm tiết lặp lại thấp hơn A/B (đã có đối chứng lặp + cấy).
+Căn chỉnh âm tiết trên đường chunk dựa vào thời lượng dự đoán, có thể lệch ±1.
+
+### V1850.E — Giả định
+Còn ≥20 câu held-out dài chưa dùng (thiếu thì tối thiểu 12, báo). Thời gian nghe 25–35 phút cho 66 mục.
