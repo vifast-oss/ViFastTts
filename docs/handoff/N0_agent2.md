@@ -128,3 +128,12 @@ SAC là thanh yếu nhất, giống xu hướng dữ liệu cũ nhưng mức tuy
 
 **Trạng thái: DỪNG — CHỜ NGƯỜI NGHE.** Nếu nghe đạt: chốt `best.pt` + `vocoder_ngochuyen/last.pt`.
 Nếu cần production: xử lý license trước; không tự chuyển.
+
+## 8. Kết quả tai — A/B (27/10/2026)
+
+- CSV 24/24 câu, không thiếu, không “hòa”: **model mới 24 · P2 zero-shot 0**.
+- **A/B dùng Vocos pretrained mặc định** `artifacts/pretrained/vocos-mel-24khz/pytorch_model.bin`,
+  không dùng Vocos fine-tune.
+- Nhận xét người nghe: **“model mới đọc như thật, không rè, không nhiễu”**.
+- Kết luận: giữ **Vocos mặc định** cho acoustic mới. Vocos fine-tune 10k chỉ là ứng viên riêng
+  (`/new_vocos`), chưa được tai xác nhận; **không đưa vào production**.

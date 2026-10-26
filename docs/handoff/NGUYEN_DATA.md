@@ -112,3 +112,10 @@ production/ONNX**.
 - P2 zero-shot: `/p2/index.html`
 - Link public: `https://instant-weblogs-reductions-separated.trycloudflare.com/`
 
+
+## 8. Tai người — A/B (27/10/2026)
+
+- 24/24 câu: **model mới thắng 24, P2 zero-shot 0, hòa 0** (CSV người dùng).
+- A/B dùng **Vocos pretrained mặc định**, không dùng Vocos fine-tune.
+- Nhận xét: đọc như thật, không rè, không nhiễu.
+- **Quyết định tạm**: giữ Vocos mặc định; Vocos fine-tune 10k chỉ để nghe riêng, chưa chốt.
