@@ -386,3 +386,13 @@ không động ONNX; không UTMOS; không cấy ghép frame; không đưa hậu 
 ### V1848.C — Không làm
 Không đổi production; không quá 2.000 bước; không thử w thứ hai sau kết quả; không UTMOS;
 không động ONNX; không cấy ghép frame.
+
+### V1848.A3 — trọng số `w` chốt TRƯỚC pilot
+
+- Probe 100 bước, `--contrast-weight 0.1`, `d_warmup=10`, seed 42, P2 EMA.
+- Trung bình 50 bước cuối (log mỗi 10): `rec` **1,52105** · `contrast` **0,39354** ·
+  `adv` **−0,39904** · `adv_eff` **0,3**.
+- Chọn **`w = 1,0338`** để `L_con` chiếm **22,5 %** tổng loss
+  (`w·contrast / (rec + eff·adv + w·contrast)`).
+- File probe: `runs/v1848_probe/`; log `train_log.csv`.
+- Chưa chạy PILOT/CONTROL tại thời điểm ghi mục này.
