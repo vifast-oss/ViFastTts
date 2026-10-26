@@ -1,6 +1,6 @@
 # V18.44 — Agent 2: đóng băng ONNX, hiệu chuẩn giám khảo, cấy ghép oracle, nghe mù
 
-> **Trạng thái: DỪNG, CHỜ ĐỌC + CHỜ NGHE A5.** Không train, không đổi production.
+> **Trạng thái: DỪNG, CHỜ ĐỌC — A5 đã XÁC NHẬN; A6 lạ; A7 chưa mở.** Không train, không đổi production.
 > **Commit gốc của vòng**: `5405188` · **Code cuối trước hồ sơ**: `161a599`
 > · **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44.
 > Báo cáo này là commit hồ sơ.
@@ -15,8 +15,8 @@
 | V1844.A3 | Bootstrap hai tầng vẫn lệch: CI **[0,0035; 0,1429]** không chứa 0 ⇒ **UTMOS bị loại khỏi luật quyết định**; BAK tất định | **XONG** (`441b1de`) |
 | V1844.A4 | **Đóng lead g1_1k** | **XONG** (`3e1ae46`) |
 | V1844.A6 | Đối chứng C_all/C_none **đạt tuyệt đối**; nhưng tổng Recovery frame **−0,85** ⇒ **LẠ, DỪNG** | **XONG** (`09cb383`) |
-| V1844.A5 | 28 lượt nghe mù đã dựng + link; **chờ CSV** để chấm | **CHỜ NGƯỜI NGHE** (`161a599`) |
-| V1844.A7 | Cổng V18.45 **chưa mở** (A5 chưa có; A6 lạ; chưa duyệt ngân sách) | **ĐÓNG** |
+| V1844.A5 | **XÁC NHẬN** — B thắng **16/16**; phiên hợp lệ (dương 4/4, âm 4/4, lặp 4/4) | **XONG** (`161a599`) |
+| V1844.A7 | Cổng V18.45 **chưa mở**: A5 đạt, nhưng A6 lạ và chưa duyệt ngân sách | **ĐÓNG** |
 
 ## 1. A1 — đóng băng ONNX
 
@@ -117,17 +117,28 @@ Bootstrap 10.000 lần; tầng 1 lấy lại câu, tầng 2 lấy lại seed tro
 .venv/bin/python tools/v1844_a5_score.py <đường_dẫn_csv>
 ```
 
-- **Chưa có CSV ⇒ chưa kết luận.** Luật: hợp lệ khi dương ≥3/4, âm ≥3/4, lặp ≥3/4;
-  B thắng khi binomial một phía p<0,05, ≥10 lượt không hòa (16 lượt cần ≥12).
-- Nếu phiên không hợp lệ: làm lại ngày khác. Nếu B không thắng: **không train theo BAK**,
-  báo A0; có thể rè người dùng nghe nằm ở chunk/fade/loudness.
+- **Kết quả CSV** (`artifacts/bench/v1844_a5/score.json`), 28/28 lượt trả lời, không thiếu:
+
+| Hạng mục | Kết quả | Luật | Kết |
+|---|---|---|---|
+| 16 lượt B vs C | **B 16 · C 0 · hòa 0**; binomial một phía **p = 1,5e-05** | ≥12/16, p<0,05 | **B thắng** |
+| 4 đối chứng dương | **4/4** chọn bản sạch | ≥3/4 | đạt |
+| 4 đối chứng âm | **4/4** "không phân biệt" | ≥3/4 | đạt |
+| 4 lượt lặp | **4/4** nhất quán | ≥3/4 | đạt |
+
+- **Kết luận A5: XÁC NHẬN.** Trên 16 câu có khoảng cách BAK lớn nhất, tai người chọn **B (mel gốc → Vocos)**
+  là ít rè hơn **C (mel P2 → Vocos)** 16/16; phiên hợp lệ đầy đủ.
+- Ý nghĩa: **BAK đúng hướng với tai** trên bộ này ⇒ BAK dùng được làm thước định hướng.
+  Giới hạn: một người nghe, 16 câu cực đoan, không suy rộng cho mọi câu/nền tạp.
+- Vì A5 xác nhận BAK, kết quả A6 "lạ" nhiều khả năng do **artefact chỗ nối frame** hoặc BAK không tuyến tính,
+  **không phải** BAK "điếc". Vẫn phải thiết kế lại A6 (ghép có overlap/crossfade) trước khi kết luận vị trí.
 
 ## 6. A7 — cổng V18.45
 
 Chưa mở, vì:
-1. A5 chưa có CSV/kết luận.
-2. A6 **lạ**, không có thành phần chính sạch.
-3. Ngân sách train chưa được người dùng duyệt.
+1. A5 **đã đạt** (XÁC NHẬN) — điều kiện này đã thỏa.
+2. A6 **lạ**, không có thành phần chính sạch ⇒ chưa thỏa.
+3. Ngân sách train chưa được người dùng duyệt ⇒ chưa thỏa.
 
 Ngân sách khi mở (nếu đủ): probe 100 bước → pilot 2.000 bước (~15 phút) có cổng BAK TF
 đặt trước → tối đa 60.000 bước (~7 giờ). Giả thuyết/kiến trúc V18.45 do A0 chốt sau A5+A6.
@@ -148,17 +159,20 @@ Ngân sách khi mở (nếu đủ): probe 100 bước → pilot 2.000 bước (~
 7. **A5 key**: lưu ngoài thư mục phục vụ (`artifacts/bench/v1844_a5/key.json`) để không lộ đáp án.
 8. **A5 link**: dùng http.server + cloudflared quick tunnel, không dùng `serve_listen_demo.sh`
    (script đó tự chọn port 8788 và có thể đụng server cũ).
+9. **A5 CSV**: chấm đúng file người dùng gửi, không sửa đáp án; `score.json` lưu local
+   (`artifacts/bench/v1844_a5/score.json`).
 
 ## 8. Việc tiếp
 
-1. **Người dùng nghe A5** và gửi CSV; mình chấm theo luật. Kết quả quyết định V18.45 có mở hay không.
-2. **A0 đọc A6**: kết quả "lạ" do tổng frame; cần quyết định có thiết kế lại cấy ghép (ví dụ ghép theo
-   cửa sổ có overlap) hay dừng hướng BAK.
-3. **Không train** cho đến khi A5 xác nhận + A6 có thành phần chính + duyệt ngân sách.
+1. **A5 đã xong**: BAK khớp tai trên 16 câu cực đoan. Không cần nghe lại trừ khi A0 muốn mở rộng mẫu.
+2. **A0 đọc A6**: kết quả "lạ" do tổng frame; A5 đã loại khả năng BAK "điếc", nên khả năng cao là
+   artefact chỗ nối. A0 quyết định có thiết kế lại cấy ghép (overlap/crossfade, ghép theo cửa sổ)
+   hay dừng hướng định vị bằng cấy ghép.
+3. **Không train** cho đến khi A6 có thành phần chính + duyệt ngân sách; A5 không còn là nút chặn.
 4. ONNX giữ đóng băng; mở lại phải chạy parity + A3 từ đầu với hash mới.
 
 ## 9. Test & trạng thái
 
 - `pytest -q -rs`: **2.547 passed, 23 skipped** (mọi skip: "V1844.A1 đóng băng ONNX"), ~42 s.
 - `ruff check .`: sạch.
-- **Trạng thái: DỪNG, CHỜ ĐỌC + CHỜ NGHE A5.**
+- **Trạng thái: DỪNG, CHỜ ĐỌC.** A5 XÁC NHẬN; A6 LẠ; A7 chưa mở (thiếu A6 + ngân sách).

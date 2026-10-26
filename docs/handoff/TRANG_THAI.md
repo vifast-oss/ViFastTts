@@ -13,8 +13,8 @@
 > - **A1b**: A3 trượt **chỉ** vì p95 short **1,2188×**; RSS **0,456×** đã đạt; CV short 0,9 % · mid 0,8 % · long 12,5 %.
 > - **A3**: bootstrap hai tầng **vẫn lệch** (CI [0,0035; 0,1429]) ⇒ **UTMOS bị loại khỏi luật quyết định**, chỉ còn BAK + tai; BAK tất định 10/10.
 > - **A6**: đối chứng C_all/C_none **đạt tuyệt đối**; tổng Recovery frame **−0,85** ⇒ **LẠ, DỪNG**; không chọn `C_lo`.
-> - **A5**: 28 lượt đã dựng, link đã kiểm tra; **chờ CSV**. 16 câu đã ghi vào `DECISIONS.md` trước khi dựng.
-> - **A7**: cổng V18.45 **chưa mở** (A5 chưa có, A6 lạ, chưa duyệt ngân sách).
+> - **A5**: **XÁC NHẬN** — B thắng **16/16** (p=1,5e-05); dương 4/4, âm 4/4, lặp 4/4; BAK khớp tai.
+> - **A7**: cổng V18.45 **chưa mở** — A5 đã đạt, còn thiếu A6 (lạ) + duyệt ngân sách.
 >
 > **V18.43 (26/10/2026, lịch sử)** — Vòng đo, không train, không đổi production.
 > - **A3 TRƯỢT** (lý do duy nhất: p95 short 1,2188×); **A2 phép đo hỏng** (đối chứng âm seed UTMOS lệch 0,0729);
@@ -44,11 +44,11 @@
 
 **Vòng hiện hành**: **V18.44** · **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44 ·
 **Commit gốc của vòng**: `5405188` · **Code cuối trước hồ sơ**: `161a599` ·
-**Trạng thái**: **DỪNG, CHỜ ĐỌC + CHỜ NGHE A5** — không training, giữ P2, ONNX đóng băng.
+**Trạng thái**: **DỪNG, CHỜ ĐỌC** — không training, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: nghe A5 + gửi CSV; A0 đọc A6 lạ; cổng V18.45 chưa mở.
-Link A5: https://reasonably-recipients-selective-solutions.trycloudflare.com/ (quick tunnel).
+**Việc tiếp**: A0 đọc A6 lạ (A5 đã xác nhận BAK); quyết định thiết kế lại cấy ghép hay dừng;
+cổng V18.45 vẫn cần A6 + duyệt ngân sách.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5405188..<commit cuối>`,
 > đối chiếu `V1844_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -96,8 +96,8 @@ Link A5: https://reasonably-recipients-selective-solutions.trycloudflare.com/ (q
 | V1844.A3 | Bootstrap hai tầng vẫn lệch; UTMOS bị loại; BAK tất định | ✅ `441b1de` |
 | V1844.A4 | Đóng lead g1_1k | ✅ `3e1ae46` |
 | V1844.A6 | Cấy ghép oracle — đối chứng đạt, tổng frame −0,85 ⇒ LẠ, dừng | ✅ `09cb383` |
-| V1844.A5 | 28 lượt nghe mù + link; chờ CSV | ⏳ **CHỜ NGHE** (`161a599`) |
-| V1844.A7 | Cổng V18.45 | ⛔ **CHƯA MỞ** |
+| V1844.A5 | **XÁC NHẬN** — B thắng 16/16; phiên hợp lệ | ✅ `161a599` |
+| V1844.A7 | Cổng V18.45: A5 đạt, A6 lạ, chưa duyệt ngân sách | ⛔ **CHƯA MỞ** |
 | — | Báo cáo `V1844_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.43 — kết quả (lịch sử)
