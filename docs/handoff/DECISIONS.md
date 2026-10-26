@@ -175,3 +175,59 @@ Danh sách dưới đây được ghi **trước** khi sinh audio/trang; seed th
 Thiết kế 28 lượt: 16 B-vs-C + 4 dương (B vs B+trắng SNR 30 dB) + 4 âm (C vs C) + 4 lặp
 (4 cặp B/C đầu, đảo A/B). Chuẩn −16 LUFS; vị trí/thứ tự ngẫu nhiên seed 1844; ẩn tên.
 Câu hỏi duy nhất: "Bản nào ít rè nền hơn?" (A / B / không phân biệt).
+
+## V18.45 — Agent 0 (26/10/2026, sau V18.44 + A5)
+
+> **ĐĂNG KÝ TRƯỚC**, hiệu lực trước mọi phép đo V18.45. Phạm vi: không train, không đổi production.
+
+| Mã | Quyết định | Cổng / điều kiện dừng |
+|---|---|---|
+| V1845.A0 | Ghi nhận A5 V18.44: **XÁC NHẬN** (B 16/16, p=1,5e-05; dương 4/4, âm 4/4, lặp 4/4). BAK thành thước **ĐỊNH HƯỚNG chính** cho rè nền. Giới hạn: một người nghe, 16 câu có khoảng cách BAK lớn nhất; không suy rộng cho câu có hiệu BAK nhỏ; kết luận production vẫn cần nghe mù. | Không |
+| V1845.A1 | Duyệt toàn bộ **TỰ QUYẾT KHÁC ĐẶC TẢ** của V18.44. | Không |
+| V1845.A2 | **ĐÓNG họ cấy ghép theo frame** (`C_nuc`, `C_onc`, `C_sil`). **KHÔNG** thiết kế lại bằng overlap/crossfade. Kết quả frame V18.44 **không** dùng để kết luận vị trí rè. Lý do: model không TF F0 ⇒ mel P2 và mel gốc khác cao độ trong cùng frame; ghép frame tạo nhảy cao độ; crossfade trộn hai họa âm ⇒ đúp/phách. Tổng −0,85 và `C_onc` −0,72 khớp cơ chế này. | Không |
+| V1845.A3 | Giữ họ cấy ghép **theo dải tần** (tổng `hi+lo` = 0,78 đã đạt). `C_lo` (Recovery gộp 0,97) là **GIẢ THUYẾT** đến khi qua A4. | Xem A4 |
+| V1845.A4 | Xác nhận `C_lo` trên **40 câu held-out MỚI**, khác hẳn 40 câu A4 V18.43; có wav gốc, TF thời lượng, cùng pipeline A6. Chạy `C_none`, `C_all`, `C_lo`, `C_hi`. Recovery **GỘP**: `(mean BAK(X) − mean BAK(C)) / Δac` của bộ mới. CI95 bootstrap theo câu 10.000 lần, lấy lại tử và mẫu cùng mẫu câu. Không dùng tỉ số từng câu; báo thêm median hiệu `BAK(C_lo) − BAK(C)` theo câu. | **ĐẠT** khi: Δac mới ≥ 0,15; Recovery(`C_lo`) ≥ 0,5; cận dưới CI95 ≥ 0,3; Recovery(lo)+Recovery(hi) ∈ [0,5; 1,5]. Δac <0,15 ⇒ không xác nhận được, báo (không phải lạ). `C_all` lệch B >0,02 hoặc `C_none` lệch C >0,02 ⇒ lạ, dừng. Tổng lo+hi ngoài khoảng ⇒ lạ, dừng. Recovery(hi) ≥0,5 trong khi Recovery(lo) <0,5 ⇒ lạ, dừng, báo. |
+| V1845.A5 | Tách cơ chế dải thấp: **độ mượt theo thời gian hay cao độ**. `C_lo_s`: dải ≤4 kHz lấy từ mel gốc nhưng **làm mượt trục thời gian** (trung bình trượt, cửa sổ lẻ) sao cho GV ratio dải <1 kHz và 1–4 kHz của mel gốc sau làm mượt khớp GV ratio của P2 (sai số ≤0,03). Dải >4 kHz giữ của C. Cửa sổ chỉ chỉnh theo GV, **không** theo BAK; ghi cửa sổ trước khi chấm BAK. Chạy 80 câu (40 cũ + 40 mới). | **Over-smoothing CHÍNH** khi Recovery(`C_lo_s`) ≤ 0,3 × Recovery(`C_lo`). **KHÔNG** phải khi ≥0,7×. Ở giữa: "hỗn hợp". Không có cửa sổ khớp GV ±0,03 ⇒ dùng gần nhất, đánh dấu "xấp xỉ", báo. Recovery(`C_lo_s`) > Recovery(`C_lo`)+0,1 ⇒ lạ, dừng. |
+| V1845.A6 | Đo phụ về cao độ trên 80 câu, frame hữu thanh: RMSE F0 C vs A (cent), tỉ lệ sai hữu thanh/vô thanh, tỉ số độ lệch chuẩn F0 theo câu C/A. Spearman giữa `BAK(B)−BAK(C)` theo câu và từng chỉ số; bootstrap CI95. | Một chỉ số "liên quan" khi **ρ ≥ 0,4** và CI95 không chứa 0. Bộ trích F0 lỗi >10% câu ⇒ bỏ chỉ số đó, báo. |
+| V1845.A7 | Cổng mở vòng có train (thay V1844.A7). Phải ĐỦ: (1) A5 V18.44 XÁC NHẬN (**đã đạt**); (2) V1845.A4 ĐẠT; (3) V1845.A5 "over-smoothing CHÍNH" hoặc "hỗn hợp", **hoặc** V1845.A6 có ≥1 chỉ số cao độ "liên quan"; (4) người dùng duyệt ngân sách. Ngân sách: probe 100 → pilot 2.000 có cổng BAK TF đặt trước → trần 60.000. Kiến trúc do A0 chốt sau A4–A6. | Thiếu bất kỳ điều kiện nào ⇒ không train. |
+
+### V1845.A4 — 40 câu MỚI, chọn trước khi vocode
+
+Nguồn: `data/codelung/v32/holdout_clean_v2_dur_seg_slot4.jsonl`; loại 40 câu A4 V18.43;
+chọn **4 câu/video** (9 video) + 4 câu bổ sung từ video nhiều dòng, step đều trong từng video;
+điều kiện có `frame_range`, có gap ≥3, audio tồn tại. Danh sách dưới đây ghi **trước** khi vocode/chấm BAK.
+(Đã sửa danh sách nháp trước khi vocode vì bản nháp không khớp file chọn thực tế.)
+
+| # | id | # | id |
+|---:|---|---:|---|
+| 1 | `2b65WyiFC9k_0004__s02` | 21 | `VeU_85bZlrY_0034__s00` |
+| 2 | `2b65WyiFC9k_0069__s00` | 22 | `VeU_85bZlrY_0037__s00` |
+| 3 | `2b65WyiFC9k_0154__s00` | 23 | `VeU_85bZlrY_0037__s04` |
+| 4 | `2b65WyiFC9k_0237__s02` | 24 | `VeU_85bZlrY_0129__s01` |
+| 5 | `4ITcvEa_Acc_0014__s00` | 25 | `o8RjAmBtyZo_0002__s00` |
+| 6 | `4ITcvEa_Acc_0055__s01` | 26 | `o8RjAmBtyZo_0075__s02` |
+| 7 | `4ITcvEa_Acc_0142__s00` | 27 | `o8RjAmBtyZo_0130__s01` |
+| 8 | `4ITcvEa_Acc_0193__s02` | 28 | `o8RjAmBtyZo_0178__s01` |
+| 9 | `BD83pScFukQ_0002__s01` | 29 | `vEtfty4Cc6Y_0005__s00` |
+| 10 | `BD83pScFukQ_0097__s00` | 30 | `vEtfty4Cc6Y_0068__s00` |
+| 11 | `BD83pScFukQ_0214__s00` | 31 | `vEtfty4Cc6Y_0162__s03` |
+| 12 | `BD83pScFukQ_0315__s00` | 32 | `vEtfty4Cc6Y_0239__s04` |
+| 13 | `EM_ObHWvd94_0002__s00` | 33 | `z0zSgR_oie4_0001__s00` |
+| 14 | `EM_ObHWvd94_0085__s03` | 34 | `z0zSgR_oie4_0059__s01` |
+| 15 | `EM_ObHWvd94_0177__s00` | 35 | `z0zSgR_oie4_0138__s04` |
+| 16 | `EM_ObHWvd94_0259__s00` | 36 | `z0zSgR_oie4_0204__s00` |
+| 17 | `EUNlJU1BuzE_0002__s00` | 37 | `BD83pScFukQ_0002__s02` |
+| 18 | `EUNlJU1BuzE_0085__s03` | 38 | `vEtfty4Cc6Y_0005__s01` |
+| 19 | `EUNlJU1BuzE_0173__s01` | 39 | `2b65WyiFC9k_0004__s03` |
+| 20 | `EUNlJU1BuzE_0259__s02` | 40 | `z0zSgR_oie4_0001__s02` |
+
+### V1845.B — Việc giao Agent 2
+1. Ghi V1845.* + 40 câu mới; cập nhật TRANG_THAI; commit riêng.
+2. A4: đối chứng `C_all`/`C_none` trước, đạt mới chạy `C_lo`/`C_hi`; báo BAK, Δac, Recovery gộp + CI95.
+3. A5: chọn cửa sổ theo GV, **commit cửa sổ trước khi chấm BAK**; rồi chấm 80 câu.
+4. A6: bảng F0 + Spearman + CI.
+5. Report.
+
+### V1845.C — Không làm
+Không train/probe; không chạy lại/thiết kế lại cấy ghép frame; không chỉnh cửa sổ theo BAK;
+không dùng UTMOS; không đưa hậu xử lý mel vào production; không động ONNX.

@@ -7,14 +7,15 @@
 > 4. Nếu ONNX không nhanh/nhẹ hơn đáng kể, nhánh ONNX sẽ đóng; nếu đạt, có thể bật ở V18.45.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.44 (26/10/2026) — DỪNG, CHỜ ĐỌC + CHỜ NGHE A5.** Không train, không đổi production.
-> **Code cuối trước hồ sơ**: `161a599`. Báo cáo: `V1844_agent2.md`.
-> - **A1**: ONNX **đóng băng**; 23 test ONNX skip có lý do; suite **2.547 pass / 23 skip**.
-> - **A1b**: A3 trượt **chỉ** vì p95 short **1,2188×**; RSS **0,456×** đã đạt; CV short 0,9 % · mid 0,8 % · long 12,5 %.
-> - **A3**: bootstrap hai tầng **vẫn lệch** (CI [0,0035; 0,1429]) ⇒ **UTMOS bị loại khỏi luật quyết định**, chỉ còn BAK + tai; BAK tất định 10/10.
-> - **A6**: đối chứng C_all/C_none **đạt tuyệt đối**; tổng Recovery frame **−0,85** ⇒ **LẠ, DỪNG**; không chọn `C_lo`.
-> - **A5**: **XÁC NHẬN** — B thắng **16/16** (p=1,5e-05); dương 4/4, âm 4/4, lặp 4/4; BAK khớp tai.
-> - **A7**: cổng V18.45 **chưa mở** — A5 đã đạt, còn thiếu A6 (lạ) + duyệt ngân sách.
+> **V18.45 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **Tệp đặc tả**: `V1845_agent0.md` + `DECISIONS.md` mục V18.45. **Commit gốc**: `244c40e`.
+> **A5 V18.44: XÁC NHẬN** (B 16/16; BAK khớp tai) ⇒ BAK là thước định hướng chính.
+> **Họ cấy ghép frame đã ĐÓNG** (V1845.A2); không crossfade. `C_lo` chỉ là **giả thuyết** (V1845.A3).
+> **Cổng train còn thiếu**: (2) A4 xác nhận `C_lo`; (3) A5 over-smoothing/hỗn hợp hoặc A6 cao độ liên quan;
+> (4) duyệt ngân sách. Chưa mở V18.45-train.
+>
+> **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
+> Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
 >
 > **V18.43 (26/10/2026, lịch sử)** — Vòng đo, không train, không đổi production.
 > - **A3 TRƯỢT** (lý do duy nhất: p95 short 1,2188×); **A2 phép đo hỏng** (đối chứng âm seed UTMOS lệch 0,0729);
@@ -42,16 +43,14 @@
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.44** · **Tệp đặc tả**: `V1844_agent0.md` + `DECISIONS.md` mục V18.44 ·
-**Commit gốc của vòng**: `5405188` · **Code cuối trước hồ sơ**: `161a599` ·
-**Trạng thái**: **DỪNG, CHỜ ĐỌC** — không training, giữ P2, ONNX đóng băng.
+**Vòng hiện hành**: **V18.45** · **Tệp đặc tả**: `V1845_agent0.md` + `DECISIONS.md` mục V18.45 ·
+**Commit gốc của vòng**: `244c40e` · **Trạng thái**: **ĐANG LÀM** — không train, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A0 đọc A6 lạ (A5 đã xác nhận BAK); quyết định thiết kế lại cấy ghép hay dừng;
-cổng V18.45 vẫn cần A6 + duyệt ngân sách.
+**Việc tiếp**: A4 40 câu mới → A5 cửa sổ GV + 80 câu → A6 F0 → report.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `5405188..<commit cuối>`,
-> đối chiếu `V1844_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `244c40e..<commit cuối>`,
+> đối chiếu `V1845_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
 ## 1. Mốc & hash ghim (V10.A3: ghim sha256 theo byte TRONG GIT — `git show HEAD:<tệp> | shasum -a 256`)
@@ -87,7 +86,16 @@ cổng V18.45 vẫn cần A6 + duyệt ngân sách.
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.44 — kết quả
+### 4.1 V18.45 — đang thực thi
+| Mã | Việc | Trạng thái |
+|---|---|---|
+| V1845.A4 | Xác nhận `C_lo` trên 40 câu mới (đã chốt danh sách) | ⏳ |
+| V1845.A5 | Cửa sổ làm mượt theo GV (commit trước) → chấm 80 câu | ⏳ |
+| V1845.A6 | F0: RMSE, vuv error, std ratio, Spearman | ⏳ |
+| V1845.A7 | Cổng train: (2)(3)(4) | ⛔ chưa mở |
+| — | Báo cáo `V1845_agent2.md` | ⏳ |
+
+### 4.2 V18.44 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1844.A1 | ONNX đóng băng; 23 test ONNX skip có lý do | ✅ `dc4398a` |
