@@ -231,3 +231,13 @@ chọn **4 câu/video** (9 video) + 4 câu bổ sung từ video nhiều dòng, s
 ### V1845.C — Không làm
 Không train/probe; không chạy lại/thiết kế lại cấy ghép frame; không chỉnh cửa sổ theo BAK;
 không dùng UTMOS; không đưa hậu xử lý mel vào production; không động ONNX.
+
+### V1845.A5 — cửa sổ làm mượt chốt TRƯỚC khi chấm BAK
+
+- Chọn bằng GV only trên 80 câu (40 A4 V18.43 + 40 mới), **chưa chấm BAK**.
+- Mục tiêu GV ratio (var C / var B, frame hữu thanh): `<1k` **0,8332**, `1–4k` **0,8656**.
+- Cửa sổ trung bình trượt lẻ được chọn: **5**.
+- Đạt được: `<1k` **0,8171**, `1–4k` **0,8519**; `max_abs_diff` **0,0161** ≤ 0,03 ⇒ không xấp xỉ.
+- Dải >4 kHz giữ của C; chỉ dải ≤4 kHz lấy từ B (làm mượt) cho `C_lo_s`.
+- `C_lo` (không làm mượt) dùng B thô ở dải ≤4 kHz.
+- File: `artifacts/bench/v1845_a5/window.json`; mels: `artifacts/bench/v1845_a5/mels.npz`.
