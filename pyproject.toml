@@ -54,6 +54,9 @@ packages = ["src/vifasttts"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+  "slow: baseline đầy đủ/chấm BAK-UTMOS; không chạy trong suite mặc định",
+]
 
 [tool.ruff]
 line-length = 100

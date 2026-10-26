@@ -1,0 +1,1251 @@
+{
+ "kind": "full",
+ "generated": "2026-10-26T11:53:52",
+ "environment": {
+  "python": "3.12.15",
+  "torch": "2.14.1",
+  "onnxruntime": "1.31.0",
+  "numpy": "1.26.4",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "texts": [
+  {
+   "name": "oov",
+   "text": "John và XYZ đang ở Hà Nội."
+  },
+  {
+   "name": "number_abbrev",
+   "text": "Năm 2026, GDP tăng 7,5% so với quý trước."
+  },
+  {
+   "name": "punctuation",
+   "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà."
+  },
+  {
+   "name": "d01",
+   "text": "Hôm nay chúng ta sẽ học cách tạo một cái ảnh mới. Đầu tiên, mình sẽ mở phần mềm lên, sau đó chọn cái công cụ ở bên trái."
+  },
+  {
+   "name": "d02",
+   "text": "Ta sẽ vẽ lại. Chúng ta sẽ xoá cái phần này đi, rồi sau đó làm lại từ đầu."
+  },
+  {
+   "name": "d03",
+   "text": "Bầu trời hôm nay rất xanh, gió lạnh thổi qua con đường quanh co trước cửa nhà. Buổi sáng trời lạnh nên mình tưới ít nước."
+  },
+  {
+   "name": "d04",
+   "text": "Cái ách treo trên tường đã cũ, còn con ếch thì ngồi im bên bờ ao. Mình muốn nghe rõ phụ âm cuối của từng từ."
+  },
+  {
+   "name": "d05",
+   "text": "Đầu tiên là phần yêu cầu, các bạn cần đọc thật kỹ. Ghi lại những câu hỏi còn chưa rõ, rồi hỏi lại người đặt hàng trước khi làm."
+  },
+  {
+   "name": "d06",
+   "text": "Mình sẽ mở trình duyệt, gõ địa chỉ, rồi bấm tìm kiếm. Sau đó chọn kết quả đầu tiên và đọc phần mô tả."
+  },
+  {
+   "name": "d07",
+   "text": "Cái máy này chạy khá êm, nhưng quạt thì hơi ồn. Buổi tối mình thường tắt nó đi cho đỡ tốn điện."
+  },
+  {
+   "name": "d08",
+   "text": "Chúng ta sẽ chia việc ra làm ba phần. Phần một là thiết kế, phần hai là viết code, phần ba là chạy thử và sửa lỗi."
+  },
+  {
+   "name": "d09",
+   "text": "Ảnh này hơi tối, mình sẽ tăng độ sáng lên một chút. Sau đó chỉnh lại màu cho tự nhiên hơn."
+  },
+  {
+   "name": "d10",
+   "text": "Con ếch nhảy ra khỏi ao, rồi biến mất sau bụi cỏ. Cái ách bằng gỗ vẫn nằm nguyên trên tường, phủ một lớp bụi mỏng."
+  },
+  {
+   "name": "d11",
+   "text": "Khi gặp lỗi, bạn nên đọc kỹ thông báo trước. Nếu vẫn chưa hiểu thì hỏi mình, đừng sửa bừa."
+  },
+  {
+   "name": "d12",
+   "text": "Cây cối quanh nhà vẫn xanh, vì có người chăm sóc mỗi ngày. Trời lạnh nên mình tưới ít nước hơn, và chỉ tưới vào buổi sáng."
+  },
+  {
+   "name": "d13",
+   "text": "Mình sẽ ghi âm lại đoạn này, rồi nghe lại thật kỹ. Các bạn nghe thử xem có bị rè hay bị to tiếng ở chỗ nào không."
+  },
+  {
+   "name": "d14",
+   "text": "Bước cuối cùng là bàn giao tài liệu, và hướng dẫn người tiếp nhận. Nên viết ngắn gọn, có ảnh chụp màn hình, và ghi rõ các bước cài đặt."
+  },
+  {
+   "name": "d15",
+   "text": "Mùa đông ở đây lạnh lắm. Nhưng trong nhà thì ấm, vì mình đã bật máy sưởi từ sáng."
+  },
+  {
+   "name": "d16",
+   "text": "Mở tệp cấu hình ra, tìm dòng có chữ tốc độ, rồi đổi số đó thành hai. Lưu lại và chạy thử."
+  },
+  {
+   "name": "d17",
+   "text": "Mình thích cách làm này, vì nó đơn giản và dễ hiểu. Không cần cài thêm gì, chỉ cần chạy đúng lệnh là xong."
+  }
+ ],
+ "variants": {
+  "pytorch_chunk": {
+   "runtime": "pytorch",
+   "rows": [
+    {
+     "name": "oov",
+     "text": "John và XYZ đang ở Hà Nội.",
+     "wav_sha256": "39a6aa37221348b58b6104fc7f01e48cdb2ab9acaa5efd12beb5051aa34a29d7",
+     "wav_samples": 70912,
+     "sample_rate": 24000,
+     "bak": 3.927,
+     "utmos": [
+      1.0409,
+      1.2695,
+      1.0511,
+      1.0367,
+      0.9239
+     ],
+     "mel_sha256": "2681b4dccab133a71a71564b3875118f5068fbb47eac5b775b6455f5adeaf102",
+     "mel_shape": [
+      1,
+      278,
+      100
+     ]
+    },
+    {
+     "name": "number_abbrev",
+     "text": "Năm 2026, GDP tăng 7,5% so với quý trước.",
+     "wav_sha256": "e4a8475ae02b432b20b7f1c74b2c22a0aca63c0d4e67c29db7d1d45de17a82ed",
+     "wav_samples": 103936,
+     "sample_rate": 24000,
+     "bak": 4.0427,
+     "utmos": [
+      1.1533,
+      1.1954,
+      1.0385,
+      0.9461,
+      0.8513
+     ],
+     "mel_sha256": "b0fe357a6ca78d40d0cb391a36860127eeee7b36fd826f216ace3747f251bf50",
+     "mel_shape": [
+      1,
+      407,
+      100
+     ]
+    },
+    {
+     "name": "punctuation",
+     "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà.",
+     "wav_sha256": "9aff6efd1c2e5840a53f29adf982031cdc69dff6365426fb156c396145170e36",
+     "wav_samples": 82176,
+     "sample_rate": 24000,
+     "bak": 4.054,
+     "utmos": [
+      1.7201,
+      1.7567,
+      1.7317,
+      2.0447,
+      1.9171
+     ],
+     "mel_sha256": "c1ad25d36972852527935f4b8cf0ebb045f5d3003bf379b5a447b86f261d955b",
+     "mel_shape": [
+      1,
+      322,
+      100
+     ]
+    },
+    {
+     "name": "d01",
+     "text": "Hôm nay chúng ta sẽ học cách tạo một cái ảnh mới. Đầu tiên, mình sẽ mở phần mềm lên, sau đó chọn cái công cụ ở bên trái.",
+     "wav_sha256": "fe34b24f7e4bfdb89f3c81c4130313a6f9624e4fdfe6424a293f81e05c2dd91e",
+     "wav_samples": 152064,
+     "sample_rate": 24000,
+     "bak": 3.7932,
+     "utmos": [
+      1.8274,
+      1.5902,
+      1.5369,
+      1.2338,
+      2.0053
+     ],
+     "mel_sha256": "29a617fb27457b64a4b63e47f875185a34e3d18f2f84515ae648c181ed989bcf",
+     "mel_shape": [
+      1,
+      595,
+      100
+     ]
+    },
+    {
+     "name": "d02",
+     "text": "Ta sẽ vẽ lại. Chúng ta sẽ xoá cái phần này đi, rồi sau đó làm lại từ đầu.",
+     "wav_sha256": "72515e601ac739405e56583908b5ba6d9d0079307d5fdb6b9edf173043559653",
+     "wav_samples": 108032,
+     "sample_rate": 24000,
+     "bak": 4.0023,
+     "utmos": [
+      1.7751,
+      1.7541,
+      1.8578,
+      1.9714,
+      1.6044
+     ],
+     "mel_sha256": "22d21a5344411f0854a1f73b51f483c6f6ae6e85a98d4616d88b9fe8dcb8706c",
+     "mel_shape": [
+      1,
+      423,
+      100
+     ]
+    },
+    {
+     "name": "d03",
+     "text": "Bầu trời hôm nay rất xanh, gió lạnh thổi qua con đường quanh co trước cửa nhà. Buổi sáng trời lạnh nên mình tưới ít nước.",
+     "wav_sha256": "cba4270b439cb02fcb5a44292f337049fc5514586fa59119b09883868f3c0ae1",
+     "wav_samples": 147200,
+     "sample_rate": 24000,
+     "bak": 3.9795,
+     "utmos": [
+      1.5563,
+      1.6208,
+      1.5162,
+      1.1368,
+      1.3047
+     ],
+     "mel_sha256": "ddc91ae8497a198dc3d5a5627bb006ff53e084a6c9662285d24cb7205da0e8b7",
+     "mel_shape": [
+      1,
+      576,
+      100
+     ]
+    },
+    {
+     "name": "d04",
+     "text": "Cái ách treo trên tường đã cũ, còn con ếch thì ngồi im bên bờ ao. Mình muốn nghe rõ phụ âm cuối của từng từ.",
+     "wav_sha256": "a44e1300cde98447b877d4f72c713a2549566005411227cb5c6b6814c7842ce3",
+     "wav_samples": 137216,
+     "sample_rate": 24000,
+     "bak": 4.0558,
+     "utmos": [
+      1.8756,
+      2.1422,
+      1.401,
+      1.6119,
+      1.7723
+     ],
+     "mel_sha256": "6041f56757ef2d0a258207b9c8e5bd13edd6a3e36572174be661d2b8331d9f97",
+     "mel_shape": [
+      1,
+      537,
+      100
+     ]
+    },
+    {
+     "name": "d05",
+     "text": "Đầu tiên là phần yêu cầu, các bạn cần đọc thật kỹ. Ghi lại những câu hỏi còn chưa rõ, rồi hỏi lại người đặt hàng trước khi làm.",
+     "wav_sha256": "a434811965747c332072363c5fc4445a9f7c476b058574446b045ede3607e3d2",
+     "wav_samples": 153856,
+     "sample_rate": 24000,
+     "bak": 4.128,
+     "utmos": [
+      1.9926,
+      1.5486,
+      1.7521,
+      1.5138,
+      1.705
+     ],
+     "mel_sha256": "78bce745ad1f1038b92f1d3144472d85470e0ac93dc705b5a7a2360e907fcfe5",
+     "mel_shape": [
+      1,
+      602,
+      100
+     ]
+    },
+    {
+     "name": "d06",
+     "text": "Mình sẽ mở trình duyệt, gõ địa chỉ, rồi bấm tìm kiếm. Sau đó chọn kết quả đầu tiên và đọc phần mô tả.",
+     "wav_sha256": "6c84b2e56db4cef85a883caeceaabdbb15c8937c358d6f2bdc6f067fa27f8d95",
+     "wav_samples": 143360,
+     "sample_rate": 24000,
+     "bak": 4.1135,
+     "utmos": [
+      1.6733,
+      1.7716,
+      1.8828,
+      1.5878,
+      1.9841
+     ],
+     "mel_sha256": "ed18f253b8494fb19412d6bc305b1a98cc952b7858ed6316cce569ca984330ea",
+     "mel_shape": [
+      1,
+      561,
+      100
+     ]
+    },
+    {
+     "name": "d07",
+     "text": "Cái máy này chạy khá êm, nhưng quạt thì hơi ồn. Buổi tối mình thường tắt nó đi cho đỡ tốn điện.",
+     "wav_sha256": "870678ae5d760022fcd8a9d900124b74dfe1ab65de22ba5b5ce7f41c23d11ee9",
+     "wav_samples": 101376,
+     "sample_rate": 24000,
+     "bak": 3.9939,
+     "utmos": [
+      1.5669,
+      1.67,
+      1.4042,
+      1.4321,
+      1.5194
+     ],
+     "mel_sha256": "f7892bd22e1c049e7f3d792d16295038e80c6d1bd46eb77737083e36faab2b82",
+     "mel_shape": [
+      1,
+      397,
+      100
+     ]
+    },
+    {
+     "name": "d08",
+     "text": "Chúng ta sẽ chia việc ra làm ba phần. Phần một là thiết kế, phần hai là viết code, phần ba là chạy thử và sửa lỗi.",
+     "wav_sha256": "27ec079eeeda206db5a526828d0844670eb8b6123dd390463b847042313203d5",
+     "wav_samples": 145920,
+     "sample_rate": 24000,
+     "bak": 4.1063,
+     "utmos": [
+      1.5176,
+      1.8937,
+      1.4791,
+      1.6395,
+      1.3311
+     ],
+     "mel_sha256": "052118d9f9ad153de8e8e79d548b10d1cb5960c034a3684b25b20a0595710b03",
+     "mel_shape": [
+      1,
+      571,
+      100
+     ]
+    },
+    {
+     "name": "d09",
+     "text": "Ảnh này hơi tối, mình sẽ tăng độ sáng lên một chút. Sau đó chỉnh lại màu cho tự nhiên hơn.",
+     "wav_sha256": "9267704a7a92b790612f72583c5a40a99605434f18c56e70b5ca5db8eaa2ea81",
+     "wav_samples": 125952,
+     "sample_rate": 24000,
+     "bak": 4.0634,
+     "utmos": [
+      1.6504,
+      1.7221,
+      1.5623,
+      1.6107,
+      1.5755
+     ],
+     "mel_sha256": "cf3eee74510251ff42757cfae6754262de3db6f2c2830a69317dddcc6975e76e",
+     "mel_shape": [
+      1,
+      493,
+      100
+     ]
+    },
+    {
+     "name": "d10",
+     "text": "Con ếch nhảy ra khỏi ao, rồi biến mất sau bụi cỏ. Cái ách bằng gỗ vẫn nằm nguyên trên tường, phủ một lớp bụi mỏng.",
+     "wav_sha256": "91aea2594c3068677d1313be0d719b9e4a07700ae384ef3ef3b15cdd9b1306a3",
+     "wav_samples": 132352,
+     "sample_rate": 24000,
+     "bak": 3.9798,
+     "utmos": [
+      1.4049,
+      1.1656,
+      1.34,
+      1.0581,
+      1.3696
+     ],
+     "mel_sha256": "9db96776a7f8f1ad34047eab073394e33068bfc3bb513529beefa7d039c75f04",
+     "mel_shape": [
+      1,
+      518,
+      100
+     ]
+    },
+    {
+     "name": "d11",
+     "text": "Khi gặp lỗi, bạn nên đọc kỹ thông báo trước. Nếu vẫn chưa hiểu thì hỏi mình, đừng sửa bừa.",
+     "wav_sha256": "457babda1cd7abb6f7883b77f87522611356e0a87de3359c406c44d59ffba438",
+     "wav_samples": 101888,
+     "sample_rate": 24000,
+     "bak": 3.9296,
+     "utmos": [
+      1.6928,
+      1.8322,
+      1.8261,
+      1.7071,
+      2.1258
+     ],
+     "mel_sha256": "39ee27445f65124b51f5fa23c385e944d49b3c9ef78d901a6cd520d57b3f4af7",
+     "mel_shape": [
+      1,
+      399,
+      100
+     ]
+    },
+    {
+     "name": "d12",
+     "text": "Cây cối quanh nhà vẫn xanh, vì có người chăm sóc mỗi ngày. Trời lạnh nên mình tưới ít nước hơn, và chỉ tưới vào buổi sáng.",
+     "wav_sha256": "0078fab7873e3dbc5900b9afba11ca598b7c66bc4e1adbad17ba474b023c83aa",
+     "wav_samples": 135424,
+     "sample_rate": 24000,
+     "bak": 4.112,
+     "utmos": [
+      1.9821,
+      1.5339,
+      1.5148,
+      2.1119,
+      1.3701
+     ],
+     "mel_sha256": "9bec9778b0486c1fe9d88ec4ffbef317554f4fdc6dd17a422df43b563571f0b6",
+     "mel_shape": [
+      1,
+      530,
+      100
+     ]
+    },
+    {
+     "name": "d13",
+     "text": "Mình sẽ ghi âm lại đoạn này, rồi nghe lại thật kỹ. Các bạn nghe thử xem có bị rè hay bị to tiếng ở chỗ nào không.",
+     "wav_sha256": "54a37c3a33b32d75ba6e835c4313b5c928b7d0c490b2f5824fc5631935cbfc89",
+     "wav_samples": 162304,
+     "sample_rate": 24000,
+     "bak": 4.04,
+     "utmos": [
+      1.2103,
+      1.2538,
+      1.3406,
+      0.9096,
+      1.399
+     ],
+     "mel_sha256": "3d7e944d14967dcecae77946083f132b193474768028b142cc4b260edcd8974f",
+     "mel_shape": [
+      1,
+      635,
+      100
+     ]
+    },
+    {
+     "name": "d14",
+     "text": "Bước cuối cùng là bàn giao tài liệu, và hướng dẫn người tiếp nhận. Nên viết ngắn gọn, có ảnh chụp màn hình, và ghi rõ các bước cài đặt.",
+     "wav_sha256": "7a030dfaa979f71aebe8526f68d2130ea55fc1a2ddac1caa8c782d242156b336",
+     "wav_samples": 177664,
+     "sample_rate": 24000,
+     "bak": 3.9933,
+     "utmos": [
+      1.6238,
+      1.5281,
+      1.9561,
+      1.8745,
+      1.9683
+     ],
+     "mel_sha256": "0f1cfe9ce1846e82af71fe61a35919560242aab45b971616d2d8255240903b35",
+     "mel_shape": [
+      1,
+      695,
+      100
+     ]
+    },
+    {
+     "name": "d15",
+     "text": "Mùa đông ở đây lạnh lắm. Nhưng trong nhà thì ấm, vì mình đã bật máy sưởi từ sáng.",
+     "wav_sha256": "40acfea7d27e0854d0072257992d7204dea5fa9402ea14157d371146704bcba9",
+     "wav_samples": 112384,
+     "sample_rate": 24000,
+     "bak": 4.0603,
+     "utmos": [
+      1.2008,
+      1.5668,
+      1.331,
+      1.4166,
+      1.3625
+     ],
+     "mel_sha256": "6b307b06c4af9a9c544ebc7a53ad0287b8c1986957b2e84d19f7c6db7e2c9f54",
+     "mel_shape": [
+      1,
+      440,
+      100
+     ]
+    },
+    {
+     "name": "d16",
+     "text": "Mở tệp cấu hình ra, tìm dòng có chữ tốc độ, rồi đổi số đó thành hai. Lưu lại và chạy thử.",
+     "wav_sha256": "5177ae1b862c09aae6d5da03a8b96ceba29542222a45bf17f7ef062cd8e0b13b",
+     "wav_samples": 128000,
+     "sample_rate": 24000,
+     "bak": 4.0708,
+     "utmos": [
+      1.5849,
+      2.0868,
+      1.6698,
+      1.6722,
+      1.6224
+     ],
+     "mel_sha256": "1c231b3b27557a6e9b32120b702d29a95c54413c2ea534c7b79e420630b04efd",
+     "mel_shape": [
+      1,
+      501,
+      100
+     ]
+    },
+    {
+     "name": "d17",
+     "text": "Mình thích cách làm này, vì nó đơn giản và dễ hiểu. Không cần cài thêm gì, chỉ cần chạy đúng lệnh là xong.",
+     "wav_sha256": "d91067883ea3aec5733fe40b4765e366a6bdff3fc112cc3301e3822044b34fa9",
+     "wav_samples": 110848,
+     "sample_rate": 24000,
+     "bak": 3.9511,
+     "utmos": [
+      0.9226,
+      1.1421,
+      1.0736,
+      1.5881,
+      1.31
+     ],
+     "mel_sha256": "8c89ed66ab21cbe11bfac93abb566b61776233954a6e0fd83f9cae30a8567378",
+     "mel_shape": [
+      1,
+      434,
+      100
+     ]
+    }
+   ]
+  },
+  "pytorch_sentence": {
+   "runtime": "pytorch",
+   "rows": [
+    {
+     "name": "oov",
+     "text": "John và XYZ đang ở Hà Nội.",
+     "wav_sha256": "1dfd92011c4123a295749358eda4ddf6fc711f312e9ea27aea56fdd96e2685d8",
+     "wav_samples": 44304,
+     "sample_rate": 24000,
+     "bak": 1.8113,
+     "utmos": [
+      1.4692,
+      1.3295,
+      1.5028,
+      1.3438,
+      1.3355
+     ]
+    },
+    {
+     "name": "number_abbrev",
+     "text": "Năm 2026, GDP tăng 7,5% so với quý trước.",
+     "wav_sha256": "32d3aba791142905498c35660a06200c5584a4afdb310e42c2eb34ff71c514a3",
+     "wav_samples": 76288,
+     "sample_rate": 24000,
+     "bak": 4.0341,
+     "utmos": [
+      1.4079,
+      1.7238,
+      1.5862,
+      1.2926,
+      1.3227
+     ]
+    },
+    {
+     "name": "punctuation",
+     "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà.",
+     "wav_sha256": "85ead82f385c4535afc214462f5d63fd06f1fb2647f3c34f8ffa5e2fd95f75a1",
+     "wav_samples": 83744,
+     "sample_rate": 24000,
+     "bak": 4.1109,
+     "utmos": [
+      1.5012,
+      1.7651,
+      1.512,
+      1.6564,
+      1.7686
+     ]
+    },
+    {
+     "name": "d01",
+     "text": "Hôm nay chúng ta sẽ học cách tạo một cái ảnh mới. Đầu tiên, mình sẽ mở phần mềm lên, sau đó chọn cái công cụ ở bên trái.",
+     "wav_sha256": "5b0e502b8ca960aaf9d8300407f267713768751149cf2e307253482e57bee6f6",
+     "wav_samples": 145680,
+     "sample_rate": 24000,
+     "bak": 3.9099,
+     "utmos": [
+      1.3424,
+      1.3453,
+      1.7665,
+      0.9839,
+      1.4421
+     ]
+    },
+    {
+     "name": "d02",
+     "text": "Ta sẽ vẽ lại. Chúng ta sẽ xoá cái phần này đi, rồi sau đó làm lại từ đầu.",
+     "wav_sha256": "79a8b5d9390755b93f10e509e81bc4297925a858d82ee7d9488eed69b4d6f7fb",
+     "wav_samples": 92192,
+     "sample_rate": 24000,
+     "bak": 4.1236,
+     "utmos": [
+      1.9013,
+      1.8159,
+      1.6591,
+      1.6724,
+      1.5818
+     ]
+    },
+    {
+     "name": "d03",
+     "text": "Bầu trời hôm nay rất xanh, gió lạnh thổi qua con đường quanh co trước cửa nhà. Buổi sáng trời lạnh nên mình tưới ít nước.",
+     "wav_sha256": "d85b7d258a8ff68051777db933a23a4143b3165cbf323e36ebaf28af0b75fccb",
+     "wav_samples": 129536,
+     "sample_rate": 24000,
+     "bak": 4.2116,
+     "utmos": [
+      1.8003,
+      1.2384,
+      1.2826,
+      1.3415,
+      1.3464
+     ]
+    },
+    {
+     "name": "d04",
+     "text": "Cái ách treo trên tường đã cũ, còn con ếch thì ngồi im bên bờ ao. Mình muốn nghe rõ phụ âm cuối của từng từ.",
+     "wav_sha256": "7039821e8914e462df1daa0501a91089e4653058a53720014c840ffda3b82eb0",
+     "wav_samples": 119552,
+     "sample_rate": 24000,
+     "bak": 4.0143,
+     "utmos": [
+      1.4913,
+      1.3209,
+      1.5764,
+      1.532,
+      1.3497
+     ]
+    },
+    {
+     "name": "d05",
+     "text": "Đầu tiên là phần yêu cầu, các bạn cần đọc thật kỹ. Ghi lại những câu hỏi còn chưa rõ, rồi hỏi lại người đặt hàng trước khi làm.",
+     "wav_sha256": "2e06a01a3c1646cb2a4acc76dba35db17f4feedc0cddcd5db4b6de65cdfc07a3",
+     "wav_samples": 150032,
+     "sample_rate": 24000,
+     "bak": 4.1551,
+     "utmos": [
+      1.7332,
+      1.7847,
+      1.3303,
+      1.278,
+      1.6517
+     ]
+    },
+    {
+     "name": "d06",
+     "text": "Mình sẽ mở trình duyệt, gõ địa chỉ, rồi bấm tìm kiếm. Sau đó chọn kết quả đầu tiên và đọc phần mô tả.",
+     "wav_sha256": "9832c28d94330f9078f4da63ab527f9c0bafbbb9325222a64eb4f72e067cd8b4",
+     "wav_samples": 130304,
+     "sample_rate": 24000,
+     "bak": 4.1994,
+     "utmos": [
+      2.1569,
+      2.0302,
+      2.1769,
+      1.9941,
+      1.6292
+     ]
+    },
+    {
+     "name": "d07",
+     "text": "Cái máy này chạy khá êm, nhưng quạt thì hơi ồn. Buổi tối mình thường tắt nó đi cho đỡ tốn điện.",
+     "wav_sha256": "420989caf361cb6f80d6df423f3cd8d11f889ca26ccb8ec4e0d444303be90400",
+     "wav_samples": 98320,
+     "sample_rate": 24000,
+     "bak": 4.0633,
+     "utmos": [
+      1.3045,
+      1.9081,
+      1.7289,
+      1.1632,
+      1.273
+     ]
+    },
+    {
+     "name": "d08",
+     "text": "Chúng ta sẽ chia việc ra làm ba phần. Phần một là thiết kế, phần hai là viết code, phần ba là chạy thử và sửa lỗi.",
+     "wav_sha256": "26681a7ed93c19f45232e89bfc2e3181ad406e5853281baa3427ec11f03430bc",
+     "wav_samples": 138000,
+     "sample_rate": 24000,
+     "bak": 4.1282,
+     "utmos": [
+      1.277,
+      1.7804,
+      1.5691,
+      1.3449,
+      1.4255
+     ]
+    },
+    {
+     "name": "d09",
+     "text": "Ảnh này hơi tối, mình sẽ tăng độ sáng lên một chút. Sau đó chỉnh lại màu cho tự nhiên hơn.",
+     "wav_sha256": "2daeb882c926bfcaa38cdd59706909179bf3169d23b9bc5388fa5fe4622a674b",
+     "wav_samples": 107312,
+     "sample_rate": 24000,
+     "bak": 4.1466,
+     "utmos": [
+      1.9514,
+      1.8202,
+      1.5794,
+      1.4697,
+      1.9652
+     ]
+    },
+    {
+     "name": "d10",
+     "text": "Con ếch nhảy ra khỏi ao, rồi biến mất sau bụi cỏ. Cái ách bằng gỗ vẫn nằm nguyên trên tường, phủ một lớp bụi mỏng.",
+     "wav_sha256": "58367020216dc24354f944af6ff9baf08751c22ec1014ef6488818b7c815c95d",
+     "wav_samples": 137728,
+     "sample_rate": 24000,
+     "bak": 4.1721,
+     "utmos": [
+      1.4115,
+      1.4028,
+      1.3193,
+      1.5747,
+      1.5007
+     ]
+    },
+    {
+     "name": "d11",
+     "text": "Khi gặp lỗi, bạn nên đọc kỹ thông báo trước. Nếu vẫn chưa hiểu thì hỏi mình, đừng sửa bừa.",
+     "wav_sha256": "95b4e69a9b41b62dfb232c70c74b979bcd8c8f010fc366452e6b97c83c710217",
+     "wav_samples": 104496,
+     "sample_rate": 24000,
+     "bak": 4.1264,
+     "utmos": [
+      2.1488,
+      2.0181,
+      1.6801,
+      1.6222,
+      2.0448
+     ]
+    },
+    {
+     "name": "d12",
+     "text": "Cây cối quanh nhà vẫn xanh, vì có người chăm sóc mỗi ngày. Trời lạnh nên mình tưới ít nước hơn, và chỉ tưới vào buổi sáng.",
+     "wav_sha256": "d126ab58c1a626318507a7113cd3a8a29fa906223172ab1ad80a933c77651b9b",
+     "wav_samples": 133904,
+     "sample_rate": 24000,
+     "bak": 4.1733,
+     "utmos": [
+      1.4885,
+      1.7224,
+      1.4752,
+      1.361,
+      1.2193
+     ]
+    },
+    {
+     "name": "d13",
+     "text": "Mình sẽ ghi âm lại đoạn này, rồi nghe lại thật kỹ. Các bạn nghe thử xem có bị rè hay bị to tiếng ở chỗ nào không.",
+     "wav_sha256": "c051a2d7cb97daae8133483a5584d216349700174134f5950d8f230ff1d4880b",
+     "wav_samples": 132096,
+     "sample_rate": 24000,
+     "bak": 4.1304,
+     "utmos": [
+      1.4679,
+      1.7215,
+      1.502,
+      1.353,
+      1.5762
+     ]
+    },
+    {
+     "name": "d14",
+     "text": "Bước cuối cùng là bàn giao tài liệu, và hướng dẫn người tiếp nhận. Nên viết ngắn gọn, có ảnh chụp màn hình, và ghi rõ các bước cài đặt.",
+     "wav_sha256": "7d5f6c10f69e0bdf0e0766616a31eca3063dde00cf1f1ad58207aa474e913662",
+     "wav_samples": 152064,
+     "sample_rate": 24000,
+     "bak": 4.1385,
+     "utmos": [
+      1.5969,
+      1.9192,
+      1.8998,
+      2.0075,
+      1.9389
+     ]
+    },
+    {
+     "name": "d15",
+     "text": "Mùa đông ở đây lạnh lắm. Nhưng trong nhà thì ấm, vì mình đã bật máy sưởi từ sáng.",
+     "wav_sha256": "0a093f74a03fec04eabe0cb682f6e9e483054c7b7f63c92199dfd65f720d513e",
+     "wav_samples": 95488,
+     "sample_rate": 24000,
+     "bak": 4.1533,
+     "utmos": [
+      1.2722,
+      1.2378,
+      1.1822,
+      1.4059,
+      1.2385
+     ]
+    },
+    {
+     "name": "d16",
+     "text": "Mở tệp cấu hình ra, tìm dòng có chữ tốc độ, rồi đổi số đó thành hai. Lưu lại và chạy thử.",
+     "wav_sha256": "3ce54c445851b6120fe8616dc543ddd1e22ab71505a0024346c4ee87045af736",
+     "wav_samples": 123136,
+     "sample_rate": 24000,
+     "bak": 4.1781,
+     "utmos": [
+      1.7794,
+      1.6863,
+      1.7164,
+      1.3886,
+      1.6052
+     ]
+    },
+    {
+     "name": "d17",
+     "text": "Mình thích cách làm này, vì nó đơn giản và dễ hiểu. Không cần cài thêm gì, chỉ cần chạy đúng lệnh là xong.",
+     "wav_sha256": "1c2fd14109528f04bf9bc8aae9389fb5f86ab418186ac81888c9565213cbefcb",
+     "wav_samples": 113920,
+     "sample_rate": 24000,
+     "bak": 4.0703,
+     "utmos": [
+      1.2494,
+      1.0855,
+      1.1781,
+      1.7707,
+      1.3664
+     ]
+    }
+   ]
+  },
+  "onnx_chunk": {
+   "runtime": "onnx",
+   "rows": [
+    {
+     "name": "oov",
+     "text": "John và XYZ đang ở Hà Nội.",
+     "wav_sha256": "a1f4c99242eec4bc8ea439a803c75f35bacd1544fb5f503ff3613aec5ecf96d5",
+     "wav_samples": 70912,
+     "sample_rate": 24000,
+     "bak": 3.927,
+     "utmos": [
+      1.0413,
+      1.2689,
+      1.051,
+      1.0378,
+      0.9242
+     ],
+     "mel_sha256": "b61a86ff97f0e511857814a9761d3d2248b199f325467cf192d98674c533d979",
+     "mel_shape": [
+      1,
+      278,
+      100
+     ]
+    },
+    {
+     "name": "number_abbrev",
+     "text": "Năm 2026, GDP tăng 7,5% so với quý trước.",
+     "wav_sha256": "5d968eb5dc4f01d0aeda6bb178a7df02e324a8b51709a58fa4b2daee0ceda3d3",
+     "wav_samples": 103936,
+     "sample_rate": 24000,
+     "bak": 4.043,
+     "utmos": [
+      1.1537,
+      1.1947,
+      1.0382,
+      0.9458,
+      0.851
+     ],
+     "mel_sha256": "bcb9b7a660ef24ace17a10516619b67bf214ffc27179dc429ac28052e608fc97",
+     "mel_shape": [
+      1,
+      407,
+      100
+     ]
+    },
+    {
+     "name": "punctuation",
+     "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà.",
+     "wav_sha256": "70b35126a118984f8f6599063eee3fcc82912bd1610077869ce1ed631c041c57",
+     "wav_samples": 82176,
+     "sample_rate": 24000,
+     "bak": 4.054,
+     "utmos": [
+      1.7198,
+      1.7572,
+      1.7312,
+      2.0445,
+      1.9176
+     ],
+     "mel_sha256": "f7652308d4f047639bacdf80c7f0f8b63cbe5fdd0cbe397d35a7aa774067312b",
+     "mel_shape": [
+      1,
+      322,
+      100
+     ]
+    },
+    {
+     "name": "d01",
+     "text": "Hôm nay chúng ta sẽ học cách tạo một cái ảnh mới. Đầu tiên, mình sẽ mở phần mềm lên, sau đó chọn cái công cụ ở bên trái.",
+     "wav_sha256": "e285f1c55835ce69c2422105fc63af0bf56662330a053cfc487803d35962eeda",
+     "wav_samples": 152064,
+     "sample_rate": 24000,
+     "bak": 3.7933,
+     "utmos": [
+      1.8272,
+      1.5916,
+      1.5367,
+      1.2309,
+      2.006
+     ],
+     "mel_sha256": "c8b93e16fc8dddcf08d0e3f3e2bbf11d9815733930b3222fc8af6a7dc321fad6",
+     "mel_shape": [
+      1,
+      595,
+      100
+     ]
+    },
+    {
+     "name": "d02",
+     "text": "Ta sẽ vẽ lại. Chúng ta sẽ xoá cái phần này đi, rồi sau đó làm lại từ đầu.",
+     "wav_sha256": "e7366b7bc8d3d03297de07756708843813c84d69baf3431f983f89839984201b",
+     "wav_samples": 108032,
+     "sample_rate": 24000,
+     "bak": 4.0021,
+     "utmos": [
+      1.7742,
+      1.7531,
+      1.8576,
+      1.9709,
+      1.6039
+     ],
+     "mel_sha256": "57df83350a5b00f9f9ffdb5c660cf6377dcb7111db0eaaa067ac087975b10261",
+     "mel_shape": [
+      1,
+      423,
+      100
+     ]
+    },
+    {
+     "name": "d03",
+     "text": "Bầu trời hôm nay rất xanh, gió lạnh thổi qua con đường quanh co trước cửa nhà. Buổi sáng trời lạnh nên mình tưới ít nước.",
+     "wav_sha256": "c133126a76748ba52f6892dd1a93030bfed726b7db5a92a3ceff208d8dfb8f07",
+     "wav_samples": 147200,
+     "sample_rate": 24000,
+     "bak": 3.9794,
+     "utmos": [
+      1.5566,
+      1.6211,
+      1.5169,
+      1.1369,
+      1.3049
+     ],
+     "mel_sha256": "e016eafe7b9bcf35eab7d5262c7ec5a4d79225afd744e50cf42fbbb8f8bb3f19",
+     "mel_shape": [
+      1,
+      576,
+      100
+     ]
+    },
+    {
+     "name": "d04",
+     "text": "Cái ách treo trên tường đã cũ, còn con ếch thì ngồi im bên bờ ao. Mình muốn nghe rõ phụ âm cuối của từng từ.",
+     "wav_sha256": "3ce4a15b841f5c23b3d20c1d47f360792cba2680b64548145b8e7aa44ed91e1a",
+     "wav_samples": 137216,
+     "sample_rate": 24000,
+     "bak": 4.0558,
+     "utmos": [
+      1.8764,
+      2.1426,
+      1.4011,
+      1.6125,
+      1.7731
+     ],
+     "mel_sha256": "4356d29ff4911429c4e9b547b6615103103252360ad47c1ff3a6436cdbf4d59b",
+     "mel_shape": [
+      1,
+      537,
+      100
+     ]
+    },
+    {
+     "name": "d05",
+     "text": "Đầu tiên là phần yêu cầu, các bạn cần đọc thật kỹ. Ghi lại những câu hỏi còn chưa rõ, rồi hỏi lại người đặt hàng trước khi làm.",
+     "wav_sha256": "bd842970c55579381ffcf152450e2681b6abdd3d3b62814f5df03cfda67ee746",
+     "wav_samples": 153856,
+     "sample_rate": 24000,
+     "bak": 4.1277,
+     "utmos": [
+      1.9914,
+      1.5481,
+      1.7515,
+      1.513,
+      1.7047
+     ],
+     "mel_sha256": "91d18fc3d43857ea1f6767176f9e86c77f92d893d60e6a56bc72f6598f62faae",
+     "mel_shape": [
+      1,
+      602,
+      100
+     ]
+    },
+    {
+     "name": "d06",
+     "text": "Mình sẽ mở trình duyệt, gõ địa chỉ, rồi bấm tìm kiếm. Sau đó chọn kết quả đầu tiên và đọc phần mô tả.",
+     "wav_sha256": "9605a3f89af6df6f5b2dc1af93fcd35b79904f578f4d8b82098277d9261e7342",
+     "wav_samples": 143360,
+     "sample_rate": 24000,
+     "bak": 4.1135,
+     "utmos": [
+      1.6733,
+      1.7727,
+      1.882,
+      1.5866,
+      1.9847
+     ],
+     "mel_sha256": "54a555b154aaf4b1c40d88dc5007901296884baad5b098dc66178d5632595577",
+     "mel_shape": [
+      1,
+      561,
+      100
+     ]
+    },
+    {
+     "name": "d07",
+     "text": "Cái máy này chạy khá êm, nhưng quạt thì hơi ồn. Buổi tối mình thường tắt nó đi cho đỡ tốn điện.",
+     "wav_sha256": "30b44bc470085b814279217bb2b470e0c873945c24bf18282127d0c7be572d8c",
+     "wav_samples": 101376,
+     "sample_rate": 24000,
+     "bak": 3.9939,
+     "utmos": [
+      1.5663,
+      1.6706,
+      1.4053,
+      1.4316,
+      1.5204
+     ],
+     "mel_sha256": "67dde66900cf7120b27559a499a62723b7833631bfc9a40e58acba577e718a80",
+     "mel_shape": [
+      1,
+      397,
+      100
+     ]
+    },
+    {
+     "name": "d08",
+     "text": "Chúng ta sẽ chia việc ra làm ba phần. Phần một là thiết kế, phần hai là viết code, phần ba là chạy thử và sửa lỗi.",
+     "wav_sha256": "255c7ea7811ab3d979cea05152ffa7ba80efc3afb40ccbd43998782d84299c56",
+     "wav_samples": 145920,
+     "sample_rate": 24000,
+     "bak": 4.1062,
+     "utmos": [
+      1.518,
+      1.8954,
+      1.4793,
+      1.6392,
+      1.3322
+     ],
+     "mel_sha256": "7159d2a28a927260a714dc3a81b6069d6e9058e03fc09df2283dcf66a5b63876",
+     "mel_shape": [
+      1,
+      571,
+      100
+     ]
+    },
+    {
+     "name": "d09",
+     "text": "Ảnh này hơi tối, mình sẽ tăng độ sáng lên một chút. Sau đó chỉnh lại màu cho tự nhiên hơn.",
+     "wav_sha256": "ee0594b570845925cff5a8c05868ea47db654984a459dc694eb9be840ab6f199",
+     "wav_samples": 125952,
+     "sample_rate": 24000,
+     "bak": 4.0632,
+     "utmos": [
+      1.6509,
+      1.722,
+      1.5624,
+      1.6111,
+      1.5766
+     ],
+     "mel_sha256": "69b22b153e4797de631085b757a09a37a182c4aa976b397b41e30be01073eb9c",
+     "mel_shape": [
+      1,
+      493,
+      100
+     ]
+    },
+    {
+     "name": "d10",
+     "text": "Con ếch nhảy ra khỏi ao, rồi biến mất sau bụi cỏ. Cái ách bằng gỗ vẫn nằm nguyên trên tường, phủ một lớp bụi mỏng.",
+     "wav_sha256": "a9ab88e2223b551be25c10b9b86098fbb7d399d59748156fda552d8f5972b048",
+     "wav_samples": 132352,
+     "sample_rate": 24000,
+     "bak": 3.9799,
+     "utmos": [
+      1.405,
+      1.1655,
+      1.3409,
+      1.0579,
+      1.3699
+     ],
+     "mel_sha256": "0ad2fd8efb3048c8a0f3aac99f646e82c67c1d9f1cb32edb573bc9a3a0714fe2",
+     "mel_shape": [
+      1,
+      518,
+      100
+     ]
+    },
+    {
+     "name": "d11",
+     "text": "Khi gặp lỗi, bạn nên đọc kỹ thông báo trước. Nếu vẫn chưa hiểu thì hỏi mình, đừng sửa bừa.",
+     "wav_sha256": "ba24a639917886dc08e824f4463d30ae568f6f7cc08c27da2c198f94ded816a9",
+     "wav_samples": 101888,
+     "sample_rate": 24000,
+     "bak": 3.9298,
+     "utmos": [
+      1.6925,
+      1.8326,
+      1.8258,
+      1.7074,
+      2.1256
+     ],
+     "mel_sha256": "361c4e4cc51689c225202570fef1c8eb36916585fe71fc59ba471187f1993333",
+     "mel_shape": [
+      1,
+      399,
+      100
+     ]
+    },
+    {
+     "name": "d12",
+     "text": "Cây cối quanh nhà vẫn xanh, vì có người chăm sóc mỗi ngày. Trời lạnh nên mình tưới ít nước hơn, và chỉ tưới vào buổi sáng.",
+     "wav_sha256": "609b9550ff8a12587ec056c3c4f34fd30f24e7abee5c52dc60742435381b613a",
+     "wav_samples": 135424,
+     "sample_rate": 24000,
+     "bak": 4.1118,
+     "utmos": [
+      1.9822,
+      1.5337,
+      1.5142,
+      2.1108,
+      1.3698
+     ],
+     "mel_sha256": "432c5311e3f9acc9032bf72ee762a1705836b710e88e5ce9c805b7973a354cdb",
+     "mel_shape": [
+      1,
+      530,
+      100
+     ]
+    },
+    {
+     "name": "d13",
+     "text": "Mình sẽ ghi âm lại đoạn này, rồi nghe lại thật kỹ. Các bạn nghe thử xem có bị rè hay bị to tiếng ở chỗ nào không.",
+     "wav_sha256": "79a48407fe403cd7d6dfe4092618a845ef9279a7af9f0764227a178001313850",
+     "wav_samples": 162304,
+     "sample_rate": 24000,
+     "bak": 4.0406,
+     "utmos": [
+      1.2107,
+      1.2548,
+      1.3407,
+      0.9095,
+      1.399
+     ],
+     "mel_sha256": "894f8d6981b3ba21396fde1a0f6446949413f62bb0baec7c4c52245b8a834cc0",
+     "mel_shape": [
+      1,
+      635,
+      100
+     ]
+    },
+    {
+     "name": "d14",
+     "text": "Bước cuối cùng là bàn giao tài liệu, và hướng dẫn người tiếp nhận. Nên viết ngắn gọn, có ảnh chụp màn hình, và ghi rõ các bước cài đặt.",
+     "wav_sha256": "bf04dcb26597c5f21566f8ca3d8a4f42709b51958ccaf1d1b5ae566dcd0f67cb",
+     "wav_samples": 177664,
+     "sample_rate": 24000,
+     "bak": 3.9935,
+     "utmos": [
+      1.6254,
+      1.5278,
+      1.9567,
+      1.8725,
+      1.9683
+     ],
+     "mel_sha256": "42a00dc655d6b12652c9320f98f0893bf2317db4054861f3b7cd46ad2b23f896",
+     "mel_shape": [
+      1,
+      695,
+      100
+     ]
+    },
+    {
+     "name": "d15",
+     "text": "Mùa đông ở đây lạnh lắm. Nhưng trong nhà thì ấm, vì mình đã bật máy sưởi từ sáng.",
+     "wav_sha256": "a375921f334f520545f9a712b48bed8de06395dcddafd906adb341f5599f7358",
+     "wav_samples": 112384,
+     "sample_rate": 24000,
+     "bak": 4.0604,
+     "utmos": [
+      1.2008,
+      1.5672,
+      1.331,
+      1.4171,
+      1.3632
+     ],
+     "mel_sha256": "21b6001a37de24ad7e017b2feaba32f68125230d805a1c669b6737385fb15e73",
+     "mel_shape": [
+      1,
+      440,
+      100
+     ]
+    },
+    {
+     "name": "d16",
+     "text": "Mở tệp cấu hình ra, tìm dòng có chữ tốc độ, rồi đổi số đó thành hai. Lưu lại và chạy thử.",
+     "wav_sha256": "340ee355cae2ca3e4ddc1b944c29bc994eb9d9daf9e347d1529852742a912473",
+     "wav_samples": 128000,
+     "sample_rate": 24000,
+     "bak": 4.0709,
+     "utmos": [
+      1.5858,
+      2.0872,
+      1.6705,
+      1.6719,
+      1.6231
+     ],
+     "mel_sha256": "d427d32897725cba9225122e77c159a2bfe2dcf948e34ce90317a0c1148065d4",
+     "mel_shape": [
+      1,
+      501,
+      100
+     ]
+    },
+    {
+     "name": "d17",
+     "text": "Mình thích cách làm này, vì nó đơn giản và dễ hiểu. Không cần cài thêm gì, chỉ cần chạy đúng lệnh là xong.",
+     "wav_sha256": "18084e4e2c2f6c44d34c5f4ef859e1231f687ef5272fcf126c40f34335d394af",
+     "wav_samples": 110848,
+     "sample_rate": 24000,
+     "bak": 3.9517,
+     "utmos": [
+      0.9229,
+      1.1423,
+      1.0741,
+      1.5887,
+      1.3103
+     ],
+     "mel_sha256": "81c48f9d272fa4a37b3fe97460fcb78d7a14a11e3db2bedacb25f868ec7f0faf",
+     "mel_shape": [
+      1,
+      434,
+      100
+     ]
+    }
+   ]
+  }
+ }
+}

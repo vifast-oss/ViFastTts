@@ -1,0 +1,126 @@
+{
+ "kind": "fast",
+ "generated": "2026-10-26T11:53:20",
+ "environment": {
+  "python": "3.12.15",
+  "torch": "2.14.1",
+  "onnxruntime": "1.31.0",
+  "numpy": "1.26.4",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "texts": [
+  {
+   "name": "oov",
+   "text": "John và XYZ đang ở Hà Nội."
+  },
+  {
+   "name": "number_abbrev",
+   "text": "Năm 2026, GDP tăng 7,5% so với quý trước."
+  },
+  {
+   "name": "punctuation",
+   "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà."
+  }
+ ],
+ "tolerance": {
+  "mel_max_abs": 1e-05,
+  "wav_max_abs": 0.0001
+ },
+ "runtimes": {
+  "pytorch": {
+   "bit_exact": true,
+   "rows": [
+    {
+     "name": "oov",
+     "text": "John và XYZ đang ở Hà Nội.",
+     "mel_sha256": "2681b4dccab133a71a71564b3875118f5068fbb47eac5b775b6455f5adeaf102",
+     "wav_sha256": "39a6aa37221348b58b6104fc7f01e48cdb2ab9acaa5efd12beb5051aa34a29d7",
+     "mel_shape": [
+      1,
+      278,
+      100
+     ],
+     "wav_samples": 70912,
+     "sample_rate": 24000,
+     "elapsed": 0.4574
+    },
+    {
+     "name": "number_abbrev",
+     "text": "Năm 2026, GDP tăng 7,5% so với quý trước.",
+     "mel_sha256": "b0fe357a6ca78d40d0cb391a36860127eeee7b36fd826f216ace3747f251bf50",
+     "wav_sha256": "e4a8475ae02b432b20b7f1c74b2c22a0aca63c0d4e67c29db7d1d45de17a82ed",
+     "mel_shape": [
+      1,
+      407,
+      100
+     ],
+     "wav_samples": 103936,
+     "sample_rate": 24000,
+     "elapsed": 0.8214
+    },
+    {
+     "name": "punctuation",
+     "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà.",
+     "mel_sha256": "c1ad25d36972852527935f4b8cf0ebb045f5d3003bf379b5a447b86f261d955b",
+     "wav_sha256": "9aff6efd1c2e5840a53f29adf982031cdc69dff6365426fb156c396145170e36",
+     "mel_shape": [
+      1,
+      322,
+      100
+     ],
+     "wav_samples": 82176,
+     "sample_rate": 24000,
+     "elapsed": 0.6589
+    }
+   ]
+  },
+  "onnx": {
+   "bit_exact": true,
+   "rows": [
+    {
+     "name": "oov",
+     "text": "John và XYZ đang ở Hà Nội.",
+     "mel_sha256": "b61a86ff97f0e511857814a9761d3d2248b199f325467cf192d98674c533d979",
+     "wav_sha256": "a1f4c99242eec4bc8ea439a803c75f35bacd1544fb5f503ff3613aec5ecf96d5",
+     "mel_shape": [
+      1,
+      278,
+      100
+     ],
+     "wav_samples": 70912,
+     "sample_rate": 24000,
+     "elapsed": 0.5269
+    },
+    {
+     "name": "number_abbrev",
+     "text": "Năm 2026, GDP tăng 7,5% so với quý trước.",
+     "mel_sha256": "bcb9b7a660ef24ace17a10516619b67bf214ffc27179dc429ac28052e608fc97",
+     "wav_sha256": "5d968eb5dc4f01d0aeda6bb178a7df02e324a8b51709a58fa4b2daee0ceda3d3",
+     "mel_shape": [
+      1,
+      407,
+      100
+     ],
+     "wav_samples": 103936,
+     "sample_rate": 24000,
+     "elapsed": 0.897
+    },
+    {
+     "name": "punctuation",
+     "text": "Hôm nay, trời đẹp; gió mát, nắng nhẹ — chúng tôi đi dạo, rồi về nhà.",
+     "mel_sha256": "f7652308d4f047639bacdf80c7f0f8b63cbe5fdd0cbe397d35a7aa774067312b",
+     "wav_sha256": "70b35126a118984f8f6599063eee3fcc82912bd1610077869ce1ed631c041c57",
+     "mel_shape": [
+      1,
+      322,
+      100
+     ],
+     "wav_samples": 82176,
+     "sample_rate": 24000,
+     "elapsed": 0.7296
+    }
+   ]
+  }
+ }
+}
