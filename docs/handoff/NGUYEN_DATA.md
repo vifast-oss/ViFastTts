@@ -77,3 +77,28 @@ train dừng; đã thay bằng `r5b_segment_stats.py` (schema `r5b-v2`) trước
 
 - Không ghi đè `data/codelung/`, cache cũ, runs cũ, ONNX/production.
 - Không dùng UTMOS; không mở lại cổng C_lo/L_con.
+
+## 7. Kết quả acoustic 60k (27/10/2026)
+
+- Checkpoint: `runs/acoustic_ngochuyen/best.pt`, **step 60.000**,
+  sha256 `d1b21642…f640070`; arch `v2_slot5`; train từ đầu (không warm-start).
+- History: `val_mel_voiced` **0,26340**, `val_rough` **0,7624**; plateau từ ~44k (0,266).
+- **Val 300 clip** (tf_seg): mel L1 z **0,2954** · raw 0,4585 · **4,0 dB** · VUV 0,987 ·
+  duration MAE 1,33 frame · F0 median 67–156 cents (SAC xấu nhất 156).
+- **Holdout 300 clip** (không dùng train/val): mel z **0,2980** · raw 0,4626 · **4,0 dB** ·
+  VUV 0,987 · duration MAE 1,37 frame; **khớp val** ⇒ không thấy overfit theo clip.
+- **Free-run 80 holdout** (Vocos pretrained): mel **16,57 dB** · length ratio **0,999** ·
+  VUV 0,9887 · duration MAE 1,39 frame · pause F1 **0,8247** · RTF 0,003.
+- **P2 zero-shot cùng 80 câu**: mel **28,31 dB** · length 0,960 · duration MAE 3,52 frame ·
+  pause F1 **0,5098** ⇒ model mới giảm mel 11,7 dB, nhịp tốt hơn rõ.
+- **Thanh điệu** (thước R5b train riêng trên giọng mới): thật **0,9835** · copy-synthesis
+  **0,9784** · free-run **0,9743** (80 clip, 2.362 âm tiết) ⇒ mất 0,0092 tuyệt đối so thật.
+- **Rè** (80 clip, CPU): NGÃ ΔHNR +1,86 dB · Δjitter −0,0106; NẶNG +0,30 dB · +0,0143;
+  không thấy tăng rè theo thanh nặng.
+
+**Demo A/B** (24 câu holdout, audio thật + model mới + P2 zero-shot, Vocos pretrained):
+`artifacts/listen_ngochuyen/ab/index.html` · key `artifacts/ngochuyen/ab_key.json`.
+
+**Vocos fine-tune** trên 17,9 h giọng mới đang chạy (10k bước, MPS); sẽ báo riêng nếu
+checkpoint mới thắng pretrained trên copy-synthesis. Không đổi production/ONNX.
+
