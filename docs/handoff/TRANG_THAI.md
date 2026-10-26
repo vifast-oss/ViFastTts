@@ -7,13 +7,14 @@
 > 4. ONNX đã **đóng băng**; production giữ P2 + PyTorch Vocos.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.49 (26/10/2026) — DỪNG — CHỜ NGHE A3.** Không train, không đổi production.
+> **V18.49 (26/10/2026) — DỪNG — TAI KHÔNG PHÂN BIỆT.** Không train, không đổi production.
 > **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49. **Commit gốc**: `74ed53c`.
 > **Code cuối trước hồ sơ**: `9d917e7`. Báo cáo: `V1849_agent2.md`.
 > - **A2 ĐẠT**: ΔBAK chunk **+0,1121** (CI [0,0569; 0,1715]); ΔCR **+0,0841** (CI [0,0776; 0,0878]).
-> - **A3**: 28 lượt PILOT vs CONTROL đã dựng, link sống; **chờ CSV**.
-> - **A4**: chỉ ứng viên nếu A3 PILOT thắng; chưa đổi production.
-> - Link A3: https://automotive-helpful-chances-governmental.trycloudflare.com/
+> - **A3**: PILOT **1** · CONTROL **0** · hòa **15**; phiên hợp lệ nhưng chỉ **1 lượt không hòa** ⇒
+>   **"TAI KHÔNG PHÂN BIỆT"**; dương 3/4, âm 4/4, lặp 4/4.
+> - **A4**: chỉ A2 đạt ⇒ **không đổi production, không thành ứng viên**; không đóng L_con
+>   (CONTROL không thắng rõ).
 >
 > **V18.48 (26/10/2026, lịch sử)** — pilot L_con: A4 không kết luận, đóng băng lại.
 > Báo cáo: `V1848_agent2.md`.
@@ -49,10 +50,10 @@
 
 **Vòng hiện hành**: **V18.49** · **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49 ·
 **Commit gốc của vòng**: `74ed53c` · **Code cuối trước hồ sơ**: `9d917e7` ·
-**Trạng thái**: **DỪNG — CHỜ NGHE A3** — không train, không đổi production.
+**Trạng thái**: **DỪNG — TAI KHÔNG PHÂN BIỆT** — không train, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: nghe A3 + gửi CSV; A2 đã ĐẠT, chờ tai để kết luận A4.
+**Việc tiếp**: không đổi production; PILOT không thành ứng viên; muốn tiếp cần thiết kế tai mới + đăng ký trước.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `74ed53c..<commit cuối>`,
 > đối chiếu `V1849_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -95,8 +96,8 @@
 | Mã | Việc | Trạng thái |
 |---|---|---|
 | V1849.A2 | Tái lập chunk 40 câu mới | ✅ **ĐẠT** — ΔBAK +0,1121; ΔCR +0,0841; `9e9df51` |
-| V1849.A3 | Trang nghe mù 28 lượt | ⏳ **CHỜ CSV** — `9d917e7` |
-| V1849.A4 | Kết hợp A2 + A3 | ⛔ **CHƯA KẾT LUẬN** |
+| V1849.A3 | Nghe mù 28 lượt | ⚪ **TAI KHÔNG PHÂN BIỆT** — PILOT 1 · CONTROL 0 · hòa 15; `9d917e7` |
+| V1849.A4 | Kết hợp A2 + A3 | ⛔ **KHÔNG ĐỔI PRODUCTION** — chỉ A2 đạt |
 | — | Báo cáo `V1849_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.48 — kết quả (lịch sử)

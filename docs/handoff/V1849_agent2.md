@@ -1,6 +1,6 @@
 # V18.49 — Agent 2: tái lập chunk + nghe mù PILOT vs CONTROL
 
-> **Trạng thái: DỪNG — CHỜ NGHE A3.** Không train, không đổi production.
+> **Trạng thái: DỪNG — TAI KHÔNG PHÂN BIỆT.** Không train, không đổi production.
 > **Commit gốc của vòng**: `74ed53c` · **Code cuối trước hồ sơ**: `9d917e7`
 > · **Tệp đặc tả**: `V1849_agent0.md` + `DECISIONS.md` mục V18.49.
 > Báo cáo này là commit hồ sơ.
@@ -12,8 +12,8 @@
 | V1849.A0 | Chấp nhận V18.48; production P2 | **XONG** |
 | V1849.A1 | Ghi lỗi thiết kế A0 thứ hai; cổng chất lượng từ nay đo chính ở **chunk**, TF chỉ chẩn đoán | **XONG** |
 | V1849.A2 | **ĐẠT** — ΔBAK chunk **+0,1121** CI [0,0569; 0,1715]; ΔCR **+0,0841** CI [0,0776; 0,0878] | **XONG** (`9e9df51`) |
-| V1849.A3 | 28 lượt đã dựng, link sống; **chờ CSV** | **CHỜ NGHE** (`9d917e7`) |
-| V1849.A4 | ỨNG VIÊN chỉ khi A3 PILOT thắng | **CHƯA KẾT LUẬN** |
+| V1849.A3 | **TAI KHÔNG PHÂN BIỆT** — PILOT 1 · CONTROL 0 · hòa 15; phiên hợp lệ | **XONG** |
+| V1849.A4 | Chỉ A2 đạt; A3 không PILOT thắng ⇒ **không đổi production, không thành ứng viên** | **DỪNG** |
 
 - **A2 tái lập mạnh** trên 40 câu mới: BAK chunk tăng +0,1121, CR tăng +0,0841.
 - Kết quả **cao hơn kỳ vọng đăng ký +0,03…+0,06**; cổng chỉ yêu cầu CI>0, nên vẫn ĐẠT.
@@ -58,11 +58,25 @@ CLI chunk mode mặc định, −16 LUFS.
 - Luật: hợp lệ khi dương ≥3/4, âm ≥3/4, lặp ≥3/4. **PILOT thắng** khi binomial một phía
   p<0,05 trên lượt không hòa, tối thiểu 10 lượt. <10 lượt không hòa ⇒ "tai không phân biệt".
   CONTROL thắng rõ ⇒ **ĐÓNG L_con**.
-- **Chưa có CSV ⇒ chưa kết luận A3/A4.**
+- **Kết quả CSV** (28/28, lưu `artifacts/bench/v1849_a3/answers.csv`, score `score.json`):
+
+| Hạng mục | Kết quả | Luật | Kết |
+|---|---|---|---|
+| 16 lượt PILOT vs CONTROL | **PILOT 1 · CONTROL 0 · hòa 15**; non-tie **1**; p_pilot 0,5 | ≥10 non-tie, p<0,05 | **tai không phân biệt** |
+| 4 đối chứng dương | **3/4** chọn bản sạch | ≥3/4 | đạt (sát biên) |
+| 4 đối chứng âm | **4/4** "không phân biệt" | ≥3/4 | đạt |
+| 4 lượt lặp | **4/4** nhất quán | ≥3/4 | đạt |
+
+- **Phiên hợp lệ**, nhưng chỉ **1 lượt không hòa** ⇒ theo luật: **"TAI KHÔNG PHÂN BIỆT"**, không kết luận PILOT thắng.
+- Không có CONTROL thắng rõ, nên **không đóng L_con**; nhưng PILOT **không thành ứng viên production** vì thiếu bằng chứng tai.
+- Giới hạn: một người nghe; 15/16 "không phân biệt" phù hợp với hiệu ứng nhỏ (~0,1 BAK) dưới ngưỡng nghe.
 
 ## 3. A4 — kết hợp
 
-- A2 **ĐẠT**; A3 **chờ nghe**.
+- A2 **ĐẠT**; A3 **"tai không phân biệt"** ⇒ chỉ một trong hai đạt.
+- Theo V1849.A4: **không đổi production, không thành ứng viên**, báo A0; **không đóng L_con**
+  (vì A3 không CONTROL thắng rõ), nhưng không mở V18.50.
+- Giữ P2; ONNX đóng băng.
 - Nếu A3 PILOT thắng: **ỨNG VIÊN**; V18.50 làm regression golden set + OOV/số/dấu câu,
   rồi người dùng duyệt đổi production sang PILOT 2k.
 - Nếu chỉ một trong hai đạt: không đổi production, báo A0.
@@ -87,13 +101,14 @@ CLI chunk mode mặc định, −16 LUFS.
 
 ## 6. Việc tiếp
 
-1. **Người dùng nghe A3** và gửi CSV; mình chấm ngay.
-2. Nếu PILOT thắng: chuẩn bị V18.50 regression/golden + duyệt production; **chưa đổi ngay**.
-3. Nếu "tai không phân biệt": PILOT không đáng đổi production; báo A0.
-4. Nếu CONTROL thắng rõ: đóng L_con.
+1. **Dừng**: tai không phân biệt; PILOT không thành ứng viên production.
+2. Không đổi production; P2 giữ nguyên; không mở V18.50.
+3. Không đóng L_con (CONTROL không thắng rõ), nhưng không thử thêm trong dòng này.
+4. Nếu A0 muốn tiếp: cần giả thuyết/thiết kế tai mới (nhiều người nghe, câu dễ phân biệt hơn)
+   + đăng ký trước; không dùng lại kết quả này.
 
 ## 7. Test & trạng thái
 
 - `pytest -q -rs`: **2.552 passed, 23 skipped** (ONNX đóng băng).
 - `ruff check .`: sạch.
-- **Trạng thái: DỪNG — CHỜ NGHE A3.**
+- **Trạng thái: DỪNG — TAI KHÔNG PHÂN BIỆT.**
