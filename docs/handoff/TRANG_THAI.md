@@ -4,15 +4,16 @@
 > 1. Sản phẩm đang chạy bằng **PyTorch** với model **P2**; bản đóng gói ONNX **chưa bật**.
 > 2. Chất lượng giọng được **đóng băng** trong lúc đo xem "rè nền" đến từ dữ liệu, vocoder hay acoustic.
 > 3. Chưa train thêm; mọi thay đổi production phải qua cổng đo đã đăng ký trước.
-> 4. Nếu ONNX không nhanh/nhẹ hơn đáng kể, nhánh ONNX sẽ đóng; nếu đạt, có thể bật ở V18.45.
+> 4. ONNX đã **đóng băng**; nhánh chất lượng đang tìm đúng nguồn rè trước khi train.
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
-> **V18.45 (26/10/2026) — ĐANG LÀM.** Không train, không đổi production.
+> **V18.45 (26/10/2026) — DỪNG, CHỜ ĐỌC.** Không train, không đổi production.
 > **Tệp đặc tả**: `V1845_agent0.md` + `DECISIONS.md` mục V18.45. **Commit gốc**: `244c40e`.
-> **A5 V18.44: XÁC NHẬN** (B 16/16; BAK khớp tai) ⇒ BAK là thước định hướng chính.
-> **Họ cấy ghép frame đã ĐÓNG** (V1845.A2); không crossfade. `C_lo` chỉ là **giả thuyết** (V1845.A3).
-> **Cổng train còn thiếu**: (2) A4 xác nhận `C_lo`; (3) A5 over-smoothing/hỗn hợp hoặc A6 cao độ liên quan;
-> (4) duyệt ngân sách. Chưa mở V18.45-train.
+> **Code cuối trước hồ sơ**: `66f2ac2`. Báo cáo: `V1845_agent2.md`.
+> - **A4 TRƯỢT**: Δac bộ mới **0,0568 < 0,15**; `C_lo` recovery 1,08 nhưng CI95 [−0,77; 2,90] ⇒ không xác nhận.
+> - **A5 TRƯỢT (điều kiện 3)**: cửa sổ 5; `C_lo_s/C_lo` = **0,789** ⇒ **không phải over-smoothing**.
+> - **A6 KHÔNG ĐẠT**: ρ cao độ 0,021–0,088; CI đều chứa 0 ⇒ không chỉ số liên quan.
+> - **A7 ĐÓNG**: (2) A4 trượt; (3) A5/A6 trượt; (4) chưa duyệt ngân sách.
 >
 > **V18.44 (26/10/2026, lịch sử)** — ONNX đóng băng; UTMOS bị loại; A6 frame lạ; A5 xác nhận BAK.
 > Test **2.547 pass / 23 skip**. Báo cáo: `V1844_agent2.md`.
@@ -44,10 +45,12 @@
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
 **Vòng hiện hành**: **V18.45** · **Tệp đặc tả**: `V1845_agent0.md` + `DECISIONS.md` mục V18.45 ·
-**Commit gốc của vòng**: `244c40e` · **Trạng thái**: **ĐANG LÀM** — không train, giữ P2, ONNX đóng băng.
+**Commit gốc của vòng**: `244c40e` · **Code cuối trước hồ sơ**: `66f2ac2` ·
+**Trạng thái**: **DỪNG, CHỜ ĐỌC** — không train, giữ P2, ONNX đóng băng.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp**: A4 40 câu mới → A5 cửa sổ GV + 80 câu → A6 F0 → report.
+**Việc tiếp**: A0 quyết `C_lo` (không xác nhận); hướng còn lại là phổ/buzz dải thấp hoặc đường chunk;
+V18.45-train vẫn đóng, chưa duyệt ngân sách.
 
 > Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `244c40e..<commit cuối>`,
 > đối chiếu `V1845_agent2.md`. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
@@ -86,14 +89,14 @@
 
 ## 4. Việc đang chờ (theo mã vòng)
 
-### 4.1 V18.45 — đang thực thi
+### 4.1 V18.45 — kết quả
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V1845.A4 | Xác nhận `C_lo` trên 40 câu mới (đã chốt danh sách) | ⏳ |
-| V1845.A5 | Cửa sổ làm mượt theo GV (commit trước) → chấm 80 câu | ⏳ |
-| V1845.A6 | F0: RMSE, vuv error, std ratio, Spearman | ⏳ |
-| V1845.A7 | Cổng train: (2)(3)(4) | ⛔ chưa mở |
-| — | Báo cáo `V1845_agent2.md` | ⏳ |
+| V1845.A4 | Xác nhận `C_lo` trên 40 câu mới | ❌ **TRƯỢT** — Δac 0,0568 < 0,15; CI [−0,77; 2,90]; `9e03ed6` |
+| V1845.A5 | Cửa sổ 5 theo GV → 80 câu | ❌ **KHÔNG phải over-smoothing** — tỉ lệ 0,789; `f5bd672`, `1fbd269` |
+| V1845.A6 | F0 80 câu | ❌ **Không chỉ số liên quan** — ρ 0,021–0,088; `66f2ac2` |
+| V1845.A7 | Cổng train: (2)(3)(4) | ⛔ **ĐÓNG** |
+| — | Báo cáo `V1845_agent2.md` | ✅ commit hồ sơ |
 
 ### 4.2 V18.44 — kết quả (lịch sử)
 | Mã | Việc | Trạng thái |
