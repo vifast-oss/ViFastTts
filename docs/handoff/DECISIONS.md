@@ -544,3 +544,19 @@ Còn ≥20 câu held-out dài chưa dùng (thiếu thì tối thiểu 12, báo).
 
 **Không đổi**: không train, không đổi production, không ONNX, không UTMOS. Hướng xử lý (GTA, vocoder source-filter,
 refine mel 2 bước) chỉ A0 chốt sau A3/A4.
+
+## V18.50c — Agent 0: bổ sung trước khi nghe
+
+| Mã | Sửa đổi | Ghi chú |
+|---|---|---|
+| V1850c.1 | Mỗi mục trang có thêm ô tick **"Văn bản không khớp âm thanh"**; CSV thêm cột `mismatch`. Mục A bị tick ⇒ câu đó "nhãn nghi sai", **loại khỏi A3/A4**, báo riêng. Báo cả trường hợp chỉ tick ở P2/PILOT (model đọc sai chữ). Không phải cổng; chỉ làm sạch phân tích và ước lượng tỉ lệ nhãn sai held-out. | Trang 86 mục (20×A/B/P2/PILOT + 3 lặp + 3 cấy). |
+
+## V18.51 — dự kiến (chạy sau V18.50, KHÔNG train)
+
+| Mã | Việc | Cổng / luật (đăng ký trước) |
+|---|---|---|
+| V1851.A1 | ASR tiếng Việt có sẵn (hoặc PhoWhisper/Whisper, ghi phiên bản) trên toàn bộ clip train + held-out; CER theo âm tiết giữa nhãn và ASR từng clip. Thêm 2 tín hiệu không ASR: tốc độ đọc lệch >3 MAD so trung vị; loss L1 từng clip của P2 (TF) top 2%. | CER chỉ để **lọc dữ liệu**, không đánh giá model. |
+| V1851.A2 | Người dùng nghe xác nhận 40 clip: 30 CER cao nhất + 10 ngẫu nhiên CER>0,3; 3 nút khớp / sai một phần / sai hoàn toàn. | Precision ngưỡng CER>0,3; <0,6 ⇒ không dùng được, báo. |
+| V1851.A3 | Ước lượng tỉ lệ nhãn sai toàn data = (số clip CER>0,3) × precision; báo theo video nguồn. | ≥2% clip hoặc ≥2% giờ ⇒ mở pilot làm sạch (A4). <2% ⇒ ghi hồ sơ, đóng giả thuyết cho rè nền, vẫn loại clip đó khỏi held-out. |
+| V1851.A4 | (Chỉ khi A3 ≥2% + duyệt) PILOT = P2 EMA + 2.000 bước trên data loại clip nghi sai; CONTROL = data đầy đủ; cùng seed/cấu hình V1848. | Cổng chính **chunk**: ΔBAK cận dưới CI95 >0 **và** ΔCR >0; rồi nghe mù đánh dấu âm tiết. Kỳ vọng ước lượng trước khi chạy. |
+| V1851.A5 | Tính lại Δac V18.43/45/46 sau khi loại câu held-out nghi sai nhãn. | Chỉ giải thích; **không** mở lại `C_lo` hay cổng cũ. |

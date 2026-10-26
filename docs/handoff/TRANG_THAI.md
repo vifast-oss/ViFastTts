@@ -8,11 +8,12 @@
 > 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
 
 > **V18.50 (27/10/2026) — ĐANG LÀM.** Không train, không đổi production.
-> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + **V1850b** (sửa đăng ký trước khi nghe).
+> **Tệp đặc tả**: `V1850_agent0.md` + `DECISIONS.md` mục V18.50 + **V1850b/c** (sửa đăng ký trước khi nghe).
 > **Commit gốc**: `3dc3ae2`.
 > **Đóng dòng L_con/rè nền**; mở dòng **"rè cục bộ theo âm tiết"**. Trang đánh dấu **86 mục**
-> (20 câu × A/B/P2/PILOT + 3 lặp + 3 cấy click), chọn âm tiết; A3 tách nguồn (A/B/P2/PILOT), A4 đặc trưng + creak.
-> Không train; chưa đổi production.
+> (20 câu × A/B/P2/PILOT + 3 lặp + 3 cấy click), chọn âm tiết + ô "văn bản không khớp";
+> A3 tách nguồn (A/B/P2/PILOT), A4 đặc trưng + creak. Không train; chưa đổi production.
+> **V18.51 dự kiến** (audit nhãn bằng ASR) đã ghi đăng ký, **chưa chạy**.
 >
 > **V18.49 (26/10/2026, lịch sử)** — A2 tái lập +0,1121; A3 tai không phân biệt; giữ P2.
 > Báo cáo: `V1849_agent2.md`.
