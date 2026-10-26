@@ -50,7 +50,14 @@ Loại: 487 parse không sạch · 32 mã trộn · 23 audio trùng · 8 text tr
 - Align `--single_speaker --beam 100 --retry_beam 400`, 6 job.
 - `mfa_to_durations` → `durations/gaps/lead/pauses`; cắt 3–10 s tại pause, `max_gap 60`,
   `tail_cap 67`, sàn 0,25 s; `seg_durations` hybrid như v32.
-- Manifest: `data/ngochuyen/manifests/{train,val,holdout}_clean_v2_dur_seg_slot4.jsonl`.
+- Manifest: `data/ngochuyen/manifests/{train,val,holdout}_dur_seg_slot4.jsonl`.
+
+**Kết quả S1 (đã đo):** MFA giữ **6.989/6.989** clip, 0 drop; cắt thành
+**9.546 train / 537 val / 527 holdout segment** (17,796 / 1,009 / 0,980 h).
+`seg_durations`: 0 fail bất biến; 367/275.640 âm tiết fallback rule (0,13%); tail gap ≤60 frame.
+Mel stats 800 clip / 623.606 frame; f0 stats R5b 2.500 segment (log-F0 mean 5,390 ≈ 219 Hz).
+**Lỗi đã sửa trong chain:** `compute_f0_stats.py` sinh schema DCT cũ (thiếu `shape_mean`) →
+train dừng; đã thay bằng `r5b_segment_stats.py` (schema `r5b-v2`) trước khi train.
 
 ## 5. Train (đăng ký trước)
 
