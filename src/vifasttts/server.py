@@ -77,13 +77,26 @@ class TtsEngine:
             raise ValueError("'overrides' phải là object chuỗi→chuỗi")
         max_chars = int(payload.get("max_chars", 400))
         peak_normalize = bool(payload.get("peak_normalize", False))
-
+        pause_mode = str(payload.get("pause_mode", "model"))
+        if pause_mode not in ("model", "fixed"):
+            raise ValueError("pause_mode phải là 'model' hoặc 'fixed'")
+        pause_comma = float(payload.get("pause_comma", 0.25))
+        pause_period = float(payload.get("pause_period", 0.55))
+        pause_default = float(payload.get("pause_default", 0.08))
         with self.lock:
-            pieces = [audio for audio, _ in self.synthesizer.iter_synthesize(
-                text, dialect=dialect, speed=speed,
-                overrides={str(k): str(v) for k, v in overrides.items()} if overrides else None,
-                max_chars=max_chars,
-            )]
+            if pause_mode == "fixed":
+                pieces = [audio for audio, _ in self.synthesizer.iter_synthesize_steady(
+                    text, dialect=dialect, speed=speed, gate_threshold=1.01,
+                    overrides={str(k): str(v) for k, v in overrides.items()} if overrides else None,
+                    max_chars=max_chars, pause_comma=pause_comma,
+                    pause_period=pause_period, pause_default=pause_default,
+                )]
+            else:
+                pieces = [audio for audio, _ in self.synthesizer.iter_synthesize(
+                    text, dialect=dialect, speed=speed,
+                    overrides={str(k): str(v) for k, v in overrides.items()} if overrides else None,
+                    max_chars=max_chars,
+                )]
         waveform = postprocess(
             np.concatenate(pieces), self.sample_rate,
             target_db=-3.0 if peak_normalize else None,

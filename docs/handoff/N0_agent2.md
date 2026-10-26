@@ -151,3 +151,12 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   Xu hướng khớp tai: fine-tune hơi “rè/ghé” hơn.
 - **Quyết định: giữ Vocos pretrained mặc định**; Vocos fine-tune không đưa vào production/demo chính.
   File fine-tune vẫn để đối chiếu, không xoá.
+
+
+## 10. Chính sách ngắt nghỉ (27/10/2026)
+
+- Dữ liệu sạch → **model tự ngắt nghỉ là mặc định** (`pause_mode="model"`).
+- Nghỉ cố định là opt-in: API `pause_mode="fixed"`, CLI `--fixed-pauses`, HTTP payload
+  `"pause_mode":"fixed"`; `--steady` chỉ là alias cũ (ẩn), mặc định tắt.
+- Fixed chặn pause model (gate 1.01), chèn 0,25 s sau phẩy và 0,55 s sau chấm/hỏi/than.
+- Không đổi hành vi mặc định của P2/ONNX cũ; N0 mặc định model-pause.

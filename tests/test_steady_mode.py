@@ -70,3 +70,47 @@ def test_steady_trims_model_edge_silence():
     # 2 chunk + 1 pause; mỗi chunk còn ~100 mẫu tiếng + margin 2×10 ms = 120 mẫu
     assert pieces[0].size <= 140 and pieces[0].size >= 100
     assert pieces[1].size == int(1000 * 0.55)
+
+
+class _DispatchStub(_Stub):
+    """Ghi lại nhánh được gọi để kiểm mặc định model-pause vs fixed-pause."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.calls: list[str] = []
+        self.gates: list[float] = []
+
+    def iter_synthesize(self, text, **kwargs):
+        self.calls.append("model")
+        yield np.ones(10, dtype=np.float32), self.sample_rate
+
+    def iter_synthesize_steady(self, text, **kwargs):
+        self.calls.append("fixed")
+        self.gates.append(float(kwargs.get("gate_threshold", -1)))
+        yield np.ones(10, dtype=np.float32), self.sample_rate
+
+
+def test_synthesize_default_uses_model_pauses(tmp_path):
+    """Mặc định phải để model tự nghỉ, không gọi nhánh fixed."""
+    engine = _DispatchStub()
+    engine.synthesize("Một. Hai", tmp_path / "model.wav")
+    assert engine.calls == ["model"]
+
+
+def test_synthesize_fixed_pauses_opt_in(tmp_path):
+    """Chỉ khi pause_mode='fixed' mới chặn pause model và dùng nghỉ cố định."""
+    engine = _DispatchStub()
+    engine.synthesize("Một. Hai", tmp_path / "fixed.wav", pause_mode="fixed")
+    assert engine.calls == ["fixed"]
+    assert engine.gates == [1.01]
+
+
+def test_synthesize_invalid_pause_mode(tmp_path):
+    """Giá trị lạ phải báo lỗi, không âm thầm rơi về một chế độ."""
+    engine = _DispatchStub()
+    try:
+        engine.synthesize("Một", tmp_path / "bad.wav", pause_mode="auto")
+    except ValueError:
+        pass
+    else:  # pragma: no cover
+        raise AssertionError("Phải raise ValueError")

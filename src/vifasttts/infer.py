@@ -381,15 +381,37 @@ class Synthesizer:
         chunk_loudness: bool = False,
         f0_scale: float = 1.0,
         duration_clamp: bool = False,
+        pause_mode: str = "model",
+        pause_comma: float = STEADY_PAUSE_COMMA,
+        pause_period: float = STEADY_PAUSE_PERIOD,
+        pause_default: float = STEADY_PAUSE_DEFAULT,
     ) -> tuple[int, int]:
-        """Ghép các đoạn từ `iter_synthesize`, hậu xử lý và ghi WAV."""
+        """Ghép các đoạn từ `iter_synthesize`, hậu xử lý và ghi WAV.
+
+        `pause_mode="model"` (mặc định): model tự quyết định ngắt/nghỉ theo dữ liệu
+        (gate 0,5). `pause_mode="fixed"`: chặn pause model và chèn nghỉ cố định theo
+        dấu câu (`pause_comma` / `pause_period` / `pause_default`); tương đương
+        `iter_synthesize_steady`.
+        """
         from vifasttts.runtime.postprocess import postprocess
 
-        pieces = [audio for audio, _ in self.iter_synthesize(
-            text, dialect=dialect, speed=speed, gate_threshold=gate_threshold,
-            sharpen_alpha=sharpen_alpha, overrides=overrides, max_chars=max_chars,
-            chunk_loudness=chunk_loudness, f0_scale=f0_scale, duration_clamp=duration_clamp,
-        )]
+        if pause_mode not in ("model", "fixed"):
+            raise ValueError("pause_mode phải là 'model' hoặc 'fixed'")
+        if pause_mode == "fixed":
+            pieces = [audio for audio, _ in self.iter_synthesize_steady(
+                text, dialect=dialect, speed=speed, gate_threshold=1.01,
+                sharpen_alpha=sharpen_alpha, overrides=overrides, max_chars=max_chars,
+                pause_comma=pause_comma, pause_period=pause_period,
+                pause_default=pause_default, chunk_loudness=chunk_loudness,
+                f0_scale=f0_scale, duration_clamp=duration_clamp,
+            )]
+        else:
+            pieces = [audio for audio, _ in self.iter_synthesize(
+                text, dialect=dialect, speed=speed, gate_threshold=gate_threshold,
+                sharpen_alpha=sharpen_alpha, overrides=overrides, max_chars=max_chars,
+                chunk_loudness=chunk_loudness, f0_scale=f0_scale,
+                duration_clamp=duration_clamp,
+            )]
         waveform = postprocess(np.concatenate(pieces), self.sample_rate,
                                target_db=-3.0 if peak_normalize else None)
         waveform = _apply_target_lufs(waveform, self.sample_rate, target_lufs)
@@ -598,12 +620,22 @@ def synthesize(
     max_chars: int = 400,
     device: str | None = None,
     target_lufs: float | None = None,
+    pause_mode: str = "model",
+    pause_comma: float = STEADY_PAUSE_COMMA,
+    pause_period: float = STEADY_PAUSE_PERIOD,
+    pause_default: float = STEADY_PAUSE_DEFAULT,
 ) -> tuple[int, int]:
-    """text -> WAV (nạp model một lần). Trả về (số mẫu, sample_rate)."""
+    """text -> WAV (nạp model một lần). Trả về (số mẫu, sample_rate).
+
+    Mặc định `pause_mode="model"`: model tự ngắt/nghỉ. Chỉ bật nghỉ cố định khi
+    truyền `pause_mode="fixed"`.
+    """
     engine = Synthesizer(config, checkpoint, vocoder_checkpoint, device=device)
     return engine.synthesize(
         text, output, dialect=dialect, speed=speed, overrides=overrides,
         peak_normalize=peak_normalize, max_chars=max_chars, target_lufs=target_lufs,
+        pause_mode=pause_mode, pause_comma=pause_comma,
+        pause_period=pause_period, pause_default=pause_default,
     )
 
 
@@ -640,8 +672,12 @@ def synthesize_batch(
     max_chars: int = 400,
     device: str | None = None,
     target_lufs: float | None = None,
+    pause_mode: str = "model",
 ) -> list[Path]:
-    """Tổng hợp danh sách (id, text) → `<output_dir>/<id>.wav` (nạp model một lần)."""
+    """Tổng hợp danh sách (id, text) → `<output_dir>/<id>.wav` (nạp model một lần).
+
+    `pause_mode="model"` mặc định — model tự nghỉ; `fixed` để chèn nghỉ cố định.
+    """
     engine = Synthesizer(config, checkpoint, vocoder_checkpoint, device=device)
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
@@ -651,6 +687,7 @@ def synthesize_batch(
         engine.synthesize(
             text, path, dialect=dialect, speed=speed, overrides=overrides,
             peak_normalize=peak_normalize, max_chars=max_chars, target_lufs=target_lufs,
+            pause_mode=pause_mode,
         )
         paths.append(path)
     return paths

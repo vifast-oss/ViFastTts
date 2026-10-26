@@ -15,6 +15,8 @@
 > **holdout 4,0 dB**; free-run 80 holdout **16,57 dB** (P2 zero-shot 28,31 dB); thanh **0,9743**
 > (thật 0,9835); Vocos fine-tune 10k mel **0,1167** (pretrained 0,1432).
 > Hồ sơ: `docs/handoff/NGUYEN_DATA.md`; báo cáo `docs/handoff/N0_agent2.md`.
+> **Ngắt nghỉ**: mặc định model tự nghỉ (`pause_mode="model"`); nghỉ cố định chỉ khi
+> `--fixed-pauses` / `pause_mode="fixed"` (mặc định tắt). Vocos fine-tune đã loại vì rè.
 > **Nghe**: https://instant-weblogs-reductions-separated.trycloudflare.com/
 >
 > **V18.52 (27/10/2026) — DỪNG — CHỜ NGƯỜI NGHE.** Không train, không đổi production, không ghi đè dữ liệu.

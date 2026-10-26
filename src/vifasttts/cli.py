@@ -332,8 +332,10 @@ def synthesize_cmd(
     speed: float = typer.Option(1.0, help="Tốc độ đọc (1.0 là gốc)"),
     gate_threshold: float | None = typer.Option(None, "--gate-threshold",
                                           help="Ngưỡng gate pause (mặc định 0.5; khi --steady mặc định 1.01 = chặn tuyệt đối)"),
-    steady: bool = typer.Option(False, "--steady",
-                                help="Chế độ đọc đều: cắt tại dấu câu + nghỉ CỐ ĐỊNH (không dùng pause model học)"),
+    steady: bool = typer.Option(False, "--steady", hidden=True,
+                                help="Alias cũ của --fixed-pauses (đã ẩn)"),
+    fixed_pauses: bool = typer.Option(False, "--fixed-pauses",
+                                      help="Bật nghỉ CỐ ĐỊNH theo dấu câu; mặc định TẮT để model tự nghỉ"),
     sentence: bool = typer.Option(False, "--sentence",
                                   help="v14: đọc CẢ CÂU một lần, pause chèn qua gaps (giữ ngữ cảnh, tránh kéo dài đầu chunk)"),
     steady_mode: str = typer.Option("sentence", "--steady-mode",
@@ -360,23 +362,24 @@ def synthesize_cmd(
 ) -> None:
     """Tổng hợp WAV bằng PyTorch (chunk câu dài, override, chuẩn hoá đỉnh tuỳ chọn).
 
-    `--steady`: chế độ "đọc đều" — model không tự đặt pause nội câu (gate 1,01 = chặn tuyệt đối),
-    runtime chèn nghỉ cố định: phẩy 0,25s · chấm/hỏi/than 0,55s (chỉnh bằng
-    `--pause-comma/--pause-period/--pause-default`).
+    Mặc định **model tự ngắt/nghỉ** (dữ liệu sạch). `--fixed-pauses` bật nghỉ cố định
+    theo dấu câu: phẩy 0,25s · chấm/hỏi/than 0,55s (chỉnh bằng
+    `--pause-comma/--pause-period/--pause-default`). `--steady` là alias cũ.
     """
     from vifasttts.infer import Synthesizer, load_overrides
 
-    gate = gate_threshold if gate_threshold is not None else (1.01 if steady else 0.5)
+    fixed = bool(steady or fixed_pauses)
+    gate = gate_threshold if gate_threshold is not None else (1.01 if fixed else 0.5)
     engine = Synthesizer(load_config(config), checkpoint, vocoder_checkpoint, device=device)
     overrides_dict = load_overrides(overrides) if overrides else None
-    if (steady and steady_mode == "sentence") or sentence:
+    if (fixed and steady_mode == "sentence") or sentence:
         samples, sample_rate = engine.synthesize_sentence(
             text, output, dialect=dialect, speed=speed, gate_threshold=gate,
             sharpen_alpha=sharpen_alpha, overrides=overrides_dict,
             peak_normalize=peak_normalize, max_chars=max_chars,
             pause_comma=pause_comma, pause_period=pause_period, target_lufs=target_lufs,
         )
-    elif steady:
+    elif fixed:
         samples, sample_rate = engine.synthesize_steady(
             text, output, dialect=dialect, speed=speed, gate_threshold=gate,
             sharpen_alpha=sharpen_alpha, overrides=overrides_dict,
@@ -405,9 +408,11 @@ def synthesize_onnx_cmd(
     speed: float = typer.Option(1.0, help="Tốc độ đọc (xấp xỉ bằng co giãn mel)"),
     gate_threshold: float | None = typer.Option(None, "--gate-threshold",
                                           help="Ngưỡng gate pause (mặc định 0.5; khi --steady mặc định 1.01 = chặn tuyệt đối)"),
-    steady: bool = typer.Option(False, "--steady",
-                                help="Chế độ đọc đều: cắt tại dấu câu + nghỉ CỐ ĐỊNH"),
-    pause_comma: float = typer.Option(0.25, "--pause-comma", help="Nghỉ sau phẩy/chấm phẩy (giây, --steady)"),
+    steady: bool = typer.Option(False, "--steady", hidden=True,
+                                help="Alias cũ của --fixed-pauses (đã ẩn)"),
+    fixed_pauses: bool = typer.Option(False, "--fixed-pauses",
+                                      help="Bật nghỉ CỐ ĐỊNH; mặc định TẮT để model tự nghỉ"),
+    pause_comma: float = typer.Option(0.25, "--pause-comma", help="Nghỉ sau phẩy/chấm phẩy (giây, --fixed-pauses)"),
     pause_period: float = typer.Option(0.55, "--pause-period", help="Nghỉ sau chấm/hỏi/than (giây, --steady)"),
     pause_default: float = typer.Option(0.08, "--pause-default",
                                         help="Nghỉ mặc định khi mảnh không có dấu câu (giây, --steady)"),
@@ -420,19 +425,20 @@ def synthesize_onnx_cmd(
 ) -> None:
     """Tổng hợp bằng ONNX Runtime + numpy (không cần PyTorch).
 
-    `--steady`: chế độ "đọc đều" — model không tự đặt pause nội câu (gate 1,01 = chặn tuyệt đối),
-    runtime chèn nghỉ cố định: phẩy 0,25s · chấm/hỏi/than 0,55s.
+    Mặc định model tự nghỉ; `--fixed-pauses` chặn pause model và chèn nghỉ cố định
+    (phẩy 0,25s · chấm/hỏi/than 0,55s). `--steady` là alias cũ.
     """
     from vifasttts.infer import load_overrides
     from vifasttts.runtime.onnx_engine import synthesize_onnx
 
-    gate = gate_threshold if gate_threshold is not None else (1.01 if steady else 0.5)
+    fixed = bool(steady or fixed_pauses)
+    gate = gate_threshold if gate_threshold is not None else (1.01 if fixed else 0.5)
     samples, sample_rate = synthesize_onnx(
         text, acoustic, output, vocoder_path=vocoder,
         dialect=dialect, speed=speed, gate_threshold=gate,
         overrides=load_overrides(overrides) if overrides else None,
         peak_normalize=peak_normalize, max_chars=max_chars, provider=provider,
-        steady=steady, pause_comma=pause_comma, pause_period=pause_period,
+        steady=fixed, pause_comma=pause_comma, pause_period=pause_period,
         pause_default=pause_default, target_lufs=target_lufs,
     )
     typer.echo(f"Đã ghi {output} ({samples} mẫu @ {sample_rate} Hz)")
@@ -453,6 +459,8 @@ def synthesize_batch_cmd(
     device: str = typer.Option("auto", help="auto | cpu | cuda | mps"),
     target_lufs: float = typer.Option(-16.0, "--target-lufs",
                                       help="Chuẩn hoá độ to cả file về LUFS này (0 = tắt)"),
+    fixed_pauses: bool = typer.Option(False, "--fixed-pauses",
+                                      help="Bật nghỉ cố định; mặc định TẮT để model tự nghỉ"),
 ) -> None:
     """Tổng hợp nhiều câu từ file → thư mục WAV (nạp model một lần)."""
     from vifasttts.infer import load_overrides, synthesize_batch
@@ -474,7 +482,7 @@ def synthesize_batch_cmd(
         vocoder_checkpoint=vocoder_checkpoint, dialect=dialect, speed=speed,
         overrides=load_overrides(overrides) if overrides else None,
         peak_normalize=peak_normalize, max_chars=max_chars, device=device,
-        target_lufs=target_lufs,
+        target_lufs=target_lufs, pause_mode="fixed" if fixed_pauses else "model",
     )
     typer.echo(f"Đã ghi {len(paths)} file vào {output_dir}")
 

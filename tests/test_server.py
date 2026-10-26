@@ -86,6 +86,8 @@ def test_engine_validates_payload(checkpoint: str):
         engine.synthesize_bytes({"text": "ba", "speed": 99.0})
     with pytest.raises(ValueError):
         engine.synthesize_bytes({"text": "ba", "overrides": ["không phải dict"]})
+    with pytest.raises(ValueError):
+        engine.synthesize_bytes({"text": "ba", "pause_mode": "auto"})
 
 
 def test_engine_synthesizes_wav_bytes(checkpoint: str):
@@ -96,6 +98,10 @@ def test_engine_synthesizes_wav_bytes(checkpoint: str):
     with wave.open(io.BytesIO(audio), "rb") as fh:
         assert fh.getnframes() > 0
         assert fh.getframerate() == 24000
+    fixed = engine.synthesize_bytes({"text": "Chào bạn. Hôm nay", "pause_mode": "fixed"})
+    assert fixed[:4] == b"RIFF"
+    with wave.open(io.BytesIO(fixed), "rb") as fh:
+        assert fh.getnframes() > 0
 
 
 def test_http_endpoints(checkpoint: str):

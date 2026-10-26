@@ -102,8 +102,8 @@ train dừng; đã thay bằng `r5b_segment_stats.py` (schema `r5b-v2`) trước
 **Vocos fine-tune** trên 17,9 h giọng mới (10k bước, MPS, `runs/vocoder_ngochuyen/last.pt`):
 copy-synthesis 100 holdout clip **mel L1 0,1167** so pretrained **0,1432** (−18,5%);
 F0 85,2 vs 88,9 cents; VUV 0,0223 vs 0,0206; clipping ~0. Thanh điệu free-run với Vocos
-fine-tune **0,9749** (A 0,9835 · B 0,9784). Dùng bản fine-tune cho demo; **không đổi
-production/ONNX**.
+fine-tune **0,9749** (A 0,9835 · B 0,9784). **Không dùng fine-tune** (nghe còn rè); demo
+chính dùng Vocos pretrained mặc định; **không đổi production/ONNX**.
 
 **Nghe**:
 - A/B mù (thật · mới · P2; Vocos pretrained): `/ab/index.html`
@@ -127,3 +127,17 @@ production/ONNX**.
 - Đo 10 câu: jitter mean 0,0664 (fine-tune) vs **0,0630** (mặc định);
   glottalization 0,00486 vs **0,00227**; HNR 0,755 vs 0,763.
 - **Chốt: dùng Vocos pretrained mặc định**; fine-tune chỉ giữ để đối chiếu.
+
+
+## 10. Chính sách ngắt nghỉ — mặc định model tự nghỉ (27/10/2026)
+
+- Dữ liệu N0 sạch, model tự đặt pause đúng; **mặc định `pause_mode="model"`**.
+- Nghỉ cố định **chỉ bật khi yêu cầu**:
+  - API: `Synthesizer.synthesize(..., pause_mode="fixed")` hoặc module `synthesize(..., pause_mode="fixed")`;
+  - CLI: `--fixed-pauses` cho `synthesize`, `synthesize-onnx`, `synthesize-batch`;
+  - HTTP: `{"pause_mode":"fixed", ...}`.
+- `--steady` giữ làm alias cũ nhưng ẩn; mặc định vẫn tắt.
+- Khi fixed: chặn pause model (`gate 1.01`), chèn phẩy 0,25 s · chấm/hỏi/than 0,55 s
+  (chỉnh `--pause-comma/--pause-period/--pause-default`).
+- Test: `tests/test_steady_mode.py` kiểm mặc định model, fixed opt-in, invalid mode;
+  `tests/test_server.py` kiểm payload mặc định/fixed.
