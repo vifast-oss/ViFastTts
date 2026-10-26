@@ -1,4 +1,9 @@
-# Trạng thái dự án (PROJECT_STATUS)
+# Trạng thái dự án (PROJECT_STATUS) — LỊCH SỬ
+
+> **LỊCH SỬ, KHÔNG PHẢI TRẠNG THÁI HIỆN HÀNH.** Trạng thái hiện hành chỉ nằm ở
+> `docs/handoff/TRANG_THAI.md`; quyết định ở `docs/handoff/DECISIONS.md`; ngoại lệ ở
+> `docs/handoff/EXCEPTIONS.md`. Tệp này giữ nguyên nội dung ngày 13/10/2026 để tra cứu,
+> không cập nhật tiếp.
 
 > **Tài liệu "compact"** — tóm tắt phiên làm việc, trạng thái as-built, nhật ký
 > quyết định, kết quả audit và việc còn lại. Cập nhật: 13/10/2026.

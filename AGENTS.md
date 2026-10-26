@@ -12,7 +12,7 @@
 2. **`docs/EVAL_TOOLS.md` — danh mục MỌI thước đo** (trong train + offline), lệnh chạy, bộ số mốc để so,
    quy trình "chấm một checkpoint" + **bẫy thống kê/điểm mù**. Đọc trước khi kết luận bất cứ điều gì.
 3. `docs/B0_BASELINE.md` — baseline B0 (mốc cũ): mel hữu thanh ~9,6–9,8 dB; free CER 0,54.
-4. `docs/PROJECT_STATUS.md` — trạng thái tổng; `docs/DATASET_V2.md` + `docs/TTS_ARCHITECTURE_RESEARCH.md` — nền.
+4. `docs/handoff/TRANG_THAI.md` — trạng thái tổng; `docs/DATASET_V2.md` + `docs/TTS_ARCHITECTURE_RESEARCH.md` — nền.
 
 **Nguyên tắc vàng: không nâng cấp gì trước khi có thước đo (và phải kiểm thước trên dữ liệu THẬT
 trước khi dùng nó để quyết định — bài học §34.3→§36.4); mọi đề xuất phải kèm số đo + cổng.**
@@ -137,6 +137,10 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
   (trước khi sửa) · **commit code cuối** (commit cuối TRƯỚC commit hồ sơ; HEAD luôn là commit hồ sơ —
   quy ước V11S.A3) · **trạng thái** (ĐANG LÀM / DỪNG, CHỜ ĐỌC) — Agent 1 tự tìm vòng để đọc
   từ đây, **không cần hash gửi kèm**.
+- **Ba tệp hồ sơ, ba vai khác nhau** (V1842b.1): `TRANG_THAI.md` = trạng thái hiện hành (duy nhất);
+  `DECISIONS.md` = nhật ký quyết định **chỉ ghi thêm**, theo mã (`V<NN>.A<k>` / `V<NN>b.<k>`);
+  `EXCEPTIONS.md` = ngoại lệ **có phạm vi** đã được A0 chấp nhận. Hai tệp sau **không** ghi trạng thái
+  hiện hành; mọi câu về trạng thái phải trỏ về `TRANG_THAI.md`. Không tạo `STATUS.md` song song.
 - **Agent 1 chỉ đọc, KHÔNG ghi tệp vào repo** (không có `V0x_agent1.md`); báo cáo đọc của Agent 1 do người
   dùng chuyển cho Agent 0. Agent 2 ghi `docs/handoff/V<NN>_agent2.md` (báo cáo + mục TỰ QUYẾT KHÁC ĐẶC TẢ).
 - **Đầu tệp chuẩn**: `VÒNG <NN> | Commit gốc: <hash> | Thay thế: …` + dòng `Agent 2 THỰC THI: Phần B |

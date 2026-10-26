@@ -199,13 +199,13 @@ docs/         toàn bộ tài liệu (xem mục 10)
 - **OOV**: từ ngoài tiếng Việt đọc bằng fallback — muốn kiểm soát thì bật `resolve_oov=True`, dùng `--overrides file.json` hoặc thêm override.
 - **Một checkpoint = một giọng, một phương ngữ** (đúng thiết kế; muốn đa giọng phải tách lớp riêng).
 
-Roadmap chi tiết có đánh dấu ✅/⬜: `docs/PROJECT_STATUS.md`.
+Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 
 ## 10. Tài liệu — nên đọc gì trước?
 
 | Nhóm | Tài liệu | Nội dung |
 | --- | --- | --- |
-| **Bắt đầu ở đây** | `docs/PROJECT_STATUS.md` | Trạng thái tổng, quyết định quan trọng, việc còn lại |
+| **Bắt đầu ở đây** | `docs/handoff/TRANG_THAI.md` | Trạng thái tổng, quyết định quan trọng, việc còn lại |
 | | `docs/MODEL_FLOW.md` | Luồng model chi tiết: data → train → inference → export |
 | | `docs/SYLLABLE_GUIDE.md` | Hướng dẫn tách âm tiết cho người không chuyên |
 | | `docs/GLOSSARY.md` | Thuật ngữ (âm đầu/đệm/chính/cuối, toàn ánh/song ánh...) |

@@ -6,7 +6,7 @@
 > chiếu (§9.9, `train-vocoder`), ✅ quantization FP16/INT8 động (§9.12), ✅ ONNX acoustic
 > với độ dài động. ⬜ Còn lại: aligner thật (MFA/forward-sum), discriminator/spectral loss
 > production, ONNX vocoder, calibration INT8 đầy đủ. Luồng as-built: `docs/MODEL_FLOW.md`;
-> trạng thái tổng: `docs/PROJECT_STATUS.md`.
+> trạng thái tổng: `docs/handoff/TRANG_THAI.md`.
 
 **Mục đích:** rà soát các họ kiến trúc TTS phổ biến (AR, NAR, end-to-end VAE/GAN, flow matching, diffusion, vocoder) và kết luận cho bài toán riêng của ViFastTts: **một giọng, một phương ngữ cho mỗi checkpoint, đầu vào là cấu trúc âm tiết `ONSET+MEDIAL+NUCLEUS+CODA+TONE`, không speaker/dialect/style id, non-autoregressive, deterministic, 24 kHz, ONNX là định dạng triển khai, có baseline iSTFTNet**.
 

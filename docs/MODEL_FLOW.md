@@ -4,7 +4,7 @@
 > công thức loss và điểm khác nhau train/inference. Số liệu lấy từ config
 > `configs/base_24k.yaml`. Liên quan: `docs/ARCHITECTURE.md` (sơ đồ ngắn),
 > `docs/TRAINING.md` (hướng dẫn chạy), `docs/TTS_ARCHITECTURE_RESEARCH.md` (thiết kế
-> tương lai), `docs/PROJECT_STATUS.md` (trạng thái tổng).
+> tương lai), `docs/handoff/TRANG_THAI.md` (trạng thái tổng).
 
 ## 0. TL;DR — bốn luồng
 
@@ -428,4 +428,4 @@ Chạy tất cả: `pytest` (2264 test). Ma trận parser: `python tools/parser_
 - `docs/DATA_PIPELINE.md` — pipeline chuẩn bị dữ liệu 15 bước.
 - `docs/DEPLOYMENT.md` — ONNX runtime, quantization.
 - `docs/TTS_ARCHITECTURE_RESEARCH.md` — thiết kế tương lai (aligner, phonation, vocoder production).
-- `docs/PROJECT_STATUS.md` — trạng thái tổng + roadmap ✅/⬜.
+- `docs/handoff/TRANG_THAI.md` — trạng thái tổng + roadmap ✅/⬜.

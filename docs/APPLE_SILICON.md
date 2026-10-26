@@ -3,7 +3,7 @@
 > Phạm vi: Mac mini M6 32GB (máy tham chiếu của repo) và các máy M-series khác.
 > Số đo thực hiện ngày 11/10/2026 trên máy thật. Câu hỏi trung tâm: **có nên viết
 > một luồng train/inference riêng cho Mac, song song với luồng CUDA?**
-> Trạng thái tổng: `docs/PROJECT_STATUS.md`; số đo train: `docs/TRAINING_ESTIMATES.md` §3.1.
+> Trạng thái tổng: `docs/handoff/TRANG_THAI.md`; số đo train: `docs/TRAINING_ESTIMATES.md` §3.1.
 
 ## 1. Các thư viện/đường chạy trên Apple Silicon
 

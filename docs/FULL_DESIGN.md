@@ -2,7 +2,7 @@
 
 > **Trạng thái:** tài liệu này giữ tóm tắt thiết kế gốc. Trạng thái as-built hiện tại:
 > `docs/ARCHITECTURE.md` và luồng chi tiết `docs/MODEL_FLOW.md`; tổng hợp + roadmap:
-> `docs/PROJECT_STATUS.md`.
+> `docs/handoff/TRANG_THAI.md`.
 
 ## Phạm vi
 

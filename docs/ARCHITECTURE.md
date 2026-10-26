@@ -1,6 +1,6 @@
 # Kiến trúc ViFastTts
 
-ViFastTts dùng frontend tiếng Việt chung và checkpoint single-speaker, single-dialect. Tài liệu này mô tả **trạng thái as-built** trong `src/vifasttts`; **luồng chi tiết train → inference → export** nằm ở `docs/MODEL_FLOW.md`; trạng thái tổng hợp và nhật ký quyết định ở `docs/PROJECT_STATUS.md`; đề xuất nâng cấp dài hạn ở `docs/TTS_ARCHITECTURE_RESEARCH.md` (mục 9).
+ViFastTts dùng frontend tiếng Việt chung và checkpoint single-speaker, single-dialect. Tài liệu này mô tả **trạng thái as-built** trong `src/vifasttts`; **luồng chi tiết train → inference → export** nằm ở `docs/MODEL_FLOW.md`; trạng thái tổng hợp và nhật ký quyết định ở `docs/handoff/TRANG_THAI.md`; đề xuất nâng cấp dài hạn ở `docs/TTS_ARCHITECTURE_RESEARCH.md` (mục 9).
 
 ## Sơ đồ as-built
 
@@ -78,7 +78,7 @@ Các hạng mục thiết kế trong `docs/TTS_ARCHITECTURE_RESEARCH.md` và tr�
    + MR-STFT, chạy khối MPS); ⬜ GTA fine-tune trên mel acoustic.
 5. ✅ **ONNX + quantization** FP16/INT8 động; ⬜ ONNX vocoder + calibration đầy đủ.
 
-Chi tiết luồng: `docs/MODEL_FLOW.md`; trạng thái đầy đủ: `docs/PROJECT_STATUS.md`.
+Chi tiết luồng: `docs/MODEL_FLOW.md`; trạng thái đầy đủ: `docs/handoff/TRANG_THAI.md`.
 
 ## Mở rộng phương ngữ
 

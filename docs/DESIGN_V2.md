@@ -1,7 +1,7 @@
 # Thiết kế hệ thống TTS tiếng Việt một giọng, chất lượng cao và tốc độ nhanh
 
 > **Tài liệu thiết kế gốc (v2.0, 09/10/2026).** Trạng thái as-built hiện tại và các
-> sai khác so với thiết kế nằm ở `docs/ARCHITECTURE.md` và `docs/PROJECT_STATUS.md`;
+> sai khác so với thiết kế nằm ở `docs/ARCHITECTURE.md` và `docs/handoff/TRANG_THAI.md`;
 > đề xuất nâng cấp chi tiết ở `docs/TTS_ARCHITECTURE_RESEARCH.md` (mục 9).
 
 **Phiên bản:** 2.0, kiến trúc đã cải tiến  

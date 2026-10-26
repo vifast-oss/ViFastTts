@@ -1,6 +1,19 @@
-# TRANG_THAI — trạng thái hiện hành (nguồn duy nhất, Agent 2 cập nhật mỗi vòng)
+# TRẠNG THÁI (STATUS) — nguồn sự thật duy nhất
 
-> **V18.41 (23/10/2026)** — frontend OOV: ONNX cũ gọi `features_from_text` **không** `resolve_oov` ⇒ `John`/`XYZ` thành fallback trong khi PyTorch production đọc được. Đã sửa mặc định `resolve_oov=True` trong `runtime/onnx_engine.py`, thêm `tests/test_onnx_frontend.py` (9 test); valid **8/8 equal**, smoke **8/8 finite**, `...` báo lỗi đúng. Kết quả v18.40 giữ: acoustic 36/36, E2E 12/12, vocoder 11/12 với **ngoại lệ spectrum A0 chấp nhận có phạm vi**. **Sẵn sàng chuyển ONNX trong phạm vi chunk mode đã kiểm tra**, config ứng viên `configs/onnx_candidate_v1841.json`; **chưa tự chuyển production**. Chi tiết: `V1841_agent2.md`, `artifacts/bench/v1841_frontend_oov/`.
+> **Cho người không kỹ thuật (5 dòng):**
+> 1. Sản phẩm đang chạy bằng **PyTorch** với model **P2**; bản đóng gói ONNX **chưa bật**.
+> 2. Chất lượng giọng được **đóng băng** trong lúc đo xem "rè nền" đến từ dữ liệu, vocoder hay acoustic.
+> 3. Chưa train thêm; mọi thay đổi production phải qua cổng đo đã đăng ký trước.
+> 4. Nếu ONNX không nhanh/nhẹ hơn đáng kể, nhánh ONNX sẽ đóng; nếu đạt, có thể bật ở V18.45.
+> 5. Chi tiết quyết định: `DECISIONS.md`; ngoại lệ có phạm vi: `EXCEPTIONS.md`.
+
+> **V18.43 (26/10/2026) — ĐANG LÀM.** Vòng đo, **không train, không đổi production**.
+> Thực thi V1842.A2/A3/A4/A6/A7 + V1842b.1–b.4 theo thứ tự: A7 → A3 → A6 → A1c → A2 → A4 → report.
+> Tệp đặc tả: `V1842_agent0.md`. Commit gốc của vòng: `7cd61ef`.
+> Commit code cuối: **chưa có** (sẽ ghi khi kết thúc vòng; HEAD sẽ là commit hồ sơ theo V11S.A3).
+> Nguồn trạng thái duy nhất: tệp này. `DECISIONS.md` chỉ ghi quyết định; `EXCEPTIONS.md` chỉ ghi ngoại lệ.
+>
+> **V18.41 (23/10/2026, lịch sử)** — frontend OOV: ONNX cũ gọi `features_from_text` **không** `resolve_oov` ⇒ `John`/`XYZ` thành fallback trong khi PyTorch production đọc được. Đã sửa mặc định `resolve_oov=True` trong `runtime/onnx_engine.py`, thêm `tests/test_onnx_frontend.py` (9 test); valid **8/8 equal**, smoke **8/8 finite**, `...` báo lỗi đúng. Kết quả v18.40 giữ: acoustic 36/36, E2E 12/12, vocoder 11/12 với **ngoại lệ spectrum A0 chấp nhận có phạm vi** (`ONNX-EXC-001`). **Sẵn sàng chuyển ONNX trong phạm vi chunk mode đã kiểm tra**, config ứng viên `configs/onnx_candidate_v1841.json`; **chưa tự chuyển production**. Chi tiết: `V1841_agent2.md`, `artifacts/bench/v1841_frontend_oov/`.
 > **V18.40 (23/10/2026)** — parity ONNX v1837: **acoustic 36/36**, frontend **12/12**, end-to-end chunk **12/12** (max 2,14e-04; RMSE 7,74e-06; RMS ratio ~1; clipping 0; cả hai runtime tất định). **Vocoder 11/12** — một input (`2b65WyiFC9k_0030__s03`) có spectrum max **0,02336** vượt tiêu chí tuyệt đối **0,02** tại bin (20,66); mean ~1e-05, waveform max 3,23e-04 và end-to-end vẫn đạt. Provenance/mel hash khớp; acoustic 180/181 exact, vocoder 63/63 exact. **Chưa tuyên bố sẵn sàng chuyển ONNX; giữ P2 + PyTorch.** Không sửa runtime/tiêu chí sau kết quả. Chi tiết: `V1840_agent2.md`, `artifacts/bench/v1840_onnx_parity/`.
 > **V18.39 (23/10/2026)** — audit UTMOSv2: `utmosv2` dùng **random crop + mixup bằng np.random không seed** ở cả prediction; cùng seed **exact**, khác seed mỗi file lệch trung bình **~0,28 điểm** (max 0,45–0,67). Chấm lại 36 WAV cũ bằng **5 seed [0..4]**: UTMOS P2 1,4899 · REC 1,4568 · legacy 1,5207 · fixed 1,4957; ΔUTMOS **fixed−legacy −0,0264 CI [−0,0554, +0,019]** (mất ý nghĩa so với 1 pass), **fixed−rec +0,0176 CI [−0,0003, +0,053]** (chỉ xu hướng), **legacy−P2 +0,0223 CI [+0,0045, +0,0461]** nhưng BAK không xác nhận. BAK/flat/HNR của v18.38 giữ; các ΔUTMOS của v18.38 **hạ mức**. CI bootstrap video **chưa gồm** bất định do giám khảo; seed range báo riêng. **Giữ P2, crop fixed là mặc định vì loại padding, không tuyên bố cải thiện chất lượng.** Chi tiết: `V1839_agent2.md`, `artifacts/bench/v1839_utmos_audit/`.
 > **V18.38 (23/10/2026)** — probe crop D **3 nhánh** từ P2 EMA (300 D warm-up + 200 G update; REC 200 G): **không nhánh nào tốt hơn P2** trên bộ 36 câu dev. `gan_fixed` vs `gan_legacy`: ΔBAK +0,0041 CI95 [−0,0112, +0,0084] (không khác), ΔUTMOS −0,0507 (**1 pass chưa seed — xem v18.39**), ΔHNR +0,036 (fixed hơn), Δflat +0,0011 (fixed phẳng hơn = kém hơn). `gan_fixed` vs `rec`: BAK +0,0201, UTMOS +0,1064 (**1 pass chưa seed — xem v18.39**) nhưng **chưa hơn P2**. Crop cũ: 35/3.975 row (0,88%) và 31/500 bước có padding, 1.098 frame; crop fixed: 0. **Giữ P2, không mở training dài.** Chi tiết: `V1838_agent2.md`, `runs/v1838_crop_probe/report.json`.
@@ -17,19 +30,17 @@
 > **Vocoder production**: Vocos pretrained `artifacts/pretrained/vocos-mel-24khz/pytorch_model.bin`
 > (SHA256 `97ec976a…`). **ONNX cũ không phải production**: vocoder ONNX cũ khớp E4-C, xem
 > `artifacts/bench/v1837_provenance.json`; bản sửa mới ở `artifacts/onnx/v1837/`.
-> **Trạng thái**: DỪNG SAU V18.37 — không training; các kết luận BAK/UTMOS cũ bị giới hạn bởi
+> **Trạng thái lịch sử V18.37**: DỪNG SAU V18.37 — không training; các kết luận BAK/UTMOS cũ bị giới hạn bởi
 > punctuation/inference mode/EMA-live/vocoder mismatch; xem `V1837_agent2.md` §9.
 > **Trang nghe cũ**: `/v1829_floor/`, `/v1830_gan/` (lịch sử; không phải production).
 
-**Vòng hiện hành**: **V18.41** · **Tệp đặc tả**: yêu cầu A0 → Agent 2 trong chat (không có `V1841_agent0.md`) ·
-**Commit gốc của vòng**: `1932553` · **Trạng thái**: **DỪNG SAU V18.41, CHỜ ĐỌC** — không training, giữ P2, chưa chuyển ONNX.
+**Vòng hiện hành**: **V18.43** · **Tệp đặc tả**: `V1842_agent0.md` (V18.42 + V18.42b) ·
+**Commit gốc của vòng**: `7cd61ef` · **Trạng thái**: **ĐANG LÀM** — không training, giữ P2, chưa chuyển ONNX.
 > Các mục V11/V10 bên dưới là **lịch sử**, không còn hiệu lực cho quyết định production.
 > Quy ước V11S.A3 vẫn dùng: HEAD là commit hồ sơ; đọc diff `<gốc>..HEAD`.
-**Việc tiếp (chỉ đề xuất, chưa làm)**: xem `V1841_agent2.md` §4 — nếu chuyển ONNX, dùng
-`configs/onnx_candidate_v1841.json` (chunk mode, ngoại lệ spectrum đã chấp nhận); rollback
-là P2 EMA + PyTorch Vocos pretrained. Không mở thêm vòng tolerance/parity.
+**Việc tiếp**: theo thứ tự V18.43 ở §4.1; báo cáo cuối vòng là `V1843_agent2.md`.
 
-> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `bfde6a7..<commit cuối>`,
+> Agent 1 đọc vòng này theo thông tin ở đầu tệp (không cần hash gửi kèm): diff `7cd61ef..<commit cuối>`,
 > đối chiếu `V1837_agent2.md` §2–§9. Agent 1 **chỉ đọc, không ghi tệp** vào repo.
 > Quy ước cũ: commit đầu vòng là tệp đặc tả; vòng này đặc tả nằm trong chat, không có `V1837_agent0.md`.
 
@@ -65,17 +76,61 @@ là P2 EMA + PyTorch Vocos pretrained. Không mở thêm vòng tolerance/parity.
 - **V10.A11**: A2 thật chạy khi đủ 6 điều kiện (không cần chờ Agent 0).
 
 ## 4. Việc đang chờ (theo mã vòng)
+
+### 4.1 V18.43 — đang thực thi
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| V11.B1 | commit đặc tả V11 | 🔄 |
-| V11.B2 | σ chuẩn (trung bình trượt 20 bước) + báo lại 7 thành phần probe + sửa §44 | ⏳ |
-| V11.B3 | chia val_calib / val_lock theo clip cha + ghim hash + test | ⏳ |
-| V11.B4 | `gate_threshold` runtime + `cer_prod` (theo dõi) + test/push | ⏳ |
-| V11.B5 | CreaPy + UTMOSv2 kiểm chứng (CPU) | ⏳ |
-| V11.B6 | bench A2 45/50/55/60k + cer_prod base | ⏳ chờ A2 tới 60k |
-| V11.B7–B10 | cây quyết định A4 · A1 (nếu nhánh) · chẩn đoán duration/VUV/SẮC-tắc · theo dõi | ⏳ |
-| V11.B11 | hồ sơ `V11_agent2.md` + TRANG_THAI | ⏳ |
-| V10.A10 | SẮC-tắc làm lại — chuyển thành V11.B9 | ⏳ |
+| V1842.A7 | hồ sơ: TRANG_THAI + DECISIONS + EXCEPTIONS + archive + đóng mã V11 + phân loại 19 khoảng trống | 🔄 |
+| V1842.A3 | benchmark ONNX vs PyTorch (chạy một mình, máy yên tĩnh) | ⏳ |
+| V1842.A6 | bit-exact → fast test (3 câu) + full baseline (20 câu, `slow`) | ⏳ |
+| V1842.A1c | test parity đọc `EXCEPTIONS.md`; chứng minh input khác vượt 0,02 vẫn FAIL | ⏳ |
+| V1842.A2 | đo chunk vs sentence + đối chứng âm (30 câu, 5 seed) | ⏳ |
+| V1842.A4 | chẩn đoán 3 tầng + C' (40 câu; 2 kiểm tra đầu vào trước) | ⏳ |
+| — | báo cáo `V1843_agent2.md` + cập nhật TRANG_THAI | ⏳ |
+
+### 4.2 Mã V11 còn treo — đã đóng (V1842b.1)
+| Mã | Kết luận | Lý do |
+|---|---|---|
+| V11.B1 | **đóng** | đặc tả V11 đã thành lịch sử; vòng hiện hành dùng V1842 |
+| V11.B2 | **đóng** | probe/σ đã hoàn tất ở V10.A7; không còn dùng để quyết định |
+| V11.B3 | **đóng** | split hiện tại theo video; val_calib/val_lock không còn trong lộ trình |
+| V11.B4 | **đóng** | `gate_threshold` đã có; `cer_prod` bị loại khỏi luật (v18.34/v18.37) |
+| V11.B5 | **đóng** | UTMOSv2 đã dùng; audit seed ở v18.39 |
+| V11.B6 | **đóng** | bench 45–60k đã được thay bằng base 40k/60k và các vòng V18 |
+| V11.B7–B8, B10–B11 | **đóng** | cây quyết định/theo dõi/hồ sơ V11 đã bị V18 kế thừa |
+| V11.B9 | **chuyển backlog chất lượng** | SẮC-tắc chưa làm; chỉ mở lại nếu A4 chỉ ra acoustic và có giả thuyết mới |
+| V10.A10 | **gộp vào backlog V11.B9** | cùng nội dung SẮC-tắc |
+
+### 4.3 Nhánh dữ liệu v3/v34 — đã đóng
+- Đã thử coda/onset (v34) và các biến thể v3; **không tạo ứng viên thắng** so với mốc `b8_filt`/`v32 small`.
+- Không đưa vào production; không chạy tiếp nếu không có giả thuyết mới cụ thể.
+- Số liệu lịch sử: `docs/handoff/DATA_V3*.md`, `DATA_V34_CODA_21_10.md` (chỉ đọc, không dùng để quyết định).
+
+### 4.4 19 khoảng trống hồ sơ (dossier v18.36 §7) — phân loại
+| # | Khoảng trống | Nhãn | Xử lý |
+|---|---|---|---|
+| 1 | C5/V18 chưa có định nghĩa + 30 câu người thật | P1 | backlog; A5 là bước gần nhất |
+| 2 | RAM inference, cold start, latency first-chunk | **P0** | **A3 đo trong V18.43** |
+| 3 | Ma trận 2×2 EMA/live cho P2/G1 | P1 | backlog; ghi nhận confound |
+| 4 | Free-run có dấu câu | P1 | eval text giữ dấu câu từ v18.37; chưa chạy lại toàn bộ |
+| 5 | Tỉ lệ crop D chứa padding | P1 | đã sửa `sample_crops(lengths=...)`; ảnh hưởng chưa đo |
+| 6 | Frame-level vuv/phonation target | P1 | backlog kiến trúc |
+| 7 | Residual waveform A−B/B−C/C−D | P1 | A4 đo BAK/flatness; residual để sau |
+| 8 | ONNX `mel_hash` | **P0** | **đã lấp** (metadata v18.40 có `mel_hash`, khớp) |
+| 9 | Quyết định vocoder production | **P0** | **đã lấp** (Vocos pretrained; `production_v1831.json`) |
+| 10 | D checkpoint cho P2/G1/G2 | P1 | không resume D; ghi nhận |
+| 11 | P2 `last.pt` + lý do dừng 7.600 | P1 | lịch sử, không cần cho quyết định |
+| 12 | Số người nói / diarization đầy đủ | P1 | backlog dữ liệu |
+| 13 | Tỉ lệ lỗi transcript so bản gõ tay | P1 | backlog dữ liệu |
+| 14 | Đánh giá tai G1 | P1 | **A5 ở V18.44** |
+| 15 | Loudness per-video sau v32 | P1 | backlog |
+| 16 | flat_V/HNR cùng 300 câu cho A/B/C/D | P1 | A4 dùng 40 câu; mở rộng nếu cần |
+| 17 | Script sinh `v1831_*` không có trong `tools/` | P1 | không tái lập được; ghi nhận |
+| 18 | Không có log/commit lần chạy v1831 | P1 | lịch sử |
+| 19 | P2/G1/G2 không log đủ thành phần loss | P1 | muốn có phải sửa logger; không làm khi đóng băng |
+
+- **P0 mở duy nhất: #2** — đang được A3 lấp trong vòng này. #8/#9 đã lấp. Không có P0 nào khác.
+
 
 ## 4b. A2 đang chạy (số kiểm đầu)
 - `runs/acoustic_v2_A2_fixtail` · log `artifacts/dataset_v2/train_v2_A2_fixtail.log` (watchdog resume).
