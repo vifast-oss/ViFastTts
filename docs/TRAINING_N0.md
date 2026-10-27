@@ -71,6 +71,15 @@ Large ≈ 32M.
   trên M6, chưa kể eval/vocoder.
 - Large chỉ nên tính khi có ≥50–100 h và chấp nhận ≥2 ngày.
 
+### 3.1 Thí nghiệm base N0 (27/10/2026, đang chạy)
+
+- Config `configs/base_ngochuyen.yaml`: **cùng 17,8 h train/cache/recipe N0 small**,
+  chỉ đổi dung lượng sang base **96/256/6 encoder/4 decoder** (~17,1M; 16,4M không tính postnet).
+- 40.000 bước (~33,5 epoch), batch 8, cosine 40k, val 300 clip, **không** early stop;
+  chọn `best` + `last` rồi chấm mel/rough/tone/CER/rè/tai.
+- Probe 100 bước: **0,397 s/bước · MPS 9,1 GB**; ước tính 40k ≈ **4,5–5 h**.
+- Chỉ là **thí nghiệm dung lượng**, không thay production; kết quả ghi sau khi chấm.
+
 ## 4. Mặc định suy luận N0
 
 - **Vocos pretrained mặc định** (không fine-tune; fine-tune bị loại vì rè).
