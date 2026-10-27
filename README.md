@@ -243,11 +243,14 @@ Mỗi âm tiết (một "tiếng") gồm 5 phần + dấu câu. Ví dụ `quốc
 
 | Phần | Trong `quốc` | Có bao nhiêu giá trị | Ví dụ khác |
 | --- | --- | --- | --- |
-| Âm đầu (onset) | `K` | 24 | `b`, `ch`, `ng`, `qu`... |
-| Âm đệm (medial) | `W` | 2 (không có / có) | `oa`, `uy`, `qu`... |
-| Âm chính (nucleus) | `Ô` | 15 | `a`, `ie`, `uo`, `oo`... |
-| Âm cuối (coda) | `C` | 11 | `ng`, `nh`, `i`, `u`... |
-| Thanh điệu | `SAC` (sắc) | 6 | ngang, huyền, hỏi, ngã, nặng |
+| Âm đầu (onset) | `K` | 24 | `b`, `ch`, `ng`, `tr`... |
+| Âm đệm (medial) | `NONE` | 2 (không có / có) | `W` trong `hoa`, `quất`, `uy`... |
+| Âm chính (nucleus) | `UÔ` | 15 | `A`, `IÊ`, `ƯƠ`, `OO`... |
+| Âm cuối (coda) | `C` | 11 | `N`, `NG`, `NH`, `J`, `W`... |
+| Thanh điệu | `SAC` (sắc) | 6 | ngang, huyền, hỏi, ngã, sắc, nặng |
+
+`quốc` = `K + NONE + UÔ + C + SAC`: chữ `u` thuộc nguyên âm đôi `uô`, **không phải
+âm đệm `W`**; `quốc` đồng âm với `cuốc`. So sánh `quất` = `K + W + Â + T + SAC`.
 
 Cộng thêm **chấm câu** và **ranh giới từ/câu** → mỗi âm tiết là **7 con số** đưa vào model.
 Giải thích từ đầu cho người không chuyên: `docs/SYLLABLE_GUIDE.md`.
