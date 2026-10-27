@@ -278,10 +278,42 @@ def _range_to_words(m: re.Match[str], dialect: str | Dialect) -> str:
     return text + " phần trăm" if m.group(3) else text
 
 
+_PHRASE_OVERRIDE_RE = re.compile(r"[A-Za-zÀ-ỹĐđ]+")
+
+
+def _apply_phrase_overrides(text: str, options: NormalizerOptions) -> str:
+    """Áp các override có dấu/space (domain, phrase) trước khi tách token.
+
+    `exact_overrides` một-từ vẫn do `normalize_word_token` xử lý để giữ đúng
+    hoa/thường. Các key như ``khongdich.com`` hoặc ``TP.HCM`` phải thay ở cấp
+    chuỗi, nếu không dấu chấm sẽ tách thành hai token và không bao giờ khớp.
+    """
+    rules = [
+        (str(key), str(value))
+        for key, value in options.exact_overrides.items()
+        if key and not _PHRASE_OVERRIDE_RE.fullmatch(str(key))
+    ]
+    if not rules:
+        return text
+    # Dài trước để ``khongdich.com.vn`` không bị rule ngắn cắt trước.
+    rules.sort(key=lambda item: len(item[0]), reverse=True)
+    pattern = re.compile(
+        "|".join(
+            f"(?<![A-Za-z0-9])(?:{re.escape(normalize_unicode(key))})(?![A-Za-z0-9])"
+            for key, _ in rules
+        ),
+        re.IGNORECASE,
+    )
+    replacements = {normalize_unicode(key).lower(): normalize_unicode(value) for key, value in rules}
+    return pattern.sub(lambda match: replacements[match.group(0).lower()], text)
+
+
 def normalize_text(text: str, dialect: str | Dialect = Dialect.NORTH, *, options: NormalizerOptions | None = None) -> str:
     """Chuẩn hoá cả đoạn văn: số/ngày/giờ/tiền/%; thứ tự các bước rất quan trọng."""
     options = options or NormalizerOptions(dialect=Dialect(dialect))
     text = normalize_unicode(text)
+    # Override cụm có dấu/space/domain phải chạy trước mọi bộ tách token.
+    text = _apply_phrase_overrides(text, options)
     # Giờ viết "14h30"/"14h" trước STEM để không lẫn với đơn vị vật lý.
     text = _HOUR_RE.sub(lambda m: _hour_notation_to_words(m, options.dialect), text)
     if options.stem_formulas:

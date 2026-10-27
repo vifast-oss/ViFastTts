@@ -74,6 +74,8 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
 
 - mỗi dòng một quy tắc `từ gốc = cách đọc`, ví dụ `AI = ây ai`;
+- key có thể là **cụm/domain** (dấu chấm, space), ví dụ
+  `khongdich.com = không dịch chấm com`; rule cụm được áp trước khi tách token;
 - lưu trong `localStorage` của trình duyệt;
 - mặc định **tích gửi để duyệt**; người dùng có thể bỏ tích để chỉ lưu local;
 - server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu/IP;

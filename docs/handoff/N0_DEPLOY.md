@@ -62,6 +62,8 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - **Cách đọc custom:** web có mục “Tùy chọn nâng cao”; lưu tối đa 50 quy tắc trong
   `localStorage`, gửi qua `overrides` của `/api/tts`. API cũng nhận trực tiếp:
   `{"text":"AI", "overrides":{"AI":"ây ai"}}`.
+  Key cụm/domain (`khongdich.com = không dịch chấm com`) được áp trước token hoá;
+  đây là literal match, không phải regex.
   Gửi đề xuất: `POST /api/overrides/suggest` với `{"rules":{"AI":"ây ai"}}`.
   Mặc định mọi quy tắc chỉ ở local; nếu tích “gửi để duyệt”, server lưu cặp từ/cách đọc
   vào hàng chờ (`/api/overrides/suggest`), không lưu câu/IP. Checkbox gửi **mặc định bật**,
