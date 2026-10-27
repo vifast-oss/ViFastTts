@@ -11,6 +11,8 @@
 - Sửa override cụm/domain: key có dấu chấm/space được áp trước tách token
   (`khongdich.com = không dịch chấm com`).
 - Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
+- Bố cục lại giao diện: 3 cột trên desktop, tùy chọn nâng cao và góp ý hiện ngay;
+  nghỉ cố định chuyển vào tùy chọn nâng cao, kèm tooltip giải thích.
 - Thêm validator cảnh báo W sau phụ âm môi, allowlist `resources/loanword_labial_w.txt`
   (`buýt`, `voan`, `boa`).
 - TODO: nếu train một model chung nhiều vùng, bắt buộc thêm dialect/speaker embedding;

@@ -24,82 +24,112 @@
 <meta name="twitter:image" content="https://vifasttts.hoctuthien.com/static/brand/og-image.png">
 <style>
   :root { --ink:#1F2430; --muted:#6B7280; --accent:#C6281E; --accent-dark:#991B1B;
-          --gold:#B77900; --line:#E8DDD0; --bg:#FBF6EE; }
+          --gold:#B77900; --line:#E8DDD0; --bg:#FBF6EE; --cream:#FFF8EC; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-         color:var(--ink); background:linear-gradient(180deg,#FFF8EC 0%,var(--bg) 48%); line-height:1.5; }
-  main { max-width:880px; margin:0 auto; padding:26px 18px 70px; }
-  .brandbar { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:20px; }
+  body { margin:0; font-family:Arial,"Helvetica Neue",Helvetica,sans-serif; color:var(--ink);
+         background:linear-gradient(180deg,var(--cream) 0%,var(--bg) 48%); line-height:1.45; }
+  main { max-width:1320px; margin:0 auto; padding:22px 18px 46px; }
+  .brandbar { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:10px; }
   .brand { display:block; line-height:0; }
-  .brand-lockup { display:block; width:clamp(270px, 42vw, 390px); height:auto; }
-  .links { display:flex; flex-wrap:wrap; gap:14px; justify-content:flex-end; margin-top:4px; }
-  .src { color:var(--accent); font-weight:700; font-size:.9rem; text-decoration:none; }
+  .brand-lockup { display:block; width:clamp(250px, 30vw, 330px); height:auto; }
+  .links { display:flex; flex-wrap:wrap; gap:13px; justify-content:flex-end; margin-top:3px; }
+  .src { color:var(--accent); font-weight:700; font-size:.86rem; text-decoration:none; }
   .src:hover { text-decoration:underline; }
-  .badge { display:inline-block; font-size:.76rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-           color:#8A2B1A; background:#FFF0EB; border:1px solid #F1C3B8; padding:5px 9px; border-radius:999px; }
-  h1 { font-size:clamp(1.65rem, 4vw, 2.4rem); letter-spacing:-.03em; margin:14px 0 6px; }
-  h1 span { color:var(--accent); }
-  .tier { display:inline-flex; gap:8px; align-items:center; margin:0 0 12px; padding:5px 10px;
-          border:1px solid #F0D49A; background:#FFF4D6; color:#7A4B00; border-radius:999px;
-          font-size:.76rem; font-weight:800; letter-spacing:.07em; }
-  .sub { color:var(--muted); margin:0 0 22px; max-width:640px; }
-  .card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
-          box-shadow:0 12px 34px rgba(90,45,25,.07); }
-  label { font-weight:650; font-size:.94rem; }
-  textarea { width:100%; min-height:124px; resize:vertical; margin-top:8px; padding:13px 14px; font:inherit; font-size:1.02rem;
-             border:1px solid #E3D2C2; border-radius:12px; outline:none; background:#FFFDF9; }
-  textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(198,40,30,.13); }
-  .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:.82rem; margin-top:6px; }
-  .controls { display:flex; flex-wrap:wrap; gap:16px 22px; align-items:center; margin:15px 0 4px; }
-  .controls label { font-weight:500; color:var(--muted); font-size:.9rem; }
-  input[type=range] { accent-color:var(--accent); vertical-align:middle; }
-  input[type=checkbox] { accent-color:var(--accent); width:17px; height:17px; vertical-align:middle; margin-right:5px; }
-  .row { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
-  button { border:0; border-radius:10px; padding:10px 15px; font:inherit; font-weight:700; cursor:pointer; }
-  .primary { background:var(--accent); color:#fff; padding:12px 20px; font-size:1rem; }
+  .hero { margin:0 0 16px; }
+  .hero-title { display:flex; align-items:center; flex-wrap:wrap; gap:10px 12px; }
+  h1 { font-size:clamp(1.55rem,3vw,2.15rem); letter-spacing:-.03em; margin:0; }
+  .badge { display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+           color:#8A2B1A; background:#FFF0EB; border:1px solid #F1C3B8; padding:4px 8px; border-radius:999px; }
+  .tier { display:inline-flex; gap:6px; align-items:center; padding:4px 9px; border:1px solid #F0D49A;
+          background:#FFF4D6; color:#7A4B00; border-radius:999px; font-size:.7rem; font-weight:800;
+          letter-spacing:.06em; }
+  .sub { color:var(--muted); margin:7px 0 0; max-width:760px; font-size:.9rem; }
+  .notice { color:#8A5A2B; background:#FFF5E7; border:1px solid #F0D9B8; border-radius:8px;
+            padding:6px 9px; font-size:.8rem; margin:8px 0 0; }
+  .workspace { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.78fr) minmax(300px,.86fr);
+               grid-template-areas:"main adv feedback"; gap:14px; align-items:start; }
+  .main-card { grid-area:main; } .advanced { grid-area:adv; } .feedback { grid-area:feedback; }
+  .card, .panel { background:#fff; border:1px solid var(--line); border-radius:14px;
+                  box-shadow:0 10px 28px rgba(90,45,25,.06); }
+  .card { padding:16px; }
+  .panel { padding:14px; }
+  .card-head, .panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  h2 { font-size:.98rem; margin:0; letter-spacing:-.01em; }
+  .pill { color:#9B2C20; background:#FBF0EC; border:1px solid #F0D2CA; border-radius:999px;
+          padding:2px 7px; font-size:.68rem; font-weight:700; white-space:nowrap; }
+  label { font-weight:650; font-size:.9rem; }
+  textarea { width:100%; min-height:98px; resize:vertical; margin-top:6px; padding:11px 12px; font:inherit;
+             font-size:.98rem; border:1px solid #E3D2C2; border-radius:10px; outline:none; background:#FFFDF9; }
+  textarea:focus, select:focus, input[type=text]:focus { border-color:var(--accent); outline:none;
+             box-shadow:0 0 0 3px rgba(198,40,30,.13); }
+  #overrides { min-height:66px; font-family:Consolas,"Liberation Mono",monospace; font-size:.82rem; }
+  #feedbackMessage { min-height:62px; }
+  .meta { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:.76rem; margin-top:5px; }
+  .speed-row { margin:10px 0 0; }
+  .speed-row label { font-weight:500; color:var(--muted); font-size:.86rem; }
+  input[type=range] { accent-color:var(--accent); vertical-align:middle; width:180px; max-width:55%; }
+  input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; vertical-align:middle; margin-right:4px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center; }
+  button { border:0; border-radius:8px; padding:8px 12px; font:inherit; font-weight:700; cursor:pointer; }
+  .primary { background:var(--accent); color:#fff; padding:10px 16px; font-size:.94rem; }
   .primary:disabled { opacity:.55; cursor:wait; }
-  .ghost { background:#FBF0EC; color:#9B2C20; border:1px solid #F0D2CA; font-weight:600; }
-  .examples { margin:16px 0 0; padding-top:14px; border-top:1px dashed var(--line); }
-  .examples p { margin:0 0 8px; color:var(--muted); font-size:.83rem; }
-  .examples button { background:#FFFCF7; color:#3F3A36; border:1px solid var(--line); font-weight:500; font-size:.86rem; padding:7px 10px; }
-  #status { min-height:1.3em; color:var(--muted); font-size:.88rem; margin-top:12px; }
+  .ghost { background:#FBF0EC; color:#9B2C20; border:1px solid #F0D2CA; font-weight:600; font-size:.83rem; }
+  .examples { margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--line); }
+  .examples p { margin:0 0 6px; color:var(--muted); font-size:.78rem; }
+  .examples button { background:#FFFCF7; color:#3F3A36; border:1px solid var(--line); font-weight:500;
+                     font-size:.8rem; padding:5px 8px; }
+  .samples audio { width:100%; height:30px; margin-top:4px; }
+  #status { min-height:1.2em; color:var(--muted); font-size:.83rem; margin-top:8px; }
   #status.err { color:#B42318; }
-  #player { display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+  #player { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
   #player audio { width:100%; }
-  .fine { color:var(--muted); font-size:.79rem; margin:14px 0 0; }
+  .fine { color:var(--muted); font-size:.76rem; margin:12px 0 0; }
   .fine a { color:var(--accent); }
-  footer { color:var(--muted); font-size:.78rem; margin-top:24px; }
+  footer { color:var(--muted); font-size:.75rem; margin-top:16px; line-height:1.6; }
   footer a { color:var(--accent); text-decoration:none; }
   footer a:hover { text-decoration:underline; }
-  code { background:#FBF0EC; padding:1px 5px; border-radius:5px; }
-  .adv { margin-top:20px; border-top:1px dashed var(--line); padding-top:14px; }
-  .adv summary { cursor:pointer; font-weight:750; color:var(--accent); }
-  .adv p { color:var(--muted); font-size:.84rem; margin:10px 0 8px; }
-  .adv textarea { min-height:82px; font-family: Consolas, "Liberation Mono", monospace; font-size:.88rem; }
-  #builtin { max-height:220px; overflow:auto; white-space:pre-wrap; background:#FFFCF7;
-             border:1px solid var(--line); border-radius:10px; padding:10px; font-size:.78rem; }
-  #overrideStatus { color:var(--muted); font-size:.8rem; margin-top:6px; }
-  .share { display:flex; gap:7px; align-items:center; margin:9px 0 2px; color:var(--muted); font-size:.84rem; }
-  .feedback { margin-top:20px; border-top:1px dashed var(--line); padding-top:14px; }
-  .feedback summary { cursor:pointer; font-weight:750; color:var(--accent); }
-  .feedback p { color:var(--muted); font-size:.84rem; margin:10px 0 8px; }
-  .feedback-grid { display:grid; grid-template-columns:1fr 1.5fr; gap:12px; margin:10px 0 8px; }
-  .feedback-grid label { display:flex; flex-direction:column; gap:5px; font-size:.82rem; color:var(--muted); font-weight:600; }
-  .feedback select, .feedback input[type=text] { width:100%; padding:9px 10px; border:1px solid #E3D2C2;
-    border-radius:10px; background:#FFFDF9; color:var(--ink); font:inherit; font-size:.92rem; }
-  .feedback select:focus, .feedback input[type=text]:focus { border-color:var(--accent); outline:none;
-    box-shadow:0 0 0 3px rgba(198,40,30,.13); }
-  .feedback textarea { min-height:96px; }
+  code { background:#FBF0EC; padding:1px 4px; border-radius:4px; }
+  .option-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:2px 0 8px;
+                color:var(--muted); font-size:.82rem; }
+  .option-row label { color:var(--ink); font-weight:650; font-size:.84rem; }
+  .checkline { display:inline-flex; align-items:center; gap:3px; }
+  .info { position:relative; display:inline-flex; align-items:center; justify-content:center;
+          width:16px; height:16px; border-radius:50%; border:1px solid #C9B8A8; color:#8A6A4F;
+          font:700 11px/1 Arial; cursor:help; flex:0 0 auto; }
+  .info .tip { display:none; position:absolute; z-index:30; bottom:calc(100% + 7px); left:50%;
+               transform:translateX(-50%); width:min(270px,72vw); padding:8px 9px; border-radius:8px;
+               background:#2C2320; color:#FFF8EC; font:400 12px/1.4 Arial; text-align:left;
+               box-shadow:0 8px 22px rgba(0,0,0,.18); }
+  .info:hover .tip, .info:focus .tip { display:block; }
+  .panel p { color:var(--muted); font-size:.78rem; margin:5px 0 7px; }
+  .share { display:flex; gap:5px; align-items:flex-start; margin:6px 0 2px; color:var(--muted); font-size:.76rem; }
+  .share input { margin-top:2px; }
+  #builtin { max-height:150px; overflow:auto; white-space:pre-wrap; background:#FFFCF7;
+             border:1px solid var(--line); border-radius:8px; padding:8px; font-size:.74rem; }
+  #overrideStatus, #feedbackStatus { color:var(--muted); font-size:.76rem; }
+  #overrideStatus.err, #feedbackStatus.err { color:#B42318; }
+  .feedback-grid { display:grid; grid-template-columns:1fr; gap:7px; margin:6px 0 5px; }
+  .feedback-grid label { display:flex; flex-direction:column; gap:3px; color:var(--muted); font-size:.76rem; font-weight:600; }
+  select, .feedback input[type=text] { width:100%; padding:7px 8px; border:1px solid #E3D2C2; border-radius:8px;
+             background:#FFFDF9; color:var(--ink); font:inherit; font-size:.84rem; }
   .feedback .hp { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
-  #feedbackStatus { color:var(--muted); font-size:.82rem; }
-  #feedbackStatus.err { color:#B42318; }
-  @media (max-width:600px) { .feedback-grid { grid-template-columns:1fr; } }
-  button:focus-visible, a:focus-visible, textarea:focus-visible { outline:3px solid rgba(198,40,30,.28); outline-offset:2px; }
+  button:focus-visible, a:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible {
+    outline:3px solid rgba(198,40,30,.25); outline-offset:2px; }
+  @media (max-width:1120px) {
+    .workspace { grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr);
+                 grid-template-areas:"main adv" "feedback feedback"; }
+  }
+  @media (max-width:760px) {
+    .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv" "feedback"; }
+  }
   @media (max-width:600px) {
-    .brandbar { flex-wrap:wrap; gap:10px; }
-    .brand-lockup { width:min(320px,84vw); }
+    main { padding:16px 12px 34px; }
+    .brandbar { flex-wrap:wrap; gap:8px; }
+    .brand-lockup { width:min(300px,84vw); }
     .links { width:100%; justify-content:flex-start; }
-    main { padding-top:20px; }
+    .hero { margin-bottom:12px; }
+    .card, .panel { padding:12px; }
+    .speed-row input[type=range] { width:160px; }
   }
 </style>
 </head>
@@ -113,24 +143,28 @@
   <nav class="links" aria-label="Liên kết">
     <a class="src" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub ↗</a>
     <a class="src" href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face ↗</a>
-    <a class="src" href="https://vifasttts.hoctuthien.com/" target="_blank" rel="noopener">Demo VPS ↗</a>
+        <a class="src" href="https://vifasttts.hoctuthien.com/" target="_blank" rel="noopener">Demo VPS ↗</a>
   </nav>
 </header>
-<span class="badge">Research demo · phi thương mại</span>
-<h1>Ngọc Huyền</h1>
-<div class="tier">SMALL · 6,1M · 24 kHz</div>
-  <p class="sub">Nhập một câu tiếng Việt (tối đa 300 ký tự). Model tự ngắt nghỉ theo dữ liệu;
-    Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
-  <p class="fine">Bản Space tĩnh miễn phí: phần tạo câu mới gọi VPS demo; các mẫu bên dưới phát trực tiếp.</p>
 
-  <section class="card">
-    <label for="text">Câu cần đọc</label>
+<div class="hero">
+  <div class="hero-title">
+    <h1>Ngọc Huyền</h1>
+    <span class="badge">Research demo · phi thương mại</span>
+    <span class="tier">SMALL · 6,1M · 24 kHz</span>
+  </div>
+  <p class="sub">Nhập câu tiếng Việt (tối đa 300 ký tự). Model tự ngắt nghỉ; Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
+  <p class="notice">Bản Space tĩnh miễn phí: tạo câu mới gọi VPS demo; các mẫu bên dưới phát trực tiếp.</p>
+</div>
+
+<div class="workspace">
+  <section class="card main-card">
+    <div class="card-head"><h2>Câu cần đọc</h2><span class="pill">Ctrl/⌘ + Enter</span></div>
     <textarea id="text" maxlength="300" placeholder="Ví dụ: Sáng nay trời đẹp, chúng ta cùng đi dạo nhé."></textarea>
-    <div class="meta"><span id="count">0/300</span><span>Ctrl/⌘ + Enter để tạo</span></div>
+    <div class="meta"><span id="count">0/300</span><span>Tối đa 300 ký tự</span></div>
 
-    <div class="controls">
+    <div class="speed-row">
       <label>Tốc độ <input id="speed" type="range" min="0.85" max="1.15" step="0.05" value="1"> <output id="speedOut">1.00×</output></label>
-      <label><input id="fixed" type="checkbox"> Nghỉ cố định <span class="fine">(mặc định tắt)</span></label>
     </div>
 
     <div class="row">
@@ -141,13 +175,14 @@
 
     <div id="player">
       <audio id="audio" controls preload="none"></audio>
-      <div class="row"><a id="download" class="ghost" style="text-decoration:none;padding:8px 12px;border-radius:10px" download="vifasttts-demo.wav">Tải WAV</a></div>
+      <div class="row"><a id="download" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.wav">Tải WAV</a></div>
     </div>
 
-    <div class="examples">
+    <div class="samples examples">
       <p>Nghe mẫu có sẵn (không cần gọi API):</p>
       <div class="row"><audio controls preload="none" src="samples/fresh01.wav"></audio><audio controls preload="none" src="samples/fresh02.wav"></audio><audio controls preload="none" src="samples/fresh04.wav"></audio></div>
     </div>
+
     <div class="examples">
       <p>Thử nhanh:</p>
       <div class="row">
@@ -156,17 +191,24 @@
         <button data-text="Chiếc tàu rời bến từ sớm, mang theo những giỏ cá tươi vừa được đánh bắt ngoài khơi.">Buổi sớm</button>
       </div>
     </div>
-    <details class="adv">
-      <summary>Tùy chọn nâng cao: cách đọc từ</summary>
+  </section>
+
+  <section class="panel advanced" id="advanced">
+      <div class="panel-head"><h2>Tùy chọn nâng cao</h2><span class="pill">Đọc &amp; nghỉ</span></div>
+      <div class="option-row">
+        <label class="checkline" for="fixed"><input id="fixed" type="checkbox"> Nghỉ cố định</label>
+        <span class="info" tabindex="0" role="img" aria-label="Giải thích nghỉ cố định">i
+          <span class="tip" role="tooltip">Nghỉ cố định: chèn khoảng lặng theo dấu câu (0,25 giây sau phẩy; 0,55 giây sau chấm/hỏi/than) thay vì để model tự dự đoán. Mặc định tắt vì model tự ngắt nghỉ tự nhiên hơn; bật khi cần nhịp đọc đều, dễ đoán.</span>
+        </span>
+        <span class="fine">Mặc định tắt</span>
+      </div>
       <p>Thêm quy tắc riêng, mỗi dòng một quy tắc dạng <code>từ gốc = cách đọc</code>.
-        Ví dụ <code>AI = ây ai</code>, hoặc cụm/domain <code>khongdich.com = không dịch chấm com</code>.
-        Quy tắc được lưu trong localStorage trình duyệt này.
-        Nếu tích “gửi để duyệt”, quy tắc được gửi khi tạo âm thanh hoặc bấm Lưu quy tắc;
-        server chỉ lưu cặp từ/cách đọc vào hàng chờ duyệt, không lưu câu hay IP;
-        bỏ tích nếu không muốn gửi.</p>
+        Hỗ trợ cụm/domain, ví dụ <code>khongdich.com = không dịch chấm com</code>.
+        Quy tắc lưu local; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP.</p>
+      <label for="overrides">Cách đọc từ</label>
       <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com"></textarea>
       <label class="share"><input id="shareOverrides" type="checkbox" checked>
-        Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(mặc định bật; bỏ tích nếu không muốn)</span></label>
+        Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(bỏ tích nếu không muốn)</span></label>
       <div class="row">
         <button id="saveOverrides" class="ghost" type="button">Lưu quy tắc</button>
         <button id="clearOverrides" class="ghost" type="button">Xoá quy tắc</button>
@@ -174,11 +216,11 @@
       </div>
       <div id="overrideStatus"></div>
       <pre id="builtin" hidden></pre>
-    </details>
-    <details id="feedback" class="feedback">
-      <summary>Góp ý, đề xuất cải tiến hoặc báo lỗi</summary>
-      <p>Gửi trực tiếp cho admin. Nội dung và liên hệ (nếu có) chỉ admin đã đặt mật khẩu mới xem được;
-        không công khai. Không gửi thông tin nhạy cảm.</p>
+  </section>
+
+  <section class="panel feedback" id="feedback">
+      <div class="panel-head"><h2>Góp ý / báo lỗi</h2><span class="pill">Admin xem</span></div>
+      <p>Gửi trực tiếp cho admin. Nội dung và liên hệ (nếu có) chỉ admin đã đặt mật khẩu mới xem được; không công khai.</p>
       <form id="feedbackForm">
         <div class="feedback-grid">
           <label for="fbCategory">Loại
@@ -189,13 +231,11 @@
             </select>
           </label>
           <label for="fbContact">Liên hệ (không bắt buộc)
-            <input id="fbContact" type="text" maxlength="120" autocomplete="off"
-                   placeholder="Email / Telegram / Zalo">
+            <input id="fbContact" type="text" maxlength="120" autocomplete="off" placeholder="Email / Telegram / Zalo">
           </label>
         </div>
         <label for="feedbackMessage">Nội dung</label>
-        <textarea id="feedbackMessage" maxlength="1000" required
-                  placeholder="Ví dụ: Ở câu có từ viết tắt, model đọc chưa đúng..."></textarea>
+        <textarea id="feedbackMessage" maxlength="1000" required placeholder="Ví dụ: Ở câu có từ viết tắt, model đọc chưa đúng..."></textarea>
         <div class="meta"><span id="fbCount">0/1000</span><span>Tối thiểu 5 ký tự</span></div>
         <div class="hp" aria-hidden="true"><label>Website <input id="fbWebsite" type="text" tabindex="-1" autocomplete="off"></label></div>
         <div class="row">
@@ -203,18 +243,20 @@
           <span id="feedbackStatus" role="status"></span>
         </div>
       </form>
-    </details>
-    <p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
-      <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
-      <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
-      · <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
-      · <a href="https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1" target="_blank" rel="noopener">research release</a>.</p>
   </section>
-  <footer>ViFastTts · single-speaker · CC-BY-NC-4.0 · không production ·
-    <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a> ·
-    <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a> ·
-    <a href="#feedback" id="feedbackLink">Góp ý</a> ·
-    <a href="https://vifasttts.hoctuthien.com/admin" target="_blank" rel="noopener">Thống kê</a></footer>
+</div>
+
+<p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
+  <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
+  <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
+  · <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
+   · <a href="https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1" target="_blank" rel="noopener">research release</a>.</p>
+<footer>ViFastTts · single-speaker · CC-BY-NC-4.0 · không production ·
+  <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a> ·
+  <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a> ·
+  <a href="#feedback" id="feedbackLink">Góp ý</a> ·
+  <a href="https://vifasttts.hoctuthien.com/admin">Thống kê</a></footer>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -340,7 +382,6 @@ const feedbackStatus = $("feedbackStatus");
 const feedbackLink = $("feedbackLink");
 if (feedbackLink) {
   feedbackLink.addEventListener("click", () => {
-    $("feedback").open = true;
     setTimeout(() => { $("feedback").scrollIntoView({block: "center"}); fbMessage.focus(); }, 30);
   });
 }
