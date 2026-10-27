@@ -6,6 +6,7 @@ Chạy trong Docker; không cần torch. Mặc định model tự nghỉ, alpha 
 from __future__ import annotations
 
 import base64
+import csv
 import hashlib
 import hmac
 import html
@@ -50,6 +51,14 @@ RATE_WINDOW = 60.0
 ALPHA = float(os.environ.get("VIFASTT_SHARPEN_ALPHA", "1.5"))
 OVERRIDES_PATH = Path(os.environ.get("OVERRIDES_PATH", ROOT / "configs" / "overrides_tech_vi.json"))
 MAX_OVERRIDES = 50
+MAX_FEEDBACK_CHARS = 1000
+MAX_CONTACT_CHARS = 120
+FEEDBACK_CATEGORIES = {
+    "gop_y": "Góp ý chung",
+    "cai_tien": "Đề xuất cải tiến",
+    "bao_loi": "Báo lỗi",
+}
+FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã xử lý"}
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
 DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
@@ -117,6 +126,19 @@ def _init_stats() -> None:
                     UNIQUE(key, value)
                 );
                 CREATE INDEX IF NOT EXISTS suggestions_status ON suggestions(status);
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    category TEXT NOT NULL DEFAULT 'gop_y',
+                    message TEXT NOT NULL,
+                    contact TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL DEFAULT 'new',
+                    source TEXT NOT NULL DEFAULT 'web',
+                    visitor TEXT NOT NULL,
+                    created REAL NOT NULL,
+                    updated REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS feedback_status ON feedback(status);
+                CREATE INDEX IF NOT EXISTS feedback_category ON feedback(category);
             """)
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(usage)")}
             if "source" not in columns:
@@ -270,6 +292,67 @@ def _pending_suggestions(limit: int = 100) -> list[dict]:
             for row in rows]
 
 
+def _clean_feedback_text(value: str | None, limit: int, label: str) -> str:
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", str(value or "")).strip()
+    if len(text) > limit:
+        raise HTTPException(status_code=422, detail=f"{label} tối đa {limit} ký tự")
+    return text
+
+
+def _record_feedback(category: str, message: str, contact: str, visitor: str, source: str) -> int:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            cursor = connection.execute(
+                "INSERT INTO feedback(category, message, contact, status, source, visitor, created, updated) "
+                "VALUES(?,?,?, 'new', ?, ?, ?, ?)",
+                (category, message, contact, source, visitor, now, now),
+            )
+            connection.commit()
+            return int(cursor.lastrowid)
+        finally:
+            connection.close()
+
+
+def _feedback_counts() -> dict:
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            rows = connection.execute(
+                "SELECT category, status, COUNT(*) AS n FROM feedback GROUP BY category, status"
+            ).fetchall()
+        finally:
+            connection.close()
+    by_category = {key: 0 for key in FEEDBACK_CATEGORIES}
+    by_status = {key: 0 for key in FEEDBACK_STATUS}
+    for row in rows:
+        by_category[str(row["category"])] = by_category.get(str(row["category"]), 0) + int(row["n"])
+        by_status[str(row["status"])] = by_status.get(str(row["status"]), 0) + int(row["n"])
+    return {
+        "total": sum(by_category.values()),
+        "new": by_status.get("new", 0),
+        "read": by_status.get("read", 0),
+        "resolved": by_status.get("resolved", 0),
+        "by_category": by_category,
+    }
+
+
+def _feedback_rows(limit: int = 200) -> list[dict]:
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            rows = connection.execute(
+                "SELECT id, category, message, contact, status, source, created "
+                "FROM feedback ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
+        finally:
+            connection.close()
+    return [{**dict(row),
+             "time": datetime.fromtimestamp(float(row["created"]), VN_TZ).strftime("%m-%d %H:%M")}
+            for row in rows]
+
+
 def _stats_payload() -> dict:
     now = time.time()
     local_now = datetime.fromtimestamp(now, VN_TZ)
@@ -299,6 +382,12 @@ def _stats_payload() -> dict:
             suggestions_approved = connection.execute(
                 "SELECT COUNT(*) AS n FROM suggestions WHERE status='approved'"
             ).fetchone()["n"]
+            feedback_total = connection.execute(
+                "SELECT COUNT(*) AS n FROM feedback"
+            ).fetchone()["n"]
+            feedback_new = connection.execute(
+                "SELECT COUNT(*) AS n FROM feedback WHERE status='new'"
+            ).fetchone()["n"]
             totals = connection.execute(
                 "SELECT COALESCE(SUM(audio_seconds),0) AS audio, "
                 "COALESCE(SUM(chars),0) AS chars, "
@@ -324,6 +413,8 @@ def _stats_payload() -> dict:
         "tts_api": int(by_source.get("api", 0)),
         "suggestions_pending": int(suggestions_pending),
         "suggestions_approved": int(suggestions_approved),
+        "feedback_total": int(feedback_total),
+        "feedback_new": int(feedback_new),
         "audio_seconds": round(float(totals["audio"]), 2),
         "chars_total": int(totals["chars"]),
         "avg_chars": round(float(totals["chars"]) / tts, 1) if tts else 0.0,
@@ -343,6 +434,36 @@ def _admin_authorized(request: Request) -> bool:
     header = request.headers.get("authorization", "")
     expected = "Basic " + base64.b64encode(f"admin:{ADMIN_PASSWORD}".encode()).decode("ascii")
     return hmac.compare_digest(header, expected)
+
+
+def _feedback_admin_rows(items: list[dict]) -> str:
+    rows = []
+    for item in items:
+        message = html.escape(str(item["message"])).replace("\n", "<br>")
+        contact = html.escape(str(item["contact"])) or "—"
+        category = html.escape(FEEDBACK_CATEGORIES.get(str(item["category"]), str(item["category"])))
+        status = FEEDBACK_STATUS.get(str(item["status"]), str(item["status"]))
+        status_key = str(item["status"])
+        actions = []
+        if status_key != "read":
+            actions.append(
+                f"<form method='post' action='/admin/feedback/{item['id']}/read' style='display:inline'>"
+                f"<button class='tiny'>Đã đọc</button></form>"
+            )
+        if status_key != "resolved":
+            actions.append(
+                f"<form method='post' action='/admin/feedback/{item['id']}/resolved' style='display:inline'>"
+                f"<button class='tiny ok'>Đã xử lý</button></form>"
+            )
+        if not actions:
+            actions.append("<span class='done'>Đã xử lý</span>")
+        rows.append(
+            f"<tr><td>{item['time']}</td><td><span class='cat'>{category}</span></td>"
+            f"<td class='msg'>{message}</td><td>{contact}</td><td>{html.escape(str(item['source']))}</td>"
+            f"<td><span class='st st-{status_key}'>{status}</span></td>"
+            f"<td class='actions'>{' '.join(actions)}</td></tr>"
+        )
+    return "".join(rows) or "<tr><td colspan='7'>Chưa có góp ý nào.</td></tr>"
 
 
 def _admin_html(stats: dict) -> str:
@@ -373,6 +494,21 @@ def _admin_html(stats: dict) -> str:
         ) or "<tr><td colspan='5'>Không có đề xuất chờ duyệt.</td></tr>"
     review_note = ("Đã bật duyệt vì có ADMIN_PASSWORD." if ADMIN_PASSWORD
                    else "Đang tạm khoá duyệt: chưa đặt ADMIN_PASSWORD. Đề xuất vẫn được xếp hàng.")
+    feedback_counts = _feedback_counts()
+    if ADMIN_PASSWORD:
+        feedback_rows = _feedback_admin_rows(_feedback_rows(limit=100))
+        feedback_note = ("Đã bật xem nội dung và cập nhật trạng thái · "
+                         "<a href='/admin/feedback.csv'>Tải CSV</a>")
+    else:
+        feedback_rows = ("<tr><td colspan='7'>Nội dung góp ý đang khoá: đặt "
+                         "<code>ADMIN_PASSWORD</code> để xem.</td></tr>")
+        feedback_note = "Đang khoá nội dung: đặt ADMIN_PASSWORD để xem và cập nhật góp ý."
+    feedback_summary = (f"{feedback_counts['total']} góp ý · "
+                        f"{feedback_counts['new']} mới · "
+                        f"Góp ý {feedback_counts['by_category'].get('gop_y', 0)} · "
+                        f"Cải tiến {feedback_counts['by_category'].get('cai_tien', 0)} · "
+                        f"Báo lỗi {feedback_counts['by_category'].get('bao_loi', 0)} · "
+                        f"Đã đọc {feedback_counts['read']} · Đã xử lý {feedback_counts['resolved']}")
     return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
@@ -392,7 +528,12 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 .tiny{{padding:4px 8px;font-size:.78rem;border-radius:7px;border:1px solid #cbd6df;background:#f4f7f8;cursor:pointer}}
 .tiny.ok{{background:#e5f5ec;border-color:#b8e2c8;color:#166534}} .tiny.no{{background:#fff0f0;border-color:#f0c4c4;color:#9b1c1c}}
 .tiny:disabled{{opacity:.45;cursor:not-allowed}}
-@media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
+.msg{{max-width:390px;white-space:normal;line-height:1.45;overflow-wrap:anywhere}}
+.cat,.st{{display:inline-block;padding:2px 7px;border-radius:999px;font-size:.76rem;white-space:nowrap}}
+.cat{{background:#FDF0EB;color:#9B2C20}} .st-new{{background:#FFF4D6;color:#7A4B00}}
+.st-read{{background:#EAF2FF;color:#1D4ED8}} .st-resolved{{background:#E5F5EC;color:#166534}}
+.actions{{white-space:nowrap}} .actions form{{margin:0 2px 0 0}} .done{{color:#166534;font-size:.8rem;font-weight:700}}
+@media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}} table{{display:block;overflow-x:auto}}}}
 </style></head><body><main>
 <h1><img class="mark" src="/static/brand/vifasttts-icon.svg" alt=""> ViFastTts · Thống kê</h1>
 <p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">về trang chủ</a></p>
@@ -408,15 +549,23 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
   <div class="card"><b>{stats['avg_chars']}</b><span>ký tự / lượt</span></div>
   <div class="card"><b>{stats['suggestions_pending']}</b><span>đề xuất chờ duyệt</span></div>
   <div class="card"><b>{stats['suggestions_approved']}</b><span>quy tắc đã duyệt</span></div>
+  <div class="card"><b>{stats['feedback_total']}</b><span>góp ý / báo lỗi</span></div>
+  <div class="card"><b>{stats['feedback_new']}</b><span>góp ý mới</span></div>
 </div>
 <h2 style="margin:24px 0 4px">Đề xuất cách đọc</h2>
 <p class="sub">{review_note}</p>
 <table><thead><tr><th>Thời điểm</th><th>Từ</th><th>Cách đọc</th><th>Nguồn</th><th>Duyệt</th></tr></thead>
 <tbody>{suggestion_rows}</tbody></table>
+<h2 style="margin:24px 0 4px">Góp ý & báo lỗi</h2>
+<p class="sub">{feedback_note}</p>
+<p class="sub">{feedback_summary}</p>
+<table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Nguồn</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
+<tbody>{feedback_rows}</tbody></table>
 <h2 style="margin:24px 0 4px">Lượt tạo gần đây</h2>
 <table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
 <tbody>{rows}</tbody></table>
-<div class="note">Số “người dùng” là ước lượng theo hash visitor/IP, không lưu IP/text. {auth_note}</div>
+<div class="note">Số “người dùng” là ước lượng theo hash visitor/IP, không lưu IP/text TTS.
+Góp ý chỉ lưu nội dung bạn gửi và liên hệ (nếu có), chỉ admin đã đặt mật khẩu mới xem được. {auth_note}</div>
 </main></body></html>"""
 
 
@@ -447,6 +596,15 @@ class SuggestRequest(BaseModel):
     rules: dict[str, str]
     visitor_id: str | None = None
     source: str = "web"
+
+
+class FeedbackRequest(BaseModel):
+    category: str = "gop_y"
+    message: str
+    contact: str | None = None
+    visitor_id: str | None = None
+    source: str = "web"
+    website: str | None = None
 
 
 def _wav_bytes(waveform: np.ndarray, sample_rate: int) -> bytes:
@@ -543,6 +701,28 @@ def suggest_overrides(payload: SuggestRequest, request: Request) -> dict:
     return {"ok": True, "queued": count, "status": "pending"}
 
 
+@app.post("/api/feedback")
+def feedback(payload: FeedbackRequest, request: Request) -> dict:
+    if (payload.website or "").strip():
+        return {"ok": True, "queued": 0}
+    category = payload.category if payload.category in FEEDBACK_CATEGORIES else "gop_y"
+    message = _clean_feedback_text(payload.message, MAX_FEEDBACK_CHARS, "Nội dung")
+    if len(message) < 5:
+        raise HTTPException(status_code=422, detail="Nội dung cần ít nhất 5 ký tự")
+    contact = _clean_feedback_text(payload.contact, MAX_CONTACT_CHARS, "Liên hệ")
+    try:
+        visitor = _visitor_hash(request, payload.visitor_id)
+    except Exception:
+        logger.exception("feedback visitor failed")
+        visitor = "unknown"
+    if not _rate_ok(f"feedback:{visitor}"):
+        raise HTTPException(status_code=429, detail="Gửi quá nhiều; thử lại sau 1 phút")
+    source = payload.source if payload.source in ("web", "space", "api") else "api"
+    feedback_id = _record_feedback(category, message, contact, visitor, source)
+    logger.info("feedback stored id=%d category=%s source=%s", feedback_id, category, source)
+    return {"ok": True, "queued": 1}
+
+
 def _admin_denied() -> Response:
     return Response(status_code=401, content="Cần đăng nhập admin.",
                     headers={"WWW-Authenticate": 'Basic realm="vifasttts-admin"'})
@@ -561,6 +741,56 @@ def admin_json(request: Request) -> Response:
         return _admin_denied()
     return Response(content=json.dumps(_stats_payload(), ensure_ascii=False),
                     media_type="application/json", headers={"Cache-Control": "no-store"})
+
+
+def _csv_cell(value: object) -> str:
+    text = str(value)
+    return "'" + text if text[:1] in ("=", "+", "-", "@") else text
+
+
+@app.get("/admin/feedback.csv")
+def feedback_csv(request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Chưa đặt ADMIN_PASSWORD; nội dung góp ý đang khoá")
+    buffer = io.StringIO()
+    buffer.write("\ufeff")
+    writer = csv.writer(buffer)
+    writer.writerow(["id", "thoi_gian", "loai", "noi_dung", "lien_he", "nguon", "trang_thai"])
+    for item in _feedback_rows(limit=10000):
+        writer.writerow([
+            item["id"], item["time"], FEEDBACK_CATEGORIES.get(item["category"], item["category"]),
+            _csv_cell(item["message"]), _csv_cell(item["contact"]), item["source"],
+            FEEDBACK_STATUS.get(item["status"], item["status"]),
+        ])
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="vifasttts-feedback.csv"',
+                 "Cache-Control": "no-store"},
+    )
+
+
+@app.post("/admin/feedback/{feedback_id}/{status}")
+def update_feedback(feedback_id: int, status: str, request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Chưa đặt ADMIN_PASSWORD; không thể cập nhật")
+    if status not in FEEDBACK_STATUS:
+        raise HTTPException(status_code=400, detail="Trạng thái không hợp lệ")
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "UPDATE feedback SET status=?, updated=? WHERE id=?",
+                (status, time.time(), feedback_id),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+    return RedirectResponse(url="/admin", status_code=303)
 
 
 @app.post("/admin/suggestions/{suggestion_id}/{action}")

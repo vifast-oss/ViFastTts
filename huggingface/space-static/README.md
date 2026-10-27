@@ -17,6 +17,7 @@ Static demo miễn phí cho model TTS tiếng Việt small 6,1M, 24 kHz, ONNX CP
 
 - Nghe 3 mẫu có sẵn trực tiếp trong trang.
 - Tạo câu mới gọi VPS demo (CORS), vì Gradio/Docker Space CPU free cần PRO.
+- Góp ý / báo lỗi gửi qua VPS; admin xem tại `/admin` khi đã đặt `ADMIN_PASSWORD`.
 - Research/non-commercial; dataset CC BY-NC 4.0; không dùng giả giọng/lừa đảo.
 
 Code: https://github.com/dvchd/ViFastTts

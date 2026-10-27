@@ -64,6 +64,12 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   bỏ tích để chỉ lưu local; trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
   được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn 570 quy tắc qua
   `GET /api/overrides`; không hỗ trợ regex/script.
+- **Góp ý / báo lỗi:** form trên web và static Space gửi `POST /api/feedback` với
+  `category = gop_y | cai_tien | bao_loi`, `message` 5–1000 ký tự, `contact` không bắt buộc,
+  `visitor_id` và `source`. Server lưu bảng SQLite `feedback`, chỉ hash visitor, không lưu IP;
+  có honeypot + giới hạn 6 lần/phút. `/admin` tổng hợp số lượng theo loại/trạng thái và hiển thị
+  nội dung **chỉ khi có `ADMIN_PASSWORD`**; chưa đặt thì nội dung bị khoá, CSV cũng bị khoá.
+  Admin đánh dấu `Đã đọc` / `Đã xử lý`; tải CSV tại `/admin/feedback.csv`.
 - **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
   (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
   Chưa tính độ trễ mạng từ trình duyệt.

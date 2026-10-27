@@ -43,3 +43,5 @@ Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Doc
   tối đa 50 quy tắc, không hỗ trợ regex/script. Nút gửi để duyệt mặc định bật, có thể bỏ tích;
   server chỉ lưu suggestion pending, admin duyệt khi có `ADMIN_PASSWORD`; chưa đặt thì nút duyệt
   bị khoá nhưng đề xuất vẫn vào hàng chờ.
+- Góp ý / báo lỗi: `POST /api/feedback`; lưu SQLite bảng `feedback`; nội dung chỉ admin xem
+  khi đã đặt `ADMIN_PASSWORD`; xuất CSV `/admin/feedback.csv`. Có rate limit + honeypot.

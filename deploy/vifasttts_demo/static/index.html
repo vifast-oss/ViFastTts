@@ -80,6 +80,20 @@
              border:1px solid var(--line); border-radius:10px; padding:10px; font-size:.78rem; }
   #overrideStatus { color:var(--muted); font-size:.8rem; margin-top:6px; }
   .share { display:flex; gap:7px; align-items:center; margin:9px 0 2px; color:var(--muted); font-size:.84rem; }
+  .feedback { margin-top:20px; border-top:1px dashed var(--line); padding-top:14px; }
+  .feedback summary { cursor:pointer; font-weight:750; color:var(--accent); }
+  .feedback p { color:var(--muted); font-size:.84rem; margin:10px 0 8px; }
+  .feedback-grid { display:grid; grid-template-columns:1fr 1.5fr; gap:12px; margin:10px 0 8px; }
+  .feedback-grid label { display:flex; flex-direction:column; gap:5px; font-size:.82rem; color:var(--muted); font-weight:600; }
+  .feedback select, .feedback input[type=text] { width:100%; padding:9px 10px; border:1px solid #E3D2C2;
+    border-radius:10px; background:#FFFDF9; color:var(--ink); font:inherit; font-size:.92rem; }
+  .feedback select:focus, .feedback input[type=text]:focus { border-color:var(--accent); outline:none;
+    box-shadow:0 0 0 3px rgba(198,40,30,.13); }
+  .feedback textarea { min-height:96px; }
+  .feedback .hp { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
+  #feedbackStatus { color:var(--muted); font-size:.82rem; }
+  #feedbackStatus.err { color:#B42318; }
+  @media (max-width:600px) { .feedback-grid { grid-template-columns:1fr; } }
   button:focus-visible, a:focus-visible, textarea:focus-visible { outline:3px solid rgba(198,40,30,.28); outline-offset:2px; }
   @media (max-width:600px) {
     .brandbar { flex-wrap:wrap; gap:10px; }
@@ -154,6 +168,35 @@
       <div id="overrideStatus"></div>
       <pre id="builtin" hidden></pre>
     </details>
+    <details id="feedback" class="feedback">
+      <summary>Góp ý, đề xuất cải tiến hoặc báo lỗi</summary>
+      <p>Gửi trực tiếp cho admin. Nội dung và liên hệ (nếu có) chỉ admin đã đặt mật khẩu mới xem được;
+        không công khai. Không gửi thông tin nhạy cảm.</p>
+      <form id="feedbackForm">
+        <div class="feedback-grid">
+          <label for="fbCategory">Loại
+            <select id="fbCategory">
+              <option value="gop_y">Góp ý chung</option>
+              <option value="cai_tien">Đề xuất cải tiến</option>
+              <option value="bao_loi">Báo lỗi</option>
+            </select>
+          </label>
+          <label for="fbContact">Liên hệ (không bắt buộc)
+            <input id="fbContact" type="text" maxlength="120" autocomplete="off"
+                   placeholder="Email / Telegram / Zalo">
+          </label>
+        </div>
+        <label for="feedbackMessage">Nội dung</label>
+        <textarea id="feedbackMessage" maxlength="1000" required
+                  placeholder="Ví dụ: Ở câu có từ viết tắt, model đọc chưa đúng..."></textarea>
+        <div class="meta"><span id="fbCount">0/1000</span><span>Tối thiểu 5 ký tự</span></div>
+        <div class="hp" aria-hidden="true"><label>Website <input id="fbWebsite" type="text" tabindex="-1" autocomplete="off"></label></div>
+        <div class="row">
+          <button id="feedbackSubmit" class="primary" type="submit">Gửi góp ý</button>
+          <span id="feedbackStatus" role="status"></span>
+        </div>
+      </form>
+    </details>
     <p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
       <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
       <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
@@ -165,6 +208,7 @@
     <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a> ·
     <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a> ·
     <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a> ·
+    <a href="#feedback" id="feedbackLink">Góp ý</a> ·
     <a href="/admin">Thống kê</a></footer>
 </main>
 <script>
@@ -173,6 +217,7 @@ const text = $("text"), count = $("count"), status = $("status"), player = $("pl
 let currentUrl = null;
 const VISIT_URL = "/api/visit";
 const API_URL = "/api/tts";
+const FEEDBACK_URL = "/api/feedback";
 const SOURCE = "web";
 function visitorId() {
   try {
@@ -261,6 +306,57 @@ $("showBuiltin").addEventListener("click", async () => {
     pre.textContent = lines.length ? lines.join("\n") : "Chưa có từ điển có sẵn.";
     overrideStatus.textContent = `${lines.length} quy tắc có sẵn/đã duyệt, chỉ đọc.`;
   } catch (_) { pre.textContent = "Không tải được từ điển có sẵn."; }
+});
+const feedbackForm = $("feedbackForm");
+const fbMessage = $("feedbackMessage");
+const fbCount = $("fbCount");
+const feedbackStatus = $("feedbackStatus");
+const feedbackLink = $("feedbackLink");
+if (feedbackLink) {
+  feedbackLink.addEventListener("click", () => {
+    $("feedback").open = true;
+    setTimeout(() => { $("feedback").scrollIntoView({block: "center"}); fbMessage.focus(); }, 30);
+  });
+}
+fbMessage.addEventListener("input", () => { fbCount.textContent = `${fbMessage.value.length}/1000`; });
+feedbackForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = fbMessage.value.trim();
+  if (message.length < 5) {
+    feedbackStatus.textContent = "Nội dung cần ít nhất 5 ký tự.";
+    feedbackStatus.className = "err";
+    fbMessage.focus();
+    return;
+  }
+  const button = $("feedbackSubmit");
+  button.disabled = true;
+  feedbackStatus.textContent = "Đang gửi...";
+  feedbackStatus.className = "";
+  try {
+    const response = await fetch(FEEDBACK_URL, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        category: $("fbCategory").value,
+        message: message,
+        contact: $("fbContact").value.trim(),
+        website: $("fbWebsite").value,
+        visitor_id: VISITOR_ID,
+        source: SOURCE,
+      }),
+    });
+    let payload = {};
+    try { payload = await response.json(); } catch (_) {}
+    if (!response.ok) throw new Error(payload.detail || "Gửi chưa được; thử lại sau.");
+    feedbackForm.reset();
+    fbCount.textContent = "0/1000";
+    feedbackStatus.textContent = "Đã gửi. Cảm ơn bạn!";
+    feedbackStatus.className = "";
+  } catch (err) {
+    feedbackStatus.textContent = err.message || "Gửi chưa được; thử lại sau.";
+    feedbackStatus.className = "err";
+  } finally {
+    button.disabled = false;
+  }
 });
 function currentOverrides() { return parseRules(rulesBox.value); }
 function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }

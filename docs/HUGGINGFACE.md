@@ -83,6 +83,7 @@ release GitHub.
 
 - Static Space miễn phí: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - App trực tiếp: https://dvchd-vifasttts-ngochuyen-demo.static.hf.space/
-- Space static có 3 mẫu audio và gọi VPS API cho câu mới (CORS).
+- Space static có 3 mẫu audio, gọi VPS API cho câu mới (CORS) và gửi góp ý/báo lỗi qua
+  `POST /api/feedback` (CORS).
 - Gradio/Docker Space CPU free hiện trả **402 Payment Required** trên account này; cần PRO.
   Vì vậy bản free dùng static Space, không chạy backend trong Space.
