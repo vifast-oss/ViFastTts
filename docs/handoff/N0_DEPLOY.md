@@ -41,8 +41,9 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   không lưu text/audio.
 - **Thống kê:** `/admin` (HTML) và `/admin.json`; tổng người dùng, tổng lượt tạo, lượt xem trang,
   **lượt tạo web / Space / API riêng**, audio đã tạo, 20 lượt gần nhất.
-  Không lưu IP/text; visitor lưu dạng hash.
-  Nếu `ADMIN_PASSWORD` rỗng hoặc chưa đặt, `/admin` mở công khai. Đặt env này để bật Basic Auth.
+  Không lưu IP/text; visitor lưu dạng hash. `/admin` hiển thị cả hàng chờ đề xuất cách đọc.
+  Nếu `ADMIN_PASSWORD` rỗng hoặc chưa đặt, `/admin` mở công khai nhưng **nút duyệt bị khoá**;
+  đặt env này để bật Basic Auth và mở duyệt.
   DB: `/app/data/stats.sqlite3`, bind mount `./data:/app/data` nên giữ qua restart.
 - **Vì sao trước đây chỉ thấy 1 người:** outer Traefik dùng TLS passthrough cho `*.hoctuthien.com`,
   nên Traefik trong LXD thấy mọi request đến từ cùng IP upstream. Web và static Space giờ tạo
@@ -53,8 +54,13 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   `source` mặc định `api`; web/Space gửi `web`/`space`.
 - **Cách đọc custom:** web có mục “Tùy chọn nâng cao”; lưu tối đa 50 quy tắc trong
   `localStorage`, gửi qua `overrides` của `/api/tts`. API cũng nhận trực tiếp:
-  `{"text":"AI", "overrides":{"AI":"ây ai"}}`. Server không lưu quy tắc người dùng.
-  Bảng có sẵn (570 quy tắc) xem qua `GET /api/overrides`; không hỗ trợ regex/script.
+  `{"text":"AI", "overrides":{"AI":"ây ai"}}`.
+  Gửi đề xuất: `POST /api/overrides/suggest` với `{"rules":{"AI":"ây ai"}}`.
+  Mặc định mọi quy tắc chỉ ở local; nếu tích “gửi để duyệt”, server lưu cặp từ/cách đọc
+  vào hàng chờ (`/api/overrides/suggest`), không lưu câu/IP. Checkbox gửi **mặc định bật**,
+  bỏ tích để chỉ lưu local; trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
+  được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn 570 quy tắc qua
+  `GET /api/overrides`; không hỗ trợ regex/script.
 - **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
   (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
   Chưa tính độ trễ mạng từ trình duyệt.

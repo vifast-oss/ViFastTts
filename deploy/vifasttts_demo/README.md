@@ -38,4 +38,6 @@ Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Doc
 - Chỉ lưu hash visitor, số ký tự, thời lượng audio, thời gian xử lý; không lưu IP/text.
 - API mẫu: `{"text":"...", "source":"api", "visitor_id":"client-1234"}`.
 - Cách đọc custom: localStorage + `overrides` trong request; xem `GET /api/overrides`;
-  tối đa 50 quy tắc, không hỗ trợ regex/script.
+  tối đa 50 quy tắc, không hỗ trợ regex/script. Nút gửi để duyệt mặc định bật, có thể bỏ tích;
+  server chỉ lưu suggestion pending, admin duyệt khi có `ADMIN_PASSWORD`; chưa đặt thì nút duyệt
+  bị khoá nhưng đề xuất vẫn vào hàng chờ.

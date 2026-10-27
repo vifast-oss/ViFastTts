@@ -8,6 +8,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import html
 import io
 import json
 import logging
@@ -25,7 +26,7 @@ from pathlib import Path
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import BaseModel
 
 from vifasttts.frontend.chunking import (
@@ -102,6 +103,18 @@ def _init_stats() -> None:
                     source TEXT NOT NULL DEFAULT 'api'
                 );
                 CREATE INDEX IF NOT EXISTS usage_ts ON usage(ts);
+                CREATE TABLE IF NOT EXISTS suggestions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    key TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    source TEXT NOT NULL DEFAULT 'web',
+                    visitor TEXT NOT NULL,
+                    created REAL NOT NULL,
+                    updated REAL NOT NULL,
+                    UNIQUE(key, value)
+                );
+                CREATE INDEX IF NOT EXISTS suggestions_status ON suggestions(status);
             """)
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(usage)")}
             if "source" not in columns:
@@ -146,11 +159,11 @@ def _load_builtin_overrides() -> dict[str, str]:
 BUILTIN_OVERRIDES = _load_builtin_overrides()
 
 
-def _clean_overrides(raw: dict[str, str] | None) -> dict[str, str]:
+def _clean_overrides(raw: dict[str, str] | None, limit: int = MAX_OVERRIDES) -> dict[str, str]:
     if not raw:
         return {}
-    if len(raw) > MAX_OVERRIDES:
-        raise HTTPException(status_code=422, detail=f"Tối đa {MAX_OVERRIDES} quy tắc đọc")
+    if len(raw) > limit:
+        raise HTTPException(status_code=422, detail=f"Tối đa {limit} quy tắc đọc")
     clean: dict[str, str] = {}
     for key, value in raw.items():
         key, value = str(key).strip(), str(value).strip()
@@ -210,6 +223,51 @@ def _record_tts(visitor: str, chars: int, audio_seconds: float, elapsed: float,
             connection.close()
 
 
+def _approved_overrides() -> dict[str, str]:
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            rows = connection.execute(
+                "SELECT key, value FROM suggestions WHERE status='approved' ORDER BY id"
+            ).fetchall()
+        finally:
+            connection.close()
+    return {str(row["key"]): str(row["value"]) for row in rows}
+
+
+def _record_suggestions(rules: dict[str, str], visitor: str, source: str) -> int:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            for key, value in rules.items():
+                connection.execute(
+                    "INSERT INTO suggestions(key, value, status, source, visitor, created, updated) "
+                    "VALUES(?,?, 'pending', ?, ?, ?, ?) "
+                    "ON CONFLICT(key, value) DO UPDATE SET updated=excluded.updated, "
+                    "source=excluded.source, visitor=excluded.visitor",
+                    (key, value, source, visitor, now, now),
+                )
+            connection.commit()
+        finally:
+            connection.close()
+    return len(rules)
+
+
+def _pending_suggestions(limit: int = 100) -> list[dict]:
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            rows = connection.execute(
+                "SELECT id, key, value, source, created FROM suggestions "
+                "WHERE status='pending' ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
+        finally:
+            connection.close()
+    return [{**dict(row), "time": datetime.fromtimestamp(float(row["created"]), VN_TZ).strftime("%m-%d %H:%M")}
+            for row in rows]
+
+
 def _stats_payload() -> dict:
     now = time.time()
     local_now = datetime.fromtimestamp(now, VN_TZ)
@@ -233,6 +291,12 @@ def _stats_payload() -> dict:
             by_source = {row["source"]: row["n"] for row in connection.execute(
                 "SELECT source, COUNT(*) AS n FROM usage GROUP BY source"
             ).fetchall()}
+            suggestions_pending = connection.execute(
+                "SELECT COUNT(*) AS n FROM suggestions WHERE status='pending'"
+            ).fetchone()["n"]
+            suggestions_approved = connection.execute(
+                "SELECT COUNT(*) AS n FROM suggestions WHERE status='approved'"
+            ).fetchone()["n"]
             totals = connection.execute(
                 "SELECT COALESCE(SUM(audio_seconds),0) AS audio, "
                 "COALESCE(SUM(chars),0) AS chars, "
@@ -256,6 +320,8 @@ def _stats_payload() -> dict:
         "tts_web": int(by_source.get("web", 0)),
         "tts_space": int(by_source.get("space", 0)),
         "tts_api": int(by_source.get("api", 0)),
+        "suggestions_pending": int(suggestions_pending),
+        "suggestions_approved": int(suggestions_approved),
         "audio_seconds": round(float(totals["audio"]), 2),
         "chars_total": int(totals["chars"]),
         "avg_chars": round(float(totals["chars"]) / tts, 1) if tts else 0.0,
@@ -285,6 +351,26 @@ def _admin_html(stats: dict) -> str:
         for item in stats["recent"]
     ) or "<tr><td colspan='7'>Chưa có lượt tạo nào.</td></tr>"
     auth_note = "Đang mở công khai, chưa đặt ADMIN_PASSWORD." if not ADMIN_PASSWORD else "Đã bật Basic Auth."
+    pending = _pending_suggestions()
+    if ADMIN_PASSWORD:
+        suggestion_rows = "".join(
+            f"<tr><td>{item['time']}</td><td>{html.escape(item['key'])}</td>"
+            f"<td>{html.escape(item['value'])}</td><td>{html.escape(item['source'])}</td>"
+            f"<td><form method='post' action='/admin/suggestions/{item['id']}/approve' style='display:inline'>"
+            f"<button class='tiny ok'>Duyệt</button></form> "
+            f"<form method='post' action='/admin/suggestions/{item['id']}/reject' style='display:inline'>"
+            f"<button class='tiny no'>Từ chối</button></form></td></tr>"
+            for item in pending
+        ) or "<tr><td colspan='5'>Không có đề xuất chờ duyệt.</td></tr>"
+    else:
+        suggestion_rows = "".join(
+            f"<tr><td>{item['time']}</td><td>{html.escape(item['key'])}</td>"
+            f"<td>{html.escape(item['value'])}</td><td>{html.escape(item['source'])}</td>"
+            f"<td><button class='tiny' disabled title='Đặt ADMIN_PASSWORD để duyệt'>Duyệt</button></td></tr>"
+            for item in pending
+        ) or "<tr><td colspan='5'>Không có đề xuất chờ duyệt.</td></tr>"
+    review_note = ("Đã bật duyệt vì có ADMIN_PASSWORD." if ADMIN_PASSWORD
+                   else "Đang tạm khoá duyệt: chưa đặt ADMIN_PASSWORD. Đề xuất vẫn được xếp hàng.")
     return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
@@ -299,6 +385,9 @@ table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dbe
 th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid #edf1f3;font-size:.86rem}}
 th{{background:#edf3f2;color:#245c57}} a{{color:#0f766e}}
 .note{{background:#fff8e8;border:1px solid #f0d49a;padding:10px 12px;border-radius:10px;color:#7a4b00;font-size:.86rem;margin-top:16px}}
+.tiny{{padding:4px 8px;font-size:.78rem;border-radius:7px;border:1px solid #cbd6df;background:#f4f7f8;cursor:pointer}}
+.tiny.ok{{background:#e5f5ec;border-color:#b8e2c8;color:#166534}} .tiny.no{{background:#fff0f0;border-color:#f0c4c4;color:#9b1c1c}}
+.tiny:disabled{{opacity:.45;cursor:not-allowed}}
 @media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
 </style></head><body><main>
 <h1>ViFastTTS · Thống kê</h1>
@@ -313,10 +402,17 @@ th{{background:#edf3f2;color:#245c57}} a{{color:#0f766e}}
   <div class="card"><b>{stats['tts_api']}</b><span>tạo qua API</span></div>
   <div class="card"><b>{stats['audio_seconds'] / 60:.1f} phút</b><span>audio đã tạo</span></div>
   <div class="card"><b>{stats['avg_chars']}</b><span>ký tự / lượt</span></div>
+  <div class="card"><b>{stats['suggestions_pending']}</b><span>đề xuất chờ duyệt</span></div>
+  <div class="card"><b>{stats['suggestions_approved']}</b><span>quy tắc đã duyệt</span></div>
 </div>
+<h2 style="margin:24px 0 4px">Đề xuất cách đọc</h2>
+<p class="sub">{review_note}</p>
+<table><thead><tr><th>Thời điểm</th><th>Từ</th><th>Cách đọc</th><th>Nguồn</th><th>Duyệt</th></tr></thead>
+<tbody>{suggestion_rows}</tbody></table>
+<h2 style="margin:24px 0 4px">Lượt tạo gần đây</h2>
 <table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
 <tbody>{rows}</tbody></table>
-<div class="note">Số “người dùng” là ước lượng theo hash IP, không lưu IP hay nội dung text. {auth_note}</div>
+<div class="note">Số “người dùng” là ước lượng theo hash visitor/IP, không lưu IP/text. {auth_note}</div>
 </main></body></html>"""
 
 
@@ -341,6 +437,12 @@ class TtsRequest(BaseModel):
 
 class VisitRequest(BaseModel):
     visitor_id: str | None = None
+
+
+class SuggestRequest(BaseModel):
+    rules: dict[str, str]
+    visitor_id: str | None = None
+    source: str = "web"
 
 
 def _wav_bytes(waveform: np.ndarray, sample_rate: int) -> bytes:
@@ -369,10 +471,12 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
                 overrides: dict[str, str]) -> tuple[bytes, float, float]:
     started = time.perf_counter()
     user_lower = {key.lower(): value for key, value in overrides.items() if key.isascii()}
+    approved = _approved_overrides()
+    approved_lower = {key.lower(): value for key, value in approved.items() if key.isascii()}
     options = NormalizerOptions(
         dialect="north",
         exact_overrides=overrides,
-        english_overrides={**BUILTIN_OVERRIDES, **user_lower},
+        english_overrides={**BUILTIN_OVERRIDES, **approved_lower, **user_lower},
     )
     chunks = (split_clauses(text, max_chars=MAX_CHARS) if fixed_pauses
               else chunk_text(text, max_chars=MAX_CHARS))
@@ -410,10 +514,29 @@ def visit(payload: VisitRequest, request: Request) -> dict:
 def overrides() -> dict:
     return {
         "builtin": BUILTIN_OVERRIDES,
+        "approved": _approved_overrides(),
         "max_rules": MAX_OVERRIDES,
-        "note": "Đây là bảng đọc có sẵn. Quy tắc người dùng chỉ lưu localStorage; "
-                "API nhận object overrides theo từng request.",
+        "note": "Bảng đọc có sẵn + quy tắc đã duyệt. Quy tắc người dùng lưu localStorage "
+                "hoặc gửi theo request; server chỉ lưu bản đề xuất khi người dùng chọn gửi.",
     }
+
+
+@app.post("/api/overrides/suggest")
+def suggest_overrides(payload: SuggestRequest, request: Request) -> dict:
+    rules = _clean_overrides(payload.rules, limit=10)
+    if not rules:
+        raise HTTPException(status_code=422, detail="Không có quy tắc để gửi")
+    try:
+        visitor = _visitor_hash(request, payload.visitor_id)
+    except Exception:
+        logger.exception("visitor stats failed")
+        visitor = "unknown"
+    if not _rate_ok(f"suggest:{visitor}"):
+        raise HTTPException(status_code=429, detail="Gửi quá nhiều; thử lại sau 1 phút")
+    source = payload.source if payload.source in ("web", "space", "api") else "api"
+    count = _record_suggestions(rules, visitor, source)
+    logger.info("suggestion queued count=%d source=%s", count, source)
+    return {"ok": True, "queued": count, "status": "pending"}
 
 
 def _admin_denied() -> Response:
@@ -434,6 +557,28 @@ def admin_json(request: Request) -> Response:
         return _admin_denied()
     return Response(content=json.dumps(_stats_payload(), ensure_ascii=False),
                     media_type="application/json", headers={"Cache-Control": "no-store"})
+
+
+@app.post("/admin/suggestions/{suggestion_id}/{action}")
+def review_suggestion(suggestion_id: int, action: str, request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Chưa đặt ADMIN_PASSWORD; tạm khoá duyệt")
+    if action not in ("approve", "reject"):
+        raise HTTPException(status_code=400, detail="Hành động không hợp lệ")
+    status = "approved" if action == "approve" else "rejected"
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "UPDATE suggestions SET status=?, updated=? WHERE id=? AND status='pending'",
+                (status, time.time(), suggestion_id),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+    return RedirectResponse(url="/admin", status_code=303)
 
 
 @app.get("/healthz")

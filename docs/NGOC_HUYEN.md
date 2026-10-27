@@ -66,7 +66,10 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
 
 - mỗi dòng một quy tắc `từ gốc = cách đọc`, ví dụ `AI = ây ai`;
-- lưu trong `localStorage` của trình duyệt, không lưu server;
+- lưu trong `localStorage` của trình duyệt;
+- mặc định **tích gửi để duyệt**; người dùng có thể bỏ tích để chỉ lưu local;
+- server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu/IP;
+- admin chỉ duyệt được khi đặt `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá;
 - áp dụng cho request hiện tại, tối đa **50 quy tắc**, key ≤80 ký tự, value ≤120 ký tự;
 - xem được **570 quy tắc có sẵn** qua nút “Xem từ điển có sẵn”.
 
@@ -80,7 +83,10 @@ API cũng nhận:
 }
 ```
 
-`GET /api/overrides` trả bảng có sẵn (read-only). Server không lưu quy tắc người dùng.
+`GET /api/overrides` trả bảng có sẵn + quy tắc đã duyệt.
+Gửi đề xuất qua `POST /api/overrides/suggest` (tối đa 10 quy tắc/lần, không lưu câu/IP). Mặc định quy tắc chỉ nằm trong
+localStorage; nếu người dùng tích “gửi để duyệt”, server chỉ lưu cặp từ/cách đọc vào hàng chờ,
+không lưu câu/IP. Admin duyệt khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá.
 Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùng được ưu tiên trước bảng có sẵn.
 
 ## File

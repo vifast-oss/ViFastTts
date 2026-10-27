@@ -54,6 +54,7 @@
   #builtin { max-height:220px; overflow:auto; white-space:pre-wrap; background:#f4f8f8;
              border:1px solid var(--line); border-radius:10px; padding:10px; font-size:.78rem; }
   #overrideStatus { color:var(--muted); font-size:.8rem; margin-top:6px; }
+  .share { display:flex; gap:7px; align-items:center; margin:9px 0 2px; color:var(--muted); font-size:.84rem; }
 </style>
 </head>
 <body>
@@ -105,9 +106,12 @@
     <details class="adv">
       <summary>Tùy chọn nâng cao: cách đọc từ</summary>
       <p>Thêm quy tắc riêng, mỗi dòng một quy tắc dạng <code>từ gốc = cách đọc</code>.
-        Ví dụ <code>AI = ây ai</code>. Quy tắc chỉ lưu trong localStorage trình duyệt này
-        và được gửi kèm request; server không lưu.</p>
+        Ví dụ <code>AI = ây ai</code>. Quy tắc được lưu trong localStorage trình duyệt này.
+        Nếu tích “gửi để duyệt”, server chỉ lưu cặp từ/cách đọc vào hàng chờ duyệt,
+        không lưu câu hay IP; bỏ tích nếu không muốn gửi.</p>
       <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét"></textarea>
+      <label class="share"><input id="shareOverrides" type="checkbox" checked>
+        Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(mặc định bật; bỏ tích nếu không muốn)</span></label>
       <div class="row">
         <button id="saveOverrides" class="ghost" type="button">Lưu quy tắc</button>
         <button id="clearOverrides" class="ghost" type="button">Xoá quy tắc</button>
@@ -149,9 +153,16 @@ fetch(VISIT_URL, {method: "POST", headers: {"Content-Type": "application/json"},
   body: JSON.stringify({visitor_id: VISITOR_ID})}).catch(() => {});
 
 const OVERRIDES_URL = "https://vifasttts.hoctuthien.com/api/overrides";
+const SUGGEST_URL = "https://vifasttts.hoctuthien.com/api/overrides/suggest";
 const OVERRIDES_KEY = "vifasttts_overrides_v1";
+const SHARE_KEY = "vifasttts_share_overrides_v1";
 const rulesBox = $("overrides");
+const shareBox = $("shareOverrides");
 const overrideStatus = $("overrideStatus");
+try { if (localStorage.getItem(SHARE_KEY) === "0") shareBox.checked = false; } catch (_) {}
+shareBox.addEventListener("change", () => {
+  try { localStorage.setItem(SHARE_KEY, shareBox.checked ? "1" : "0"); } catch (_) {}
+});
 function parseRules(value) {
   const rules = {};
   for (const line of value.split("\n")) {
@@ -176,7 +187,27 @@ try {
   rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
 } catch (_) {}
 rulesBox.addEventListener("input", () => saveRules(true));
-$("saveOverrides").addEventListener("click", () => saveRules(false));
+$("saveOverrides").addEventListener("click", async () => {
+  saveRules(false);
+  const rules = parseRules(rulesBox.value);
+  if (!shareBox.checked) {
+    overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc local; không gửi lên server.`;
+    return;
+  }
+  if (!Object.keys(rules).length) return;
+  overrideStatus.textContent = "Đang gửi đề xuất...";
+  try {
+    const response = await fetch(SUGGEST_URL, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({rules: rules, visitor_id: VISITOR_ID, source: SOURCE})
+    });
+    if (!response.ok) throw new Error("gửi thất bại");
+    const data = await response.json();
+    overrideStatus.textContent = `Đã lưu local và gửi ${data.queued} quy tắc chờ duyệt.`;
+  } catch (_) {
+    overrideStatus.textContent = "Đã lưu local; gửi đề xuất thất bại.";
+  }
+});
 $("clearOverrides").addEventListener("click", () => {
   rulesBox.value = ""; try { localStorage.removeItem(OVERRIDES_KEY); } catch (_) {}
   overrideStatus.textContent = "Đã xoá quy tắc riêng.";
@@ -189,9 +220,10 @@ $("showBuiltin").addEventListener("click", async () => {
   try {
     const response = await fetch(OVERRIDES_URL);
     const data = await response.json();
-    const lines = Object.entries(data.builtin || {}).map(([k, v]) => `${k} = ${v}`);
+    const merged = {...(data.builtin || {}), ...(data.approved || {})};
+    const lines = Object.entries(merged).map(([k, v]) => `${k} = ${v}`);
     pre.textContent = lines.length ? lines.join("\n") : "Chưa có từ điển có sẵn.";
-    overrideStatus.textContent = `${lines.length} quy tắc có sẵn, chỉ đọc.`;
+    overrideStatus.textContent = `${lines.length} quy tắc có sẵn/đã duyệt, chỉ đọc.`;
   } catch (_) { pre.textContent = "Không tải được từ điển có sẵn."; }
 });
 function currentOverrides() { return parseRules(rulesBox.value); }
