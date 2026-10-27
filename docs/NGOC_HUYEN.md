@@ -96,7 +96,7 @@ API cũng nhận:
 }
 ```
 
-`GET /api/overrides` trả bảng có sẵn + quy tắc đã duyệt.
+`GET /api/overrides` trả bảng có sẵn + quy tắc đã duyệt + mục `stem` (ví dụ quy tắc nội bộ cho hoá học/toán/vật lý/LaTeX, đọc thực tế do normalizer sinh). Quy tắc người dùng được ưu tiên trước STEM; các dạng như `NaCl`, `x^2`, `\alpha` chưa có quy tắc riêng thì thêm vào ô cách đọc.
 Gửi đề xuất qua `POST /api/overrides/suggest` (tối đa 10 quy tắc/lần, không lưu câu/IP). Mặc định quy tắc chỉ nằm trong
 localStorage; nếu người dùng tích “gửi để duyệt”, server chỉ lưu cặp từ/cách đọc vào hàng chờ,
 không lưu câu/IP. Admin duyệt khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá.

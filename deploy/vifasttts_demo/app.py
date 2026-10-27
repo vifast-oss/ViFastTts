@@ -37,7 +37,7 @@ from vifasttts.frontend.chunking import (
     split_clauses,
     steady_pause_seconds,
 )
-from vifasttts.frontend.normalizer import NormalizerOptions
+from vifasttts.frontend.normalizer import NormalizerOptions, normalize_text
 from vifasttts.runtime.onnx_engine import OnnxAcousticModel, OnnxVocoder
 from vifasttts.runtime.postprocess import postprocess, sharpen_mel_numpy
 
@@ -181,6 +181,35 @@ def _load_builtin_overrides() -> dict[str, str]:
 
 
 BUILTIN_OVERRIDES = _load_builtin_overrides()
+
+#: Ví dụ các quy tắc STEM nội bộ (không nằm trong 570 overrides). Đọc thực tế
+#: được sinh lại bằng normalizer để UI không hiển thị sai.
+STEM_GROUPS = (
+    ("Hoá học", ("H2O", "CO2", "H2SO4")),
+    ("Toán", ("1/2",)),
+    ("Vật lý", ("m/s", "km/h")),
+    ("LaTeX", (r"\frac{a}{b}",)),
+)
+
+
+def _stem_examples() -> dict:
+    groups = []
+    for label, samples in STEM_GROUPS:
+        items = []
+        for text in samples:
+            try:
+                reading = normalize_text(text)
+            except (ValueError, TypeError):
+                reading = ""
+            if reading and reading != text:
+                items.append({"input": text, "reading": reading})
+        if items:
+            groups.append({"label": label, "items": items})
+    return {
+        "note": "Quy tắc STEM nội bộ, áp dụng trước từ điển. Quy tắc của bạn được ưu tiên; "
+                "NaCl, x^2, \\alpha... chưa có quy tắc riêng — thêm vào ô cách đọc.",
+        "groups": groups,
+    }
 
 
 def _clean_overrides(raw: dict[str, str] | None, limit: int = MAX_OVERRIDES) -> dict[str, str]:
@@ -677,9 +706,10 @@ def overrides() -> dict:
     return {
         "builtin": BUILTIN_OVERRIDES,
         "approved": _approved_overrides(),
+        "stem": _stem_examples(),
         "max_rules": MAX_OVERRIDES,
-        "note": "Bảng đọc có sẵn + quy tắc đã duyệt. Quy tắc người dùng lưu localStorage "
-                "hoặc gửi theo request; server chỉ lưu bản đề xuất khi người dùng chọn gửi.",
+        "note": "Bảng đọc có sẵn + quy tắc đã duyệt + ví dụ STEM nội bộ. Quy tắc người dùng "
+                "lưu localStorage hoặc gửi theo request; server chỉ lưu bản đề xuất khi gửi.",
     }
 
 

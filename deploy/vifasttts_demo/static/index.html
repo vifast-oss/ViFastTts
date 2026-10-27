@@ -227,7 +227,7 @@
       <div class="row">
         <button id="saveOverrides" class="ghost" type="button">Lưu quy tắc</button>
         <button id="clearOverrides" class="ghost" type="button">Xoá quy tắc</button>
-        <button id="showBuiltin" class="ghost" type="button">Xem từ điển có sẵn</button>
+        <button id="showBuiltin" class="ghost" type="button">Xem từ điển &amp; STEM</button>
       </div>
       <div id="overrideStatus"></div>
       <pre id="builtin" hidden></pre>
@@ -396,8 +396,18 @@ $("showBuiltin").addEventListener("click", async () => {
     const data = await response.json();
     const merged = {...(data.builtin || {}), ...(data.approved || {})};
     const lines = Object.entries(merged).map(([k, v]) => `${k} = ${v}`);
+    const stem = data.stem || {};
+    if (stem.groups && stem.groups.length) {
+      lines.push("", "[STEM NỘI BỘ — VÍ DỤ]");
+      if (stem.note) lines.push(stem.note);
+      for (const group of stem.groups) {
+        lines.push(`[${group.label}]`);
+        for (const item of group.items || []) lines.push(`${item.input} = ${item.reading}`);
+      }
+    }
     pre.textContent = lines.length ? lines.join("\n") : "Chưa có từ điển có sẵn.";
-    overrideStatus.textContent = `${lines.length} quy tắc có sẵn/đã duyệt, chỉ đọc.`;
+    const stemCount = (stem.groups || []).reduce((n, group) => n + (group.items || []).length, 0);
+    overrideStatus.textContent = `${Object.keys(merged).length} quy tắc có sẵn/đã duyệt + ${stemCount} ví dụ STEM, chỉ đọc.`;
   } catch (_) { pre.textContent = "Không tải được từ điển có sẵn."; }
 });
 const feedbackForm = $("feedbackForm");

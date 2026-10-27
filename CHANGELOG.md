@@ -10,6 +10,8 @@
   (Trung bộ chính và Nam gộp D/GI; Nam đọc R khác D/GI).
 - Sửa override cụm/domain: key có dấu chấm/space được áp trước tách token
   (`khongdich.com = không dịch chấm com`).
+- `GET /api/overrides` + nút “Xem từ điển & STEM”: hiển thị cả ví dụ quy tắc STEM nội bộ
+  (hoá học/toán/vật lý/LaTeX), kèm ghi chú quy tắc người dùng được ưu tiên.
 - Thêm ví dụ rule hoá học/toán/LaTeX/vật lý trong UI; textarea 3 dòng đủ cao;
   cho phép ký tự `>`/`<` trong rule literal (vẫn escape khi hiển thị admin).
 - Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
