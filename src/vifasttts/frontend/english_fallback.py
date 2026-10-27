@@ -62,6 +62,14 @@ ACRONYM_READINGS = {
     "THCS": "trung học cơ sở", "PGS": "phó giáo sư",
     "TS": "tiến sĩ", "ThS": "thạc sĩ", "BS": "bác sĩ", "KS": "kỹ sư",
     "HS": "học sinh",
+    # Viết tắt địa danh/doanh nghiệp/giáo dục bổ sung 27/10.
+    "HN": "hà nội", "BD": "bình dương", "ĐN": "đà nẵng",
+    "TƯ": "trung ương", "QL": "quốc lộ", "VP": "văn phòng",
+    "CĐ": "cao đẳng", "TBYT": "thiết bị y tế", "BV": "bệnh viện",
+    "TNHH": "trách nhiệm hữu hạn", "CP": "cổ phần", "DN": "doanh nghiệp",
+    "DNTN": "doanh nghiệp tư nhân", "CK": "chuyển khoản",
+    "VAT": "thuế giá trị gia tăng", "ĐKKD": "đăng ký kinh doanh",
+    "BĐS": "bất động sản",
 }
 
 # Từ tiếng Anh thông thường được phép khớp không phân biệt hoa thường,

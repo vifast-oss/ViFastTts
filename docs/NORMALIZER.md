@@ -95,12 +95,17 @@ Bất biến được kiểm bằng test: **mọi reading trong từ điển ph�
 
 ### Kiểm toán từ điển override (27/10/2026)
 
-- `configs/overrides_tech_vi.json` rút từ **570 → 179 mục**; bỏ các alias ASR/tiền tố rác
+- `configs/overrides_tech_vi.json` rút từ **570 → 200 mục**; bỏ các alias ASR/tiền tố rác
   như `dipsic` (DeepSeek), `dipick`, `dipix`, `analyer`, `antropic`, `appile`, `cching`;
   bỏ các key một chữ cái (`c`, `l`, `s`, `ch`, `th`...) vì dễ đè lên token bình thường.
 - Bổ sung viết tắt Việt thường gặp: `UBND`, `HĐND`, `UBMTTQ`, `TP.HCM`, `THPT`, `THCS`,
   `BHXH`, `BHYT`, `CMND`, `CCCD`, `GPLX`, `GDP`, `CPI`, `FDI`, `VTV`, `HTV`, `WHO`, `UN`,
   `VND`, `USD`, `ASEAN`, `UNESCO`; nhóm chat an toàn (`ko`, `dc`, `vs`, `ib`, `sdt`, `tk`, `mk`...).
+- Bổ sung địa danh/doanh nghiệp/giáo dục: `HN`, `BD`, `ĐN` (mặc định Đà Nẵng), `QL`,
+  `CĐ`, `GD&ĐT`, `HS-SV`, `TBYT`, `BV`, `TNHH`, `CP`, `DN`, `DNTN`, `CK` (mặc định
+  chuyển khoản), `VAT`, `ĐKKD`, `BĐS`, `Ngân hàng TMCP`, `VP`, `B công an`, `TƯ`.
+  `ĐN` và `CK` là viết tắt **đa nghĩa**; từ điển chọn nghĩa trội, muốn nghĩa còn lại thì
+  viết đầy đủ (Đồng Nai / chứng khoán).
 - Bổ sung/sửa tên sản phẩm và từ công nghệ phổ biến: DeepSeek, ChatGPT, Claude, Docker,
   Kubernetes, MongoDB, PostgreSQL, Nginx, Redis, macOS, Linux, VS Code, WordPress,
   `bug` → “bắc”, `download`/`upload`, `windows` → “uyn đâu”.

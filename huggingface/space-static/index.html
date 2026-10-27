@@ -332,7 +332,13 @@ function saveRules() {
     overrideStatus.textContent = "Tối đa 50 quy tắc.";
     return false;
   }
-  try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(rules)); } catch (_) {}
+  try {
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(rules));
+  } catch (_) {
+    // Safari private / iframe chặn storage: vẫn dùng được trong phiên, nhưng báo rõ.
+    overrideStatus.textContent = "Trình duyệt chặn lưu local; quy tắc chỉ dùng trong phiên này.";
+    return false;
+  }
   return true;
 }
 let lastSuggestedRules = "";
@@ -361,7 +367,12 @@ async function syncSharedRules() {
 try {
   const stored = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
   rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
-} catch (_) {}
+  if (Object.keys(stored).length) {
+    overrideStatus.textContent = `Đã khôi phục ${Object.keys(stored).length} quy tắc local.`;
+  }
+} catch (_) {
+  overrideStatus.textContent = "Không đọc được localStorage; quy tắc chỉ dùng trong phiên này.";
+}
 rulesBox.addEventListener("input", () => {
   if (!saveRules()) return;
   lastSuggestedRules = "";
@@ -370,6 +381,11 @@ rulesBox.addEventListener("input", () => {
   } else {
     overrideStatus.textContent = "Đã lưu local; checkbox đang tắt nên không gửi.";
   }
+});
+rulesBox.addEventListener("change", () => { saveRules(); });
+window.addEventListener("pagehide", () => { saveRules(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") saveRules();
 });
 document.querySelectorAll("[data-rule]").forEach((button) => button.addEventListener("click", () => {
   const line = button.dataset.rule;
