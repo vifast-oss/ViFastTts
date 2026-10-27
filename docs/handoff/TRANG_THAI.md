@@ -54,19 +54,24 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
   **`n0_onnx_fp32_q.zip`** (Q-init, đang live).
 - `n0-ngochuyen-research-v1` — research, dùng ONNX N0 cũ; không có Q.
 - `q-preview-2026-10-27` — **preview tạm**, chỉ 2 WAV; xoá sau khi chọn xong.
+- `n0-demo-samples-v1` — 3 WAV mẫu nghe sẵn cho VPS (pre-release; `fetch_demo_samples.sh`).
 - Hugging Face model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small (ONNX Q đã cập nhật).
 - Static Space: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 
 ## 4. Demo / feedback / custom reading
 
-- Custom reading lưu `localStorage`; mặc định **gửi duyệt khi bấm Tạo âm thanh** nếu checkbox bật,
-  hoặc khi bấm **Lưu quy tắc**; server chỉ lưu cặp `key = value` dạng pending, không lưu câu/IP.
+- Custom reading **tự lưu `localStorage` khi gõ**; gửi duyệt khi bấm **Tạo âm thanh** nếu
+  checkbox bật; server chỉ lưu cặp `key = value` dạng pending, không lưu câu/IP.
 - Quy tắc người dùng **ưu tiên trước** STEM và 570 quy tắc có sẵn.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.
   **Chưa đặt `ADMIN_PASSWORD`** ⇒ nội dung feedback và nút duyệt còn khoá.
-- Giới hạn: 300 ký tự, 6 request/phút/IP, một request đồng thời.
+- Giới hạn: **3000 ký tự** (env `MAX_CHARS`), 6 request/phút/IP, một request đồng thời;
+  UI hiển thị thời gian xử lý / audio / RTF sau mỗi lần tạo. Mỗi lúc chỉ 1 request tổng hợp;
+  request sau chờ tối đa 45 s rồi 503 (không có queue nền).
+- Web VPS có **3 mẫu nghe sẵn** `/static/samples/fresh01|02|04.wav` (không gọi API);
+  WAV lấy từ release `n0-demo-samples-v1`, không commit.
 
 ## 5. Test / tài liệu
 

@@ -21,6 +21,7 @@ pick_python() {
 PY="$(pick_python)"
 
 "$ROOT/scripts/fetch_ngochuyen_models.sh"
+"$ROOT/scripts/fetch_demo_samples.sh" || true
 if [ ! -x "$VENV/bin/python" ]; then
   echo "Tạo venv demo: $VENV"
   "$PY" -m venv "$VENV"

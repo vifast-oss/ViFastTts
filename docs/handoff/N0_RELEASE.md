@@ -1,8 +1,8 @@
 # N0 — release chính thức + preview Q (27/10/2026)
 
 > **Trạng thái:** 2 release chính (`prod`, `research`) + **1 preview tạm** cho A/B Q-init vs
-> fine-tune. Tất cả đều **research/non-commercial** vì dataset CC-BY-NC-4.0.
-> Release audio test cũ đã xoá.
+> fine-tune + **1 release 3 WAV mẫu** cho VPS. Tất cả đều **research/non-commercial** vì
+> dataset CC-BY-NC-4.0. Release audio test cũ đã xoá.
 
 ## 1. Prod candidate (nội bộ)
 
@@ -46,12 +46,22 @@
   - `finetune.wav` — fine-tune 3k, sha256 `891d6d97…8c26199`
 - Xoá sau khi người dùng chọn model live (`gh release delete q-preview-2026-10-27 --yes`).
 
-## 4. Đã xoá
+## 4. Mẫu nghe sẵn cho VPS (tạm)
+
+- Tag: `n0-demo-samples-v1` (pre-release)
+- URL: https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1
+- Asset: `fresh01.wav` (230.956 B), `fresh02.wav` (205.356 B), `fresh04.wav` (264.236 B),
+  `SHA256SUMS`; dùng cho 3 player `/static/samples/` trên VPS.
+- Không commit WAV; `scripts/fetch_demo_samples.sh` tải + kiểm SHA256 vào static.
+- Có thể xoá release này khi không cần mẫu VPS nữa.
+
+## 5. Đã xoá
 
 Toàn bộ release audio test cũ (`demo-audio-*`, `demo-giong-clone-*`,
-`n0-ngochuyen-small-research-v1`). `gh release list` hiện còn 3 tag: 2 chính + preview Q.
+`n0-ngochuyen-small-research-v1`). `gh release list` hiện còn 4 tag:
+2 release chính + preview Q + samples VPS.
 
-## 5. Hugging Face
+## 6. Hugging Face
 
 - https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - License metadata `cc-by-nc-4.0`; có checkpoint, config/stats, Vocos, ONNX, demo, model card.

@@ -175,7 +175,7 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 - **Q (sau báo cáo gốc):** prod có thêm `n0_onnx_fp32_q.zip` (Q-init, đang live);
   preview tạm `q-preview-2026-10-27` có 2 WAV Q-init vs fine-tune 3k.
 - **Research/non-commercial — không production thương mại**, dataset CC-BY-NC-4.0.
-- Đã xoá toàn bộ release audio test cũ; hiện còn 2 release chính + preview Q.
+- Đã xoá toàn bộ release audio test cũ; hiện còn 2 release chính + preview Q + 3 mẫu VPS.
 - Đã tải lại asset, kiểm sha256, giải nén chạy `inference.py` CPU thành công.
 
 ## 12. Xác nhận tai trên 10 câu mới (27/10/2026)
@@ -197,6 +197,6 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 - Demo public: **https://vifasttts.hoctuthien.com/**
   (VPS `jp` qua Tailscale → LXD `hoctuthien-vps` → Docker `/opt/vifasttts` → Traefik).
 - Service dùng ONNX Runtime, alpha 1.5, Vocos pretrained, model tự nghỉ mặc định;
-  fixed pause là checkbox tắt mặc định. Rate limit 6 request/phút/IP, text 300 ký tự.
+  fixed pause là checkbox tắt mặc định. Rate limit 6 request/phút/IP, text 3000 ký tự (env `MAX_CHARS`).
 - Release có `n0_onnx_fp32_q.zip` (sha256 `ef35567c…`); gói N0 cũ `n0_onnx_fp32.zip`
   (sha256 `3521ac2e…`) vẫn còn cho lịch sử.

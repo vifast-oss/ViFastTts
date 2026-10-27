@@ -42,7 +42,7 @@
 | --- | --- |
 | `docs/handoff/TRANG_THAI.md` | **Nguồn sự thật duy nhất** về trạng thái, việc đang chờ, quyết định hiện hành |
 | `docs/handoff/N0_DEPLOY.md` | ONNX N0/Q, service VPS, demo, admin, feedback, release asset |
-| `docs/handoff/N0_RELEASE.md` | 2 release chính + preview tạm, asset/hash, license |
+| `docs/handoff/N0_RELEASE.md` | 2 release chính + preview Q + 3 mẫu VPS, asset/hash, license |
 | `docs/handoff/N0_agent2.md` | Báo cáo train/đo N0 gốc; đọc cùng `N0_DEPLOY` + `TRANG_THAI` |
 | `docs/handoff/NGUYEN_DATA.md` | Dataset `ngochuyen_voice`, pipeline MFA/segment/cache |
 | `docs/NGOC_HUYEN.md` | Model card, license, quickstart, cách đọc, giới hạn |

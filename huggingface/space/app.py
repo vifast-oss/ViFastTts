@@ -19,7 +19,8 @@ from vifasttts.runtime.onnx_engine import OnnxAcousticModel, OnnxVocoder
 from vifasttts.runtime.postprocess import postprocess, sharpen_mel_numpy
 
 MODEL_REPO = os.environ.get("MODEL_REPO", "dvchd/vifasttts-ngochuyen-small")
-MAX_CHARS = 300
+MAX_CHARS = 3000
+CHUNK_CHARS = 300
 ALPHA = 1.5
 
 acoustic = OnnxAcousticModel(
@@ -41,8 +42,8 @@ def synthesize(text: str, speed: float, fixed_pauses: bool):
         raise gr.Error("Cần ít nhất một chữ cái.")
     speed = min(1.15, max(0.85, float(speed)))
     options = NormalizerOptions(dialect="north")
-    chunks = (split_clauses(text, max_chars=MAX_CHARS) if fixed_pauses
-              else chunk_text(text, max_chars=MAX_CHARS))
+    chunks = (split_clauses(text, max_chars=CHUNK_CHARS) if fixed_pauses
+              else chunk_text(text, max_chars=CHUNK_CHARS))
     pieces: list[np.ndarray] = []
     for index, chunk in enumerate(chunks):
         features = acoustic.features_from_text(chunk, options=options)
@@ -83,7 +84,7 @@ with gr.Blocks(title="ViFastTts · Ngọc Huyền small") as demo:
                 "- Alpha 1,5\n"
                 "- Vocos pretrained\n"
                 "- Model tự nghỉ\n"
-                "- 300 ký tự\n\n"
+                "- 3000 ký tự\n\n"
                 "**Không dùng để giả giọng, lừa đảo hoặc thương mại.** "
                 "Dataset gốc CC BY-NC 4.0; code MIT."
             )

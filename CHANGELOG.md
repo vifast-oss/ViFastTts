@@ -16,6 +16,13 @@
   cho phép ký tự `>`/`<` trong rule literal (vẫn escape khi hiển thị admin).
 - Gọn UI “Cách đọc từ”: hướng dẫn dài chuyển vào icon ⓘ cạnh nhãn (giống “Nghỉ cố định”),
   giữ textarea + chip ví dụ; giảm chiều cao panel tùy chọn nâng cao.
+- Bỏ nút **Lưu quy tắc** (đã tự lưu khi gõ) và **Xoá quy tắc** (xoá trực tiếp trong textarea);
+  quy tắc vẫn gửi duyệt khi bấm **Tạo âm thanh** nếu checkbox bật.
+- VPS demo có **3 mẫu nghe sẵn** phát trực tiếp (không gọi API); WAV ở release
+  `n0-demo-samples-v1`, tải bằng `scripts/fetch_demo_samples.sh` (không commit).
+- Nâng giới hạn demo lên **3000 ký tự** mặc định (`MAX_CHARS`; UI đọc `/api/config`),
+  chunk nội bộ 300 ký tự; response `/api/tts` trả `X-Processing-Seconds`, `X-Audio-Seconds`,
+  `X-RTF` và UI hiển thị thời gian xử lý / audio / RTF sau mỗi lần tạo.
 - Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
 - Bố cục lại giao diện: 3 cột trên desktop, tùy chọn nâng cao và góp ý hiện ngay;
   nghỉ cố định chuyển vào tùy chọn nâng cao, kèm tooltip giải thích.

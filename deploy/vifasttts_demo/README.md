@@ -1,8 +1,10 @@
 # ViFastTts demo service
 
 ONNX-only demo (không cần torch):
-- `app.py` — FastAPI, ONNX acoustic + Vocos, alpha 1.5, model tự nghỉ mặc định.
-- `static/index.html` — trang nhập câu, play/tải WAV.
+- `app.py` — FastAPI, ONNX acoustic + Vocos, alpha 1.5, model tự nghỉ mặc định;
+  giới hạn mặc định 3000 ký tự (`MAX_CHARS`), chunk nội bộ 300 ký tự.
+- `static/index.html` — trang nhập câu, play/tải WAV, 3 mẫu nghe sẵn.
+- `static/samples/` — 3 WAV mẫu (không commit; tải bằng `scripts/fetch_demo_samples.sh`).
 - `static/brand/` — icon, lockup, favicon, OG image, manifest (nguồn: `resources/brand/`).
 - `Dockerfile` / `requirements.txt` / `docker-compose.yml`.
 
@@ -39,10 +41,12 @@ Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Doc
 - Có tách lượt tạo theo `source = web | space | api`.
 - Chỉ lưu hash visitor, số ký tự, thời lượng audio, thời gian xử lý; không lưu IP/text.
 - API mẫu: `{"text":"...", "source":"api", "visitor_id":"client-1234"}`.
+- `GET /api/config` trả max_chars/rate_limit; response `/api/tts` có header
+  `X-Processing-Seconds`, `X-Audio-Seconds`, `X-RTF` để UI hiển thị thời gian/RTF.
 - Cách đọc custom: localStorage + `overrides` trong request; xem `GET /api/overrides`;
   tối đa 50 quy tắc, không hỗ trợ regex/script; key có thể là cụm/domain
   (`khongdich.com = không dịch chấm com`, `H2 + O2 -> H2O = hát hai cộng ô hai tạo ra nước`). Gửi để duyệt mặc định bật; quy tắc được gửi khi
-  tạo âm thanh hoặc bấm Lưu quy tắc; server chỉ lưu suggestion pending, admin duyệt khi có
+  tạo âm thanh; server chỉ lưu suggestion pending, admin duyệt khi có
   `ADMIN_PASSWORD`; chưa đặt thì nút duyệt bị khoá nhưng đề xuất vẫn vào hàng chờ.
 - Góp ý / báo lỗi: `POST /api/feedback`; lưu SQLite bảng `feedback`; nội dung chỉ admin xem
   khi đã đặt `ADMIN_PASSWORD`; xuất CSV `/admin/feedback.csv`. Có rate limit + honeypot.

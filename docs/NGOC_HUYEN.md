@@ -36,7 +36,9 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 - Space demo miễn phí: **https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo**
 - Thống kê demo (mở công khai): **https://vifasttts.hoctuthien.com/admin**
 - Health: https://vifasttts.hoctuthien.com/healthz
-- Giới hạn: 300 ký tự · 6 request/phút/IP · không lưu text/audio.
+- Giới hạn mặc định: **3000 ký tự** · 6 request/phút/IP · không lưu text/audio;
+  có thể đổi bằng env `MAX_CHARS` (UI đọc `/api/config`).
+- Web VPS có **3 mẫu nghe sẵn** (không gọi API) lấy từ release `n0-demo-samples-v1`.
 
 ## Model
 
@@ -86,7 +88,7 @@ Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
   `\frac{a}{b} = a trên b`; rule cụm được áp trước khi tách token;
 - lưu trong `localStorage` của trình duyệt;
 - mặc định **tích gửi để duyệt**; người dùng có thể bỏ tích để chỉ lưu local;
-- quy tắc được gửi khi bấm **Tạo âm thanh** (nếu checkbox bật) hoặc bấm **Lưu quy tắc**;
+- quy tắc **tự lưu khi gõ**; gửi duyệt khi bấm **Tạo âm thanh** (nếu checkbox bật);
 - server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu/IP;
 - admin chỉ duyệt được khi đặt `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá;
 - áp dụng cho request hiện tại, tối đa **50 quy tắc**, key ≤80 ký tự, value ≤120 ký tự;
@@ -121,6 +123,7 @@ Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùn
     (asset Q đang live: `n0_onnx_fp32_q.zip`, sha256 `ef35567c…`)
   - research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
   - nghe thử Q: https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27
+  - 3 mẫu VPS: https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1
 
 ## Dữ liệu & huấn luyện lại
 

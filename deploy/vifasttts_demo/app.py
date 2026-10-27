@@ -45,7 +45,19 @@ ROOT = Path(__file__).resolve().parent
 MODEL_DIR = Path(os.environ.get("MODEL_DIR", ROOT / "models"))
 ACOUSTIC = MODEL_DIR / "acoustic.onnx"
 VOCODER = MODEL_DIR / "vocoder.onnx"
-MAX_CHARS = 300
+def _env_int(name: str, default: int, low: int, high: int) -> int:
+    """Đọc số nguyên từ env, kẹp trong [low, high] để tránh cấu hình phá service."""
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except ValueError:
+        value = default
+    return max(low, min(high, value))
+
+
+#: Giới hạn request công khai; có thể tăng bằng env (UI đọc /api/config).
+MAX_CHARS = _env_int("MAX_CHARS", 3000, 100, 10000)
+#: Mỗi đoạn đưa vào model vẫn ngắn (tránh vượt MAX_POSITIONS / RAM); dài hơn sẽ chia.
+SYNTH_CHUNK_CHARS = _env_int("SYNTH_CHUNK_CHARS", 300, 100, MAX_CHARS)
 RATE_LIMIT = 6
 RATE_WINDOW = 60.0
 ALPHA = float(os.environ.get("VIFASTT_SHARPEN_ALPHA", "1.5"))
@@ -75,6 +87,7 @@ app.add_middleware(
     allow_origin_regex=r"https://.*\.hf\.space",
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
+    expose_headers=["X-Processing-Seconds", "X-Audio-Seconds", "X-RTF", "X-Characters"],
 )
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
@@ -669,8 +682,8 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
         exact_overrides=overrides,
         english_overrides={**BUILTIN_OVERRIDES, **approved_lower, **user_lower},
     )
-    chunks = (split_clauses(text, max_chars=MAX_CHARS) if fixed_pauses
-              else chunk_text(text, max_chars=MAX_CHARS))
+    chunks = (split_clauses(text, max_chars=SYNTH_CHUNK_CHARS) if fixed_pauses
+              else chunk_text(text, max_chars=SYNTH_CHUNK_CHARS))
     if not chunks:
         raise HTTPException(status_code=422, detail="Không có nội dung để đọc")
     pieces: list[np.ndarray] = []
@@ -693,6 +706,12 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
 def index() -> HTMLResponse:
     return HTMLResponse((ROOT / "static" / "index.html").read_text(encoding="utf-8"),
                         headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/config")
+def public_config() -> dict:
+    """Cấu hình công khai để UI hiển thị đúng giới hạn (không lộ secret)."""
+    return {"max_chars": MAX_CHARS, "rate_limit": RATE_LIMIT, "rate_window": RATE_WINDOW}
 
 
 @app.post("/api/visit")
@@ -873,11 +892,11 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         logger.exception("visitor stats failed")
         visitor = "unknown"
     if not _rate_ok(visitor):
-        raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút")
+        raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút", headers={"Retry-After": "60"})
     source = payload.source if payload.source in ("web", "space", "api") else "api"
     overrides = _clean_overrides(payload.overrides)
     if not _lock.acquire(timeout=45):
-        raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau")
+        raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau", headers={"Retry-After": "10"})
     try:
         audio, elapsed, audio_seconds = _synthesize(text, speed, bool(payload.fixed_pauses), overrides)
     except HTTPException:
@@ -892,8 +911,13 @@ def tts(payload: TtsRequest, request: Request) -> Response:
     except Exception:
         logger.exception("tts stats failed")
     logger.info("tts ok %.2fs chars=%d fixed=%s", elapsed, len(text), payload.fixed_pauses)
+    rtf = elapsed / audio_seconds if audio_seconds > 0 else 0.0
     return Response(content=audio, media_type="audio/wav", headers={
         "Content-Disposition": 'inline; filename="vifasttts-demo.wav"',
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
+        "X-Processing-Seconds": f"{elapsed:.3f}",
+        "X-Audio-Seconds": f"{audio_seconds:.2f}",
+        "X-RTF": f"{rtf:.4f}",
+        "X-Characters": str(len(text)),
     })

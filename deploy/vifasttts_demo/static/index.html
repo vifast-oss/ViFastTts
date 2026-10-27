@@ -79,6 +79,7 @@
   .examples button { background:#FFFCF7; color:#3F3A36; border:1px solid var(--line); font-weight:500;
                      font-size:.8rem; padding:5px 8px; }
   .samples audio { width:100%; height:30px; margin-top:4px; }
+  .metrics { color:var(--muted); font-size:.78rem; margin-top:7px; }
   #status { min-height:1.2em; color:var(--muted); font-size:.83rem; margin-top:8px; }
   #status.err { color:#B42318; }
   #player { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
@@ -160,15 +161,15 @@
     <span class="badge">Research demo · phi thương mại</span>
     <span class="tier">SMALL · 6,1M · 24 kHz</span>
   </div>
-  <p class="sub">Nhập câu tiếng Việt (tối đa 300 ký tự). Model tự ngắt nghỉ; Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
+  <p class="sub">Nhập câu tiếng Việt (tối đa 3000 ký tự). Model tự ngắt nghỉ; Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
   
 </div>
 
 <div class="workspace">
   <section class="card main-card">
     <div class="card-head"><h2>Câu cần đọc</h2><span class="pill">Ctrl/⌘ + Enter</span></div>
-    <textarea id="text" maxlength="300" placeholder="Ví dụ: Sáng nay trời đẹp, chúng ta cùng đi dạo nhé."></textarea>
-    <div class="meta"><span id="count">0/300</span><span>Tối đa 300 ký tự</span></div>
+    <textarea id="text" maxlength="3000" placeholder="Ví dụ: Sáng nay trời đẹp, chúng ta cùng đi dạo nhé."></textarea>
+    <div class="meta"><span id="count">0/3000</span><span id="limitLabel">Tối đa 3000 ký tự</span></div>
 
     <div class="speed-row">
       <label>Tốc độ <input id="speed" type="range" min="0.85" max="1.15" step="0.05" value="1"> <output id="speedOut">1.00×</output></label>
@@ -183,9 +184,13 @@
     <div id="player">
       <audio id="audio" controls preload="none"></audio>
       <div class="row"><a id="download" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.wav">Tải WAV</a></div>
+      <div id="metrics" class="metrics" hidden></div>
     </div>
 
-    
+    <div class="samples examples">
+      <p>Nghe mẫu có sẵn (không cần gọi API):</p>
+      <div class="row"><audio controls preload="none" src="/static/samples/fresh01.wav"></audio><audio controls preload="none" src="/static/samples/fresh02.wav"></audio><audio controls preload="none" src="/static/samples/fresh04.wav"></audio></div>
+    </div>
 
     <div class="examples">
       <p>Thử nhanh:</p>
@@ -209,7 +214,7 @@
       <div class="label-row">
         <label for="overrides">Cách đọc từ</label>
         <span class="info" tabindex="0" role="img" aria-label="Giải thích cách đọc từ">i
-          <span class="tip" role="tooltip">Mỗi dòng một quy tắc dạng “từ gốc = cách đọc”. Hỗ trợ từ, cụm, domain hoặc công thức; không hỗ trợ regex/script. Quy tắc lưu trong trình duyệt; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP. Bấm chip ví dụ để thêm nhanh.</span>
+          <span class="tip" role="tooltip">Mỗi dòng một quy tắc dạng “từ gốc = cách đọc”. Hỗ trợ từ, cụm, domain hoặc công thức; không hỗ trợ regex/script. Quy tắc tự lưu khi gõ trong trình duyệt; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP. Bấm chip ví dụ để thêm nhanh.</span>
         </span>
       </div>
       <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com"></textarea>
@@ -228,8 +233,6 @@
       <label class="share"><input id="shareOverrides" type="checkbox" checked>
         Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(bỏ tích nếu không muốn)</span></label>
       <div class="row">
-        <button id="saveOverrides" class="ghost" type="button">Lưu quy tắc</button>
-        <button id="clearOverrides" class="ghost" type="button">Xoá quy tắc</button>
         <button id="showBuiltin" class="ghost" type="button">Xem từ điển &amp; STEM</button>
       </div>
       <div id="overrideStatus"></div>
@@ -284,6 +287,8 @@ const VISIT_URL = "/api/visit";
 const API_URL = "/api/tts";
 const FEEDBACK_URL = "/api/feedback";
 const SOURCE = "web";
+const CONFIG_URL = "/api/config";
+let maxChars = 3000;
 function visitorId() {
   try {
     let id = localStorage.getItem("vifasttts_visitor_v1");
@@ -320,23 +325,22 @@ function parseRules(value) {
   }
   return rules;
 }
-function saveRules(quiet = false) {
+function saveRules() {
   const rules = parseRules(rulesBox.value);
   if (Object.keys(rules).length > 50) {
     overrideStatus.textContent = "Tối đa 50 quy tắc.";
     return false;
   }
   try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(rules)); } catch (_) {}
-  if (!quiet) overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc trong trình duyệt này.`;
   return true;
 }
 let lastSuggestedRules = "";
-async function syncSharedRules(force = false) {
+async function syncSharedRules() {
   if (!shareBox.checked) return false;
   const rules = parseRules(rulesBox.value);
   if (!Object.keys(rules).length || Object.keys(rules).length > 50) return false;
   const signature = JSON.stringify(rules);
-  if (!force && signature === lastSuggestedRules) return false;
+  if (signature === lastSuggestedRules) return false;
   overrideStatus.textContent = "Đang gửi quy tắc để duyệt...";
   try {
     const response = await fetch(SUGGEST_URL, {
@@ -358,7 +362,7 @@ try {
   rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
 } catch (_) {}
 rulesBox.addEventListener("input", () => {
-  saveRules(true);
+  if (!saveRules()) return;
   lastSuggestedRules = "";
   if (shareBox.checked) {
     overrideStatus.textContent = "Đã lưu local; sẽ gửi khi tạo âm thanh.";
@@ -372,24 +376,10 @@ document.querySelectorAll("[data-rule]").forEach((button) => button.addEventList
   if (!existing.includes(line.trim())) {
     rulesBox.value = rulesBox.value.trim() ? rulesBox.value.trim() + "\n" + line : line;
   }
-  saveRules(true);
+  saveRules();
   lastSuggestedRules = "";
   overrideStatus.textContent = "Đã thêm ví dụ; bấm Tạo âm thanh để dùng.";
 }));
-$("saveOverrides").addEventListener("click", async () => {
-  if (!saveRules(false)) return;
-  const rules = parseRules(rulesBox.value);
-  if (!shareBox.checked) {
-    overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc local; không gửi lên server.`;
-    return;
-  }
-  await syncSharedRules(true);
-});
-$("clearOverrides").addEventListener("click", () => {
-  rulesBox.value = ""; try { localStorage.removeItem(OVERRIDES_KEY); } catch (_) {}
-  overrideStatus.textContent = "Đã xoá quy tắc riêng.";
-  $("builtin").hidden = true;
-});
 $("showBuiltin").addEventListener("click", async () => {
   const pre = $("builtin");
   if (!pre.hidden) { pre.hidden = true; return; }
@@ -465,7 +455,20 @@ feedbackForm.addEventListener("submit", async (event) => {
 });
 function currentOverrides() { return parseRules(rulesBox.value); }
 function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }
-function updateCount() { count.textContent = `${text.value.length}/300`; }
+function updateCount() { count.textContent = `${text.value.length}/${maxChars}`; }
+fetch(CONFIG_URL).then((response) => response.ok ? response.json() : null).then((data) => {
+  const limit = Number(data && data.max_chars);
+  if (Number.isFinite(limit) && limit >= 100) {
+    maxChars = limit; text.maxLength = limit;
+    const label = $("limitLabel"); if (label) label.textContent = `Tối đa ${limit} ký tự`;
+    updateCount();
+  }
+}).catch(() => {});
+function formatAudio(seconds) {
+  if (!Number.isFinite(seconds)) return "";
+  const total = Math.round(seconds);
+  return total >= 60 ? `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}` : `${seconds.toFixed(1)}s`;
+}
 text.addEventListener("input", updateCount);
 $("speed").addEventListener("input", (e) => { $("speedOut").textContent = Number(e.target.value).toFixed(2) + "×"; });
 document.querySelectorAll("[data-text]").forEach((b) => b.addEventListener("click", () => {
@@ -473,12 +476,14 @@ document.querySelectorAll("[data-text]").forEach((b) => b.addEventListener("clic
 }));
 $("clear").addEventListener("click", () => {
   text.value = ""; updateCount(); setStatus(""); player.style.display = "none";
+  const metrics = $("metrics"); if (metrics) metrics.hidden = true;
   if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
 });
 async function generate() {
   const value = text.value.trim();
   if (!value) { setStatus("Nhập câu cần đọc trước.", true); return; }
   $("go").disabled = true; setStatus("Đang tạo…");
+  const pendingMetrics = $("metrics"); if (pendingMetrics) pendingMetrics.hidden = true;
   if (shareBox.checked) void syncSharedRules();
   try {
     const response = await fetch(API_URL, {
@@ -490,12 +495,25 @@ async function generate() {
       try { const j = await response.json(); if (j.detail) detail = j.detail; } catch (_) {}
       throw new Error(detail);
     }
+    const processing = parseFloat(response.headers.get("X-Processing-Seconds") || "");
+    const audioSeconds = parseFloat(response.headers.get("X-Audio-Seconds") || "");
+    const rtf = parseFloat(response.headers.get("X-RTF") || "");
     const blob = await response.blob();
     if (currentUrl) URL.revokeObjectURL(currentUrl);
     currentUrl = URL.createObjectURL(blob);
     $("audio").src = currentUrl;
     $("download").href = currentUrl;
     player.style.display = "block";
+    const metrics = $("metrics");
+    if (metrics) {
+      if (Number.isFinite(processing) && Number.isFinite(audioSeconds) && Number.isFinite(rtf)) {
+        metrics.textContent = `Xử lý ${processing.toFixed(2)}s · Audio ${formatAudio(audioSeconds)} · RTF ${rtf.toFixed(4)}`;
+        metrics.title = "RTF = thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.";
+        metrics.hidden = false;
+      } else {
+        metrics.hidden = true;
+      }
+    }
     setStatus("Xong. Bấm play để nghe.");
     $("audio").play().catch(() => {});
   } catch (err) {

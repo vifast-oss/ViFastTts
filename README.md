@@ -38,7 +38,8 @@ cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần to
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
   [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1) ·
-  [nghe thử Q](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27) (tạm)
+  [nghe thử Q](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27) (tạm) ·
+  [3 mẫu VPS](https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1)
 
 ### Chọn đúng luồng
 

@@ -34,13 +34,19 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - URL: **https://vifasttts.hoctuthien.com/**
 - Health: `https://vifasttts.hoctuthien.com/healthz`
 - Host: VPS `jp` (Tailscale `100.104.111.17`), LXD container `hoctuthien-vps` (web host
-  của `hoctuthien.com`), Docker path `/opt/vifasttts`.
+  của `hoctuthien.com`), Docker path `/opt/vifasttts`. VPS có **6 vCPU** (Icelake, cpuset 0–5,
+  không quota); Docker không giới hạn CPU. ONNX Runtime đặt `VIFASTT_INTRA_THREADS=2`,
+  nên mỗi inference chủ yếu dùng **2 luồng**; không phải 1 core, cũng không dùng cả 6.
+  Uvicorn chạy **1 worker**, `_lock` toàn cục ⇒ **mỗi lúc chỉ 1 request tổng hợp**; request
+  đến sau chờ tối đa **45 s**, quá hạn trả 503 (không có queue/job nền, không có vị trí chờ).
 - Image: `vifasttts-vifasttts:latest`; container `vifasttts`, restart `unless-stopped`.
 - Routing: Traefik trong LXD (Coolify proxy) dùng Docker labels; DNS
   `vifasttts.hoctuthien.com` đã trỏ VPS, wildcard `*.hoctuthien.com` đi qua LXD.
 - TLS: Let's Encrypt (TLS-ALPN) tại Traefik LXD; cert hợp lệ.
-- Trang: nhập text 300 ký tự, play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
-  Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
+- Trang: nhập text **3000 ký tự** (mặc định; env `MAX_CHARS`), play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
+  Vocos pretrained. Fixed pause là checkbox, mặc định tắt. Có **3 mẫu nghe sẵn**
+  (`/static/samples/fresh01.wav`, `fresh02`, `fresh04`) phát trực tiếp, không gọi API;
+  WAV lấy từ release `n0-demo-samples-v1`, tải bằng `scripts/fetch_demo_samples.sh` (không commit).
 - **Q (27/10/2026, đang live):** onset Q (ID cuối) cho `qu`; ONNX đang phục vụ là
   `n0_q/acoustic.onnx` (Q-init, `Q = K`, bit-exact với N0 Bắc cũ) và mang metadata
   `onset_has_q=true`. Model/ONNX cũ thiếu cờ này bị từ chối, không có adapter Q→K.
@@ -49,7 +55,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - **Nhận diện:** nguồn logo ở `resources/brand/` (`vifasttts-icon.svg`,
   `vifasttts-lockup.svg`, favicon, `og-image.png`, manifest). Web phục vụ
   `/static/brand/`; `app.py` mount `StaticFiles` và có route `/favicon.ico`.
-- Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 300 ký tự,
+- Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 3000 ký tự,
   không lưu text/audio.
 - **Thống kê:** `/admin` (HTML) và `/admin.json`; tổng người dùng, tổng lượt tạo, lượt xem trang,
   **lượt tạo web / Space / API riêng**, audio đã tạo, 20 lượt gần nhất.
@@ -64,6 +70,9 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - API payload mẫu:
   `{"text":"...", "source":"api", "visitor_id":"my-client-1234"}`.
   `source` mặc định `api`; web/Space gửi `web`/`space`.
+- `GET /api/config` trả `{max_chars, rate_limit, rate_window}` để UI hiển thị đúng giới hạn;
+  `POST /api/tts` trả thêm header `X-Processing-Seconds`, `X-Audio-Seconds`, `X-RTF`,
+  `X-Characters` để UI/API hiển thị thời gian xử lý và RTF.
 - **Cách đọc custom:** web có mục “Tùy chọn nâng cao”; lưu tối đa 50 quy tắc trong
   `localStorage`, gửi qua `overrides` của `/api/tts`. API cũng nhận trực tiếp:
   `{"text":"AI", "overrides":{"AI":"ây ai"}}`.
@@ -72,7 +81,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   Gửi đề xuất: `POST /api/overrides/suggest` với `{"rules":{"AI":"ây ai"}}`.
   Mặc định mọi quy tắc chỉ ở local; nếu tích “gửi để duyệt”, server lưu cặp từ/cách đọc
   vào hàng chờ (`/api/overrides/suggest`), không lưu câu/IP. Checkbox gửi **mặc định bật**,
-  bỏ tích để chỉ lưu local; quy tắc gửi khi **tạo âm thanh** hoặc bấm **Lưu quy tắc**;
+  bỏ tích để chỉ lưu local; quy tắc tự lưu khi gõ và gửi khi **tạo âm thanh**;
   trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
   được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn 570 quy tắc qua
   `GET /api/overrides`; không hỗ trợ regex/script.
@@ -86,8 +95,8 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   nội dung **chỉ khi có `ADMIN_PASSWORD`**; chưa đặt thì nội dung bị khoá, CSV cũng bị khoá.
   Admin đánh dấu `Đã đọc` / `Đã xử lý`; tải CSV tại `/admin/feedback.csv`.
 - **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
-  (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
-  Chưa tính độ trễ mạng từ trình duyệt.
+  (HTTP loopback trong container), **RTF 0,045**. Đo 3000 ký tự qua HTTPS: audio **180,09 s**,
+  xử lý **5,82 s**, **RTF 0,032**, WAV 8,64 MB. Chưa tính độ trễ mạng từ trình duyệt.
 
 ## 3. Deploy / cập nhật
 
