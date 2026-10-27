@@ -108,7 +108,7 @@ Muốn train giọng khác, xem `docs/TRAINING.md` + `docs/TRAINING_N0.md`.
 
 Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
 
-> **Vocab Q:** từ commit này, onset **Q** đứng cuối vocab (ID cũ không đổi) cho chữ `qu`.
+> **Vocab Q:** từ commit `60b5cf9`, onset **Q** đứng cuối vocab (ID cũ không đổi) cho chữ `qu`.
 > Checkpoint/ONNX trước đó chưa có Q và không có `onset_has_q=true` sẽ bị từ chối rõ ràng;
 > không dùng adapter Q→K. Xem `CHANGELOG.md` và `docs/SYLLABLE_GUIDE.md`.
 
