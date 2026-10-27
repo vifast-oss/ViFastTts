@@ -51,6 +51,10 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - API payload mẫu:
   `{"text":"...", "source":"api", "visitor_id":"my-client-1234"}`.
   `source` mặc định `api`; web/Space gửi `web`/`space`.
+- **Cách đọc custom:** web có mục “Tùy chọn nâng cao”; lưu tối đa 50 quy tắc trong
+  `localStorage`, gửi qua `overrides` của `/api/tts`. API cũng nhận trực tiếp:
+  `{"text":"AI", "overrides":{"AI":"ây ai"}}`. Server không lưu quy tắc người dùng.
+  Bảng có sẵn (570 quy tắc) xem qua `GET /api/overrides`; không hỗ trợ regex/script.
 - **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
   (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
   Chưa tính độ trễ mạng từ trình duyệt.

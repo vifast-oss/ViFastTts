@@ -47,6 +47,13 @@
   .fine a { color:var(--accent); }
   footer { color:var(--muted); font-size:.78rem; margin-top:24px; }
   code { background:#eef3f4; padding:1px 5px; border-radius:5px; }
+  .adv { margin-top:20px; border-top:1px dashed var(--line); padding-top:14px; }
+  .adv summary { cursor:pointer; font-weight:750; color:var(--accent); }
+  .adv p { color:var(--muted); font-size:.84rem; margin:10px 0 8px; }
+  .adv textarea { min-height:82px; font-family: Consolas, "Liberation Mono", monospace; font-size:.88rem; }
+  #builtin { max-height:220px; overflow:auto; white-space:pre-wrap; background:#f4f8f8;
+             border:1px solid var(--line); border-radius:10px; padding:10px; font-size:.78rem; }
+  #overrideStatus { color:var(--muted); font-size:.8rem; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -91,6 +98,20 @@
         <button data-text="Chiếc tàu rời bến từ sớm, mang theo những giỏ cá tươi vừa được đánh bắt ngoài khơi.">Buổi sớm</button>
       </div>
     </div>
+    <details class="adv">
+      <summary>Tùy chọn nâng cao: cách đọc từ</summary>
+      <p>Thêm quy tắc riêng, mỗi dòng một quy tắc dạng <code>từ gốc = cách đọc</code>.
+        Ví dụ <code>AI = ây ai</code>. Quy tắc chỉ lưu trong localStorage trình duyệt này
+        và được gửi kèm request; server không lưu.</p>
+      <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét"></textarea>
+      <div class="row">
+        <button id="saveOverrides" class="ghost" type="button">Lưu quy tắc</button>
+        <button id="clearOverrides" class="ghost" type="button">Xoá quy tắc</button>
+        <button id="showBuiltin" class="ghost" type="button">Xem từ điển có sẵn</button>
+      </div>
+      <div id="overrideStatus"></div>
+      <pre id="builtin" hidden></pre>
+    </details>
     <p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
       <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
       <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
@@ -124,6 +145,54 @@ function visitorId() {
 const VISITOR_ID = visitorId();
 fetch(VISIT_URL, {method: "POST", headers: {"Content-Type": "application/json"},
   body: JSON.stringify({visitor_id: VISITOR_ID})}).catch(() => {});
+
+const OVERRIDES_URL = "/api/overrides";
+const OVERRIDES_KEY = "vifasttts_overrides_v1";
+const rulesBox = $("overrides");
+const overrideStatus = $("overrideStatus");
+function parseRules(value) {
+  const rules = {};
+  for (const line of value.split("\n")) {
+    const pos = line.indexOf("=");
+    if (pos < 1) continue;
+    const key = line.slice(0, pos).trim(), val = line.slice(pos + 1).trim();
+    if (key && val) rules[key] = val;
+  }
+  return rules;
+}
+function saveRules(quiet = false) {
+  const rules = parseRules(rulesBox.value);
+  if (Object.keys(rules).length > 50) {
+    overrideStatus.textContent = "Tối đa 50 quy tắc.";
+    return;
+  }
+  try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(rules)); } catch (_) {}
+  if (!quiet) overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc trong trình duyệt này.`;
+}
+try {
+  const stored = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
+  rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
+} catch (_) {}
+rulesBox.addEventListener("input", () => saveRules(true));
+$("saveOverrides").addEventListener("click", () => saveRules(false));
+$("clearOverrides").addEventListener("click", () => {
+  rulesBox.value = ""; try { localStorage.removeItem(OVERRIDES_KEY); } catch (_) {}
+  overrideStatus.textContent = "Đã xoá quy tắc riêng.";
+  $("builtin").hidden = true;
+});
+$("showBuiltin").addEventListener("click", async () => {
+  const pre = $("builtin");
+  if (!pre.hidden) { pre.hidden = true; return; }
+  pre.hidden = false; pre.textContent = "Đang tải...";
+  try {
+    const response = await fetch(OVERRIDES_URL);
+    const data = await response.json();
+    const lines = Object.entries(data.builtin || {}).map(([k, v]) => `${k} = ${v}`);
+    pre.textContent = lines.length ? lines.join("\n") : "Chưa có từ điển có sẵn.";
+    overrideStatus.textContent = `${lines.length} quy tắc có sẵn, chỉ đọc.`;
+  } catch (_) { pre.textContent = "Không tải được từ điển có sẵn."; }
+});
+function currentOverrides() { return parseRules(rulesBox.value); }
 function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }
 function updateCount() { count.textContent = `${text.value.length}/300`; }
 text.addEventListener("input", updateCount);
@@ -142,7 +211,7 @@ async function generate() {
   try {
     const response = await fetch(API_URL, {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text: value, speed: Number($("speed").value), fixed_pauses: $("fixed").checked, visitor_id: VISITOR_ID, source: SOURCE})
+      body: JSON.stringify({text: value, speed: Number($("speed").value), fixed_pauses: $("fixed").checked, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()})
     });
     if (!response.ok) {
       let detail = "Không tạo được âm thanh.";

@@ -46,6 +46,8 @@ MAX_CHARS = 300
 RATE_LIMIT = 6
 RATE_WINDOW = 60.0
 ALPHA = float(os.environ.get("VIFASTT_SHARPEN_ALPHA", "1.5"))
+OVERRIDES_PATH = Path(os.environ.get("OVERRIDES_PATH", ROOT / "configs" / "overrides_tech_vi.json"))
+MAX_OVERRIDES = 50
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
 DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
@@ -130,6 +132,34 @@ def _get_salt() -> str:
         finally:
             connection.close()
     return _SALT
+
+
+def _load_builtin_overrides() -> dict[str, str]:
+    try:
+        payload = json.loads(OVERRIDES_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {str(key).strip().lower(): str(value).strip()
+            for key, value in payload.items() if str(key).strip() and str(value).strip()}
+
+
+BUILTIN_OVERRIDES = _load_builtin_overrides()
+
+
+def _clean_overrides(raw: dict[str, str] | None) -> dict[str, str]:
+    if not raw:
+        return {}
+    if len(raw) > MAX_OVERRIDES:
+        raise HTTPException(status_code=422, detail=f"Tối đa {MAX_OVERRIDES} quy tắc đọc")
+    clean: dict[str, str] = {}
+    for key, value in raw.items():
+        key, value = str(key).strip(), str(value).strip()
+        if not key or not value or len(key) > 80 or len(value) > 120:
+            raise HTTPException(status_code=422, detail="Quy tắc đọc sai độ dài")
+        if any(ord(char) < 32 for char in key + value) or "<" in key + value or ">" in key + value:
+            raise HTTPException(status_code=422, detail="Quy tắc đọc chứa ký tự không hợp lệ")
+        clean[key] = value
+    return clean
 
 
 def _visitor_hash(request: Request, visitor_id: str | None = None) -> str:
@@ -306,6 +336,7 @@ class TtsRequest(BaseModel):
     fixed_pauses: bool = False
     visitor_id: str | None = None
     source: str = "api"
+    overrides: dict[str, str] | None = None
 
 
 class VisitRequest(BaseModel):
@@ -334,9 +365,15 @@ def _rate_ok(client: str) -> bool:
     return True
 
 
-def _synthesize(text: str, speed: float, fixed_pauses: bool) -> tuple[bytes, float, float]:
+def _synthesize(text: str, speed: float, fixed_pauses: bool,
+                overrides: dict[str, str]) -> tuple[bytes, float, float]:
     started = time.perf_counter()
-    options = NormalizerOptions(dialect="north")
+    user_lower = {key.lower(): value for key, value in overrides.items() if key.isascii()}
+    options = NormalizerOptions(
+        dialect="north",
+        exact_overrides=overrides,
+        english_overrides={**BUILTIN_OVERRIDES, **user_lower},
+    )
     chunks = (split_clauses(text, max_chars=MAX_CHARS) if fixed_pauses
               else chunk_text(text, max_chars=MAX_CHARS))
     if not chunks:
@@ -367,6 +404,16 @@ def index() -> HTMLResponse:
 def visit(payload: VisitRequest, request: Request) -> dict:
     _record_page(_visitor_hash(request, payload.visitor_id))
     return {"ok": True}
+
+
+@app.get("/api/overrides")
+def overrides() -> dict:
+    return {
+        "builtin": BUILTIN_OVERRIDES,
+        "max_rules": MAX_OVERRIDES,
+        "note": "Đây là bảng đọc có sẵn. Quy tắc người dùng chỉ lưu localStorage; "
+                "API nhận object overrides theo từng request.",
+    }
 
 
 def _admin_denied() -> Response:
@@ -413,10 +460,11 @@ def tts(payload: TtsRequest, request: Request) -> Response:
     if not _rate_ok(visitor):
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút")
     source = payload.source if payload.source in ("web", "space", "api") else "api"
+    overrides = _clean_overrides(payload.overrides)
     if not _lock.acquire(timeout=45):
         raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau")
     try:
-        audio, elapsed, audio_seconds = _synthesize(text, speed, bool(payload.fixed_pauses))
+        audio, elapsed, audio_seconds = _synthesize(text, speed, bool(payload.fixed_pauses), overrides)
     except HTTPException:
         raise
     except Exception as exc:

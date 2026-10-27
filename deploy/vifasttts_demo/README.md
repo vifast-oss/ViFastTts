@@ -37,3 +37,5 @@ Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Doc
 - Có tách lượt tạo theo `source = web | space | api`.
 - Chỉ lưu hash visitor, số ký tự, thời lượng audio, thời gian xử lý; không lưu IP/text.
 - API mẫu: `{"text":"...", "source":"api", "visitor_id":"client-1234"}`.
+- Cách đọc custom: localStorage + `overrides` trong request; xem `GET /api/overrides`;
+  tối đa 50 quy tắc, không hỗ trợ regex/script.

@@ -61,6 +61,28 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 - **Dùng model:** chỉ cần ONNX + script, không torch, không train.
 - **Train model:** cài `.[dev,audio,train,onnx]`, làm dữ liệu/MFA/cache, xem `TRAINING_N0.md`.
 
+## Tùy chọn cách đọc
+
+Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
+
+- mỗi dòng một quy tắc `từ gốc = cách đọc`, ví dụ `AI = ây ai`;
+- lưu trong `localStorage` của trình duyệt, không lưu server;
+- áp dụng cho request hiện tại, tối đa **50 quy tắc**, key ≤80 ký tự, value ≤120 ký tự;
+- xem được **570 quy tắc có sẵn** qua nút “Xem từ điển có sẵn”.
+
+API cũng nhận:
+
+```json
+{
+  "text": "AI và VPS",
+  "overrides": {"AI": "ây ai", "VPS": "vi pi ét"},
+  "source": "api"
+}
+```
+
+`GET /api/overrides` trả bảng có sẵn (read-only). Server không lưu quy tắc người dùng.
+Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùng được ưu tiên trước bảng có sẵn.
+
 ## File
 
 - Checkpoint: `runs/acoustic_ngochuyen/best.pt` (không có trong git; tải release).
