@@ -37,7 +37,7 @@
 - Test hiện tại: **2.743 pass / 24 skip**, `ruff` sạch; parser audit **49.104 tổ hợp, 0 lỗi**.
 - TODO: nếu train một model chung nhiều vùng, bắt buộc thêm dialect/speaker embedding;
   train riêng từng vùng thì không cần.
-- Từ điển override rút **570 → 201 mục**: bỏ alias ASR/tiền tố rác (`dipsic`→DeepSeek,
+- Từ điển override rút **570 → 202 mục**: bỏ alias ASR/tiền tố rác (`dipsic`→DeepSeek,
   `dipick`, `dipix`, `analyer`, `antropic`...), bỏ key một chữ cái; thêm viết tắt Việt
   (`UBND`, `HĐND`, `TP.HCM`, `BHXH`, `BHYT`, `CCCD`, `GDP`, `CPI`, `FDI`, `VND`, `USD`...)
   và tên công nghệ phổ biến; sửa `bug`/`download`/`upload`/`windows`/`tensorflow`.

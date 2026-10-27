@@ -14,7 +14,7 @@
    nên giọng Bắc giữ nguyên từng mẫu âm thanh so với N0 cũ.
 3. Bản **fine-tune Q 3k** đã train xong, hay hơn rất nhẹ về độ nét nhưng **chưa được chọn**;
    đang có 2 file nghe thử trong release tạm.
-4. Demo có **cách đọc tự thêm**, từ điển **201 quy tắc tinh gọn** + fallback tiếng Anh,
+4. Demo có **cách đọc tự thêm**, từ điển **202 quy tắc tinh gọn** + fallback tiếng Anh,
    ví dụ STEM (hoá học/toán/vật lý/LaTeX),
    góp ý/báo lỗi và thống kê; nội dung góp ý còn khoá vì chưa đặt `ADMIN_PASSWORD`.
 5. Test **2.743 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
@@ -63,7 +63,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 - Custom reading **tự lưu `localStorage` khi gõ**; gửi duyệt khi bấm **Tạo âm thanh** nếu
   checkbox bật; server chỉ lưu cặp `key = value` dạng pending, không lưu câu/IP.
-- Quy tắc người dùng **ưu tiên trước** STEM và 201 quy tắc có sẵn; fallback tiếng Anh
+- Quy tắc người dùng **ưu tiên trước** STEM và 202 quy tắc có sẵn; fallback tiếng Anh
   (CASE_INSENSITIVE_ENGLISH + acronym) vẫn áp dụng sau parser.
 - Ngày 27/10 đã kiểm lại từ điển: bỏ alias ASR/tiền tố rác, bỏ key một chữ cái; thêm
   viết tắt Việt + tên công nghệ; chi tiết ở `docs/NORMALIZER.md` mục “Kiểm toán từ điển”.
