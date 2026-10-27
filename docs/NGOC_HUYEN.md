@@ -78,6 +78,7 @@ Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
   `khongdich.com = không dịch chấm com`; rule cụm được áp trước khi tách token;
 - lưu trong `localStorage` của trình duyệt;
 - mặc định **tích gửi để duyệt**; người dùng có thể bỏ tích để chỉ lưu local;
+- quy tắc được gửi khi bấm **Tạo âm thanh** (nếu checkbox bật) hoặc bấm **Lưu quy tắc**;
 - server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu/IP;
 - admin chỉ duyệt được khi đặt `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá;
 - áp dụng cho request hiện tại, tối đa **50 quy tắc**, key ≤80 ký tự, value ≤120 ký tự;

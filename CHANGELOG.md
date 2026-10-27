@@ -10,6 +10,7 @@
   (Trung bộ chính và Nam gộp D/GI; Nam đọc R khác D/GI).
 - Sửa override cụm/domain: key có dấu chấm/space được áp trước tách token
   (`khongdich.com = không dịch chấm com`).
+- Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
 - Thêm validator cảnh báo W sau phụ âm môi, allowlist `resources/loanword_labial_w.txt`
   (`buýt`, `voan`, `boa`).
 - TODO: nếu train một model chung nhiều vùng, bắt buộc thêm dialect/speaker embedding;

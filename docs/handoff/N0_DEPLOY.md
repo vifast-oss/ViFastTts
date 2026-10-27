@@ -67,7 +67,8 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   Gửi đề xuất: `POST /api/overrides/suggest` với `{"rules":{"AI":"ây ai"}}`.
   Mặc định mọi quy tắc chỉ ở local; nếu tích “gửi để duyệt”, server lưu cặp từ/cách đọc
   vào hàng chờ (`/api/overrides/suggest`), không lưu câu/IP. Checkbox gửi **mặc định bật**,
-  bỏ tích để chỉ lưu local; trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
+  bỏ tích để chỉ lưu local; quy tắc gửi khi **tạo âm thanh** hoặc bấm **Lưu quy tắc**;
+  trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
   được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn 570 quy tắc qua
   `GET /api/overrides`; không hỗ trợ regex/script.
 - **Validator từ vay:** `resources/loanword_labial_w.txt` (buýt, voan, boa);

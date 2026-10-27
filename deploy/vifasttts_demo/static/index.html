@@ -156,8 +156,9 @@
       <p>Thêm quy tắc riêng, mỗi dòng một quy tắc dạng <code>từ gốc = cách đọc</code>.
         Ví dụ <code>AI = ây ai</code>, hoặc cụm/domain <code>khongdich.com = không dịch chấm com</code>.
         Quy tắc được lưu trong localStorage trình duyệt này.
-        Nếu tích “gửi để duyệt”, server chỉ lưu cặp từ/cách đọc vào hàng chờ duyệt,
-        không lưu câu hay IP; bỏ tích nếu không muốn gửi.</p>
+        Nếu tích “gửi để duyệt”, quy tắc được gửi khi tạo âm thanh hoặc bấm Lưu quy tắc;
+        server chỉ lưu cặp từ/cách đọc vào hàng chờ duyệt, không lưu câu hay IP;
+        bỏ tích nếu không muốn gửi.</p>
       <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com"></textarea>
       <label class="share"><input id="shareOverrides" type="checkbox" checked>
         Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(mặc định bật; bỏ tích nếu không muốn)</span></label>
@@ -243,6 +244,7 @@ const shareBox = $("shareOverrides");
 const overrideStatus = $("overrideStatus");
 try { if (localStorage.getItem(SHARE_KEY) === "0") shareBox.checked = false; } catch (_) {}
 shareBox.addEventListener("change", () => {
+  lastSuggestedRules = "";
   try { localStorage.setItem(SHARE_KEY, shareBox.checked ? "1" : "0"); } catch (_) {}
 });
 function parseRules(value) {
@@ -259,25 +261,20 @@ function saveRules(quiet = false) {
   const rules = parseRules(rulesBox.value);
   if (Object.keys(rules).length > 50) {
     overrideStatus.textContent = "Tối đa 50 quy tắc.";
-    return;
+    return false;
   }
   try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(rules)); } catch (_) {}
   if (!quiet) overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc trong trình duyệt này.`;
+  return true;
 }
-try {
-  const stored = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
-  rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
-} catch (_) {}
-rulesBox.addEventListener("input", () => saveRules(true));
-$("saveOverrides").addEventListener("click", async () => {
-  saveRules(false);
+let lastSuggestedRules = "";
+async function syncSharedRules(force = false) {
+  if (!shareBox.checked) return false;
   const rules = parseRules(rulesBox.value);
-  if (!shareBox.checked) {
-    overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc local; không gửi lên server.`;
-    return;
-  }
-  if (!Object.keys(rules).length) return;
-  overrideStatus.textContent = "Đang gửi đề xuất...";
+  if (!Object.keys(rules).length || Object.keys(rules).length > 50) return false;
+  const signature = JSON.stringify(rules);
+  if (!force && signature === lastSuggestedRules) return false;
+  overrideStatus.textContent = "Đang gửi quy tắc để duyệt...";
   try {
     const response = await fetch(SUGGEST_URL, {
       method: "POST", headers: {"Content-Type": "application/json"},
@@ -285,10 +282,35 @@ $("saveOverrides").addEventListener("click", async () => {
     });
     if (!response.ok) throw new Error("gửi thất bại");
     const data = await response.json();
-    overrideStatus.textContent = `Đã lưu local và gửi ${data.queued} quy tắc chờ duyệt.`;
+    lastSuggestedRules = signature;
+    overrideStatus.textContent = `Đã gửi ${data.queued} quy tắc chờ duyệt.`;
+    return true;
   } catch (_) {
     overrideStatus.textContent = "Đã lưu local; gửi đề xuất thất bại.";
+    return false;
   }
+}
+try {
+  const stored = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
+  rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
+} catch (_) {}
+rulesBox.addEventListener("input", () => {
+  saveRules(true);
+  lastSuggestedRules = "";
+  if (shareBox.checked) {
+    overrideStatus.textContent = "Đã lưu local; sẽ gửi khi tạo âm thanh.";
+  } else {
+    overrideStatus.textContent = "Đã lưu local; checkbox đang tắt nên không gửi.";
+  }
+});
+$("saveOverrides").addEventListener("click", async () => {
+  if (!saveRules(false)) return;
+  const rules = parseRules(rulesBox.value);
+  if (!shareBox.checked) {
+    overrideStatus.textContent = `Đã lưu ${Object.keys(rules).length} quy tắc local; không gửi lên server.`;
+    return;
+  }
+  await syncSharedRules(true);
 });
 $("clearOverrides").addEventListener("click", () => {
   rulesBox.value = ""; try { localStorage.removeItem(OVERRIDES_KEY); } catch (_) {}
@@ -375,6 +397,7 @@ async function generate() {
   const value = text.value.trim();
   if (!value) { setStatus("Nhập câu cần đọc trước.", true); return; }
   $("go").disabled = true; setStatus("Đang tạo…");
+  if (shareBox.checked) void syncSharedRules();
   try {
     const response = await fetch(API_URL, {
       method: "POST", headers: {"Content-Type": "application/json"},
