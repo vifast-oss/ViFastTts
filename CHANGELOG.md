@@ -23,6 +23,7 @@
 - Nâng giới hạn demo lên **3000 ký tự** mặc định (`MAX_CHARS`; UI đọc `/api/config`),
   chunk nội bộ 300 ký tự; response `/api/tts` trả `X-Processing-Seconds`, `X-Audio-Seconds`,
   `X-RTF` và UI hiển thị thời gian xử lý / audio / RTF sau mỗi lần tạo.
+- UI hiển thị đồng hồ **Đang tạo… Xs** trong lúc chờ để biết request vẫn chạy; không stream audio.
 - Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
 - Bố cục lại giao diện: 3 cột trên desktop, tùy chọn nâng cao và góp ý hiện ngay;
   nghỉ cố định chuyển vào tùy chọn nâng cao, kèm tooltip giải thích.

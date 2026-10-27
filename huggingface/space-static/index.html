@@ -283,6 +283,7 @@
 const $ = (id) => document.getElementById(id);
 const text = $("text"), count = $("count"), status = $("status"), player = $("player");
 let currentUrl = null;
+let generateTimer = null;
 const API_URL = "https://vifasttts.hoctuthien.com/api/tts";
 const FEEDBACK_URL = "https://vifasttts.hoctuthien.com/api/feedback";
 const VISIT_URL = "https://vifasttts.hoctuthien.com/api/visit";
@@ -483,6 +484,11 @@ async function generate() {
   const value = text.value.trim();
   if (!value) { setStatus("Nhập câu cần đọc trước.", true); return; }
   $("go").disabled = true; setStatus("Đang tạo…");
+  const started = performance.now();
+  if (generateTimer) clearInterval(generateTimer);
+  generateTimer = setInterval(() => {
+    setStatus(`Đang tạo… ${((performance.now() - started) / 1000).toFixed(1)}s`);
+  }, 250);
   const pendingMetrics = $("metrics"); if (pendingMetrics) pendingMetrics.hidden = true;
   if (shareBox.checked) void syncSharedRules();
   try {
@@ -519,6 +525,7 @@ async function generate() {
   } catch (err) {
     setStatus(err.message || "Lỗi không xác định.", true);
   } finally {
+    if (generateTimer) { clearInterval(generateTimer); generateTimer = null; }
     $("go").disabled = false;
   }
 }
