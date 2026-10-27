@@ -86,7 +86,7 @@ Ba khối:
 
 **Khác biệt cốt lõi:** thay vì ký tự/BPE/IPA, mỗi âm tiết là bộ 5 category ngôn ngữ học
 `(ONSET, MEDIAL, NUCLEUS, CODA, TONE)` → 7 ID rời rạc. Nhờ vậy: phát âm ổn định, không UNK với
-tiếng Việt chuẩn, thanh điệu không bao giờ sai vị trí, vocab cực nhỏ (68 ID), export ONNX gọn.
+tiếng Việt chuẩn, thanh điệu không bao giờ sai vị trí, vocab cực nhỏ (69 ID), export ONNX gọn.
 
 **Tính chất:** tất định (không sampling); train dùng duration thật (teacher forcing), suy luận tự
 dự đoán duration; `--speed` co giãn duration; chunk câu dài tự động; OOV không bao giờ crash.
@@ -236,7 +236,7 @@ text
 | Ca | Cách xử lý | Ý nghĩa |
 | --- | --- | --- |
 | `gi` dùng chung chữ i | `gì/gìn` → onset GI + nucleus I; `giếng` → GI + IÊ (cùng vần `tiếng`); `già/giữ/giường` → digraph `gi` câm | Tránh mất /z/ |
-| `qu` | = `K` + `W` khi sau `u` là âm không tròn môi (`qua` = K+W+A, `quơ`, `quân`); `qu` + `ô`: u thuộc âm đôi uô | `quốc` = K+NONE+UÔ+C (đồng âm `cuốc`) |
+| `qu` | = `Q` + `W` khi sau `u` là âm không tròn môi (`qua` = Q+W+A, `quơ`, `quân`); `qu` + `ô`: u thuộc âm đôi uô | `quốc` = Q+NONE+UÔ+C; `cuốc` = K+NONE+UÔ+C (Bắc đồng âm, khác token) |
 | `uy` vs `ui` | `uy` = medial W + nucleus I (`thuỷ` — dấu trên y); `ui` = nucleus U + coda J (`tủi` — dấu trên u) | Hai vần khác nhau thật |
 | `iê/yê/ia/ya`, `uô/ua`, `ươ/ưa` | Cùng nucleus trừu tượng IÊ/UÔ/ƯƠ; chính tả giữ ở Orthography | Song ánh ở cặp (tuple + chính tả dư) |
 | `oo` từ vay | **Nucleus `OO` riêng** [ɔː] (`xoong` ≠ `xong`), dấu trên chữ o thứ hai | Phản hồi người bản ngữ |
@@ -253,7 +253,7 @@ hưởng vì chỉ thấy tuple.
 ### 4.4. Vocab 7 ID (`frontend/vocab.py`)
 | Vị trí | Trường | Số giá trị | Ghi chú |
 | --- | --- | --- | --- |
-| 0 | onset | 24 | NONE + 23 phụ âm đầu |
+| 0 | onset | 25 | NONE + phụ âm đầu + Q |
 | 1 | medial | 2 | NONE / W |
 | 2 | nucleus | 15 | A Ă Â E Ê I O Ô Ơ U Ư IÊ UÔ ƯƠ **OO** |
 | 3 | coda | 11 | NONE M N NG NH P T C CH J W |
@@ -261,11 +261,12 @@ hưởng vì chỉ thấy tuple.
 | 5 | boundary | 4 | NONE(padding) / WORD / PHRASE / SENTENCE |
 | 6 | punctuation | 6 | NONE COMMA PERIOD QUESTION EXCLAMATION OTHER |
 
-Tổng vocab **68 ID**. Không UNK, không BPE. Không gian âm tiết trừu tượng hợp lệ **28.800**
-(6.336 shape, 264 vần) — đối chiếu Kirby 2011 + lexicon 39K từ.
+Tổng vocab **69 ID**. Không UNK, không BPE. Q là token onset của `qu`, đứng cuối vocab;
+checkpoint/ONNX mới mang `onset_has_q=true`. Không gian âm tiết trừu tượng cần chốt lại
+bằng validator sau Q (không dùng số cũ 28.800 để tránh sai).
 
 **Chưa có token SIL:** kế hoạch A3 (REVISION_PLAN_V2 rev.4) mô tả SIL ở vị trí cố định + tone NONE
-→ vocab ~70, nhưng **chưa có trong code** (`ComponentVocabs.default()` vẫn 24/2/15/11/6 + 4 + 6).
+→ vocab ~70, nhưng **chưa có trong code** (`ComponentVocabs.default()` vẫn 25/2/15/11/6 + 4 + 6).
 Đây là việc đang chờ sau MFA (§15.2).
 
 ### 4.5. Normalizer (`frontend/normalizer.py`)
@@ -606,7 +607,7 @@ là lựa chọn có chủ đích, ghi trong `docs/DEPLOYMENT.md`.
    rời rạc; vocab nhỏ, không UNK; G2P chỉ dùng build-time.
 2. **Song ánh nằm ở cặp "chữ canonical ↔ (tuple + chính tả dư)"**, không ở tuple thuần (đồng âm/
    biến thể i-y). Nên `ParsedSyllable` giữ cả hai tầng.
-3. **Inventory chốt:** 24 onset / 2 medial / 15 nucleus (gồm `OO`) / 11 coda / 6 tone.
+3. **Inventory chốt:** 25 onset (Q ở cuối) / 2 medial / 15 nucleus (gồm `OO`) / 11 coda / 6 tone.
    `q` trần không hợp lệ; `uy` = W+I; `oo` là nucleus riêng; `ay/au` = Ă ngắn vs `ai/ao` = A dài.
 4. **Tone spelling:** mặc định lối hiện đại (QĐ 1989/2018/QĐ-BGDĐT), cài đặt được; chỉ ảnh hưởng tầng chữ.
 5. **Kiến trúc NAR FastSpeech2 + Conformer-lite** (depthwise conv rẻ, ONNX tốt), có frame-position,

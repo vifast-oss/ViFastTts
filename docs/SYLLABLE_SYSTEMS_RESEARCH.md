@@ -31,12 +31,12 @@ Một mô hình tách/gộp âm tiết cho frontend TTS tiếng Việt cần th�
 Ba tầng: **chính tả** (`Orthography`) → **âm vị học** (`AbstractSyllable`:
 `ONSET/MEDIAL/NUCLEUS/CODA/TONE`) → **ngữ âm** (`g2p.py`, một chiều).
 
-- Inventory: **24 onset / 15 nucleus / 11 coda / 6 tone**; nucleus gồm 12 nguyên
+- Inventory: **25 onset / 15 nucleus / 11 coda / 6 tone** (Q ở cuối vocab); nucleus gồm 12 nguyên
   âm đơn + `IÊ/UÔ/ƯƠ` + `OO` (từ vay, tách riêng vì người bản ngữ phân biệt
   `xoong ≠ xong`).
 - Không gian lý thuyết: **264 rime** (15 + 9 với âm đệm W, × 11 coda),
-  **1.200 cặp (rime, thanh)**, **6.336 shape** (onset × rime),
-  **28.800 âm tiết trừu tượng**; audit chữ viết kiểm **49.166 tổ hợp chính tả**.
+  1.200 cặp (rime, thanh) và 6.336 shape theo **inventory cũ 24 onset**;
+  số âm tiết trừu tượng sau Q sẽ chốt lại bằng validator; audit chữ viết kiểm **49.166 tổ hợp chính tả**.
 - Bất biến đang được test trong CI (`tests/test_parser_matrix.py`):
   `parse → compose → parse` ổn định; đầu ra tuân bảng
   `MEDIAL_NUCLEUS_COMPATIBILITY`/`CODA_TONE_COMPATIBILITY`; coda tắc chỉ
@@ -90,7 +90,7 @@ Hannas 1997; Henderson 1966) — tức truyền thống khu vực đã dùng s�
   chuyên biệt của repo làm được.
 
 Với chữ Quốc ngữ, cách đúng là **constrained decoding của một ngữ pháp nhỏ**
-(24 × 264 × thanh): tất định, kiểm chứng được bằng vét cạn — đúng như repo đang làm.
+(25 onset × 264 rime × thanh, sau Q): tất định, kiểm chứng được bằng vét cạn — đúng như repo đang làm.
 
 **Chuẩn so sánh hiện có:** Bartlett, Kondrak & Cherry (ACL 2008; NAACL 2009)
 đặt chuẩn benchmark tách âm vị; Marchand & Damper (2006), Marchand, Adsett &
@@ -167,7 +167,7 @@ mà không phải feature gộp vào phụ âm đầu).
 | Vấn đề | Các quan điểm | Lựa chọn của repo |
 | --- | --- | --- |
 | `/w/` là âm đệm hay nguyên âm đôi? | Đoàn Thiện Thuật: slot âm đệm; Cao Xuân Hạo: nét [+tròn môi]; Phạm Andrea Hòa (2009): **segment độc lập**, nhưng "triphthong không phải một đơn vị" | Slot `MEDIAL=W` tách khỏi nucleus; đuôi `j/w` là coda |
-| `qu` | Phần lớn: /k/ + /w/; một số: /kw/ | Onset `qu` → K + W khi sau là âm **không tròn môi**; `quốc` (u thuộc âm đôi uô): K+UÔ+C — xem §4.4 |
+| `qu` | Phần lớn: /k/ + /w/; một số: /kw/ | Onset `qu` → **Q**; Q + W khi sau là âm **không tròn môi**; `quốc` (u thuộc âm đôi uô): Q+NONE+UÔ+C; `cuốc` = K+NONE+UÔ+C — xem §4.4 |
 | `gi` + i | `giếng` = /z+iəŋ/; chỉ ~7 âm tiết viết `g` trước i (`gì`, `gìn`, `giết`, `giêng`, `giềng`, `giếng`, `gịa`) | GI là một onset; chữ i dùng chung (`gì` = GI + I, `giếng` = GI + IÊ + NG) |
 | `i`/`y` | Một âm vị /i/, hai cách viết; QĐ 240/1984 *không* đặt quy tắc i/y; QĐ 2018 yêu cầu i sau âm đầu (`lí luận`), tên riêng tự do | Giữ nguyên như người viết (round-trip); không tự ý đổi |
 | `/ɔ/`–`/ɔː/` | Haudricourt (1952): `xoong` [sɔːŋ] ≠ `xong` [sɔŋ]; Nguyễn Lân Trung (2010); nhiều giáo trình coi o/ô là hai âm vị | Nucleus `OO` riêng, tách khỏi `O` |
@@ -192,7 +192,7 @@ mà không phải feature gộp vào phụ âm đầu).
 - `/w/` (âm đệm) **không đi sau phụ âm môi** /ɓ f v m/ trong từ bản ngữ; các từ
   như `voan`, `boa`, `moa`, `phuy` là **từ vay** (chủ yếu Pháp/Anh).
 - `/w/` (âm đệm) **không đi trước nguyên âm tròn môi** /u, o, ô/ (luật dị hoá):
-  `quốc` = /k/ + /uə/ + /k/ — chữ u thuộc âm đôi `uô` (đồng âm `cuốc` miền Bắc;
+  `quốc` = Q + NONE + UÔ + C (IPA Bắc /k uə k/); chữ u thuộc âm đôi `uô` (đồng âm `cuốc` miền Bắc;
   Wiktionary ghi "Homophone: cuốc"). `quất` /kwɤ̆t/ thì u VẪN là âm đệm (`â`
   không tròn môi). Nguồn: góp ý ThS Đinh Thị Hằng (Viện Ngôn ngữ học, 16/10);
   giáo trình âm vị ("Hệ thống âm đệm"); Tạ Thành Tấn.
@@ -211,7 +211,7 @@ mà không phải feature gộp vào phụ âm đầu).
 | HCMUS CLC | 6.835 âm tiết phân biệt | từ điển học thuật |
 | Vietlex / danh sách cộng đồng | 7.729 / 6.653–7.884 | tùy tiêu chí đếm |
 | COCOSDA-2018 | ~19.000 khả năng / ~6.500 dùng | |
-| **Repo (bảng)** | **6.336 shape / 28.800 âm tiết trừu tượng** | vét cạn được, không UNK |
+| **Repo (bảng)** | **25 onset; số shape/tuple chốt lại sau Q** | vét cạn được, không UNK |
 
 Các con số xấp xỉ nhau (~6.100–7.900 tùy tiêu chí); repo nằm đúng dải này và
 mạnh hơn ở chỗ **kiểm chứng vét cạn** thay vì phụ thuộc từ điển.
@@ -272,7 +272,7 @@ Các script audit có thể tái chạy: `tools/parser_audit.py [--wordlist FILE
 
 | Biểu diễn | Đơn vị/âm tiết | Ví dụ `khuỷu`, `quốc` | Nghịch đảo chữ được? | Phủ chuẩn? | Ghi chú |
 | --- | --- | --- | --- | --- | --- |
-| **5 thành phần (repo)** | 5 slot + thanh | `KH+W+I+W+HOI`, `K+NONE+UÔ+C+SAC` | Có (cần alias chính tả) | Có | Tối đa thông tin, kiểm chứng vét cạn |
+| **5 thành phần (repo)** | 5 slot + thanh | `KH+W+I+W+HOI`, `Q+NONE+UÔ+C+SAC` | Có (cần alias chính tả) | Có | Tối đa thông tin, kiểm chứng vét cạn |
 | Onset + vần + thanh | 3 đơn vị (vần gộp) | `KH + uyu + HOI` | Được nhưng vần nhiều (hàng trăm) | Có | Nghiên cứu ASR 2026 dùng để giảm lỗi cấp vần |
 | Phoneme string + tone | 3–5 âm vị | `kʰ w i w ˧˩˧` | Không (mất chính tả) | Có | espeak-ng/sea-g2p |
 | Tonal phoneme | tone gộp vào ký hiệu | `kʰ wi w4` | Không | Có | Vi_G2P (Kaldi lexicon) |

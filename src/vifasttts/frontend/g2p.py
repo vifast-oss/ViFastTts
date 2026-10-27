@@ -22,6 +22,8 @@ Quy ước quan trọng:
   ngắn [a] còn `ai/ao` dùng a dài [aː] (Help:IPA/Vietnamese).
 - Phương ngữ: Nam gộp `OO`→[ɔ] (xoong ≈ xong với người Nam); Bắc narrow
   đọc `ưu/ươu` ngả [iw]/[iəw] (Thompson 1965) — broad giữ /ɯw/ɯəw/.
+- Q là token onset của chữ "qu"; trong bảng code hiện map Q như K (Bắc).
+  Cách đọc Nam (qu ≈ /w/) chỉ ghi chú tài liệu, chưa cài vào G2P.
 - Không có trọng âm từ vựng trong tiếng Việt; không thêm dấu ˈ.
 
 LƯU Ý KIẾN TRÚC: module này KHÔNG được import bởi `models/`, `train.py`,
@@ -51,7 +53,7 @@ ONSET_BROAD_NORTH: dict[str, tuple[str, ...]] = {
     "X": ("s",), "S": ("s",),
     "CH": ("tɕ",), "TR": ("tɕ",),
     "NH": ("ɲ",), "NG": ("ŋ",), "G": ("ɣ",), "KH": ("x",), "H": ("h",),
-    "K": ("k",), "P": ("p",),
+    "K": ("k",), "Q": ("k",), "P": ("p",),
 }
 
 ONSET_BROAD_SOUTH: dict[str, tuple[str, ...]] = {
@@ -62,7 +64,7 @@ ONSET_BROAD_SOUTH: dict[str, tuple[str, ...]] = {
     "X": ("s",), "S": ("ʂ",),
     "CH": ("c",), "TR": ("ʈ",),
     "NH": ("ɲ",), "NG": ("ŋ",), "G": ("ɣ",), "KH": ("x",), "H": ("h",),
-    "K": ("k",), "P": ("p",),
+    "K": ("k",), "Q": ("k",), "P": ("p",),
 }
 
 # Trung (xấp xỉ Huế): âm đầu kiểu Nam; xem ghi chú đầu file.

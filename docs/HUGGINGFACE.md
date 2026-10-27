@@ -1,6 +1,7 @@
 # Hugging Face — đã upload
 
 - Repo: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
+- Commit ONNX Q: `0b08245ee96710a738d7b1e543151e026b4f6cde` (acoustic Q, `onset_has_q=true`)
 - Commit gần nhất khi thêm logo: `460afac94b40fe6ff1504a28e748f0aeb8233cba`
   (model card; asset logo ở các commit trước đó).
 - License metadata: `cc-by-nc-4.0`; model chỉ dùng research/non-commercial.
@@ -21,7 +22,7 @@
 | `best.pt` | acoustic small 60k |
 | `config.yaml` | `configs/small_ngochuyen.yaml` |
 | `mel_stats.json`, `f0_stats_v2.json` | để load/verify |
-| `acoustic.onnx`, `vocoder.onnx` | runtime CPU không torch |
+| `acoustic.onnx`, `vocoder.onnx` | runtime CPU không torch; acoustic Q có `onset_has_q=true` |
 | `LICENSE.md` | CC-BY-NC + attribution dataset |
 | `assets/vifasttts-lockup-cream.png` | logo model card (nguồn `resources/brand/`) |
 | `sample.wav` (tuỳ chọn) | 1–3 câu demo, ghi rõ research |

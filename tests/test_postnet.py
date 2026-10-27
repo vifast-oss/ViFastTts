@@ -102,7 +102,8 @@ def test_postnet_export_onnx(tmp_path):
     }
     model = ViFastTtsModel(config, _vocab_sizes())
     checkpoint = tmp_path / "ckpt.pt"
-    torch.save({"model": model.state_dict(), "config": config, "step": 2}, checkpoint)
+    torch.save({"model": model.state_dict(), "config": config, "step": 2,
+                "onset_has_q": True}, checkpoint)
     onnx_path = tmp_path / "model.onnx"
     export_onnx(config, str(checkpoint), str(onnx_path))
     session = onnxruntime.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])

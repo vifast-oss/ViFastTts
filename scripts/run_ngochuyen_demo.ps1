@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $Venv = Join-Path $Root ".venv-demo"
 $Models = Join-Path $Root "artifacts\onnx\n0"
-$Url = "https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32.zip"
+$Url = "https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32_q.zip"
 $Sha = "3521ac2e79aabf179017a2ba7abcaf56f13bbf852efd10a3a7742b609045c687"
 
 function Resolve-Python {

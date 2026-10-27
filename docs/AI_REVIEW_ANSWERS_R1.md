@@ -188,7 +188,7 @@ cho Q5. (Với config thật `hop_length` metadata sẽ là 256.)
 | # | Điểm review | Kết quả xác minh |
 | --- | --- | --- |
 | 1 | Tone classifier vô dụng | **Đúng** — xem Q1 (đo: loss 0,0014–0,0096; acc 99–100%) |
-| 2 | Chưa có SIL → silence bị dồn vào âm tiết kề | **Đúng** — không có `SIL`/`<sil>` trong `src/`; vocab vẫn 68 ID (`vocab.py:31–41`). Chưa có chính sách gán silence. |
+| 2 | Chưa có SIL → silence bị dồn vào âm tiết kề | **Đúng** — không có `SIL`/`<sil>` trong `src/`; vocab vẫn 69 ID (Q ở cuối vocab) (`vocab.py:31–41`). Chưa có chính sách gán silence. |
 | 3 | Quy đổi frame MFA (10 ms) → hop 256 (10,67 ms) | **Chưa có code nào làm việc này** (MFA chưa từng chạy). Đề xuất "quy đổi biên tích luỹ + assert sum(durations)==T" là hợp lý và **chưa tồn tại** — nên ghi thành yêu cầu kỹ thuật trước khi smoke. |
 | 4 | Topology 3 frame/phone của MFA | **Một phần sai cho MFA 3.4.3** — xem Q3 (default cho phép 1 frame; beam mặc định 10/40). |
 | 5 | F0 trung bình làm mất contour; DCT nên bắt buộc | **Đúng** — không có DCT trong `src/`; F0 là trung bình Hz/âm tiết (`dataset.py:147`). Xem thêm cảnh báo interpolate-vs-vuv ở Q2. |

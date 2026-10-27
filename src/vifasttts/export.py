@@ -110,12 +110,14 @@ def _export_fp32(config: dict, checkpoint: str, output: str, opset_version: int)
     import torch
 
     from vifasttts.frontend.vocab import ComponentVocabs
+    from vifasttts.models.factory import require_onset_has_q
     from vifasttts.models.vifasttts import ViFastTtsModel
 
     vocabs = ComponentVocabs.default()
     sizes = [len(vocabs.onset), len(vocabs.medial), len(vocabs.nucleus), len(vocabs.coda), len(vocabs.tone), len(vocabs.boundary), len(vocabs.punctuation)]
     model = ViFastTtsModel(config, sizes)
     state = torch.load(checkpoint, map_location="cpu")
+    require_onset_has_q(state if isinstance(state, dict) else {}, str(checkpoint))
     model.load_state_dict(state.get("model", state))
     model.eval()
     dummy = torch.zeros((1, 8, 7), dtype=torch.long)
@@ -138,6 +140,7 @@ def _export_fp32(config: dict, checkpoint: str, output: str, opset_version: int)
         "sample_rate": int(config.get("sample_rate", 24000)),
         "n_mels": int(config["mel"]["n_mels"]),
         "use_phonation": bool(getattr(model, "use_phonation", False)),
+        "onset_has_q": "true",
         **_mel_provenance(config, checkpoint),
     })
 
@@ -150,12 +153,18 @@ def _export_v2_fp32(config: dict, checkpoint: str, output: str, opset_version: i
     import torch
 
     from vifasttts.frontend.vocab import ComponentVocabs
-    from vifasttts.models.factory import ARCH_V2, build_model, load_model_state
+    from vifasttts.models.factory import (
+        ARCH_V2,
+        build_model,
+        load_model_state,
+        require_onset_has_q,
+    )
 
     vocabs = ComponentVocabs.default()
     sizes = [len(vocabs.onset), len(vocabs.medial), len(vocabs.nucleus), len(vocabs.coda), len(vocabs.tone), len(vocabs.boundary), len(vocabs.punctuation)]
     model = build_model(config, sizes, arch=ARCH_V2)
     ckpt = torch.load(checkpoint, map_location="cpu")
+    require_onset_has_q(ckpt if isinstance(ckpt, dict) else {}, str(checkpoint))
     load_model_state(model, ckpt.get("model", ckpt))
     f0_stats = ckpt.get("f0_stats")
     if isinstance(f0_stats, dict):
@@ -211,6 +220,7 @@ def _export_v2_fp32(config: dict, checkpoint: str, output: str, opset_version: i
         "n_mels": int(config["mel"]["n_mels"]),
         "use_phonation": bool(getattr(model, "use_phonation", False)),
         "arch": ARCH_V2,
+        "onset_has_q": "true",
         **_mel_provenance(config, checkpoint),
     }
     for key in ("seg_method", "seg_method_version", "seg_weights_hash", "f0_stats_hash"):

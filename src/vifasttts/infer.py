@@ -123,6 +123,7 @@ class Synthesizer:
             arch_of_checkpoint,
             build_model,
             load_model_state,
+            require_onset_has_q,
         )
         from vifasttts.models.istftnet import build_generator, load_generator_state
 
@@ -138,6 +139,7 @@ class Synthesizer:
                  len(self.vocabs.coda), len(self.vocabs.tone), len(self.vocabs.boundary),
                  len(self.vocabs.punctuation)]
         state = torch.load(checkpoint, map_location="cpu")
+        require_onset_has_q(state if isinstance(state, dict) else {}, str(checkpoint))
         verify_mel_hash(state, canonical_mel_config(config), str(checkpoint))
         self.arch = arch_of_checkpoint(state if isinstance(state, dict) else {})
         self.model = build_model(config, sizes, arch=self.arch)

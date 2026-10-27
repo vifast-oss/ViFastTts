@@ -19,8 +19,8 @@ ONSET + MEDIAL + NUCLEUS + CODA + TONE
 - Giữ TR, CH riêng.
 - Giữ S, X riêng.
 - Giữ HỎI, NGÃ riêng.
-- `qu` ánh xạ K + W khi sau `u` là nguyên âm **không tròn môi**: `a ă â e ê i/y ơ` (`qua`, `quăn`, `quân`, `que`, `quê`, `quy`, `quơ`).
-- `qu` + `ô` (`quốc`): âm đệm /w/ không kết hợp với âm tròn môi (u, ô, o) → chữ `u` thuộc nguyên âm đôi `uô`: `quốc` = K + NONE + UÔ + C (onset chính tả `q`; đồng âm `cuốc` — xem `docs/SYLLABLE_GUIDE.md` §5).
+- Mọi chữ `qu` dùng âm đầu **Q**. Khi sau `u` là nguyên âm **không tròn môi** (`a ă â e ê i/y ơ`), `u` là âm đệm W: `qua` = Q+W+A, `quất` = Q+W+Â+T, `quy` = Q+W+I, `quơ` = Q+W+Ơ.
+- `qu` + `ô` (`quốc`): âm đệm /w/ không kết hợp với âm tròn môi (u, ô, o) → chữ `u` thuộc nguyên âm đôi `uô`: `quốc` = Q + NONE + UÔ + C (onset chính tả `q`; giọng Bắc đồng âm `cuốc` = K + NONE + UÔ + C, nhưng khác token).
 - `quo`, `quu` là fallback (không phải vần thật).
 - `q` trần không hợp lệ (`qa`, `qi`, `qy`... là fallback); riêng `quốc` có onset chính tả `q` nội bộ (u thuộc vần — xem trên).
 - `i/y` cuối có thể ánh xạ J.

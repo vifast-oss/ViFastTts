@@ -8,7 +8,7 @@ from __future__ import annotations
 # Dạng chính tả dài được kiểm trước. "q" đứng một mình không phải âm
 # đầu hợp lệ trong tiếng Việt (chỉ tồn tại trong "qu"); "qa", "qi"... là fallback.
 # Ngoại lệ nội bộ: "quốc" — u thuộc vần nên onset chính tả là "q" (không nằm
-# trong bảng này; xem syllable.py::_match_onset).
+# trong bảng này; xem syllable.py::_match_onset). Cả "q" và "qu" đều ánh xạ Q.
 ONSET_SPELLINGS = (
     "ngh", "ng", "gh", "gi", "kh", "nh", "ph", "th", "tr", "ch", "qu",
     "b", "c", "d", "đ", "g", "h", "k", "l", "m", "n", "p", "r", "s", "t", "v", "x",
@@ -18,7 +18,7 @@ ONSET_ABSTRACT = {
     "": "NONE", "b": "B", "m": "M", "ph": "PH", "v": "V", "t": "T",
     "th": "TH", "đ": "Đ", "n": "N", "d": "D", "gi": "GI", "r": "R",
     "x": "X", "s": "S", "ch": "CH", "tr": "TR", "nh": "NH", "l": "L",
-    "c": "K", "k": "K", "qu": "K", "kh": "KH", "ng": "NG",
+    "c": "K", "k": "K", "qu": "Q", "kh": "KH", "ng": "NG",
     "ngh": "NG", "g": "G", "gh": "G", "h": "H", "p": "P",
 }
 
@@ -54,8 +54,8 @@ STOP_CODAS = {"P", "T", "C", "CH"}
 # khi huấn luyện production.
 # W (âm đệm o/u) chỉ kết hợp với nguyên âm KHÔNG tròn môi: W+{A,Ă,Â,E,Ê,I,Ơ,IÊ}
 # (oa, oă, oe, uâ, uê, uy, uơ, uyê...). KHÔNG kết hợp với u/ô/o — vì thế
-# "quốc" không phải W+Ô: chữ u thuộc nguyên âm đôi uô (quốc = K+UÔ+C, đồng âm
-# "cuốc" — góp ý ThS Đinh Thị Hằng (Viện Ngôn ngữ học); xem syllable.py::_match_onset).
+# "quốc" không phải W+Ô: chữ u thuộc nguyên âm đôi uô (quốc = Q+NONE+UÔ+C,
+# đồng âm Bắc với "cuốc" = K+NONE+UÔ+C; Q tách riêng để giữ phân biệt phương ngữ).
 MEDIAL_NUCLEUS_COMPATIBILITY = {
     "NONE": set(NUCLEUS_ABSTRACT.values()),
     "W": {"A", "Ă", "Â", "E", "Ê", "I", "Ơ", "IÊ"},

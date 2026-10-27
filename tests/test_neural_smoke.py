@@ -380,8 +380,8 @@ def test_variant_configs_match_estimated_params():
     large = load_config("configs/large_24k.yaml")
     validate_config(small, "acoustic")
     validate_config(large, "acoustic")
-    assert sum(p.numel() for p in ViFastTtsModel(small, sizes).parameters()) == 6_139_054
-    assert sum(p.numel() for p in ViFastTtsModel(large, sizes).parameters()) == 32_156_654
+    assert sum(p.numel() for p in ViFastTtsModel(small, sizes).parameters()) == 6_139_118
+    assert sum(p.numel() for p in ViFastTtsModel(large, sizes).parameters()) == 32_156_782
 
 
 @pytest.mark.skipif(not torch.backends.mps.is_available(), reason="MPS không khả dụng")

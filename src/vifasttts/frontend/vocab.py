@@ -9,6 +9,9 @@ from dataclasses import dataclass
 
 from vifasttts.types import ParsedSyllable
 
+#: Checkpoint/ONNX mới phải mang cờ này; model cũ chưa có Q bị từ chối rõ ràng.
+ONSET_HAS_Q = True
+
 
 def _map(values: list[str]) -> dict[str, int]:
     """Tạo ánh xạ {giá trị: id} theo đúng thứ tự danh sách."""
@@ -29,9 +32,13 @@ class ComponentVocabs:
 
     @classmethod
     def default(cls) -> ComponentVocabs:
-        """Bộ vocab chuẩn của tiếng Việt: 24/2/15/11/6 + 4 boundary + 6 punctuation."""
+        """Bộ vocab chuẩn của tiếng Việt: 25/2/15/11/6 + 4 boundary + 6 punctuation.
+
+        Q đứng cuối để ID cũ 0–23 không đổi; Q là onset của chữ ``qu`` (chuẩn bị
+        cho đa phương ngữ). Model cũ chưa có Q được đánh dấu ``onset_has_q``.
+        """
         return cls(
-            onset=_map(["NONE", "B", "M", "PH", "V", "T", "TH", "Đ", "N", "D", "GI", "R", "X", "S", "CH", "TR", "NH", "L", "K", "KH", "NG", "G", "H", "P"]),
+            onset=_map(["NONE", "B", "M", "PH", "V", "T", "TH", "Đ", "N", "D", "GI", "R", "X", "S", "CH", "TR", "NH", "L", "K", "KH", "NG", "G", "H", "P", "Q"]),
             medial=_map(["NONE", "W"]),
             nucleus=_map(["A", "Ă", "Â", "E", "Ê", "I", "O", "Ô", "Ơ", "U", "Ư", "IÊ", "UÔ", "ƯƠ", "OO"]),
             coda=_map(["NONE", "M", "N", "NG", "NH", "P", "T", "C", "CH", "J", "W"]),

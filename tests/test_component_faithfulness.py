@@ -133,11 +133,11 @@ def test_six_tones_have_distinct_contours():
 
 
 def test_component_vocab_is_small_and_discrete():
-    """47.520 tổ hợp lý thuyết phủ toàn bộ âm tiết bản ngữ, không cần UNK."""
+    """49.500 tổ hợp lý thuyết phủ toàn bộ âm tiết bản ngữ, không cần UNK."""
     from vifasttts.frontend.vocab import ComponentVocabs
 
     vocabs = ComponentVocabs.default()
     product = (len(vocabs.onset) * len(vocabs.medial) * len(vocabs.nucleus)
                * len(vocabs.coda) * len(vocabs.tone))
-    assert product == 24 * 2 * 15 * 11 * 6
+    assert product == 25 * 2 * 15 * 11 * 6
     assert product >= 40_000

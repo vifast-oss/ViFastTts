@@ -249,6 +249,9 @@ def train_reference(
     if resume:
         # Tiếp tục từ checkpoint (model + optimizer + bước) — job dài không mất tiến độ.
         resume_state = torch.load(resume, map_location=device, weights_only=False)
+        from vifasttts.models.factory import require_onset_has_q
+
+        require_onset_has_q(resume_state, str(resume))
         model.load_state_dict(resume_state["model"])
         if "optimizer" in resume_state:
             optimizer.load_state_dict(resume_state["optimizer"])
@@ -330,7 +333,7 @@ def train_reference(
                     history.flush()
                     state = {"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                              "config": config, "step": step, "best_val": best_val,
-                             "mel_hash": _mel_hash(config)}
+                             "mel_hash": _mel_hash(config), "onset_has_q": True}
                     torch.save(state, out / "last.pt")
                     if val_loss < best_val:
                         best_val = val_loss
@@ -350,14 +353,15 @@ def train_reference(
                 elif step % save_every == 0:
                     torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                                 "config": config, "step": step, "best_val": best_val,
-                                "mel_hash": _mel_hash(config)}, out / "last.pt")
+                                "mel_hash": _mel_hash(config), "onset_has_q": True},
+                               out / "last.pt")
                 if early_stopped or step >= steps:
                     break
             if early_stopped:
                 break
     torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                 "config": config, "step": step, "best_val": best_val,
-                "mel_hash": _mel_hash(config)}, out / "last.pt")
+                "mel_hash": _mel_hash(config), "onset_has_q": True}, out / "last.pt")
     print(f"Đã huấn luyện {step} bước, checkpoint tại {out}/last.pt")
 
 

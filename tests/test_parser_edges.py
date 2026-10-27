@@ -29,11 +29,11 @@ def test_quoc_u_thuoc_am_doi_khong_phai_am_dem():
     """ThS Đinh Thị Hằng (Viện Ngôn ngữ học): /w/ không đứng trước âm tròn môi (u, ô, o) —
     "quốc" = /k/ + uô + /k/, chữ u thuộc nguyên âm đôi; đồng âm với "cuốc"."""
     a = parse_syllable("quốc").abstract
-    assert (a.onset, a.medial, a.nucleus, a.coda) == ("K", "NONE", "UÔ", "C")
-    assert a == parse_syllable("cuốc").abstract
+    assert (a.onset, a.medial, a.nucleus, a.coda) == ("Q", "NONE", "UÔ", "C")
+    assert a != parse_syllable("cuốc").abstract  # Q/K khác token, cùng âm Bắc
     # "quất": â không tròn môi → u vẫn là âm đệm W (khác "quốc").
     b = parse_syllable("quất").abstract
-    assert (b.medial, b.nucleus) == ("W", "Â")
+    assert b.onset == "Q" and (b.medial, b.nucleus) == ("W", "Â")
 
 
 @pytest.mark.parametrize("word", ["quo", "quom", "quò", "quu", "quoo", "quuô"])

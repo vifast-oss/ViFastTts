@@ -56,7 +56,7 @@ inference dùng duration *tự dự đoán*. Không sampling, chạy tất đị
 
 | Vị trí | Trường | Số giá trị | Ví dụ `quốc` |
 | --- | --- | --- | --- |
-| 0 | onset (âm đầu) | 24 | `K` |
+| 0 | onset (âm đầu) | 25 | `Q` |
 | 1 | medial (âm đệm) | 2 | `NONE` |
 | 2 | nucleus (âm chính) | 15 | `UÔ` |
 | 3 | coda (âm cuối) | 11 | `C` |
@@ -64,7 +64,7 @@ inference dùng duration *tự dự đoán*. Không sampling, chạy tất đị
 | 5 | boundary | 4 | `WORD` / `PHRASE` / `SENTENCE` |
 | 6 | punctuation | 6 | `NONE`/`COMMA`/`PERIOD`/`QUESTION`/`EXCLAMATION`/`OTHER` |
 
-Tổng cộng **68 ID** cho toàn bộ tiếng Việt chuẩn — không UNK, không BPE.
+Tổng cộng **69 ID** cho toàn bộ tiếng Việt chuẩn — không UNK, không BPE. Q ở cuối vocab; checkpoint/ONNX mới mang `onset_has_q=true`.
 Token ngoài tiếng Việt vẫn được mã hoá (xem §6.3): `FALLBACK_REQUIRED` dùng
 `(NONE, NONE, A, NONE, NGANG)` để pipeline không crash.
 

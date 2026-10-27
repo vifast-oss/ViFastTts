@@ -16,6 +16,7 @@ from vifasttts.models.vifasttts import ViFastTtsModel
 ARCH_V1 = "v1_syl"
 ARCH_V2 = "v2_slot5"
 ARCHES = (ARCH_V1, ARCH_V2)
+ONSET_HAS_Q_KEY = "onset_has_q"
 
 # Key được warm-start từ B0/v1 sang v2 (§11) — khớp theo tiền tố.
 WARM_START_PREFIXES = ("embedding.", "encoder.", "decoder.", "mel.", "postnet.",
@@ -39,6 +40,38 @@ def build_model(config: dict, vocab_sizes: list[int], arch: str | None = None) -
 
 #: Buffer mới thêm sau này được phép thiếu khi nạp checkpoint cũ (đều suy ra từ `f0_stats`).
 OPTIONAL_STATE_KEYS = frozenset({"tone_prior_z", "gate_bias.weight"})  # gate_bias: khởi tạo 0 (v18.29 Fc)
+
+
+def require_onset_has_q(checkpoint: dict, source: str) -> None:
+    """Từ chối checkpoint/ONNX cũ chưa có token Q, tránh ghép frontend mới với model cũ."""
+    value = checkpoint.get(ONSET_HAS_Q_KEY)
+    if value is not True and str(value).strip().lower() not in {"1", "true", "yes"}:
+        raise ValueError(
+            f"{source}: checkpoint thiếu cờ onset_has_q=true (model cũ chưa có Q). "
+            "Hãy dùng checkpoint mới đã fine-tune với Q; không tự ghép frontend mới với model cũ."
+        )
+
+
+def expand_legacy_onset_state(state: dict, target_rows: int, k_row: int) -> dict:
+    """Mở rộng embedding onset cũ (24) thêm hàng Q = K cho fine-tune một lần.
+
+    Đây là thao tác migration có chủ đích khi train, KHÔNG phải adapter runtime:
+    checkpoint mới vẫn phải có ``onset_has_q`` và ONNX mới mới được deploy.
+    """
+    result = dict(state)
+    key = "embedding.tables.0.weight"
+    weight = result.get(key)
+    if weight is None:
+        raise ValueError(f"Checkpoint thiếu {key} để mở rộng Q")
+    if tuple(weight.shape[:1]) == (target_rows,):
+        return result
+    if tuple(weight.shape[:1]) != (target_rows - 1,):
+        raise ValueError(f"{key} shape {tuple(weight.shape)} không khớp target {target_rows}")
+    expanded = weight.new_zeros((target_rows, *weight.shape[1:]))
+    expanded[: weight.shape[0]] = weight
+    expanded[-1] = weight[k_row]
+    result[key] = expanded
+    return result
 
 
 def load_model_state(model: nn.Module, state: dict) -> None:
@@ -72,6 +105,9 @@ def warm_start_v2_from_v1(model_v2: nn.Module, checkpoint_v1: dict) -> dict[str,
         if key not in target:
             skipped.append(key)
             continue
+        if key == "embedding.tables.0.weight" and tuple(value.shape) != tuple(target[key].shape):
+            # B0/v1 cũ 24 onset: thêm Q = K khi warm-start sang vocab 25.
+            value = expand_legacy_onset_state({key: value}, target[key].shape[0], 18)[key]
         if tuple(target[key].shape) != tuple(value.shape):
             raise ValueError(f"shape lệch cho {key}: checkpoint {tuple(value.shape)} "
                              f"vs model {tuple(target[key].shape)}")

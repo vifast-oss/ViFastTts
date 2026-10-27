@@ -14,7 +14,7 @@ from vifasttts.frontend.syllable import parse_syllable
 def test_expand_quoc_roles_and_units():
     segments = expand_syllable(parse_syllable("quốc"))
     assert [segment.role for segment in segments] == ["onset", "nucleus", "nucleus", "coda", "tone"]
-    assert [segment.unit for segment in segments] == ["K", "UÔ", "UÔ", "C", "SAC"]
+    assert [segment.unit for segment in segments] == ["Q", "UÔ", "UÔ", "C", "SAC"]
     assert segments[0].phoneme == "k"
     assert [segment.phoneme for segment in segments[1:3]] == ["u", "ə"]
     assert segments[-1].weight == 0.0

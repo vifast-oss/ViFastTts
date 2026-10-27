@@ -40,6 +40,10 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 
 ## Model
 
+> **Vocab Q (27/10/2026):** onset `Q` cho chữ `qu` là cấu trúc chuẩn bị đa phương ngữ,
+> đứng cuối vocab. N0 giọng Bắc dùng Q-init với `Q` = `K` (giữ đúng giọng đã nghe); checkpoint/ONNX
+> mới mang `onset_has_q=true`. Model/ONNX cũ chưa có Q bị từ chối rõ ràng (không adapter).
+
 | Thành phần | Giá trị |
 |---|---|
 | Kiến trúc | acoustic `v2_slot5` small (6,1M tham số) |

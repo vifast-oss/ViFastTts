@@ -26,6 +26,12 @@ library_name: vifasttts
 Model TTS tiếng Việt **một giọng nữ**, acoustic **small 6,1M tham số**, 24 kHz.
 Repo này chứa checkpoint, config, stats, ONNX FP32, Vocos pretrained và 10 câu demo.
 
+## Vocab Q (27/10/2026)
+
+ONNX trong repo này đã có onset **Q** (`onset_has_q=true`) cho chữ `qu`; Q ở cuối vocab,
+khởi tạo bằng K cho N0 Bắc. Checkpoint/ONNX chưa có cờ này bị frontend mới từ chối; không có
+adapter Q→K. Checkpoint `.pt` cũ vẫn là model K (dùng `--init-from` nếu fine-tune Q).
+
 ## Hai luồng sử dụng
 
 ### A. Chỉ dùng model để tạo âm thanh

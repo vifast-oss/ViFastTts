@@ -51,9 +51,9 @@ def _match_onset(word: str) -> tuple[str, str, bool]:
     # "qu": chữ u là âm đệm W khi sau nó là nguyên âm KHÔNG tròn môi
     # (qua, quê, quy, quân, quơ...). Riêng "quô" (quốc): âm đệm /w/ không
     # kết hợp với âm tròn môi (u, ô, o) — chữ u thuộc nguyên âm đôi uô, nên
-    # onset chính tả chỉ còn "q" (âm vị vẫn là K; xem parse_syllable).
-    # Hệ quả: "quốc" = K+UÔ+C, đồng âm "cuốc" (thay cho K+W+Ô+C cũ — góp ý
-    # của ThS Đinh Thị Hằng, Viện Ngôn ngữ học).
+    # onset chính tả chỉ còn "q". Cả "q" và "qu" đều cho token Q; Q đứng cuối
+    # vocab để giữ ID cũ, và copy embedding K khi fine-tune giọng Bắc.
+    # Hệ quả: "quốc" = Q+NONE+UÔ+C; "cuốc" = K+NONE+UÔ+C (đồng âm Bắc).
     if word.startswith("qu"):
         if word[2:3] == "ô":
             return "q", word[1:], False
@@ -139,10 +139,10 @@ def parse_syllable(raw: str) -> ParsedSyllable:
         # Vì vậy abstract phải là Ă, còn chính tả vẫn giữ "a" để round-trip.
         nucleus_a = NUCLEUS_ABSTRACT["ă"]
 
-    if onset_spelling == "q":
-        # "q" trần chỉ xuất hiện khi u thuộc vần ("quốc" = q+uô+c):
-        # âm vị đầu vẫn là K (xem _match_onset).
-        abstract_onset = "K"
+    if onset_spelling in ("q", "qu"):
+        # Mọi chữ "qu" dùng onset Q; đây là token chuẩn bị cho đa phương ngữ.
+        # Với giọng Bắc, Q được khởi tạo bằng K nên âm thanh không đổi.
+        abstract_onset = "Q"
     else:
         abstract_onset = ONSET_ABSTRACT[onset_spelling]
     if onset_spelling == "g" and no_tone.startswith("gi"):

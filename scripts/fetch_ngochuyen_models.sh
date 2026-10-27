@@ -3,8 +3,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$ROOT/artifacts/onnx/n0"
-URL="https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32.zip"
-SHA="3521ac2e79aabf179017a2ba7abcaf56f13bbf852efd10a3a7742b609045c687"
+URL="https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32_q.zip"
+SHA="ef35567c4433cf823db78ef90f716a259d14c79d62bed53e621f93b5231a01ed"
 
 if [ -f "$DEST/acoustic.onnx" ] && [ -f "$DEST/vocoder.onnx" ]; then
   echo "ONNX đã có: $DEST"

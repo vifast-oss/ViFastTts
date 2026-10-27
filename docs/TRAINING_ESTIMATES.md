@@ -51,14 +51,14 @@ Quy đổi nhanh cho tiếng Việt (~4–5 âm tiết/giây):
 
 ## 2. Ước lượng tham số model (tính chính xác từ config)
 
-Số dưới đây **đo từ code** với vocab 24/2/15/11/6 (+boundary/punctuation):
+Số dưới đây **đo từ code** với vocab 25/2/15/11/6 (+boundary/punctuation; Q ở cuối):
 
 | Biến thể | hidden/layers (enc–dec)/ffn/heads | Tham số acoustic | Config | Ghi chú |
 | --- | --- | --- | --- | --- |
-| tiny (test) | 16 / 1–1 / 32 / 2 | **14.142** | — | Chỉ để smoke test, không dùng thật |
-| small | 192 / 4–2 / 768 / 4 | **6.139.054** | `configs/small_24k.yaml` | Khi dữ liệu < 5 giờ |
-| **base (mặc định)** | 256 / 6–4 / 1024 / 4 | **16.444.654** | `configs/base_24k.yaml` | 5–30 giờ dữ liệu |
-| large | 320 / 8–5 / 1280 / 8 | **32.156.654** | `configs/large_24k.yaml` | ≥ 40–50 giờ |
+| tiny (test) | 16 / 1–1 / 32 / 2 | **14.150** | — | Chỉ để smoke test, không dùng thật |
+| small | 192 / 4–2 / 768 / 4 | **6.139.118** | `configs/small_24k.yaml` | Khi dữ liệu < 5 giờ |
+| **base (mặc định)** | 256 / 6–4 / 1024 / 4 | **16.444.750** | `configs/base_24k.yaml` | 5–30 giờ dữ liệu |
+| large | 320 / 8–5 / 1280 / 8 | **32.156.782** | `configs/large_24k.yaml` | ≥ 40–50 giờ |
 | xl (ví dụ) | 384 / 10–6 / 1536 / 8 | **55.428.974** | — | Chỉ khi có > 100 giờ + nhiều GPU |
 
 Vocoder: **3.527.426** tham số (iSTFTNetLite hidden 256) — dùng chung cho mọi biến thể trên.

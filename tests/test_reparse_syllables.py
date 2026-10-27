@@ -46,7 +46,7 @@ def test_reparse_cap_nhat_quoc_va_giu_nguyen_cac_am_tiet_khac(tmp_path: Path):
     rows = _load(manifest)
     quoc = next(s for s in rows[0]["syllables"] if s["normalized"] == "quốc")
     assert quoc["abstract"] == {
-        "onset": "K", "medial": "NONE", "nucleus": "UÔ", "coda": "C", "tone": "SAC",
+        "onset": "Q", "medial": "NONE", "nucleus": "UÔ", "coda": "C", "tone": "SAC",
     }
     assert (tmp_path / "manifest.jsonl.pre-reparse.bak").exists()
 

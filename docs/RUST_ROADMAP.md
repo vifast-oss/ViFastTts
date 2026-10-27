@@ -20,7 +20,7 @@ Sau khi frontend ổn định, có thể viết package Rust bổ sung cho:
 Rust phải sử dụng cùng:
 
 - JSON schema của parser (kể cả `status`, `confidence`, `punctuation`).
-- Component vocabulary ID (24/2/15/11/6 + boundary/punctuation).
+- Component vocabulary ID (25/2/15/11/6 + boundary/punctuation; Q cuối).
 - Quy tắc round-trip và tone placement (xem `tests/test_spelling_bijection.py`).
 - Bảng compatibility (`MEDIAL_NUCLEUS_COMPATIBILITY`, `CODA_TONE_COMPATIBILITY`).
 - Bộ unit test golden (đối chiếu từng ca của Python).

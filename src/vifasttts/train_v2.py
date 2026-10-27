@@ -179,6 +179,7 @@ def train_slot_v2(
     reset_val_state: bool = False,
     stop_at_step: int | None = None,
     validate_at_stop: bool = False,
+    init_from: str | None = None,
     device: str | None = None,
     adversarial_flag: bool | None = None,
 ) -> None:
@@ -208,6 +209,9 @@ def train_slot_v2(
         ARCH_V2,
         arch_of_checkpoint,
         build_model,
+        expand_legacy_onset_state,
+        load_model_state,
+        require_onset_has_q,
         warm_start_v2_from_v1,
     )
     from vifasttts.models.v2_losses import slot_losses
@@ -299,6 +303,20 @@ def train_slot_v2(
         warm_hash = _sha16(Path(warm_start).read_bytes())
         print(f"Warm-start {warm_start}: copy {len(report['loaded'])} tensor "
               f"(bỏ {len(report['skipped'])}), hash {warm_hash}")
+    init_hash: str | None = None
+    if init_from:
+        ckpt = torch.load(init_from, map_location="cpu", weights_only=False)
+        if arch_of_checkpoint(ckpt) != ARCH_V2:
+            raise ValueError(f"--init-from cần checkpoint v2, nhận {arch_of_checkpoint(ckpt)!r}")
+        state = dict(ckpt.get("model", ckpt))
+        # Checkpoint production cũ (24 onset) → thêm hàng Q = K. Đây là migration
+        # một lần khi train; checkpoint mới sẽ mang onset_has_q=true.
+        state = expand_legacy_onset_state(state, len(vocabs.onset), vocabs.onset["K"])
+        load_model_state(model, state)
+        if "f0_stats" in ckpt:
+            model.load_f0_stats(dict(ckpt["f0_stats"]))
+        init_hash = _sha16(Path(init_from).read_bytes())
+        print(f"Init-from {init_from}: Q = K, hash {init_hash}")
 
     resolved_device = torch.device(device or resolve_device(training.get("device", "auto")))
     model.to(resolved_device)
@@ -337,6 +355,7 @@ def train_slot_v2(
         from vifasttts.models.factory import load_model_state
 
         state = resume_state  # đã nạp + kiểm tra ở đầu hàm (trước mọi ghi tệp)
+        require_onset_has_q(state, resume)
         load_model_state(model, state["model"])
         model.load_f0_stats(f0_stats)  # buffer suy từ stats (tone_prior_z) — nạp lại sau resume
         if "optimizer" in state:
@@ -546,6 +565,7 @@ def train_slot_v2(
                         "model": model.state_dict(), "optimizer": optimizer.state_dict(),
                         "config": config, "step": step, "best_val": best_val,
                         "no_improve": no_improve, "mel_hash": _mel_hash(config), "arch": ARCH_V2,
+                        "onset_has_q": True, "init_from": init_hash,
                         "f0_stats": f0_stats, "f0_stats_hash": _f0_stats_hash(f0_stats),
                         "warm_start_from": warm_hash, **seg_meta, **val_meta,
                         **({"ema": ema_state, "ema_decay": ema_decay} if ema_state else {}),
@@ -574,6 +594,7 @@ def train_slot_v2(
                         "model": model.state_dict(), "optimizer": optimizer.state_dict(),
                         "config": config, "step": step, "best_val": best_val,
                         "no_improve": no_improve, "mel_hash": _mel_hash(config), "arch": ARCH_V2,
+                        "onset_has_q": True, "init_from": init_hash,
                         "f0_stats": f0_stats, "f0_stats_hash": _f0_stats_hash(f0_stats),
                         "warm_start_from": warm_hash, **val_meta,
                         **seg_meta,
@@ -610,7 +631,8 @@ def train_slot_v2(
     _save_atomic(out / "last.pt", {
         "model": model.state_dict(), "optimizer": optimizer.state_dict(),
         "config": config, "step": step, "best_val": best_val,
-        "mel_hash": _mel_hash(config), "arch": ARCH_V2,
+        "mel_hash": _mel_hash(config), "arch": ARCH_V2, "onset_has_q": True,
+        "init_from": init_hash,
         "f0_stats": f0_stats, "f0_stats_hash": _f0_stats_hash(f0_stats),
         "warm_start_from": warm_hash, "no_improve": no_improve, **seg_meta, **val_meta,
         **({"ema": ema_state, "ema_decay": ema_decay} if ema_state else {}),

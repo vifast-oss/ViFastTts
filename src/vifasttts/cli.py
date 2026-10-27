@@ -186,6 +186,8 @@ def train_v2(
     val_manifest: str = typer.Option(..., help="Manifest validation `_slot4` (JSONL)"),
     output: str = typer.Option(..., help="Thư mục run"),
     warm_start: str | None = typer.Option(None, help="Checkpoint v1 (B0) để warm-start (§11)"),
+    init_from: str | None = typer.Option(None, "--init-from",
+                                           help="Checkpoint v2 production cũ để fine-tune Q (Q = K)"),
     max_steps: int | None = typer.Option(None, help="Ghi đè số bước tối đa (chạy thử nhanh)"),
     resume: str | None = typer.Option(None, help="Checkpoint v2 .pt để tiếp tục (resume)"),
     reset_val_state: bool = typer.Option(False, "--reset-val-state",
@@ -202,7 +204,7 @@ def train_v2(
     from vifasttts.train_v2 import train_slot_v2
 
     train_slot_v2(load_config(config), train_manifest, val_manifest, output,
-                  warm_start=warm_start, max_steps=max_steps, resume=resume,
+                  warm_start=warm_start, init_from=init_from, max_steps=max_steps, resume=resume,
                   reset_val_state=reset_val_state, stop_at_step=stop_at_step,
                   validate_at_stop=validate_at_stop, device=device,
                   adversarial_flag=adversarial)

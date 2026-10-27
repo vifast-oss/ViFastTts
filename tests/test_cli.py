@@ -64,7 +64,7 @@ def test_build_and_validate_manifest_cli(tmp_path: Path):
 
 
 def test_check_profile_cli():
-    result = runner.invoke(app, ["check-profile", "voan", "--profile", "strict"])
+    result = runner.invoke(app, ["check-profile", "bóa", "--profile", "strict"])
     assert result.exit_code == 0
     assert "labial-w" in result.stdout
 

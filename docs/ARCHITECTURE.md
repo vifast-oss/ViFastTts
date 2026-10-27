@@ -46,14 +46,14 @@ raw text
 Trong tài liệu, tầng biểu diễn này gọi là **dạng âm vị học** (bộ âm vị 5 thành phần; xem `docs/GLOSSARY.md`). Quyết định thiết kế này được khóa bằng test trong `tests/test_component_faithfulness.py` và được khuyến nghị cho một-giọng/đơn ngữ (xem `docs/TTS_ARCHITECTURE_RESEARCH.md` mục 10).
 
 **Đầu vào là 5 thành phần + boundary/punctuation**, không phải chuỗi ký tự thô hay IPA:
-`ONSET + MEDIAL + NUCLEUS + CODA + TONE`, mỗi trường là một ID rời rạc trong vocab nhỏ (24/2/15/11/6).
+`ONSET + MEDIAL + NUCLEUS + CODA + TONE`, mỗi trường là một ID rời rạc trong vocab nhỏ (25/2/15/11/6; Q ở cuối vocab).
 
 - **Không cần G2P ở runtime.** Chính tả tiếng Việt gần như ngữ âm, nên parser đã cho biểu diễn phonemic-native trực tiếp từ văn bản; thêm bước G2P chỉ thêm một bề mặt lỗi (OOV, quy ước thanh điệu của từng hệ G2P) mà không thêm thông tin.
 - **Tone là biến rời rạc 6 giá trị**, không phải ký hiệu phụ trên chuỗi IPA. Duration/F0/nhịp điệu điều kiện hoá trực tiếp trên tone; IPA phải mã hoá thanh bằng quy ước riêng (ví dụ sea-g2p mã hoá huyền/hỏi/ngã/nặng bằng 2/4/5/6 còn ngang/sắc dựa vào chất lượng nguyên âm) — dễ sai lệch khi so khớp.
 - **Không mất thông tin chính tả.** Các cặp phân biệt quan trọng như `uy` vs `ui`, `d` vs `gi`, `tr` vs `ch`, `s` vs `x`, hỏi vs ngã vị trí dấu cũ/mới đều được khóa bằng test; IPA Bắc gộp `d/gi` thành `/z/` và làm mờ các khác biệt này.
-- **Phủ từ bản ngữ không UNK**: vocab 24 × 2 × 15 × 11 × 6 ID; không gian âm tiết trừu tượng hợp lệ
-  là **28.800** (coda tắc chỉ đi với sắc/nặng), tương ứng 6.336 shape (onset × vần) và 264 vần
-  (15 nucleus gồm `OO` từ vay); từ vay/OOV dùng fallback + override thay vì phình vocab.
+- **Phủ từ bản ngữ không UNK**: vocab 25 × 2 × 15 × 11 × 6 ID; Q là token onset mới, đứng cuối
+  vocab. Không gian âm tiết trừu tượng sẽ được chốt lại bằng validator sau khi thêm Q; từ vay/OOV
+  dùng fallback + override thay vì phình vocab.
   Số liệu audit chi tiết: `docs/SYLLABLE_SYSTEMS_RESEARCH.md` mục 5.
 - **Đổi lại, kiến trúc là đơn ngữ.** Nếu cần đa ngôn ngữ, hướng đúng là thêm language token + bộ token hoá theo ngôn ngữ (hoặc IPA có kiểm soát) như một lớp riêng, không đổi thân Conformer.
 

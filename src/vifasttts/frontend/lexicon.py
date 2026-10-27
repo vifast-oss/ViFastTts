@@ -49,6 +49,20 @@ _K_GROUP = {"I", "IÊ", "E", "Ê"}
 _GH_GROUP = {"I", "IÊ", "E", "Ê"}
 _E_GROUP = {"E", "Ê"}
 _LABIAL_ONSETS = {"B", "M", "PH", "V", "P"}
+
+#: Từ vay có W sau phụ âm môi: chỉ cảnh báo strict, không phải lỗi parser.
+_LOANWORD_LABIAL_W_PATH = Path(__file__).resolve().parents[3] / "resources" / "loanword_labial_w.txt"
+
+
+def _load_loanword_labial_w() -> frozenset[str]:
+    try:
+        lines = _LOANWORD_LABIAL_W_PATH.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return frozenset()
+    return frozenset(line.strip().lower() for line in lines if line.strip() and not line.startswith("#"))
+
+
+LOANWORD_LABIAL_W = _load_loanword_labial_w()
 _OPEN_ALIASES = {"iê": "ia", "uô": "ua", "ươ": "ưa"}
 
 
@@ -133,7 +147,8 @@ def strict_warnings(parsed: ParsedSyllable) -> list[str]:
         issues.append("spelling-ngh-before-back")
 
     # Giới hạn ngữ âm bản ngữ: /w/ không đi sau phụ âm môi.
-    if a.medial == "W" and a.onset in _LABIAL_ONSETS:
+    if (a.medial == "W" and a.onset in _LABIAL_ONSETS
+            and parsed.normalized.lower() not in LOANWORD_LABIAL_W):
         issues.append("labial-w")
 
     # Coda nh/ch chỉ sau a, ê, i.

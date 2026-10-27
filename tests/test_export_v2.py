@@ -71,7 +71,7 @@ def _save_v2_checkpoint(config: dict, path) -> None:
     model = build_model(config, _sizes(), arch=ARCH_V2)
     torch.save({
         "model": model.state_dict(), "arch": ARCH_V2, "f0_stats": dict(F0_STATS),
-        "seg_method": "hybrid", "seg_method_version": "t2.1-hybrid-v1",
+        "onset_has_q": True, "seg_method": "hybrid", "seg_method_version": "t2.1-hybrid-v1",
         "seg_weights_hash": "abc",
     }, str(path))
 
@@ -137,7 +137,7 @@ def test_export_v1_khong_doi(tmp_path, use_postnet: bool):
     torch.manual_seed(0)
     model = ViFastTtsModel(config, _sizes()).eval()
     ckpt = tmp_path / "v1.pt"
-    torch.save({"model": model.state_dict()}, str(ckpt))
+    torch.save({"model": model.state_dict(), "onset_has_q": True}, str(ckpt))
     out = tmp_path / "v1.onnx"
     export_onnx(config, str(ckpt), str(out), precision="fp32")
 

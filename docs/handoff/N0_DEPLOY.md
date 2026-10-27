@@ -37,6 +37,10 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - TLS: Let's Encrypt (TLS-ALPN) tại Traefik LXD; cert hợp lệ.
 - Trang: nhập text 300 ký tự, play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
+- **Q (27/10/2026):** onset Q (ID cuối) cho `qu`; checkpoint/ONNX mới mang metadata
+  `onset_has_q=true`. Model/ONNX cũ thiếu cờ này bị từ chối, không có adapter Q→K;
+  chỉ deploy sau khi export ONNX mới. D/GI/R/V vẫn 4 token (Bắc Trung Bộ có thổ ngữ
+  phân biệt; Trung bộ chính/Nam gộp D/GI — không ghi “Nam phân biệt D/GI”).
 - **Nhận diện:** nguồn logo ở `resources/brand/` (`vifasttts-icon.svg`,
   `vifasttts-lockup.svg`, favicon, `og-image.png`, manifest). Web phục vụ
   `/static/brand/`; `app.py` mount `StaticFiles` và có route `/favicon.ico`.
@@ -64,6 +68,9 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   bỏ tích để chỉ lưu local; trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
   được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn 570 quy tắc qua
   `GET /api/overrides`; không hỗ trợ regex/script.
+- **Validator từ vay:** `resources/loanword_labial_w.txt` (buýt, voan, boa);
+  `tools/validate_syllables.py` chỉ cảnh báo, không chặn. Reparse manifest trước khi train;
+  feature cache không chứa token nên không cần rebuild.
 - **Góp ý / báo lỗi:** form trên web và static Space gửi `POST /api/feedback` với
   `category = gop_y | cai_tien | bao_loi`, `message` 5–1000 ký tự, `contact` không bắt buộc,
   `visitor_id` và `source`. Server lưu bảng SQLite `feedback`, chỉ hash visitor, không lưu IP;
@@ -104,7 +111,7 @@ curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
 
 ## 4. ONNX trong release
 
-Release prod có asset `n0_onnx_fp32.zip` (acoustic + vocoder ONNX + SHA256SUMS);
+Release prod có asset `n0_onnx_fp32_q.zip` (Q, `onset_has_q=true`); asset cũ `n0_onnx_fp32.zip` vẫn còn cho lịch sử. Bản `n0_onnx_fp32.zip` (acoustic + vocoder ONNX + SHA256SUMS);
 có thể tải riêng nếu không dùng checkpoint PyTorch. Package chính vẫn chứa checkpoint +
 config + stats + Vocos pretrained.
 

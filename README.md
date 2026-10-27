@@ -79,9 +79,9 @@ vị trí, và không có "từ lạ" với tiếng Việt chuẩn.
 
 | Hạng mục | Kết quả |
 | --- | --- |
-| Bộ test | **2.565 test pass / 23 skip**; `ruff` sạch |
+| Bộ test | **2.569 test pass / 24 skip**; `ruff` sạch |
 | Parser âm tiết | Vét cạn **49.166 tổ hợp = 0 lỗi**; 39K từ thật: 6.617/6.633 parse OK |
-| Kho âm tiết | 24 âm đầu · 2 âm đệm · 15 âm chính · 11 âm cuối · 6 thanh → **264 vần**, **28.800 âm tiết trừu tượng** |
+| Kho âm tiết | 25 âm đầu (thêm Q) · 2 âm đệm · 15 âm chính · 11 âm cuối · 6 thanh → **264 vần** |
 | Model | Acoustic small **6,1M** (N0) / base **16,4M**; Vocos pretrained **13,5M** |
 | Sinh giọng | Web demo + `vifasttts synthesize` end-to-end (WAV 16-bit, 24 kHz); văn bản dài tự chia câu |
 | Runtime ONNX | `vifasttts synthesize-onnx` chạy acoustic + vocoder ONNX, iSTFT numpy (không cần PyTorch) |
@@ -107,6 +107,10 @@ Muốn train giọng khác, xem `docs/TRAINING.md` + `docs/TRAINING_N0.md`.
 | Tốc độ thực tế | **RTF 0,045** end-to-end, ONNX CPU trên VPS (5 câu, 22,44 s audio / 1,01 s xử lý) |
 
 Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
+
+> **Vocab Q:** từ commit này, onset **Q** đứng cuối vocab (ID cũ không đổi) cho chữ `qu`.
+> Checkpoint/ONNX trước đó chưa có Q và không có `onset_has_q=true` sẽ bị từ chối rõ ràng;
+> không dùng adapter Q→K. Xem `CHANGELOG.md` và `docs/SYLLABLE_GUIDE.md`.
 
 ## 3. Luồng hoạt động trong 30 giây
 
@@ -243,14 +247,15 @@ Mỗi âm tiết (một "tiếng") gồm 5 phần + dấu câu. Ví dụ `quốc
 
 | Phần | Trong `quốc` | Có bao nhiêu giá trị | Ví dụ khác |
 | --- | --- | --- | --- |
-| Âm đầu (onset) | `K` | 24 | `b`, `ch`, `ng`, `tr`... |
+| Âm đầu (onset) | `Q` | 25 | `K`, `b`, `ch`, `ng`, `tr`... |
 | Âm đệm (medial) | `NONE` | 2 (không có / có) | `W` trong `hoa`, `quất`, `uy`... |
 | Âm chính (nucleus) | `UÔ` | 15 | `A`, `IÊ`, `ƯƠ`, `OO`... |
 | Âm cuối (coda) | `C` | 11 | `N`, `NG`, `NH`, `J`, `W`... |
 | Thanh điệu | `SAC` (sắc) | 6 | ngang, huyền, hỏi, ngã, sắc, nặng |
 
-`quốc` = `K + NONE + UÔ + C + SAC`: chữ `u` thuộc nguyên âm đôi `uô`, **không phải
-âm đệm `W`**; `quốc` đồng âm với `cuốc`. So sánh `quất` = `K + W + Â + T + SAC`.
+`quốc` = `Q + NONE + UÔ + C + SAC`: chữ `u` thuộc nguyên âm đôi `uô`, **không phải
+âm đệm `W`**; giọng Bắc đọc `quốc` giống `cuốc` (`cuốc` = `K + NONE + UÔ + C + SAC`),
+nhưng Q/K là hai token riêng. So sánh `quất` = `Q + W + Â + T + SAC`.
 
 Cộng thêm **chấm câu** và **ranh giới từ/câu** → mỗi âm tiết là **7 con số** đưa vào model.
 Giải thích từ đầu cho người không chuyên: `docs/SYLLABLE_GUIDE.md`.
@@ -271,7 +276,7 @@ tools/        parser_audit, compute_mel_stats, train_chunked, n0_social_card, ..
 resources/    brand/ (logo, favicon, OG image, manifest; xem resources/brand/README.md)
 deploy/       vifasttts_demo/ (FastAPI ONNX + Dockerfile + static page)
 scripts/      fetch_ngochuyen_models.sh · run_ngochuyen_demo.sh · run_A2_fixgap.sh
-tests/        2.565 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
+tests/        2.569 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
 docs/         toàn bộ tài liệu (xem mục 10), gồm TRAINING_N0.md / NGOC_HUYEN.md / N0_DEPLOY.md
 ```
 

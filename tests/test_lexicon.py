@@ -56,9 +56,11 @@ def test_strict_flags_g_gh_ng_ngh_distribution():
     assert "spelling-ngh-before-back" in _issues("ngha")
 
 
-def test_strict_flags_labial_w():
-    assert "labial-w" in _issues("voan")
-    assert "labial-w" in _issues("boa")
+def test_strict_allows_listed_labial_w():
+    assert _issues("voan") == []
+    assert _issues("boa") == []
+    assert _issues("buýt") == []
+    assert "labial-w" in _issues("bóa")  # không nằm trong allowlist
     assert _issues("quan") == []
 
 
@@ -119,15 +121,15 @@ def test_lexicon_from_manifest(tmp_path: Path):
 
 
 def test_profile_report_counts():
-    report = profile_report(["ba", "cen", "voan", "khoai"], "strict")
+    report = profile_report(["ba", "cen", "bóa", "khoai"], "strict")
     assert report["total"] == 4
     assert report["flagged"] == 2
     assert report["issues"]["spelling-c-before-front"] == 1
     assert report["issues"]["labial-w"] == 1
-    assert report["examples"]["labial-w"] == ["voan"]
+    assert report["examples"]["labial-w"] == ["bóa"]
 
 
 def test_all_issue_codes_have_descriptions():
-    report = profile_report(["cen", "ka", "gê", "gha", "ngi", "ngha", "voan", "unh", "iên", "uô"], "strict")
+    report = profile_report(["cen", "ka", "gê", "gha", "ngi", "ngha", "bóa", "unh", "iên", "uô"], "strict")
     for code in report["issues"]:
         assert code in ISSUE_DESCRIPTIONS, code

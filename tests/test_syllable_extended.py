@@ -30,7 +30,7 @@ def signature(word):
     ("thuế", ("TH", "W", "Ê", "NONE", "SAC")),
     ("huyền", ("H", "W", "IÊ", "N", "HUYEN")),
     ("tuyên", ("T", "W", "IÊ", "N", "NGANG")),
-    ("quyết", ("K", "W", "IÊ", "T", "SAC")),
+    ("quyết", ("Q", "W", "IÊ", "T", "SAC")),
     ("chuối", ("CH", "NONE", "UÔ", "J", "SAC")),
     ("mười", ("M", "NONE", "ƯƠ", "J", "HUYEN")),
     ("thiếu", ("TH", "NONE", "IÊ", "W", "SAC")),

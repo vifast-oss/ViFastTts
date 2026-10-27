@@ -823,6 +823,7 @@ def favicon() -> Response:
 @app.get("/healthz")
 def healthz() -> dict:
     return {"ok": True, "sample_rate": SAMPLE_RATE, "arch": acoustic.metadata.get("arch", "?"),
+            "onset_has_q": acoustic.metadata.get("onset_has_q") == "true",
             "alpha": ALPHA, "pause": "model"}
 
 
