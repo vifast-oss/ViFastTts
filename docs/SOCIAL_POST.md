@@ -46,7 +46,8 @@ https://vifasttts.hoctuthien.com/
 Toàn bộ tài nguyên:
 
 - Mã nguồn: https://github.com/dvchd/ViFastTts
-- Hugging Face: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
+- Hugging Face model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
+- Space nghe thử miễn phí: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - Demo: https://vifasttts.hoctuthien.com/
 - Release research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
 - Release prod candidate nội bộ: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1

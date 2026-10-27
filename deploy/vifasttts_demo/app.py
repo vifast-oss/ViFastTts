@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
@@ -42,6 +43,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger("vifasttts-demo")
 
 app = FastAPI(title="ViFastTTS research demo", docs_url=None, redoc_url=None)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://huggingface.co"],
+    allow_origin_regex=r"https://.*\.hf\.space",
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
 

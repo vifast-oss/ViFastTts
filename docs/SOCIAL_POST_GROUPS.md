@@ -31,7 +31,7 @@ Mình tách rõ 2 luồng:
 1. Người dùng model: chỉ cần ONNX và chạy, không cần torch, không cần train.
 2. Người train model: cài bộ train đầy đủ, chuẩn bị dữ liệu, MFA, cache, train, đánh giá và export ONNX.
 
-Mã nguồn, model card, hướng dẫn train lại, bản ONNX và demo mình đã để trong repo và kho model cộng đồng. Bài này mình không gắn link để đỡ bị hội nhóm ẩn bài. Ai cần link thì comment hoặc nhắn mình, mình gửi.
+Mã nguồn, model card, hướng dẫn train lại, bản ONNX, model trên kho model cộng đồng và Space nghe thử miễn phí mình đã để sẵn. Bài này mình không gắn link để đỡ bị hội nhóm ẩn bài. Ai cần link thì comment hoặc nhắn mình, mình gửi.
 
 Lưu ý: model mẫu dùng dataset CC BY-NC 4.0, nên chỉ dùng cho nghiên cứu và phi thương mại, không dùng giả giọng, lừa đảo hoặc production thương mại. Code repo là MIT, quyền của dataset và giọng vẫn giữ nguyên.
 

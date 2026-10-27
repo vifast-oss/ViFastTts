@@ -26,3 +26,6 @@ eval/baselines/*
 !eval/baselines/base*_fixtail.json
 !eval/baselines/b8_*.json
 !eval/baselines/README*
+
+# Static Space samples are uploaded to the Space, not committed
+huggingface/space-static/samples/

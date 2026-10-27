@@ -26,7 +26,8 @@ Script tự tải ONNX FP32 (có kiểm sha256), tạo `.venv-demo`, cài `onnxr
 và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 
 - **Demo online:** https://vifasttts.hoctuthien.com/
-- **Hugging Face:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
+- **Hugging Face model:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
+- **Space demo miễn phí:** https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
   [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1)
@@ -294,7 +295,7 @@ Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 | | `docs/TRAINING_N0.md` | **Run N0 Ngọc Huyền**: pipeline, thời gian, chọn 5–20 h small / 30–50 h base |
 | | `docs/NGOC_HUYEN.md` | Model card model mẫu, license, quickstart |
 | | `docs/N0_DEPLOY.md` | ONNX + service `vifasttts.hoctuthien.com` |
-| | `docs/HUGGINGFACE.md` | Hugging Face đã upload, model card + repo |
+| | `docs/HUGGINGFACE.md` | Hugging Face model + Space static demo |
 | | `docs/TRAINING_RUN_CODELUNG.md` | **Run thật `small` trên kênh @codelung**: số đo MPS, cách chạy lại, triển khai |
 | | `docs/REVISION_PLAN_V2.md` | **Kế hoạch sửa nền tảng** trước khi lên base (A1 mel loss, A2 f0 contour, A3 SIL, MFA, mel log-magnitude) |
 | | `docs/ARCH_DISCUSSION_M6.md` | **Hồ sơ thảo luận kiến trúc/ngân sách** cho Mac mini M6 32GB + đặc thù dữ liệu @codelung (gửi chuyên gia vòng 4) |

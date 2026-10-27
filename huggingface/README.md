@@ -104,6 +104,7 @@ demo/                                   # 10 câu mới + texts.json
 - Code: https://github.com/dvchd/ViFastTts
 - Demo: https://vifasttts.hoctuthien.com/
 - Hugging Face: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
+- Space demo: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - Research release: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
 - ONNX release: `n0_onnx_fp32.zip`
 

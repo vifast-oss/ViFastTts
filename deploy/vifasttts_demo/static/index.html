@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ViFastTTS — Demo giọng Ngọc Huyền</title>
+<title>ViFastTTS · Ngọc Huyền (Small 6,1M)</title>
 <style>
   :root { --ink:#18212b; --muted:#637083; --accent:#0f766e; --line:#dbe3ea; --bg:#f4f7f8; }
   * { box-sizing:border-box; }
@@ -17,6 +17,9 @@
            color:#8a4b00; background:#fff1d6; border:1px solid #ffd89a; padding:5px 9px; border-radius:999px; }
   h1 { font-size:clamp(1.6rem, 4vw, 2.35rem); letter-spacing:-.03em; margin:16px 0 8px; }
   h1 span { color:var(--accent); }
+  .tier { display:inline-flex; gap:8px; align-items:center; margin:0 0 12px; padding:5px 10px;
+          border:1px solid #cfe3df; background:#eaf5f2; color:#245c57; border-radius:999px;
+          font-size:.76rem; font-weight:800; letter-spacing:.07em; }
   .sub { color:var(--muted); margin:0 0 22px; max-width:640px; }
   .card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 12px 34px rgba(25,50,60,.06); }
   label { font-weight:650; font-size:.94rem; }
@@ -51,9 +54,11 @@
   <div class="links">
     <a class="src" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub ↗</a>
     <a class="src" href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face ↗</a>
+    <a class="src" href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space ↗</a>
   </div>
   <span class="badge">Research demo · phi thương mại</span>
-  <h1>ViFastTTS <span>— Ngọc Huyền</span></h1>
+  <h1>ViFastTTS <span>· Ngọc Huyền</span></h1>
+  <div class="tier">SMALL · 6,1M · 24 kHz</div>
   <p class="sub">Nhập một câu tiếng Việt (tối đa 300 ký tự). Model tự ngắt nghỉ theo dữ liệu;
     Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
 
@@ -90,11 +95,13 @@
       <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
       <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
       · <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
+      · <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space demo</a>
       · <a href="https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1" target="_blank" rel="noopener">research release</a>.</p>
   </section>
   <footer>ViFastTts · single-speaker · CC-BY-NC-4.0 · không production ·
     <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a> ·
-    <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a></footer>
+    <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a> ·
+    <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a></footer>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);

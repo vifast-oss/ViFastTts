@@ -28,7 +28,8 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 ## Demo online
 
 - Web: **https://vifasttts.hoctuthien.com/**
-- Hugging Face: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
+- Hugging Face model: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
+- Space demo miễn phí: **https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo**
 - Health: https://vifasttts.hoctuthien.com/healthz
 - Giới hạn: 300 ký tự · 6 request/phút/IP · không lưu text/audio.
 
