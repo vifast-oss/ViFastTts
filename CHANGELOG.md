@@ -46,4 +46,5 @@
 - Bổ sung viết tắt địa danh/doanh nghiệp/giáo dục theo góp ý người dùng: `HN`, `BD`, `ĐN`,
   `QL`, `CĐ`, `GD&ĐT`, `HS-SV`, `TBYT`, `BV`, `TNHH`, `CP`, `DN`, `DNTN`, `CK`, `VAT`,
   `ĐKKD`, `BĐS`, `Ngân hàng TMCP`, `VP`, `B công an`, `TƯ`; lưu ý `ĐN`/`CK` đa nghĩa.
-- Lưu quy tắc local bền hơn: lưu thêm khi `change`/`pagehide`/tab ẩn; báo lỗi nếu trình duyệt chặn localStorage.
+- Lưu quy tắc local bền hơn: lưu thêm khi `change`/`pagehide`/tab ẩn; fallback
+  `localStorage → sessionStorage`; báo lỗi nếu trình duyệt chặn cả hai.

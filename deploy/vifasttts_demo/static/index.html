@@ -326,16 +326,30 @@ function parseRules(value) {
   }
   return rules;
 }
+function readStoredRules() {
+  for (const store of [localStorage, sessionStorage]) {
+    try {
+      const raw = store.getItem(OVERRIDES_KEY);
+      if (raw && raw !== "{}") return raw;
+    } catch (_) {}
+  }
+  return null;
+}
+function writeStoredRules(value) {
+  // Ưu tiên localStorage (bền qua tab); nếu browser/iframe chặn thì sessionStorage
+  // vẫn giữ được qua F5 trong cùng tab.
+  for (const store of [localStorage, sessionStorage]) {
+    try { store.setItem(OVERRIDES_KEY, value); return true; } catch (_) {}
+  }
+  return false;
+}
 function saveRules() {
   const rules = parseRules(rulesBox.value);
   if (Object.keys(rules).length > 50) {
     overrideStatus.textContent = "Tối đa 50 quy tắc.";
     return false;
   }
-  try {
-    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(rules));
-  } catch (_) {
-    // Safari private / iframe chặn storage: vẫn dùng được trong phiên, nhưng báo rõ.
+  if (!writeStoredRules(JSON.stringify(rules))) {
     overrideStatus.textContent = "Trình duyệt chặn lưu local; quy tắc chỉ dùng trong phiên này.";
     return false;
   }
@@ -365,13 +379,13 @@ async function syncSharedRules() {
   }
 }
 try {
-  const stored = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
+  const stored = JSON.parse(readStoredRules() || "{}");
   rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
   if (Object.keys(stored).length) {
     overrideStatus.textContent = `Đã khôi phục ${Object.keys(stored).length} quy tắc local.`;
   }
 } catch (_) {
-  overrideStatus.textContent = "Không đọc được localStorage; quy tắc chỉ dùng trong phiên này.";
+  overrideStatus.textContent = "Không đọc được storage; quy tắc chỉ dùng trong phiên này.";
 }
 rulesBox.addEventListener("input", () => {
   if (!saveRules()) return;

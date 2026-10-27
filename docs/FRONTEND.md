@@ -112,9 +112,9 @@ nạp từ điển "mặt chữ → cách đọc" và `runtime/postprocess.py` l
 Key override có dấu chấm/khoảng trắng (`TP.HCM`, `v.v.`) phải được truyền vào
 `exact_overrides` để áp trước tokenizer; demo đã tách riêng các key này.
 Quy tắc người dùng tự thêm được lưu `localStorage` khi gõ (thêm cả `change`/
-`pagehide`/tab ẩn); nếu trình duyệt chặn storage (private/iframe), UI báo rõ thay vì
-âm thầm mất. Các viết tắt phổ biến đã nằm trong từ điển server nên không phụ thuộc
-localStorage.
+`pagehide`/tab ẩn); nếu trình duyệt chặn `localStorage` (private/iframe), thử tiếp
+`sessionStorage` để giữ qua F5 trong cùng tab và báo rõ nếu cả hai bị chặn. Các viết tắt
+phổ biến đã nằm trong từ điển server nên không phụ thuộc storage.
 
 ## Lớp G2P tùy chọn (`frontend/g2p.py`) — IPA chuẩn theo phương ngữ
 
