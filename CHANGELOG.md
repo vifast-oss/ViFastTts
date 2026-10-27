@@ -57,3 +57,5 @@
   `cappuccino`, `Band`, `Kumarun`; loại `croissant`, `social media`, `workshop`, `backpack`,
   `smartphone` vì cách đọc sai/không phù hợp.
 - Thêm `smartphone → sờ mát phôn`; sửa đề xuất tương ứng từ `sờ mát phone` và duyệt.
+- Base N0 40k: kết quả teacher-forced + A/B + nhận xét tai người; tiếp tục 40k → 60k
+  bằng cosine mới, chưa production.

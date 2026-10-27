@@ -72,7 +72,8 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
   vào từ điển (các đề xuất `prô tê in`, `rô tê in` bị loại).
 - **Base N0 @40k đã xong**: teacher-forced tốt hơn small (~9–11% mel) nhưng free-run
   chưa thắng rõ (speech dB 14,49 vs 14,37; pause F1 0,819 vs 0,834); chưa thay production.
-  Chi tiết ở `docs/TRAINING_N0.md` §3.1.
+  Người nghe nghiêng base nhưng alpha0 5/8 hòa. Đang chạy tiếp **40k → 60k** (cosine mới)
+  để kiểm tra trần; chi tiết ở `docs/TRAINING_N0.md` §3.1–3.3.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.

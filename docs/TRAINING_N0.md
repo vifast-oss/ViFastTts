@@ -77,6 +77,9 @@ Large ≈ 32M.
   chỉ đổi dung lượng sang base **96/256/6 encoder/4 decoder** (~17,1M; 16,4M không tính postnet).
 - 40.000 bước (~33,5 epoch), batch 8, cosine 40k, val 300 clip, **không** early stop;
   checkpoint cuối `best.pt`/`last.pt` đều @40k.
+- Quá trình: bắt đầu **27/10 18:28**, probe **0,397 s/bước · MPS 9,1 GB**; tiến trình nền
+  từng dừng ở 8k và 24k do shell, đã resume từ `last.pt` không mất checkpoint; xong 40k
+  lúc **28/10 04:59**. Tốc độ thực ~0,46 s/bước, val 300 clip mỗi 1k bước.
 - Kết quả **teacher-forced tốt hơn small**, nhưng **free-run chưa thắng rõ**:
 
 | Thước | small @60k | base @40k | đọc |
@@ -105,6 +108,17 @@ Large ≈ 32M.
   lợi thế đó (nhiều hòa, small nhỉnh hơn nhẹ).
 - Kết luận: **chưa đủ bằng chứng để đổi production sang base**; nếu cần, phải nghe thêm
   mẫu mới hoặc chạy base 50–60k rồi A/B lại.
+
+### 3.3 Tai người (user) & quyết định 60k
+
+- Người nghe nhận xét: **base có vẻ tốt hơn**, small vẫn hơi “méo” một chút dù nghe rõ;
+  nhiều cặp không phân biệt được. Đây là đánh giá **chủ quan**, dùng để chọn hướng,
+  không thay số đo.
+- Bộ alpha 0 (8 câu mới): 5 hòa · 2 small · 1 base ⇒ khác biệt cảm nhận rất nhỏ.
+- **Quyết định:** tiếp tục base **40k → 60k** bằng cosine mới (không reset optimizer/model),
+  vì val teacher-forced vẫn giảm và tai người nghiêng base; **chưa deploy**.
+- Cổng sau 60k: TF val/holdout không xấu; free speech dB/pause/CER không xấu hơn small;
+  A/B fresh alpha 0 phải nghiêng base rõ; nếu không → giữ small.
 
 ## 4. Mặc định suy luận N0
 
