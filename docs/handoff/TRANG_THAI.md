@@ -14,9 +14,10 @@
    nên giọng Bắc giữ nguyên từng mẫu âm thanh so với N0 cũ.
 3. Bản **fine-tune Q 3k** đã train xong, hay hơn rất nhẹ về độ nét nhưng **chưa được chọn**;
    đang có 2 file nghe thử trong release tạm.
-4. Demo có **cách đọc tự thêm**, từ điển 570 quy tắc, ví dụ STEM (hoá học/toán/vật lý/LaTeX),
+4. Demo có **cách đọc tự thêm**, từ điển **179 quy tắc tinh gọn** + fallback tiếng Anh,
+   ví dụ STEM (hoá học/toán/vật lý/LaTeX),
    góp ý/báo lỗi và thống kê; nội dung góp ý còn khoá vì chưa đặt `ADMIN_PASSWORD`.
-5. Test **2.575 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
+5. Test **2.743 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
 
 ## 1. Đang chạy production
 
@@ -62,7 +63,8 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 - Custom reading **tự lưu `localStorage` khi gõ**; gửi duyệt khi bấm **Tạo âm thanh** nếu
   checkbox bật; server chỉ lưu cặp `key = value` dạng pending, không lưu câu/IP.
-- Quy tắc người dùng **ưu tiên trước** STEM và 570 quy tắc có sẵn.
+- Quy tắc người dùng **ưu tiên trước** STEM và 179 quy tắc có sẵn; fallback tiếng Anh
+  (CASE_INSENSITIVE_ENGLISH + acronym) vẫn áp dụng sau parser.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.
@@ -75,7 +77,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 5. Test / tài liệu
 
-- `pytest -q`: **2.575 passed, 24 skipped** (~40 s).
+- `pytest -q`: **2.743 passed, 24 skipped** (~40 s).
 - `ruff check .`: sạch.
 - Parser audit: **49.104 tổ hợp, 0 vấn đề**; wordlist 39K: 6.617/6.633 parse OK.
 - Tài liệu hiện hành: `docs/README.md`; lịch sử: `docs/archive/README.md`.

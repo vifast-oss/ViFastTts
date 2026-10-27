@@ -93,6 +93,26 @@ Từ điển tích hợp chỉ dành cho từ công nghệ thường gặp. Mọ
 
 Bất biến được kiểm bằng test: **mọi reading trong từ điển phải parse được thành âm tiết Việt hợp lệ** (nếu không, pipeline sẽ rơi lại vào `FALLBACK_REQUIRED` ngay sau khi chuẩn hoá). Các reading lỗi cũ như `blu tút`, `brao dơ`, `eo` đã được sửa.
 
+### Kiểm toán từ điển override (27/10/2026)
+
+- `configs/overrides_tech_vi.json` rút từ **570 → 179 mục**; bỏ các alias ASR/tiền tố rác
+  như `dipsic` (DeepSeek), `dipick`, `dipix`, `analyer`, `antropic`, `appile`, `cching`;
+  bỏ các key một chữ cái (`c`, `l`, `s`, `ch`, `th`...) vì dễ đè lên token bình thường.
+- Bổ sung viết tắt Việt thường gặp: `UBND`, `HĐND`, `UBMTTQ`, `TP.HCM`, `THPT`, `THCS`,
+  `BHXH`, `BHYT`, `CMND`, `CCCD`, `GPLX`, `GDP`, `CPI`, `FDI`, `VTV`, `HTV`, `WHO`, `UN`,
+  `VND`, `USD`, `ASEAN`, `UNESCO`; nhóm chat an toàn (`ko`, `dc`, `vs`, `ib`, `sdt`, `tk`, `mk`...).
+- Bổ sung/sửa tên sản phẩm và từ công nghệ phổ biến: DeepSeek, ChatGPT, Claude, Docker,
+  Kubernetes, MongoDB, PostgreSQL, Nginx, Redis, macOS, Linux, VS Code, WordPress,
+  `bug` → “bắc”, `download`/`upload`, `windows` → “uyn đâu”.
+- Các mục đa nghĩa được giữ có chủ đích nhưng ghi nhận rủi ro: `ts` (tiến sĩ), `bs` (bác sĩ),
+  `tp` (thành phố), `vs` (với), `un` (Liên Hợp Quốc). `WHO`/`UN` viết hoa đọc mở rộng;
+  `who` chữ thường **không** bị override để không phá câu tiếng Anh.
+- Key có dấu chấm/khoảng trắng (`TP.HCM`, `v.v.`, `hugging face`) được đưa vào
+  `exact_overrides` trong demo để `_apply_phrase_overrides` chạy trước tokenizer.
+- Test: `tests/test_overrides_tech.py` (không còn alias ASR, mọi reading parse được,
+  `TP.HCM`/`UBND`/`DeepSeek` đọc đúng); test fallback cũ vẫn chạy.
+
+
 Thế hệ mạng di động `5G`/`4G` đọc là "năm giê"/"bốn giê".
 
 ## Thứ tự phân loại token

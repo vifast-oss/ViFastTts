@@ -109,6 +109,8 @@ nhắc unit đầu vào model.
 khoảng nghỉ (0.15s cuối câu, 0.08s cuối mệnh đề, 0.05s còn lại). Cả `synthesize` (PyTorch)
 lẫn `synthesize-onnx` dùng chung để tránh đọc câu dài một hơi. `infer.load_overrides(file)`
 nạp từ điển "mặt chữ → cách đọc" và `runtime/postprocess.py` lo fade/peak-normalize.
+Key override có dấu chấm/khoảng trắng (`TP.HCM`, `v.v.`) phải được truyền vào
+`exact_overrides` để áp trước tokenizer; demo đã tách riêng các key này.
 
 ## Lớp G2P tùy chọn (`frontend/g2p.py`) — IPA chuẩn theo phương ngữ
 

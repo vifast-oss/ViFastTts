@@ -34,6 +34,12 @@
 - Tài liệu: thêm `docs/README.md` (mục lục hiện hành/tham chiếu/lịch sử), viết lại
   `docs/handoff/TRANG_THAI.md` theo trạng thái live; chuyển thiết kế gốc, kế hoạch/review cũ,
   run @codelung và báo cáo V08–V18.52 vào `docs/archive/` (không xoá).
-- Test hiện tại: **2.575 pass / 24 skip**, `ruff` sạch; parser audit **49.104 tổ hợp, 0 lỗi**.
+- Test hiện tại: **2.743 pass / 24 skip**, `ruff` sạch; parser audit **49.104 tổ hợp, 0 lỗi**.
 - TODO: nếu train một model chung nhiều vùng, bắt buộc thêm dialect/speaker embedding;
   train riêng từng vùng thì không cần.
+- Từ điển override rút **570 → 179 mục**: bỏ alias ASR/tiền tố rác (`dipsic`→DeepSeek,
+  `dipick`, `dipix`, `analyer`, `antropic`...), bỏ key một chữ cái; thêm viết tắt Việt
+  (`UBND`, `HĐND`, `TP.HCM`, `BHXH`, `BHYT`, `CCCD`, `GDP`, `CPI`, `FDI`, `VND`, `USD`...)
+  và tên công nghệ phổ biến; sửa `bug`/`download`/`upload`/`windows`/`tensorflow`.
+- Demo áp được override cụm có dấu chấm/khoảng trắng trước tokenizer; test mới
+  `tests/test_overrides_tech.py`.
