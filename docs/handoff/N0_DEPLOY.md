@@ -83,7 +83,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   vào hàng chờ (`/api/overrides/suggest`), không lưu câu/IP. Checkbox gửi **mặc định bật**,
   bỏ tích để chỉ lưu local; quy tắc tự lưu khi gõ và gửi khi **tạo âm thanh**;
   trạng thái checkbox được nhớ trong localStorage. Admin chỉ duyệt
-  được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn **203 quy tắc** qua
+  được khi có `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá. Bảng có sẵn **204 quy tắc** qua
   `GET /api/overrides`; không hỗ trợ regex/script.
 - **Validator từ vay:** `resources/loanword_labial_w.txt` (buýt, voan, boa);
   `tools/validate_syllables.py` chỉ cảnh báo, không chặn. Reparse manifest trước khi train;

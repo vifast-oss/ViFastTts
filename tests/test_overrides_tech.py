@@ -84,6 +84,7 @@ def test_khong_con_alias_asr_va_key_nguy_hiem():
     ("protein", "pờ rô tê in"),
     ("apple", "áp pồ"),
     ("khongdich", "không dịch"),
+    ("smartphone", "sờ mát phôn"),
     ("bug", "bắc"),
     ("download", "đao lốt"),
     ("windows", "uyn đâu"),
@@ -104,3 +105,4 @@ def test_email_local_part_known_va_lạ():
     unknown = normalize_text("nguyenvana@yahoo.com")
     assert "en giê" in unknown
     assert "a còng" in unknown
+    assert normalize_text("abc123@gmail.com").startswith("a bê xê một hai ba a còng")

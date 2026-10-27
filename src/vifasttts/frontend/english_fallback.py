@@ -218,6 +218,7 @@ CASE_INSENSITIVE_ENGLISH = {
     "zip": "díp", "zoom": "dum",
     # Bổ sung 27/10 — từ/công nghệ thường gặp trong văn bản Việt; đã bỏ biến thể ASR.
     "bug": "bắc", "dashboard": "đát bốt", "claude": "cờ lốt", "khongdich": "không dịch",
+    "smartphone": "sờ mát phôn",
     "chatgpt": "chát giê pê tê", "deepseek": "đíp sích",
     "anthropic": "an trô pích", "apache": "a pát chi", "django": "giăng gô",
     "docker": "đốc cơ", "kubernetes": "kiu bơ nét", "cloudflare": "cờ lao phờ le",

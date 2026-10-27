@@ -95,7 +95,7 @@ Bất biến được kiểm bằng test: **mọi reading trong từ điển ph�
 
 ### Kiểm toán từ điển override (27/10/2026)
 
-- `configs/overrides_tech_vi.json` rút từ **570 → 203 mục**; bỏ các alias ASR/tiền tố rác
+- `configs/overrides_tech_vi.json` rút từ **570 → 204 mục**; bỏ các alias ASR/tiền tố rác
   như `dipsic` (DeepSeek), `dipick`, `dipix`, `analyer`, `antropic`, `appile`, `cching`;
   bỏ các key một chữ cái (`c`, `l`, `s`, `ch`, `th`...) vì dễ đè lên token bình thường.
 - Bổ sung viết tắt Việt thường gặp: `UBND`, `HĐND`, `UBMTTQ`, `TP.HCM`, `THPT`, `THCS`,
