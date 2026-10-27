@@ -14,6 +14,8 @@
   (hoá học/toán/vật lý/LaTeX), kèm ghi chú quy tắc người dùng được ưu tiên.
 - Thêm ví dụ rule hoá học/toán/LaTeX/vật lý trong UI; textarea 3 dòng đủ cao;
   cho phép ký tự `>`/`<` trong rule literal (vẫn escape khi hiển thị admin).
+- Gọn UI “Cách đọc từ”: hướng dẫn dài chuyển vào icon ⓘ cạnh nhãn (giống “Nghỉ cố định”),
+  giữ textarea + chip ví dụ; giảm chiều cao panel tùy chọn nâng cao.
 - Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
 - Bố cục lại giao diện: 3 cột trên desktop, tùy chọn nâng cao và góp ý hiện ngay;
   nghỉ cố định chuyển vào tùy chọn nâng cao, kèm tooltip giải thích.

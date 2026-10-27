@@ -93,6 +93,7 @@
                 color:var(--muted); font-size:.82rem; }
   .option-row label { color:var(--ink); font-weight:650; font-size:.84rem; }
   .checkline { display:inline-flex; align-items:center; gap:3px; }
+  .label-row { display:flex; align-items:center; gap:5px; margin:2px 0 0; }
   .info { position:relative; display:inline-flex; align-items:center; justify-content:center;
           width:16px; height:16px; border-radius:50%; border:1px solid #C9B8A8; color:#8A6A4F;
           font:700 11px/1 Arial; cursor:help; flex:0 0 auto; }
@@ -208,13 +209,15 @@
         </span>
         <span class="fine">Mặc định tắt</span>
       </div>
-      <p>Thêm quy tắc riêng, mỗi dòng một quy tắc dạng <code>từ gốc = cách đọc</code>.
-        Hỗ trợ cụm/domain, ví dụ <code>khongdich.com = không dịch chấm com</code>.
-        Quy tắc lưu local; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP.</p>
-      <label for="overrides">Cách đọc từ</label>
+      <div class="label-row">
+        <label for="overrides">Cách đọc từ</label>
+        <span class="info" tabindex="0" role="img" aria-label="Giải thích cách đọc từ">i
+          <span class="tip" role="tooltip">Mỗi dòng một quy tắc dạng “từ gốc = cách đọc”. Hỗ trợ từ, cụm, domain hoặc công thức; không hỗ trợ regex/script. Quy tắc lưu trong trình duyệt; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP. Bấm chip ví dụ để thêm nhanh.</span>
+        </span>
+      </div>
       <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com"></textarea>
       <div class="rule-examples">
-        <p>Ví dụ nhanh (bấm để thêm vào ô):</p>
+        <p>Ví dụ nhanh:</p>
         <div class="row">
           <button type="button" title="khongdich.com = không dịch chấm com" data-rule="khongdich.com = không dịch chấm com">Domain</button>
           <button type="button" title="H2 + O2 -> H2O = hát hai cộng ô hai tạo ra nước" data-rule="H2 + O2 -&gt; H2O = hát hai cộng ô hai tạo ra nước">H₂+O₂→H₂O</button>
