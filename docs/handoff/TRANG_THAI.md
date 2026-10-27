@@ -17,7 +17,7 @@
 4. Demo có **cách đọc tự thêm**, từ điển **204 quy tắc tinh gọn** + fallback tiếng Anh,
    ví dụ STEM (hoá học/toán/vật lý/LaTeX),
    góp ý/báo lỗi và thống kê; nội dung góp ý còn khoá vì chưa đặt `ADMIN_PASSWORD`.
-5. Test **2.743 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
+5. Test **2.909 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
 
 ## 1. Đang chạy production
 
@@ -70,6 +70,9 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 - Đã duyệt **32** đề xuất đọc trong backend; **15** đề xuất sai/không phù hợp bị loại;
   **0 pending**. Sửa nhẹ `canxi cacbonat`/`hiđrocacbonat`; `protein` được thêm bản đúng
   vào từ điển (các đề xuất `prô tê in`, `rô tê in` bị loại).
+- **Base N0 @40k đã xong**: teacher-forced tốt hơn small (~9–11% mel) nhưng free-run
+  chưa thắng rõ (speech dB 14,49 vs 14,37; pause F1 0,819 vs 0,834); chưa thay production.
+  Chi tiết ở `docs/TRAINING_N0.md` §3.1.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.
@@ -82,7 +85,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 5. Test / tài liệu
 
-- `pytest -q`: **2.743 passed, 24 skipped** (~40 s).
+- `pytest -q`: **2.909 passed, 24 skipped** (~40 s).
 - `ruff check .`: sạch.
 - Parser audit: **49.104 tổ hợp, 0 vấn đề**; wordlist 39K: 6.617/6.633 parse OK.
 - Tài liệu hiện hành: `docs/README.md`; lịch sử: `docs/archive/README.md`.
