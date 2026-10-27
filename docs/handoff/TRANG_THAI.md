@@ -1,7 +1,7 @@
 # TRẠNG THÁI (STATUS) — nguồn sự thật duy nhất
 
 > **Vòng hiện hành:** N0 + Q (27/10/2026) · **Tệp đặc tả:** `docs/Q_ONSET.md` +
-> `docs/handoff/N0_DEPLOY.md` · **Commit code:** `78b429a` · **Trạng thái:** **LIVE (Q-init)** —
+> `docs/handoff/N0_DEPLOY.md` · **Commit code:** `ee8c518` · **Trạng thái:** **LIVE (Q-init)** —
 > chờ chọn Q-init hay fine-tune 3k.
 >
 > Tài liệu cũ: `docs/archive/handoff/TRANG_THAI_2026-10-27_pre_N0_live.md` (lịch sử, không hiệu lực).
