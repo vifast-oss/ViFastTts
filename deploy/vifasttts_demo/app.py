@@ -195,7 +195,7 @@ def _load_builtin_overrides() -> dict[str, str]:
 
 BUILTIN_OVERRIDES = _load_builtin_overrides()
 
-#: Ví dụ các quy tắc STEM nội bộ (không nằm trong 200 overrides tinh gọn). Đọc thực tế
+#: Ví dụ các quy tắc STEM nội bộ (không nằm trong 201 overrides tinh gọn). Đọc thực tế
 #: được sinh lại bằng normalizer để UI không hiển thị sai.
 STEM_GROUPS = (
     ("Hoá học", ("H2O", "CO2", "H2SO4")),
@@ -684,9 +684,13 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
         key: value for key, value in BUILTIN_OVERRIDES.items()
         if not re.fullmatch(r"[A-Za-zÀ-ỹĐđ]+", key)
     }
+    approved_phrases = {
+        key: value for key, value in approved.items()
+        if not re.fullmatch(r"[A-Za-zÀ-ỹĐđ]+", key)
+    }
     options = NormalizerOptions(
         dialect="north",
-        exact_overrides={**builtin_phrases, **overrides},
+        exact_overrides={**builtin_phrases, **approved_phrases, **overrides},
         english_overrides={**BUILTIN_OVERRIDES, **approved_lower, **user_lower},
     )
     chunks = (split_clauses(text, max_chars=SYNTH_CHUNK_CHARS) if fixed_pauses

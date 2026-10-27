@@ -92,7 +92,7 @@ Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
 - server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu/IP;
 - admin chỉ duyệt được khi đặt `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá;
 - áp dụng cho request hiện tại, tối đa **50 quy tắc**, key ≤80 ký tự, value ≤120 ký tự;
-- xem được **200 quy tắc tinh gọn + fallback tiếng Anh + ví dụ STEM** qua nút “Xem từ điển & STEM”.
+- xem được **201 quy tắc tinh gọn + fallback tiếng Anh + ví dụ STEM** qua nút “Xem từ điển & STEM”.
 
 API cũng nhận:
 

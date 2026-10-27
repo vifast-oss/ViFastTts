@@ -81,6 +81,7 @@ def test_khong_con_alias_asr_va_key_nguy_hiem():
     ("BĐS", "bất động sản"),
     ("Ngân hàng TMCP", "ngân hàng thương mại cổ phần"),
     ("VP", "văn phòng"),
+    ("protein", "pờ rô tê in"),
     ("bug", "bắc"),
     ("download", "đao lốt"),
     ("windows", "uyn đâu"),
