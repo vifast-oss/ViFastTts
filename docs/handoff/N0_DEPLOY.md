@@ -39,10 +39,18 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
 - Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 300 ký tự,
   không lưu text/audio.
-- **Thống kê:** `/admin` (HTML) và `/admin.json`; đếm unique visitor theo hash IP, tổng lượt
-  tạo, lượt xem trang, audio đã tạo, 20 lượt gần nhất. Không lưu IP/text.
+- **Thống kê:** `/admin` (HTML) và `/admin.json`; tổng người dùng, tổng lượt tạo, lượt xem trang,
+  **lượt tạo web / Space / API riêng**, audio đã tạo, 20 lượt gần nhất.
+  Không lưu IP/text; visitor lưu dạng hash.
   Nếu `ADMIN_PASSWORD` rỗng hoặc chưa đặt, `/admin` mở công khai. Đặt env này để bật Basic Auth.
   DB: `/app/data/stats.sqlite3`, bind mount `./data:/app/data` nên giữ qua restart.
+- **Vì sao trước đây chỉ thấy 1 người:** outer Traefik dùng TLS passthrough cho `*.hoctuthien.com`,
+  nên Traefik trong LXD thấy mọi request đến từ cùng IP upstream. Web và static Space giờ tạo
+  `visitor_id` trong localStorage và gửi `/api/visit` + `/api/tts`; API thuần có thể gửi
+  `visitor_id` trong JSON, nếu không sẽ fallback hash IP (có thể gộp sau proxy).
+- API payload mẫu:
+  `{"text":"...", "source":"api", "visitor_id":"my-client-1234"}`.
+  `source` mặc định `api`; web/Space gửi `web`/`space`.
 - **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
   (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
   Chưa tính độ trễ mạng từ trình duyệt.

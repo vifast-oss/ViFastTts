@@ -33,4 +33,7 @@ Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Doc
 - Mặc định mở công khai nếu `ADMIN_PASSWORD` chưa đặt.
 - Đặt `ADMIN_PASSWORD` trong compose để bật Basic Auth.
 - DB `data/stats.sqlite3`; compose bind mount `./data:/app/data`.
-- Chỉ lưu hash IP, số ký tự, thời lượng audio, thời gian xử lý; không lưu IP/text.
+- Web/Space dùng `visitor_id` localStorage; API thuần có thể gửi `visitor_id`; fallback IP.
+- Có tách lượt tạo theo `source = web | space | api`.
+- Chỉ lưu hash visitor, số ký tự, thời lượng audio, thời gian xử lý; không lưu IP/text.
+- API mẫu: `{"text":"...", "source":"api", "visitor_id":"client-1234"}`.

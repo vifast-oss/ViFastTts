@@ -111,6 +111,21 @@ const $ = (id) => document.getElementById(id);
 const text = $("text"), count = $("count"), status = $("status"), player = $("player");
 let currentUrl = null;
 const API_URL = "https://vifasttts.hoctuthien.com/api/tts";
+const VISIT_URL = "https://vifasttts.hoctuthien.com/api/visit";
+const SOURCE = "space";
+function visitorId() {
+  try {
+    let id = localStorage.getItem("vifasttts_visitor_v1");
+    if (!id) {
+      id = (crypto.randomUUID && crypto.randomUUID()) || ("v-" + Date.now() + "-" + Math.random().toString(36).slice(2));
+      localStorage.setItem("vifasttts_visitor_v1", id);
+    }
+    return id;
+  } catch (_) { return "anon-" + Math.random().toString(36).slice(2); }
+}
+const VISITOR_ID = visitorId();
+fetch(VISIT_URL, {method: "POST", headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({visitor_id: VISITOR_ID})}).catch(() => {});
 function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }
 function updateCount() { count.textContent = `${text.value.length}/300`; }
 text.addEventListener("input", updateCount);
@@ -129,7 +144,7 @@ async function generate() {
   try {
     const response = await fetch(API_URL, {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text: value, speed: Number($("speed").value), fixed_pauses: $("fixed").checked})
+      body: JSON.stringify({text: value, speed: Number($("speed").value), fixed_pauses: $("fixed").checked, visitor_id: VISITOR_ID, source: SOURCE})
     });
     if (!response.ok) {
       let detail = "Không tạo được âm thanh.";

@@ -12,6 +12,7 @@ import io
 import json
 import logging
 import os
+import re
 import secrets
 import sqlite3
 import threading
@@ -95,10 +96,14 @@ def _init_stats() -> None:
                     audio_seconds REAL NOT NULL,
                     elapsed REAL NOT NULL,
                     fixed_pauses INTEGER NOT NULL,
-                    speed REAL NOT NULL
+                    speed REAL NOT NULL,
+                    source TEXT NOT NULL DEFAULT 'api'
                 );
                 CREATE INDEX IF NOT EXISTS usage_ts ON usage(ts);
             """)
+            columns = {row["name"] for row in connection.execute("PRAGMA table_info(usage)")}
+            if "source" not in columns:
+                connection.execute("ALTER TABLE usage ADD COLUMN source TEXT NOT NULL DEFAULT 'api'")
             connection.commit()
         finally:
             connection.close()
@@ -127,10 +132,14 @@ def _get_salt() -> str:
     return _SALT
 
 
-def _visitor_hash(request: Request) -> str:
+def _visitor_hash(request: Request, visitor_id: str | None = None) -> str:
     forwarded = request.headers.get("x-forwarded-for", "")
     client = forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    return hashlib.sha256(f"{_get_salt()}:{client}".encode()).hexdigest()[:24]
+    if visitor_id and re.fullmatch(r"[A-Za-z0-9_-]{8,80}", visitor_id):
+        material = f"id:{visitor_id}"
+    else:
+        material = f"ip:{client}"
+    return hashlib.sha256(f"{_get_salt()}:{material}".encode()).hexdigest()[:24]
 
 
 def _record_page(visitor: str) -> None:
@@ -150,15 +159,15 @@ def _record_page(visitor: str) -> None:
 
 
 def _record_tts(visitor: str, chars: int, audio_seconds: float, elapsed: float,
-                fixed_pauses: bool, speed: float) -> None:
+                fixed_pauses: bool, speed: float, source: str) -> None:
     now = time.time()
     with _STATS_LOCK:
         connection = _connect()
         try:
             connection.execute(
-                "INSERT INTO usage(ts, visitor, chars, audio_seconds, elapsed, fixed_pauses, speed) "
-                "VALUES(?,?,?,?,?,?,?)",
-                (now, visitor, chars, audio_seconds, elapsed, int(fixed_pauses), speed),
+                "INSERT INTO usage(ts, visitor, chars, audio_seconds, elapsed, fixed_pauses, speed, source) "
+                "VALUES(?,?,?,?,?,?,?,?)",
+                (now, visitor, chars, audio_seconds, elapsed, int(fixed_pauses), speed, source),
             )
             connection.execute(
                 "INSERT INTO visitors(visitor, first_seen, last_seen, tts_count) VALUES(?,?,?,1) "
@@ -191,13 +200,16 @@ def _stats_payload() -> dict:
             tts_today = connection.execute(
                 "SELECT COUNT(*) AS n FROM usage WHERE ts >= ?", (day_start,)
             ).fetchone()["n"]
+            by_source = {row["source"]: row["n"] for row in connection.execute(
+                "SELECT source, COUNT(*) AS n FROM usage GROUP BY source"
+            ).fetchall()}
             totals = connection.execute(
                 "SELECT COALESCE(SUM(audio_seconds),0) AS audio, "
                 "COALESCE(SUM(chars),0) AS chars, "
                 "COALESCE(AVG(elapsed),0) AS elapsed FROM usage"
             ).fetchone()
             recent = [dict(row) for row in connection.execute(
-                "SELECT ts, visitor, chars, audio_seconds, elapsed, fixed_pauses, speed "
+                "SELECT ts, visitor, chars, audio_seconds, elapsed, fixed_pauses, speed, source "
                 "FROM usage ORDER BY id DESC LIMIT 20"
             ).fetchall()]
         finally:
@@ -211,6 +223,9 @@ def _stats_payload() -> dict:
         "page_views": int(pages),
         "tts_total": int(tts),
         "tts_today": int(tts_today),
+        "tts_web": int(by_source.get("web", 0)),
+        "tts_space": int(by_source.get("space", 0)),
+        "tts_api": int(by_source.get("api", 0)),
         "audio_seconds": round(float(totals["audio"]), 2),
         "chars_total": int(totals["chars"]),
         "avg_chars": round(float(totals["chars"]) / tts, 1) if tts else 0.0,
@@ -236,9 +251,9 @@ def _admin_html(stats: dict) -> str:
     rows = "".join(
         f"<tr><td>{item['time']}</td><td>{item['visitor']}</td><td>{item['chars']}</td>"
         f"<td>{item['audio_seconds']:.2f}s</td><td>{item['elapsed']:.2f}s</td>"
-        f"<td>{'có' if item['fixed_pauses'] else 'không'}</td></tr>"
+        f"<td>{item.get('source', 'api')}</td><td>{'có' if item['fixed_pauses'] else 'không'}</td></tr>"
         for item in stats["recent"]
-    ) or "<tr><td colspan='6'>Chưa có lượt tạo nào.</td></tr>"
+    ) or "<tr><td colspan='7'>Chưa có lượt tạo nào.</td></tr>"
     auth_note = "Đang mở công khai, chưa đặt ADMIN_PASSWORD." if not ADMIN_PASSWORD else "Đã bật Basic Auth."
     return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -263,12 +278,13 @@ th{{background:#edf3f2;color:#245c57}} a{{color:#0f766e}}
   <div class="card"><b>{stats['tts_total']}</b><span>lượt tạo audio</span></div>
   <div class="card"><b>{stats['page_views']}</b><span>lượt xem trang</span></div>
   <div class="card"><b>{stats['tts_today']}</b><span>lượt tạo hôm nay</span></div>
-  <div class="card"><b>{stats['users_today']}</b><span>người dùng hôm nay</span></div>
-  <div class="card"><b>{stats['users_7d']}</b><span>người dùng 7 ngày</span></div>
+  <div class="card"><b>{stats['tts_web']}</b><span>tạo trên web</span></div>
+  <div class="card"><b>{stats['tts_space']}</b><span>tạo qua Space</span></div>
+  <div class="card"><b>{stats['tts_api']}</b><span>tạo qua API</span></div>
   <div class="card"><b>{stats['audio_seconds'] / 60:.1f} phút</b><span>audio đã tạo</span></div>
   <div class="card"><b>{stats['avg_chars']}</b><span>ký tự / lượt</span></div>
 </div>
-<table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>Nghỉ cố định</th></tr></thead>
+<table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="note">Số “người dùng” là ước lượng theo hash IP, không lưu IP hay nội dung text. {auth_note}</div>
 </main></body></html>"""
@@ -288,6 +304,12 @@ class TtsRequest(BaseModel):
     text: str
     speed: float = 1.0
     fixed_pauses: bool = False
+    visitor_id: str | None = None
+    source: str = "api"
+
+
+class VisitRequest(BaseModel):
+    visitor_id: str | None = None
 
 
 def _wav_bytes(waveform: np.ndarray, sample_rate: int) -> bytes:
@@ -336,13 +358,15 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool) -> tuple[bytes, flo
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request) -> HTMLResponse:
-    try:
-        _record_page(_visitor_hash(request))
-    except Exception:
-        logger.exception("page stats failed")
+def index() -> HTMLResponse:
     return HTMLResponse((ROOT / "static" / "index.html").read_text(encoding="utf-8"),
                         headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/visit")
+def visit(payload: VisitRequest, request: Request) -> dict:
+    _record_page(_visitor_hash(request, payload.visitor_id))
+    return {"ok": True}
 
 
 def _admin_denied() -> Response:
@@ -381,15 +405,14 @@ def tts(payload: TtsRequest, request: Request) -> Response:
     if not any(char.isalpha() for char in text):
         raise HTTPException(status_code=422, detail="Cần ít nhất một chữ cái")
     speed = min(1.2, max(0.8, float(payload.speed)))
-    forwarded = request.headers.get("x-forwarded-for", "")
-    client = forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    if not _rate_ok(client):
-        raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút")
     try:
-        visitor = _visitor_hash(request)
+        visitor = _visitor_hash(request, payload.visitor_id)
     except Exception:
         logger.exception("visitor stats failed")
         visitor = "unknown"
+    if not _rate_ok(visitor):
+        raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút")
+    source = payload.source if payload.source in ("web", "space", "api") else "api"
     if not _lock.acquire(timeout=45):
         raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau")
     try:
@@ -402,7 +425,7 @@ def tts(payload: TtsRequest, request: Request) -> Response:
     finally:
         _lock.release()
     try:
-        _record_tts(visitor, len(text), audio_seconds, elapsed, bool(payload.fixed_pauses), speed)
+        _record_tts(visitor, len(text), audio_seconds, elapsed, bool(payload.fixed_pauses), speed, source)
     except Exception:
         logger.exception("tts stats failed")
     logger.info("tts ok %.2fs chars=%d fixed=%s", elapsed, len(text), payload.fixed_pauses)
