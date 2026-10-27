@@ -93,6 +93,19 @@ Large ≈ 32M.
 - Kết luận tạm: **base là hướng đáng theo dõi nhưng chưa đủ để thay small**;
   cần nghe A/B và có thể chạy 50–60k nếu muốn kiểm tra tiếp.
 
+### 3.2 A/B tai người (28/10/2026)
+
+| Bộ nghe | Base | Small | Hòa |
+|---|---:|---:|---:|
+| 24 câu holdout, alpha 1,5 | **17** | 2 | 5 |
+| thêm 8 câu holdout, alpha 1,5 | 2 | **3** | 3 |
+| 8 câu mới, alpha 0, không audio thật | 1 | **2** | **5** |
+
+- Ở alpha 1,5, 24 câu đầu nghiêng base rõ; 8 câu sau và bộ alpha 0 **không xác nhận**
+  lợi thế đó (nhiều hòa, small nhỉnh hơn nhẹ).
+- Kết luận: **chưa đủ bằng chứng để đổi production sang base**; nếu cần, phải nghe thêm
+  mẫu mới hoặc chạy base 50–60k rồi A/B lại.
+
 ## 4. Mặc định suy luận N0
 
 - **Vocos pretrained mặc định** (không fine-tune; fine-tune bị loại vì rè).
