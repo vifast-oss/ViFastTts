@@ -37,3 +37,19 @@ def test_unmatched_domain_stays_fallback_not_crash():
     items = parse_text("qwertyzzz.com", options=_options())
     assert len(items) == 2
     assert items[0].status.value == "FALLBACK_REQUIRED"
+
+
+def test_chemical_and_physics_phrases_are_literal():
+    options = NormalizerOptions(exact_overrides={
+        "H2 + O2 -> H2O": "hát hai cộng ô hai tạo ra nước",
+        "x^2": "x bình phương",
+        "m/s": "mét trên giây",
+    })
+    assert normalize_text("H2 + O2 -> H2O", options=options) == "hát hai cộng ô hai tạo ra nước"
+    assert normalize_text("x^2", options=options) == "x bình phương"
+    assert normalize_text("m/s", options=options) == "mét trên giây"
+
+
+def test_latex_phrase_is_literal():
+    options = NormalizerOptions(exact_overrides={r"\frac{a}{b}": "a trên b"})
+    assert normalize_text(r"\frac{a}{b}", options=options) == "a trên b"

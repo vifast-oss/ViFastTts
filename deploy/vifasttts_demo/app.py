@@ -193,8 +193,8 @@ def _clean_overrides(raw: dict[str, str] | None, limit: int = MAX_OVERRIDES) -> 
         key, value = str(key).strip(), str(value).strip()
         if not key or not value or len(key) > 80 or len(value) > 120:
             raise HTTPException(status_code=422, detail="Quy tắc đọc sai độ dài")
-        if any(ord(char) < 32 for char in key + value) or "<" in key + value or ">" in key + value:
-            raise HTTPException(status_code=422, detail="Quy tắc đọc chứa ký tự không hợp lệ")
+        if any(ord(char) < 32 for char in key + value):
+            raise HTTPException(status_code=422, detail="Quy tắc đọc chứa ký tự điều khiển")
         clean[key] = value
     return clean
 

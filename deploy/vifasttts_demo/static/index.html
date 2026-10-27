@@ -62,7 +62,7 @@
              font-size:.98rem; border:1px solid #E3D2C2; border-radius:10px; outline:none; background:#FFFDF9; }
   textarea:focus, select:focus, input[type=text]:focus { border-color:var(--accent); outline:none;
              box-shadow:0 0 0 3px rgba(198,40,30,.13); }
-  #overrides { min-height:66px; font-family:Consolas,"Liberation Mono",monospace; font-size:.82rem; }
+  #overrides { min-height:96px; font-family:Consolas,"Liberation Mono",monospace; font-size:.82rem; }
   #feedbackMessage { min-height:62px; }
   .meta { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:.76rem; margin-top:5px; }
   .speed-row { margin:10px 0 0; }
@@ -102,6 +102,11 @@
                box-shadow:0 8px 22px rgba(0,0,0,.18); }
   .info:hover .tip, .info:focus .tip { display:block; }
   .panel p { color:var(--muted); font-size:.78rem; margin:5px 0 7px; }
+  .rule-examples { margin:8px 0 2px; }
+  .rule-examples p { margin:0 0 5px; color:var(--muted); font-size:.74rem; }
+  .rule-examples button { background:#FFFCF7; color:#6B3A2A; border:1px solid var(--line);
+    font-size:.72rem; font-weight:600; padding:3px 6px; }
+  .rule-examples button:hover { border-color:#E3B7A8; background:#FFF7F0; }
   .share { display:flex; gap:5px; align-items:flex-start; margin:6px 0 2px; color:var(--muted); font-size:.76rem; }
   .share input { margin-top:2px; }
   #builtin { max-height:150px; overflow:auto; white-space:pre-wrap; background:#FFFCF7;
@@ -118,6 +123,7 @@
   @media (max-width:1120px) {
     .workspace { grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr);
                  grid-template-areas:"main adv" "feedback feedback"; }
+    .feedback-grid { grid-template-columns:1fr 1fr; }
   }
   @media (max-width:760px) {
     .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv" "feedback"; }
@@ -204,6 +210,18 @@
         Quy tắc lưu local; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP.</p>
       <label for="overrides">Cách đọc từ</label>
       <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com"></textarea>
+      <div class="rule-examples">
+        <p>Ví dụ nhanh (bấm để thêm vào ô):</p>
+        <div class="row">
+          <button type="button" title="khongdich.com = không dịch chấm com" data-rule="khongdich.com = không dịch chấm com">Domain</button>
+          <button type="button" title="H2 + O2 -> H2O = hát hai cộng ô hai tạo ra nước" data-rule="H2 + O2 -&gt; H2O = hát hai cộng ô hai tạo ra nước">H₂+O₂→H₂O</button>
+          <button type="button" title="CO2 = xê ô hai" data-rule="CO2 = xê ô hai">CO₂</button>
+          <button type="button" title="x^2 = x bình phương" data-rule="x^2 = x bình phương">x²</button>
+          <button type="button" title="\frac{a}{b} = a trên b" data-rule="\frac{a}{b} = a trên b">LaTeX</button>
+          <button type="button" title="m/s = mét trên giây" data-rule="m/s = mét trên giây">m/s</button>
+          <button type="button" title="AI = ây ai" data-rule="AI = ây ai">AI</button>
+        </div>
+      </div>
       <label class="share"><input id="shareOverrides" type="checkbox" checked>
         Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(bỏ tích nếu không muốn)</span></label>
       <div class="row">
@@ -345,6 +363,16 @@ rulesBox.addEventListener("input", () => {
     overrideStatus.textContent = "Đã lưu local; checkbox đang tắt nên không gửi.";
   }
 });
+document.querySelectorAll("[data-rule]").forEach((button) => button.addEventListener("click", () => {
+  const line = button.dataset.rule;
+  const existing = rulesBox.value.split("\n").map((item) => item.trim());
+  if (!existing.includes(line.trim())) {
+    rulesBox.value = rulesBox.value.trim() ? rulesBox.value.trim() + "\n" + line : line;
+  }
+  saveRules(true);
+  lastSuggestedRules = "";
+  overrideStatus.textContent = "Đã thêm ví dụ; bấm Tạo âm thanh để dùng.";
+}));
 $("saveOverrides").addEventListener("click", async () => {
   if (!saveRules(false)) return;
   const rules = parseRules(rulesBox.value);

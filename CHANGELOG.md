@@ -10,6 +10,8 @@
   (Trung bộ chính và Nam gộp D/GI; Nam đọc R khác D/GI).
 - Sửa override cụm/domain: key có dấu chấm/space được áp trước tách token
   (`khongdich.com = không dịch chấm com`).
+- Thêm ví dụ rule hoá học/toán/LaTeX/vật lý trong UI; textarea 3 dòng đủ cao;
+  cho phép ký tự `>`/`<` trong rule literal (vẫn escape khi hiển thị admin).
 - Override cụm/domain tự gửi duyệt khi tạo âm thanh (nếu checkbox bật), không cần bấm Lưu trước.
 - Bố cục lại giao diện: 3 cột trên desktop, tùy chọn nâng cao và góp ý hiện ngay;
   nghỉ cố định chuyển vào tùy chọn nâng cao, kèm tooltip giải thích.

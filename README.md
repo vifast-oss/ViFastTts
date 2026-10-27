@@ -79,7 +79,7 @@ vị trí, và không có "từ lạ" với tiếng Việt chuẩn.
 
 | Hạng mục | Kết quả |
 | --- | --- |
-| Bộ test | **2.573 test pass / 24 skip**; `ruff` sạch |
+| Bộ test | **2.575 test pass / 24 skip**; `ruff` sạch |
 | Parser âm tiết | Vét cạn **49.166 tổ hợp = 0 lỗi**; 39K từ thật: 6.617/6.633 parse OK |
 | Kho âm tiết | 25 âm đầu (thêm Q) · 2 âm đệm · 15 âm chính · 11 âm cuối · 6 thanh → **264 vần** |
 | Model | Acoustic small **6,1M** (N0) / base **16,4M**; Vocos pretrained **13,5M** |
@@ -276,7 +276,7 @@ tools/        parser_audit, compute_mel_stats, train_chunked, n0_social_card, ..
 resources/    brand/ (logo, favicon, OG image, manifest; xem resources/brand/README.md)
 deploy/       vifasttts_demo/ (FastAPI ONNX + Dockerfile + static page)
 scripts/      fetch_ngochuyen_models.sh · run_ngochuyen_demo.sh · run_A2_fixgap.sh
-tests/        2.573 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
+tests/        2.575 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
 docs/         toàn bộ tài liệu (xem mục 10), gồm TRAINING_N0.md / NGOC_HUYEN.md / N0_DEPLOY.md
 ```
 

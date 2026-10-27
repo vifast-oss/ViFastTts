@@ -41,7 +41,7 @@ Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Doc
 - API mẫu: `{"text":"...", "source":"api", "visitor_id":"client-1234"}`.
 - Cách đọc custom: localStorage + `overrides` trong request; xem `GET /api/overrides`;
   tối đa 50 quy tắc, không hỗ trợ regex/script; key có thể là cụm/domain
-  (`khongdich.com = không dịch chấm com`). Gửi để duyệt mặc định bật; quy tắc được gửi khi
+  (`khongdich.com = không dịch chấm com`, `H2 + O2 -> H2O = hát hai cộng ô hai tạo ra nước`). Gửi để duyệt mặc định bật; quy tắc được gửi khi
   tạo âm thanh hoặc bấm Lưu quy tắc; server chỉ lưu suggestion pending, admin duyệt khi có
   `ADMIN_PASSWORD`; chưa đặt thì nút duyệt bị khoá nhưng đề xuất vẫn vào hàng chờ.
 - Góp ý / báo lỗi: `POST /api/feedback`; lưu SQLite bảng `feedback`; nội dung chỉ admin xem
