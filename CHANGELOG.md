@@ -37,7 +37,7 @@
 - Test hiện tại: **2.743 pass / 24 skip**, `ruff` sạch; parser audit **49.104 tổ hợp, 0 lỗi**.
 - TODO: nếu train một model chung nhiều vùng, bắt buộc thêm dialect/speaker embedding;
   train riêng từng vùng thì không cần.
-- Từ điển override rút **570 → 202 mục**: bỏ alias ASR/tiền tố rác (`dipsic`→DeepSeek,
+- Từ điển override rút **570 → 203 mục**: bỏ alias ASR/tiền tố rác (`dipsic`→DeepSeek,
   `dipick`, `dipix`, `analyer`, `antropic`...), bỏ key một chữ cái; thêm viết tắt Việt
   (`UBND`, `HĐND`, `TP.HCM`, `BHXH`, `BHYT`, `CCCD`, `GDP`, `CPI`, `FDI`, `VND`, `USD`...)
   và tên công nghệ phổ biến; sửa `bug`/`download`/`upload`/`windows`/`tensorflow`.
@@ -51,3 +51,8 @@
 - Duyệt 22/32 đề xuất cách đọc (10 loại): giữ STEM/hoá học/tên hợp lệ; loại các bản sai
   `VPS`, `\frac{a}{b} → a trên c`, `H2 + O2 → H2O` đọc sai, `protein`/`Gregor`/`Zizzi's`;
   sửa `canxi cacbonat`/`hiđrocacbonat`; thêm `protein` bản đúng.
+- Email: đọc được local part lạ thay vì bỏ mất (`khongdich@gmail.com`); thêm
+  `khongdich → không dịch`, test hồi quy.
+- Duyệt thêm các đề xuất đọc hợp lệ: `hotline`, `cover`, `coffee shop`, `feed`, `burger`,
+  `cappuccino`, `Band`, `Kumarun`; loại `croissant`, `social media`, `workshop`, `backpack`,
+  `smartphone` vì cách đọc sai/không phù hợp.

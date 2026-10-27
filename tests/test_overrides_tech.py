@@ -83,6 +83,7 @@ def test_khong_con_alias_asr_va_key_nguy_hiem():
     ("VP", "văn phòng"),
     ("protein", "pờ rô tê in"),
     ("apple", "áp pồ"),
+    ("khongdich", "không dịch"),
     ("bug", "bắc"),
     ("download", "đao lốt"),
     ("windows", "uyn đâu"),
@@ -95,3 +96,11 @@ def test_viet_tat_lowercase_van_khop():
     options = _options()
     assert normalize_text("ubnd", options=options) == "ủy ban nhân dân"
     assert normalize_text("hđnd", options=options) == "hội đồng nhân dân"
+
+
+def test_email_local_part_known_va_lạ():
+    assert normalize_text("khongdich@gmail.com") == "không dịch a còng giê meo chấm com"
+    # Username lạ phải được đánh vần, không bỏ mất local part.
+    unknown = normalize_text("nguyenvana@yahoo.com")
+    assert "en giê" in unknown
+    assert "a còng" in unknown

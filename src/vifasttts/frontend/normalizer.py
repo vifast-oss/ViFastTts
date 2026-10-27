@@ -281,6 +281,35 @@ def _range_to_words(m: re.Match[str], dialect: str | Dialect) -> str:
 _PHRASE_OVERRIDE_RE = re.compile(r"[A-Za-zÀ-ỹĐđ]+")
 
 
+def _email_local_to_words(local: str, options: NormalizerOptions) -> str:
+    """Đọc phần local của email: từ đã biết giữ cách đọc; từ lạ đánh vần.
+
+    Trước đây email chỉ đổi dấu chấm và ``@``; local part lạ (vd ``khongdich``)
+    bị bỏ lại thành OOV nên TTS chỉ đọc ``@gmail.com``. Đánh vần là hành vi an toàn
+    cho username; từ tiếng Việt/Anh đã biết vẫn đi qua normalizer bình thường.
+    """
+    from vifasttts.frontend.oov import spell_token
+
+    parts: list[str] = []
+    for part in local.split("."):
+        if not part:
+            continue
+        canonical = _canonicalize_vietnamese_token(part)
+        if canonical is not None:
+            parts.append(canonical)
+            continue
+        reading = normalize_word_token(part, options)
+        if reading != part:
+            parts.append(reading)
+            continue
+        letters = "".join(ch for ch in part if ch.isalpha())
+        digits = "".join(ch for ch in part if ch.isdigit())
+        spelled = spell_token(letters) if letters else ""
+        digit_words = " ".join(SMALL[int(d)] for d in digits)
+        parts.append(" ".join(item for item in (spelled, digit_words) if item))
+    return " chấm ".join(parts)
+
+
 def _apply_phrase_overrides(text: str, options: NormalizerOptions) -> str:
     """Áp các override có dấu/space (domain, phrase) trước khi tách token.
 
@@ -331,7 +360,8 @@ def normalize_text(text: str, dialect: str | Dialect = Dialect.NORTH, *, options
     # Email: đọc "a còng" và "chấm" (V11/P0.2: trước đây "email@abc.com" đọc sót "@").
     text = re.sub(
         r"(?<![\w.+-])([A-Za-z0-9][\w.+-]*?)@([\w-]+(?:\.[\w-]+)+)(?![\w-])",
-        lambda m: m.group(1).replace(".", " chấm ") + " a còng " + m.group(2).replace(".", " chấm "),
+        lambda m: _email_local_to_words(m.group(1), options) + " a còng "
+        + m.group(2).replace(".", " chấm "),
         text,
     )
     # Ký hiệu toán học & liên từ: chỉ thay khi nằm GIỮA chữ/số để không phá trang trí

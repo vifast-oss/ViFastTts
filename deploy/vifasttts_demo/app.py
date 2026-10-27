@@ -195,7 +195,7 @@ def _load_builtin_overrides() -> dict[str, str]:
 
 BUILTIN_OVERRIDES = _load_builtin_overrides()
 
-#: Ví dụ các quy tắc STEM nội bộ (không nằm trong 202 overrides tinh gọn). Đọc thực tế
+#: Ví dụ các quy tắc STEM nội bộ (không nằm trong 203 overrides tinh gọn). Đọc thực tế
 #: được sinh lại bằng normalizer để UI không hiển thị sai.
 STEM_GROUPS = (
     ("Hoá học", ("H2O", "CO2", "H2SO4")),

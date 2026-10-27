@@ -95,7 +95,7 @@ Bất biến được kiểm bằng test: **mọi reading trong từ điển ph�
 
 ### Kiểm toán từ điển override (27/10/2026)
 
-- `configs/overrides_tech_vi.json` rút từ **570 → 202 mục**; bỏ các alias ASR/tiền tố rác
+- `configs/overrides_tech_vi.json` rút từ **570 → 203 mục**; bỏ các alias ASR/tiền tố rác
   như `dipsic` (DeepSeek), `dipick`, `dipix`, `analyer`, `antropic`, `appile`, `cching`;
   bỏ các key một chữ cái (`c`, `l`, `s`, `ch`, `th`...) vì dễ đè lên token bình thường.
 - Bổ sung viết tắt Việt thường gặp: `UBND`, `HĐND`, `UBMTTQ`, `TP.HCM`, `THPT`, `THCS`,
@@ -114,6 +114,9 @@ Bất biến được kiểm bằng test: **mọi reading trong từ điển ph�
   `who` chữ thường **không** bị override để không phá câu tiếng Anh.
 - Key có dấu chấm/khoảng trắng (`TP.HCM`, `v.v.`, `hugging face`) được đưa vào
   `exact_overrides` trong demo để `_apply_phrase_overrides` chạy trước tokenizer.
+- Email: local part lạ (`khongdich@gmail.com`) trước đây bị bỏ lại OOV nên chỉ đọc
+  `@gmail.com`; nay `_email_local_to_words` đánh vần local part lạ, còn tên đã biết
+  (`email`, `khongdich`) đi qua fallback/override. Test: `test_email_local_part_known_va_lạ`.
 - Test: `tests/test_overrides_tech.py` (không còn alias ASR, mọi reading parse được,
   `TP.HCM`/`UBND`/`DeepSeek` đọc đúng); test fallback cũ vẫn chạy.
 
