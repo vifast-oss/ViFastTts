@@ -207,7 +207,7 @@ def _stem_examples() -> dict:
             groups.append({"label": label, "items": items})
     return {
         "note": "Quy tắc STEM nội bộ, áp dụng trước từ điển. Quy tắc của bạn được ưu tiên; "
-                "NaCl, x^2, \\alpha... chưa có quy tắc riêng — thêm vào ô cách đọc.",
+                "NaCl dạng trần, x^2, \\alpha... chưa có quy tắc riêng — thêm vào ô cách đọc.",
         "groups": groups,
     }
 

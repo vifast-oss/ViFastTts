@@ -22,7 +22,7 @@ cd ViFastTts
 
 Script tự:
 1. kiểm tra Python ≥ 3.11;
-2. tải ONNX FP32 N0 từ GitHub release (có kiểm sha256);
+2. tải ONNX FP32 **N0 Q-init** từ GitHub release (có kiểm sha256);
 3. tạo `.venv-demo` + cài `onnxruntime`, `fastapi`, `uvicorn`;
 4. chạy web demo ONNX, **không cần torch**.
 
@@ -50,12 +50,18 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 | Sample rate | 24 kHz, mel 100 bin |
 | Train | 17,9 h sạch, 60k bước, batch 8, MPS |
 | Vocoder | Vocos pretrained `charactr/vocos-mel-24khz` (MIT) |
-| ONNX | FP32, opset 18, acoustic + vocoder |
+| ONNX | FP32, opset 18, acoustic + vocoder; `onset_has_q=true` (Q-init đang live) |
 | Đo holdout | mel L1 **4,0 dB** (z 0,298); duration MAE 1,37 frame |
 | Free-run 80 câu | mel **16,57 dB**; length 0,999; pause F1 0,825 |
 | Thanh điệu | thật 0,9835 · copy 0,9784 · free **0,9743** |
 | A/B tai người | **24/24** chọn model mới so P2 zero-shot |
 | RTF thực tế | **0,045** end-to-end trên VPS CPU (5 câu, 22,44 s audio / 1,01 s xử lý) |
+
+**Đang live:** **Q-init** (N0 cũ + hàng Q = K) — output bit-exact với N0 Bắc cũ; ONNX
+`n0_q/acoustic.onnx` sha256 `16e66b70…`, `healthz` báo `onset_has_q=true`.
+Fine-tune Q 3k (`val mel 0,26320` · `rough 0,76318`) đã export nhưng **chưa chọn**;
+nghe A/B tại release `q-preview-2026-10-27`. Chi tiết: `docs/Q_ONSET.md`,
+`docs/handoff/N0_DEPLOY.md`, `docs/handoff/TRANG_THAI.md`.
 
 ## Mặc định
 
@@ -84,7 +90,7 @@ Trong web/Space có mục **Tùy chọn nâng cao: cách đọc từ**:
 - server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu/IP;
 - admin chỉ duyệt được khi đặt `ADMIN_PASSWORD`; nếu chưa đặt, nút duyệt bị khoá;
 - áp dụng cho request hiện tại, tối đa **50 quy tắc**, key ≤80 ký tự, value ≤120 ký tự;
-- xem được **570 quy tắc có sẵn** qua nút “Xem từ điển có sẵn”.
+- xem được **570 quy tắc có sẵn + ví dụ STEM** qua nút “Xem từ điển & STEM”.
 
 API cũng nhận:
 
@@ -104,12 +110,17 @@ Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùn
 
 ## File
 
-- Checkpoint: `runs/acoustic_ngochuyen/best.pt` (không có trong git; tải release).
-- Config: `configs/small_ngochuyen.yaml`.
-- ONNX: `artifacts/onnx/n0/{acoustic,vocoder}.onnx`.
+- Checkpoint live: `runs/acoustic_ngochuyen_q/init_q.pt` (Q-init, `Q = K`;
+  sha256 `3c330cfc…`); gốc N0: `runs/acoustic_ngochuyen/best.pt`
+  (sha256 `d1b21642…f640070`); fine-tune Q 3k: `runs/acoustic_ngochuyen_q/best.pt`.
+- Config: `configs/small_ngochuyen.yaml` (N0) · `configs/small_ngochuyen_q.yaml` (Q fine-tune).
+- ONNX live: `artifacts/onnx/n0_q/{acoustic,vocoder}.onnx`; candidate:
+  `artifacts/onnx/n0_q_ft/`; bản N0 cũ `artifacts/onnx/n0/` bị runtime mới từ chối.
 - Release:
   - prod candidate nội bộ: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
+    (asset Q đang live: `n0_onnx_fp32_q.zip`, sha256 `ef35567c…`)
   - research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
+  - nghe thử Q: https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27
 
 ## Dữ liệu & huấn luyện lại
 

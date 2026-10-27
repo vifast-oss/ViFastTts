@@ -14,7 +14,7 @@ ONSET + MEDIAL + NUCLEUS + CODA + TONE
 
 - Chỉ loại dấu thanh, không làm mất ă â ê ô ơ ư.
 - Longest match cho onset và coda.
-- Giữ D, GI, R riêng.
+- Giữ D, GI, R, V riêng (một số thổ ngữ Bắc Trung Bộ còn phân biệt; Trung bộ chính/Nam gộp D/GI).
 - `gi` dùng chung chữ i: trước `ê`, cuối từ hoặc phụ âm thì i thuộc vần (`gì` = GI + I, `giếng` = GI + IÊ, cùng vần với `tiếng`); trước nguyên âm khác (`già`, `giữ`, `giường`) thì i là digraph /z/ câm.
 - Giữ TR, CH riêng.
 - Giữ S, X riêng.

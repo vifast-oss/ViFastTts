@@ -8,9 +8,9 @@ $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $PSScriptRoot
 $Venv = Join-Path $Root ".venv-demo"
-$Models = Join-Path $Root "artifacts\onnx\n0"
+$Models = Join-Path $Root "artifacts\onnx\n0_q"
 $Url = "https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32_q.zip"
-$Sha = "3521ac2e79aabf179017a2ba7abcaf56f13bbf852efd10a3a7742b609045c687"
+$Sha = "ef35567c4433cf823db78ef90f716a259d14c79d62bed53e621f93b5231a01ed"
 
 function Resolve-Python {
     $candidates = @()
@@ -36,7 +36,7 @@ $py = Resolve-Python
 
 if (-not ((Test-Path (Join-Path $Models "acoustic.onnx")) -and
           (Test-Path (Join-Path $Models "vocoder.onnx")))) {
-    Write-Host "Tải ONNX N0..."
+    Write-Host "Tải ONNX N0 Q-init..."
     $zip = Join-Path $env:TEMP "n0_onnx_fp32.zip"
     Invoke-WebRequest -Uri $Url -OutFile $zip
     $actual = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLower()

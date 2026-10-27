@@ -1,9 +1,11 @@
-# Acoustic v2 — thiết kế chốt (Plan + Addendum 1–5)
+# Acoustic v2 — thiết kế chốt + nhật ký as-built (§0–§51)
 
-> **Trạng thái: ĐÓNG thiết kế (13/10/2026).** Thứ tự ưu tiên nguồn gốc:
-> **Addendum 5 > 4 > 3 > 2 > 1 > Plan**. Tài liệu này là bản tổng hợp chốt để triển khai;
-> số đo thực thi ở §15. Nền nghiên cứu: `docs/TTS_ARCHITECTURE_RESEARCH.md` §9 (v2.1),
-> `docs/REVISION_PLAN_V2.md`.
+> **Trạng thái:** thiết kế đóng 13/10/2026; tài liệu được **ghi tiếp số đo thực thi** đến §51
+> (20/10/2026). Đây là hồ sơ thiết kế/nghiên cứu acoustic v2 trên codelung; **model đang live**
+> là N0 Ngọc Huyền (recipe small b8 + Q-init), xem `docs/handoff/TRANG_THAI.md`.
+> Thứ tự ưu tiên nguồn gốc: **Addendum 5 > 4 > 3 > 2 > 1 > Plan**; mục mới hơn thắng mục cũ.
+> Nền nghiên cứu: `docs/TTS_ARCHITECTURE_RESEARCH.md` §9 (v2.1),
+> `docs/archive/plans/REVISION_PLAN_V2.md` (lịch sử).
 
 ## 0. Mục tiêu & nguyên tắc
 
@@ -436,7 +438,7 @@ Build: `.venv/bin/vifasttts cache-features --config configs/small_codelung_v2.ya
 - **Chưa xong (đợt 2)**: dataset v2 (nối `v2_targets` vào collate + raise khi thiếu `seg_durations`),
   loss v2, `export.py`/runtime rẽ nhánh `arch` (+ speed), eval `tf_seg`/`tf_syl` v2, warm-start
   train từ B0 → cổng so B0.
-- Checklist tích hợp chi tiết: `docs/V2_INTEGRATION_CHECKLIST.md` (sub-agent, 127 dòng).
+- Checklist tích hợp chi tiết: `docs/archive/plans/V2_INTEGRATION_CHECKLIST.md` (sub-agent, 127 dòng).
 
 ## 24. Task 5 (đợt 2) — dataset v2 + loss v2 + export/runtime rẽ nhánh (13/10/2026)
 
@@ -1650,7 +1652,7 @@ biểu diễn (vocoder-side) — chưa có đòn rẻ.
 
 Chạy tự động qua đêm bằng `tools/night_chain.sh` (idempotent): chờ mel_sharp → probe từng config →
 4 run **b8@46k → 70k** (một biến số mỗi run) → bench best+last (mốc `b8_filt`, cùng `val_filt`) →
-CER-100 → probe đuôi hiếm → demo nghe. Bảng đầy đủ + cổng: `docs/handoff/OVERNIGHT_18_19.md`.
+CER-100 → probe đuôi hiếm → demo nghe. Bảng đầy đủ + cổng: `docs/archive/handoff/OVERNIGHT_18_19.md`.
 
 | Ứng viên (bước) | mel_z | dB | rough | C | CER-20 | CER-100 | Δjitter | Δhnr | cổng tương đối | probe hiếm (hnr/jit) |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -1712,7 +1714,7 @@ này lọt qua cả bản `_filt`.
 **Thí nghiệm (đang chạy 19/10 sáng)**: manifest `train_clean_v2_dur_seg_slot4_dropnoise.jsonl`
 (9.763 → 9.315 row, bỏ đúng 448 row của `4kyqfOypVWI`), resume b8@46k→70k (một biến số), probe ĐẠT
 (0,25 s/bước) → run `runs/acoustic_v2_b8_dropnoise` + chain tự bench/CER-100/probe đuôi hiếm/demo
-(`/dropnoise/`) → báo cáo `docs/handoff/DROPNOISE_19_10.md`. Nếu creak tốt lên ⇒ mở rộng: lọc lại
+(`/dropnoise/`) → báo cáo `docs/archive/handoff/DROPNOISE_19_10.md`. Nếu creak tốt lên ⇒ mở rộng: lọc lại
 theo **nền nhiễu rộng** (không chỉ hiss) + xét cả dữ liệu **Vocos** (Vocos cũng đã học video nhiễu).
 
 ### 48.2 Kết quả screening "bỏ video nhiễu" (19/10) — mel tốt lên, creak proxies lẫn với độ nét

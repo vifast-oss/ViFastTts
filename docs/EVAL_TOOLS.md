@@ -1,7 +1,12 @@
 # Danh mục thước đo & quy trình đánh giá (v2) — `docs/EVAL_TOOLS.md`
 
 > Một chỗ liệt kê **mọi thước** đang dùng, cách chạy, ý nghĩa, cổng, và **bẫy thống kê**.
-> Số liệu gốc: `docs/ACOUSTIC_V2.md` §30–§39. Cập nhật: 14/10/2026.
+> Số liệu gốc: `docs/ACOUSTIC_V2.md` §30–§51. Cập nhật: 27/10/2026.
+>
+> **Lưu ý phạm vi:** bảng mốc B0/b8/base 40k dưới đây là **codelung v2** (dùng để so checkpoint
+> acoustic v2). Model **N0 Ngọc Huyền** có bộ đo riêng: holdout mel **4,0 dB** (z 0,298),
+> free-run **16,57 dB**, thanh free **0,9743**, pause F1 **0,825** — xem
+> `docs/handoff/N0_agent2.md`. Đừng trộn số N0 với bảng codelung.
 
 ## 0) Nguyên tắc vàng (đã trả giá 2 lần)
 

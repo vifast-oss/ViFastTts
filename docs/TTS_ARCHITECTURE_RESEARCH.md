@@ -286,7 +286,7 @@ Chú thích: "—" = không có số liệu được công bố trong nguồn đ
 
 ## 9. Đề xuất kiến trúc v2 cho ViFastTts
 
-Đề xuất dưới đây **giữ nguyên triết lý** của `docs/DESIGN_V2.md` và **cụ thể hóa** những điểm còn mơ hồ hoặc chưa được triển khai trong code hiện tại (`src/vifasttts/models/vifasttts.py` hiện chỉ expand ở cấp âm tiết, variance ở cấp âm tiết). Nội dung là "v2.1": cùng sơ đồ, thêm cấp segment và các quyết định kỹ thuật để ONNX + deterministic không còn rủi ro.
+Đề xuất dưới đây **giữ nguyên triết lý** của `docs/archive/design/DESIGN_V2.md` và **cụ thể hóa** những điểm còn mơ hồ hoặc chưa được triển khai trong code hiện tại (`src/vifasttts/models/vifasttts.py` hiện chỉ expand ở cấp âm tiết, variance ở cấp âm tiết). Nội dung là "v2.1": cùng sơ đồ, thêm cấp segment và các quyết định kỹ thuật để ONNX + deterministic không còn rủi ro.
 
 ### 9.1 Sơ đồ tổng thể (inference)
 

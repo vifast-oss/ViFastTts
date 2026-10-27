@@ -35,8 +35,8 @@ Ba tầng: **chính tả** (`Orthography`) → **âm vị học** (`AbstractSyll
   âm đơn + `IÊ/UÔ/ƯƠ` + `OO` (từ vay, tách riêng vì người bản ngữ phân biệt
   `xoong ≠ xong`).
 - Không gian lý thuyết: **264 rime** (15 + 9 với âm đệm W, × 11 coda),
-  1.200 cặp (rime, thanh) và 6.336 shape theo **inventory cũ 24 onset**;
-  số âm tiết trừu tượng sau Q sẽ chốt lại bằng validator; audit chữ viết kiểm **49.166 tổ hợp chính tả**.
+  1.200 cặp (rime, thanh); 6.336 shape theo inventory cũ 24 onset, và **6.600 shape lý thuyết**
+  với 25 onset sau Q (25 × 264); validator xác nhận **49.104 tuple chính tả hợp lệ** (0 lỗi).
 - Bất biến đang được test trong CI (`tests/test_parser_matrix.py`):
   `parse → compose → parse` ổn định; đầu ra tuân bảng
   `MEDIAL_NUCLEUS_COMPATIBILITY`/`CODA_TONE_COMPATIBILITY`; coda tắc chỉ
@@ -211,7 +211,7 @@ mà không phải feature gộp vào phụ âm đầu).
 | HCMUS CLC | 6.835 âm tiết phân biệt | từ điển học thuật |
 | Vietlex / danh sách cộng đồng | 7.729 / 6.653–7.884 | tùy tiêu chí đếm |
 | COCOSDA-2018 | ~19.000 khả năng / ~6.500 dùng | |
-| **Repo (bảng)** | **25 onset; số shape/tuple chốt lại sau Q** | vét cạn được, không UNK |
+| **Repo (bảng)** | **25 onset × 264 rime = 6.600 shape lý thuyết; 49.104 tuple hợp lệ** | vét cạn được, không UNK |
 
 Các con số xấp xỉ nhau (~6.100–7.900 tùy tiêu chí); repo nằm đúng dải này và
 mạnh hơn ở chỗ **kiểm chứng vét cạn** thay vì phụ thuộc từ điển.
@@ -249,7 +249,7 @@ wordlist) và các script audit mở rộng; kết quả:
 
 | Kiểm chứng | Kết quả |
 | --- | --- |
-| Ma trận parse→compose→parse | 49.166 tổ hợp, **0 vấn đề** |
+| Ma trận parse→compose→parse | 49.104 tổ hợp, **0 vấn đề** |
 | Wordlist 39K | **6.617/6.633** parse; 16 fallback = typo/từ vay (đã phân loại) |
 | Wordlist 74K | 1.382 fallback — chủ yếu từ vay kỹ thuật (`axit`, `album`...), từ dân tộc (`hđrung`, `kpă`...), mojibake, chữ cái đơn; **không có từ Kinh chuẩn nào bị rơi** |
 | Rime ngữ liệu dùng | 180/264 rime "sinh được"; **0 rime ngoài bảng** |

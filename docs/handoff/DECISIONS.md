@@ -6,7 +6,10 @@
 >
 > - Quyết định của Agent 0: mã `V<NN>.A<k>` (trong vòng) hoặc `V<NN>b.<k>` (bổ sung).
 > - Ngoại lệ có phạm vi: `docs/handoff/EXCEPTIONS.md`.
-> - Đặc tả nguyên văn: `docs/handoff/V1842_agent0.md`.
+> - Đặc tả nguyên văn: `docs/archive/handoff/V1842_agent0.md`.
+>
+> **27/10/2026:** N0 Q-init đang live; các quyết định V18.xx dưới đây là lịch sử, không thay
+> trạng thái hiện hành. Q và deploy N0: `docs/Q_ONSET.md`, `docs/handoff/N0_DEPLOY.md`.
 
 ---
 

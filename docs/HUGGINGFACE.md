@@ -1,9 +1,10 @@
 # Hugging Face — đã upload
 
 - Repo: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
-- Commit ONNX Q: `0b08245ee96710a738d7b1e543151e026b4f6cde` (acoustic Q, `onset_has_q=true`)
-- Commit gần nhất khi thêm logo: `460afac94b40fe6ff1504a28e748f0aeb8233cba`
-  (model card; asset logo ở các commit trước đó).
+- Commit ONNX Q: `0b08245ee96710a738d7b1e543151e026b4f6cde` (acoustic Q, `onset_has_q=true`;
+  file `onnx/acoustic.onnx` sha256 `16e66b70…`, khớp bản live).
+- Commit model card/logo: `460afac94b40fe6ff1504a28e748f0aeb8233cba`
+  (asset logo ở các commit trước đó).
 - License metadata: `cc-by-nc-4.0`; model chỉ dùng research/non-commercial.
 - Đã có: checkpoint, config, mel/f0 stats, Vocos, ONNX FP32, 10 demo, model card, license.
 - Đã kiểm tra `model_info` + tải thử `onnx/acoustic.onnx` (HTTP 200, 31.626.168 byte).

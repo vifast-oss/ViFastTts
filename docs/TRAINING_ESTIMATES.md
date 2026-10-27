@@ -136,7 +136,7 @@ Cùng batch đo như trên:
 | Dataloader **không** cache | **6,34 s/batch** | STFT + F0 autocorrelation → **cache feature là bắt buộc** với clip dài |
 | Cache feature 8 workers | **33 giây / 51 giờ audio** | 6,7 GB cho 13.225 clip |
 | Vocoder CPU + crop 128 frame | **0,166 s/bước** | Random crop ngắn thay vì clip 14s (nhanh ~50×) |
-| Bộ nhớ MPS | leo tới **40 GB → OOM** | Phải `empty_cache` định kỳ + cap validation + chunked runner — xem `docs/TRAINING_RUN_CODELUNG.md` §3 |
+| Bộ nhớ MPS | leo tới **40 GB → OOM** | Phải `empty_cache` định kỳ + cap validation + chunked runner — xem `docs/archive/training/TRAINING_RUN_CODELUNG.md` §3 |
 
 ### 3.2 Dự đoán `base`/`large` trên dataset @codelung (Mac mini M6 32GB) — *ước lượng*
 

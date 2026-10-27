@@ -27,6 +27,6 @@ if [ ! -x "$VENV/bin/python" ]; then
 fi
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check -r "$ROOT/deploy/vifasttts_demo/requirements.txt"
 export PYTHONPATH="$ROOT/src"
-export MODEL_DIR="$ROOT/artifacts/onnx/n0"
+export MODEL_DIR="$ROOT/artifacts/onnx/n0_q"
 echo "Mở http://$HOST:$PORT  (Ctrl-C để dừng)"
 exec "$VENV/bin/uvicorn" deploy.vifasttts_demo.app:app --host "$HOST" --port "$PORT"

@@ -19,5 +19,11 @@
   nghỉ cố định chuyển vào tùy chọn nâng cao, kèm tooltip giải thích.
 - Thêm validator cảnh báo W sau phụ âm môi, allowlist `resources/loanword_labial_w.txt`
   (`buýt`, `voan`, `boa`).
+- Quickstart: `fetch_ngochuyen_models.sh`/`run_ngochuyen_demo.sh` dùng thư mục `artifacts/onnx/n0_q`;
+  PowerShell dùng đúng sha256 của gói Q (trước đó URL Q nhưng hash N0 cũ).
+- Tài liệu: thêm `docs/README.md` (mục lục hiện hành/tham chiếu/lịch sử), viết lại
+  `docs/handoff/TRANG_THAI.md` theo trạng thái live; chuyển thiết kế gốc, kế hoạch/review cũ,
+  run @codelung và báo cáo V08–V18.52 vào `docs/archive/` (không xoá).
+- Test hiện tại: **2.575 pass / 24 skip**, `ruff` sạch; parser audit **49.104 tổ hợp, 0 lỗi**.
 - TODO: nếu train một model chung nhiều vùng, bắt buộc thêm dialect/speaker embedding;
   train riêng từng vùng thì không cần.

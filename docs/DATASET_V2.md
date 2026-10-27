@@ -1,8 +1,12 @@
 # DATASET V2 — trạng thái thực thi (12/10/2026)
 
 > Chủ dự án giao "làm dữ liệu sạch nhất/tốt nhất theo ý agent". Tài liệu này ghi **quyết
-> định + kết quả thực thi** của bước dựng lại dữ liệu (REBUILD_PLAN_M6 §3). Nguồn sự thật
-> kỹ thuật: `docs/REBUILD_PLAN_M6.md`, `docs/R6_DIARIZATION_RESULTS.md`, `docs/VOCODER_VOCOS.md`.
+> định + kết quả thực thi** của bước dựng lại dữ liệu codelung v2 (REBUILD_PLAN_M6 §3, lịch sử).
+> Nguồn sự thật kỹ thuật: `docs/archive/plans/REBUILD_PLAN_M6.md`,
+> `docs/archive/research/R6_DIARIZATION_RESULTS.md`, `docs/VOCODER_VOCOS.md`.
+>
+> **N0 (Ngọc Huyền) không dùng dataset này**: N0 dùng `pnnbao-ump/ngochuyen_voice`
+> (CC-BY-NC-4.0, 19,89 h sạch) — xem `docs/handoff/NGUYEN_DATA.md` và `docs/TRAINING_N0.md`.
 
 ## 1. Quyết định (chốt 12/10, tối)
 

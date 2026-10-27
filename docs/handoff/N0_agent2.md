@@ -1,9 +1,10 @@
 # N0 — Agent 2: train small mới trên `ngochuyen_voice`
 
-> **Trạng thái: DỪNG — ĐÃ TRAIN XONG, CHỜ NGƯỜI NGHE.** Không đổi production, không ONNX.
+> **Trạng thái (cập nhật 27/10/2026):** đã train xong; **Q-init đã deploy live**;
+> fine-tune Q 3k là candidate, chưa chọn. Các mục đo acoustic/vocoder dưới đây là báo cáo gốc.
 > **Dataset CC-BY-NC-4.0** → chỉ dùng phi thương mại/nghiên cứu.
-> **Commit gốc**: `8a2b94f` · **Báo cáo này**: commit hồ sơ cuối vòng.
-> Tệp đặc tả/recipe: `docs/handoff/NGUYEN_DATA.md`.
+> **Commit gốc**: `8a2b94f` · Tệp đặc tả/recipe: `docs/handoff/NGUYEN_DATA.md`.
+> Trạng thái hiện hành: `docs/handoff/TRANG_THAI.md`; deploy: `docs/handoff/N0_DEPLOY.md`; Q: `docs/Q_ONSET.md`.
 
 ## 0. Tóm tắt
 
@@ -171,8 +172,10 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   (`n0_ngochuyen_research_v1.zip`, sha256 `152d9059…f0d4fa`).
 - Cả hai gồm acoustic 60k, config/stats, Vocos pretrained, 10 demo; research thêm
   `TRAINING.md`/`REPORT.md`. **Không** kèm data gốc; **không** kèm Vocos fine-tune.
+- **Q (sau báo cáo gốc):** prod có thêm `n0_onnx_fp32_q.zip` (Q-init, đang live);
+  preview tạm `q-preview-2026-10-27` có 2 WAV Q-init vs fine-tune 3k.
 - **Research/non-commercial — không production thương mại**, dataset CC-BY-NC-4.0.
-- Đã xoá toàn bộ release audio test cũ; chỉ còn 2 release trên.
+- Đã xoá toàn bộ release audio test cũ; hiện còn 2 release chính + preview Q.
 - Đã tải lại asset, kiểm sha256, giải nén chạy `inference.py` CPU thành công.
 
 ## 12. Xác nhận tai trên 10 câu mới (27/10/2026)
@@ -188,10 +191,12 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 
 ## 13. ONNX + demo service (27/10/2026)
 
-- Đã export `artifacts/onnx/n0/acoustic.onnx` (30 MB) và `vocoder.onnx` (52 MB), opset 18,
-  FP32; `synthesize-onnx` smoke-test CPU pass.
+- Bản đầu: `artifacts/onnx/n0/` (N0 chưa Q; giờ bị runtime mới từ chối).
+- **Bản đang live:** `artifacts/onnx/n0_q/acoustic.onnx` (Q-init, sha256 `16e66b70…`) +
+  `vocoder.onnx` (`b3eb09cf…`), opset 18, FP32; `synthesize-onnx` smoke-test CPU pass.
 - Demo public: **https://vifasttts.hoctuthien.com/**
   (VPS `jp` qua Tailscale → LXD `hoctuthien-vps` → Docker `/opt/vifasttts` → Traefik).
 - Service dùng ONNX Runtime, alpha 1.5, Vocos pretrained, model tự nghỉ mặc định;
   fixed pause là checkbox tắt mặc định. Rate limit 6 request/phút/IP, text 300 ký tự.
-- Release có thêm `n0_onnx_fp32.zip` (sha256 `3521ac2e…c687`).
+- Release có `n0_onnx_fp32_q.zip` (sha256 `ef35567c…`); gói N0 cũ `n0_onnx_fp32.zip`
+  (sha256 `3521ac2e…`) vẫn còn cho lịch sử.

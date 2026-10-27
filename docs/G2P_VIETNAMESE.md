@@ -228,7 +228,7 @@ vig2p("anh có một vài issues muốn discuss với em", separator="/")
 
 ## 6. Khuyến nghị tích hợp vào ViFastTts
 
-Bối cảnh: ViFastTts coi parser `ONSET + MEDIAL + NUCLEUS + CODA + TONE` là nguồn sự thật cho chính tả và category trừu tượng; neural input là 7 trường vocab ID, không phải chuỗi ký tự thô; phương ngữ nằm ở normalizer; English fallback là **từ điển respelling xác định**, không phải G2P tiếng Anh tổng quát (`docs/FULL_DESIGN.md`). Vì vậy G2P ngoài nên đóng vai trò **công cụ build-time và kiểm chứng**, không phải runtime engine.
+Bối cảnh: ViFastTts coi parser `ONSET + MEDIAL + NUCLEUS + CODA + TONE` là nguồn sự thật cho chính tả và category trừu tượng; neural input là 7 trường vocab ID, không phải chuỗi ký tự thô; phương ngữ nằm ở normalizer; English fallback là **từ điển respelling xác định**, không phải G2P tiếng Anh tổng quát (`docs/archive/design/FULL_DESIGN.md`). Vì vậy G2P ngoài nên đóng vai trò **công cụ build-time và kiểm chứng**, không phải runtime engine.
 
 ### 6.1 Nên dùng G2P để làm gì
 
@@ -253,7 +253,7 @@ Bối cảnh: ViFastTts coi parser `ONSET + MEDIAL + NUCLEUS + CODA + TONE` là 
 - **Không thay parser cấu trúc âm tiết** hay suy ONSET/MEDIAL/NUCLEUS/CODA từ output IPA: G2P trả chuỗi âm vị, đã mất thông tin chính tả (D/GI/R, TR/CH, S/X, vị trí dấu thanh cũ/mới) — thứ mà ViFastTts cần.
 - **Không đưa chuỗi ký tự IPA thô làm input neural**: phá vỡ thiết kế component vocab, làm vocab phình to, mất ổn định khi đổi engine.
 - **Không dùng code GPL-3.0 trong runtime/sản phẩm** (vPhon, phonemizer, espeak-ng, `cmudict`): chỉ dùng ở công cụ nghiên cứu/đối chiếu ngoài repo runtime. Ưu tiên sea-g2p (Apache-2.0), MFA models (CC BY 4.0), WikiPron code (Apache-2.0, lưu ý data theo Wiktionary).
-- **Không dùng để đoán tên riêng không biết trong production**: cả sea-g2p lẫn viG2P đều đọc theo luật/đánh vần và có thể sai; thiết kế hiện tại đã đúng khi yêu cầu "tên sản phẩm, tên người... phải thêm vào override" (`docs/FULL_DESIGN.md`).
+- **Không dùng để đoán tên riêng không biết trong production**: cả sea-g2p lẫn viG2P đều đọc theo luật/đánh vần và có thể sai; thiết kế hiện tại đã đúng khi yêu cầu "tên sản phẩm, tên người... phải thêm vào override" (`docs/archive/design/FULL_DESIGN.md`).
 - **Không kỳ vọng xử lý teencode/UGT**: benchmark UGTPhon 2026 cho thấy PER non-canonical của viG2P là 78.4 và Epitran 75.1 — cần tầng normalizer/override riêng.
 
 ### 6.3 Luồng dữ liệu đề xuất

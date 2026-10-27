@@ -1,8 +1,9 @@
 # N0 — dữ liệu & huấn luyện small trên `ngochuyen_voice`
 
 > **Trạng thái hiện hành**: xem `docs/handoff/TRANG_THAI.md`.
-> Tệp này là hồ sơ dữ liệu/kế hoạch của đợt **N0** (dataset mới), không thay V18.52.
-> **Không đổi production, không đụng ONNX.** Dataset CC-BY-NC-4.0 → chỉ dùng nội bộ/nghiên cứu.
+> Tệp này là hồ sơ dữ liệu/kế hoạch gốc của đợt **N0** (dataset mới), không thay V18.52.
+> Kế hoạch gốc ghi “không đổi production”; thực tế sau đó N0 đã lên ONNX live (Q-init) —
+> xem `docs/handoff/N0_DEPLOY.md`. Dataset CC-BY-NC-4.0 → chỉ dùng nội bộ/nghiên cứu.
 
 ## 1. Nguồn
 

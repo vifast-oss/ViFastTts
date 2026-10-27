@@ -20,7 +20,7 @@
 | — | Tổng pipeline (không tính tải) | **~8 giờ** |
 
 Train 60k với 9.546 segment, batch 8 ≈ 1.193 bước/epoch ⇒ **~50 epoch**. Cache feature là bắt buộc;
-không cache dataloader từng rất chậm (xem `TRAINING_RUN_CODELUNG.md`).
+không cache dataloader từng rất chậm (xem `docs/archive/training/TRAINING_RUN_CODELUNG.md`).
 
 ## 2. Small 6,1M cần bao nhiêu dữ liệu?
 

@@ -20,7 +20,7 @@ Dockerfile cần context phẳng; tạo staging rồi build:
 TMP=$(mktemp -d)
 cp -R src app.py static Dockerfile requirements.txt "$TMP/"
 mkdir -p "$TMP/models"
-cp artifacts/onnx/n0/*.onnx "$TMP/models/"
+cp artifacts/onnx/n0_q/*.onnx "$TMP/models/"
 docker build -t vifasttts-demo "$TMP"
 docker run --rm -p 8090:8000 vifasttts-demo
 # http://127.0.0.1:8090

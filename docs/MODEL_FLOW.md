@@ -21,6 +21,16 @@ duration/f0/vuv/energy → **duration predictor** quyết định độ dài t�
 mel được **vocoder** đổi thành sóng. Train dùng duration *thật* (teacher forcing);
 inference dùng duration *tự dự đoán*. Không sampling, chạy tất định.
 
+### 0.1 Hai `arch` đang có
+
+| `arch` | Dùng ở đâu | Khác biệt chính |
+| --- | --- | --- |
+| `v1_syl` (mặc định khi checkpoint thiếu `arch`) | B0, các run codelung v1 | 1 duration/âm tiết, 8 output ONNX (9 nếu phonation) |
+| `v2_slot5` | b8/base 40k, **N0 Ngọc Huyền đang live** | 5 slot/âm tiết `[O,M,N,C,G]` + `G_lead`; duration 2 tầng; output thêm `slot_durations`, `pause_gate`; ONNX 10 output (11 nếu phonation); input `features + speed + gate_threshold` |
+
+Thiết kế/đo `v2_slot5`: `docs/ACOUSTIC_V2.md` §1–§29 và §30–§51. N0 dùng MFA thật,
+không dùng alignment placeholder. Q: `docs/Q_ONSET.md`.
+
 ## 1. Sơ đồ tổng thể
 
 ```text
@@ -305,9 +315,14 @@ thử nghiệm để dùng GPU/ANE. Chi tiết + số đo: `docs/APPLE_SILICON.m
 ```text
 mel [B,T,100], log_duration [B,N], durations [B,N], f0 [B,N],
 vuv_logits [B,N], energy [B,N], (phonation [B,N,3] nếu use_phonation),
-tone_logits [B,N,6], lengths [B]
+tone_logits [B,N,6], lengths [B],
+# v2_slot5 thêm cuối:
+slot_durations [B,1+5N], pause_gate [B,N]
 ```
 
+- `v2_slot5` dùng input `features + speed [1] + gate_threshold [1]` và output thêm
+  `slot_durations` + `pause_gate`; metadata có `arch`, `onset_has_q`, `seg_method`.
+  Xem `docs/ACOUSTIC_V2.md` §23–§29; N0 live dùng Q-init.
 - `--precision fp32|fp16|int8`: fp16 chuyển toàn graph (giữ io types); int8 quantize
   động weight (QUInt8). Bản chuyển ghi từ file trung gian rồi xoá — `output` luôn hoàn chỉnh.
 - **Vocoder ONNX** (`export-vocoder-onnx`): wrapper trả `spec_real/spec_imag`
@@ -334,7 +349,7 @@ tone_logits [B,N,6], lengths [B]
 1. **Alignment**: không có `durations` thật thì chia đều theo trọng số/frame — placeholder.
    Muốn chất lượng cần MFA/aligner thật ghi `durations` vào manifest (§4 khảo sát).
 2. **Vocoder tham chiếu + nâng cấp**: MPD-lite (mặc định cũ) và **MPD đầy đủ + MRD + MR-STFT**
-   (config `discriminator: mpd_mrd`, `stft_weight > 0`) — xem `docs/REVISION_PLAN_V2.md` §10.
+   (config `discriminator: mpd_mrd`, `stft_weight > 0`) — xem `docs/archive/plans/REVISION_PLAN_V2.md` §10.
 3. **Phonation conditioning** mới ở mức reference (`model.use_phonation`): model dự đoán
    3 kênh; chưa có đánh giá nghe/thính học.
 4. **ONNX**: đã có runtime đầy đủ (acoustic + vocoder spectrum + iSTFT numpy ở

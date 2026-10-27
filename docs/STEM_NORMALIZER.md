@@ -8,7 +8,7 @@ Hỗ trợ `$...$`, `$$...$$`, `\\(...\\)`, `\\[...\\]`, phân số, căn, số 
 
 ## Hoá học
 
-Hỗ trợ `\\ce{...}`, `\\chem{...}` và công thức độc lập như `H2O`, `CO2`, `NaCl`, `H2SO4`, `Ca(OH)2`. Nguyên tố được đọc theo tên tiếng Việt và chỉ số được đọc bằng number normalizer.
+Hỗ trợ `\\ce{...}`, `\\chem{...}` và công thức độc lập **có chỉ số** như `H2O`, `CO2`, `H2SO4`, `Ca(OH)2`. Nguyên tố được đọc theo tên tiếng Việt và chỉ số được đọc bằng number normalizer. Công thức không có chỉ số như `NaCl` nên viết `\\ce{NaCl}` (hoặc thêm rule `NaCl = natri clo`); dạng trần hiện được giữ nguyên để tránh nhầm mã sản phẩm.
 
 ## Vật lý và đơn vị
 

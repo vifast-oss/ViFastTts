@@ -114,7 +114,7 @@ Kết quả kênh tham chiếu: pool chủ kênh 12.278 clip/47,68h → loại *
 tiếng khác (0,19%) → **12.230 clip/47,48h**. Kiểm chứng kèm theo (đạt toàn bộ): anchor đúng `spk0`
 100% clip (cov ≥0,95, 1 clip lệch nhẹ đã kiểm lại), không clip nào vượt cửa sổ model (max 20,6s;
 anchor 6s + 20,6s < 27,2s), chạy lại tái lập tuyệt đối. Chi tiết + bảng số đầy đủ:
-`docs/R6_DIARIZATION_RESULTS.md`.
+`docs/archive/research/R6_DIARIZATION_RESULTS.md`.
 
 ## 6. Tuỳ chọn chính
 
@@ -171,7 +171,7 @@ data/codelung/
 
 > **Ràng buộc cứng về thứ tự:** overrides → reparse → MFA. Lab/lexicon của MFA sinh từ trường
 > `normalized`; nếu reparse sau khi align thì số âm tiết lệch → durations hỏng, phải align lại.
-> Các bước ghi "(đang hoàn thiện)" thuộc lộ trình `docs/REBUILD_PLAN_M6.md`.
+> Các bước ghi "(đang hoàn thiện)" thuộc lộ trình `docs/archive/plans/REBUILD_PLAN_M6.md`.
 
 ```bash
 # (1) Tải kênh của bạn → clip 24 kHz + manifest + SRT + dataset card (resume được)
@@ -223,7 +223,7 @@ python tools/mfa_build_corpus.py --manifest data/<ds>/train.jsonl \
 ```
 
 Kết quả thật của các bước (1)–(5) trên kênh tham chiếu: xem `docs/YOUTUBE_DATASET.md` mục 3 và
-`docs/R6_DIARIZATION_RESULTS.md`.
+`docs/archive/research/R6_DIARIZATION_RESULTS.md`.
 
 ## 10. Giới hạn (đọc trước khi train)
 

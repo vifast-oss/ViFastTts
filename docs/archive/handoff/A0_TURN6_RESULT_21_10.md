@@ -1,0 +1,145 @@
+> **LỊCH SỬ — không còn hiệu lực (archive từ 27/10/2026).**
+> Trạng thái hiện hành: `docs/handoff/TRANG_THAI.md`; mục lục: `docs/README.md`.
+> Giữ để audit/tái lập, không dùng để quyết định.
+
+# A0 lượt 6 — Việc 4a (thước năng lượng) + bỏ α — 21/10/2026
+
+## 0. Bỏ α (theo chỉ đạo người dùng)
+
+- **Mặc định α = 0** ở mọi nơi: `src/vifasttts/cli.py` (1,5 → 0), `infer.py` (đã 0), `tools/steady_demo.py`,
+  `tools/roughness_dashboard.py`, `tools/coda_realization.py`, `tools/creak_rarity_probe.py`,
+  `tools/adv_energy_audit.py`, `tools/adv_progress_demo.py`.
+- `chunking.py` và `export.py` **không có** tham số α (α chỉ áp trong `infer.py`/CLI/tool) — ghi nhận,
+  không cần xoá. Sau khi chốt checkpoint sẽ xoá hẳn tham số khỏi `infer.py` + CLI + docs.
+- Trang nghe tiến trình đã sinh lại **chỉ α=0**: `/adv_progress/` (P1) và `/adv_progress_p2/` (P2).
+- 2.525 test pass, ruff sạch.
+
+## 1. Việc 4a — spike năng lượng từng âm tiết (40 segment val, 683 âm tiết, TF, EMA)
+
+Cách đo: mean log-mel **đã bỏ z-norm** (dB = 8,686 × log) trên frame của âm tiết, **trừ trung vị câu**
+(độ to tương đối); spike = (synth − thật) > +3 dB; RMS dB của waveform sau Vocos cùng cách.
+
+| checkpoint | spike α=0 | MAE dB α=0 | **RMS spike α=0** | (α=1,5: spike / RMS spike) |
+|---|---|---|---|---|
+| v3.2 | 0,186 | 2,589 | **0,078** | 0,177 / 0,108 |
+| P1 @2k | 0,196 | 2,600 | 0,079 | 0,190 / 0,101 |
+| P1 @4k | 0,208 | 2,624 | 0,084 | 0,205 / 0,107 |
+| P1 @6k | 0,205 | 2,632 | 0,089 | 0,206 / 0,101 |
+| P2 @2k | 0,189 | 2,613 | **0,123** | 0,190 / 0,110 |
+
+### Kết luận H1/H2/H3
+
+- **H1 (α cộng dồn) — ĐÚNG một phần, ở mức WAVEFORM**: trên mel, α gần như không đổi spike
+  (0,186 → 0,177). Nhưng trên **RMS sau Vocos**, α=1,5 **tăng spike 0,078 → 0,108** ở v3.2 (+38 %)
+  và giữ P1 ở 0,10–0,11 so với 0,079–0,089 khi α=0. Đây là cơ chế hợp lý cho "từ tự nhiên to lên"
+  mà tai nghe thấy: trang cũ dùng α=1,5. ⇒ **bỏ α là đúng**.
+- **H2 (GAN kéo lệch năng lượng) — YẾU**: spike tăng theo bước nhưng chỉ 0,186 → 0,196 → 0,208 → 0,205
+  (1,05–1,12× v3.2), **không đạt ngưỡng 2×** ⇒ **chưa cần Việc 4b**. (P2 @2k spike mel 0,189 nhưng
+  RMS spike 0,123 = cao nhất — theo dõi tiếp ở P2 4k/6k.)
+- **H3 (nhiễu EMA) — KHÔNG**: 4k → 6k đi ngang (0,208 → 0,205).
+
+### Top 10 spike — **giống hệt nhau ở mọi checkpoint** (di truyền từ v3.2, không phải do GAN)
+
+| # | từ | v3.2 | P1 2k | P1 4k | P1 6k | P2 2k |
+|---|---|---|---|---|---|---|
+| 1 | qua | +21,2 | +22,3 | +22,7 | +22,7 | +23,1 |
+| 2 | Ở | +17,7 | +19,0 | +19,3 | +19,1 | +21,1 |
+| 3 | ét | +15,8 | +15,9 | +15,7 | +15,5 | +16,5 |
+| 4 | Ở | +14,8 | +17,6 | +17,4 | +17,7 | +19,9 |
+| 5 | ai | +14,7 | +14,7 | +14,3 | +14,5 | +15,1 |
+
+⇒ Đây là các âm tiết ngắn/hư từ bị lệch chuẩn hoá (và có thể lệch biên align), **có từ trước GAN**.
+Tai nghe "từ to lên" ở P1 4k nhiều khả năng là **α=1,5 trên mel đã nét hơn** + vài sự kiện hiếm,
+không phải dịch chuyển năng lượng hệ thống.
+
+## 2. Run
+
+- P1 20k: bước 7,5k · EMA @7k val 1,6101 (+3,7 %), GV 0,635.
+- P2 20k: bước 2,7k · EMA @2k val 1,6167 (+4,1 %), GV 0,724.
+- Hard-stop spike (α=0 > 2× v3.2 trong 2 mốc liên tiếp): **chưa chạm** (ngưỡng 0,372; hiện 0,20–0,21).
+
+## 3. Trang nghe (α=0)
+
+- Tiến trình P1: https://cio-rows-rocks-seq.trycloudflare.com/adv_progress/
+- Tiến trình P2: https://cio-rows-rocks-seq.trycloudflare.com/adv_progress_p2/
+- Top spike từng checkpoint: `/energy/v32_ref/`, `/energy/p1_2k/`, `/energy/p1_4k/`, `/energy/p1_6k/`, `/energy/p2_2k/`
+
+## 4. Bổ sung (người dùng nghe): "xoá" to dần ở P1 — P2 2k KHÔNG bị
+
+Đo trên chính câu `tech2` ("… Chúng ta sẽ xoá cái phần này đi …"), WAV chế độ đọc đều α=0 đã có,
+năng lượng **mệnh đề** chứa "xoá" so mệnh đề 1 (dB):
+
+| checkpoint | c1 | c2 (chứa "xoá") | **c2 − c1** | đỉnh c2 |
+|---|---|---|---|---|
+| v3.2 | −29,1 | −28,4 | **+0,7** | −21,8 |
+| P1 @2k | −28,2 | −26,9 | +1,2 | −20,6 |
+| P1 @4k | −28,8 | −24,5 | **+4,3** | −13,8 |
+| P1 @6k | −28,4 | −22,4 | **+6,0** | −12,4 |
+| P1 @8k | −29,0 | −24,8 | +4,2 | −18,1 |
+| **P2 @2k** | −25,4 | −25,6 | **−0,2** | −19,5 |
+
+⇒ "Từ to lên" là **thật và đo được**, tăng theo bước ở P1 (H2 — GAN kéo lệch năng lượng), và **P2 @2k
+không bị** (cân bằng như v3.2). Khớp đúng tai người dùng: P2 2k rõ hơn, ít rè hơn, ít to tiếng hơn.
+⇒ Ứng viên hiện tại: **P2 @2k** (chờ P2 4k/6k để xem có trôi không; nếu trôi → chọn checkpoint sớm).
+⇒ Việc 4b (energy envelope loss + low-band ×2) **có cơ sở** — ưu tiên khởi động từ P2 @2k.
+
+## 5. Bổ sung (người dùng nghe): P2 @2k là bản tốt nhất hiện tại
+Tai người dùng: **P2 2k rõ hơn P1, ít rè hơn, ít to tiếng hơn** — khớp bảng mục 4.
+
+## 6. Việc 5b (A0 lượt 7) — drift độ to giữa MỆNH ĐỀ (20 câu mới, free-run đọc đều, α=0)
+
+`drift = max−min RMS (frame hữu thanh) giữa các chunk` của câu; tool `tools/premise_drift.py`,
+bộ câu `examples/drift_texts.json` (20 câu, 2–4 mệnh đề). Bản đầu của tool bị lỗi (tính cả chunk
+lặng ⇒ drift 88 dB) — đã sửa: bỏ chunk < 0,15 s hoặc < −50 dBFS.
+
+| checkpoint | drift median | **drift p90** | std |
+|---|---|---|---|
+| v3.2 | 1,43 | **3,34** | 0,60 |
+| P1 @2k | 1,40 | 3,55 | 0,64 |
+| P1 @4k | 1,92 | 4,41 | 0,85 |
+| P1 @6k | 2,28 | 4,66 | 0,99 |
+| P1 @8k | 2,22 | 5,05 | 0,95 |
+| **P2 @2k** | **1,92** | **4,67** | 0,80 |
+| P2 @4k | 3,75 | **6,27** | 1,48 |
+| P2 @6k | 5,08 | **7,43** | 2,26 |
+
+**Cổng A0: p90 ≤ v3.2 + 2 dB = 5,34 dB.**
+- P1: 2k–8k đều **qua** (3,55 → 5,05), nhưng xấu dần theo bước.
+- P2: 2k qua (4,67); **4k (6,27) và 6k (7,43) vượt cổng 2 mốc liên tiếp** ⇒ theo hard-stop của A0
+  **dừng P2 20k**, giữ **P2 @2k** — đúng bản tai người dùng thích nhất (rõ, ít rè, ít to tiếng).
+- Xu hướng chung: GAN làm **mức tuyệt đối giữa các chunk trôi dần theo số bước** (đúng cơ chế A0 nêu:
+  D chỉ nhìn crop 64 frame, không quan tâm mức tuyệt đối).
+
+**Quyết định tạm thời**: ứng viên production = **P2 @2k EMA** (qua cổng drift, GV EMA 0,724, val EMA
++4,1 %, tai người dùng chọn). P1 giữ 2/4/6/8k làm đối chứng; P2 giữ 2/4/6k.
+
+## 7. Nhận lệnh A0 lượt 8 — trạng thái bàn giao (phiên sắp hết ngữ cảnh)
+
+Đồng ý toàn bộ §0–§6 của v8. Trạng thái thực tế:
+
+- **Đã có**: P2 @2k EMA (`runs/adv_p2_20k/ckpt_2000.pt`, bản gộp dùng được:
+  `artifacts/listen_small_filt/adv_progress_p2/_ckpt/step_02000.pt`), P1 2/4/6/8k, P2 2/4/6k;
+  thước `tools/premise_drift.py` + 20 câu `examples/drift_texts.json`; số drift mục 6.
+- **Chưa làm**: 6a (ONNX + md5 + RTF), 6b (mốc giọng thật + 40 câu + CI), 6c (E0–E3),
+  6d (chuẩn hoá runtime), 6e (top spike).
+
+### Việc kế tiếp, theo đúng thứ tự (để phiên sau chạy ngay)
+
+1. **6b trước 6a** (rẻ, quyết định cổng): chọn câu thật ≥3 mệnh đề từ val/holdout (ghép segment
+   liên tiếp cùng `parent`), đo `drift` bằng **cùng công thức** (`_voiced_rms_db` chunk + max−min),
+   báo median/p90 + CI 90 % bootstrap 1.000 lần; mở rộng bộ câu mới lên 40 (giữ 20 cũ + 20 mới).
+   Cổng mới: p90 model ∈ [thật−1,5; thật+1,5] dB **và** ≤ v3.2+2 dB (nếu thật < v3.2 chỉ dùng điều kiện 1).
+2. **6a**: `vifasttts export` từ P2 @2k EMA → ONNX opset 18, `dynamo=False`; md5 ×3 cùng input;
+   md5 khi đổi intra-op threads 1/2/4; RTF CPU 2 luồng (acoustic/vocoder riêng). Tên `v32_adv_p2_2k`,
+   giữ v3.2 làm phương án lùi.
+3. **6c**: E0–E3 từ P2 @2k (cả trọng số sống + EMA khởi tạo bằng EMA P2@2k), 4k bước/nhánh,
+   đo ở 2k/4k: drift (thước 6b), GV EMA, val EMA, flux biên, smooth. Chọn theo §3.
+4. **6d**: chuẩn hoá log-mel theo chunk về trung vị RMS hữu thanh của giọng thật, giới hạn ±4 dB,
+   mặc định TẮT; đo drift có/không cho v3.2, P2@2k, P2@6k; trang nghe 6 câu A/B.
+5. **6e**: 10 top spike (qua, Ở, ét, ai…) — mel thật + TextGrid quanh âm tiết, xác định frame thật
+   có lặng/biên lệch; chỉ báo cáo.
+
+### Cảnh báo đã ghi nhận từ A0 (đừng quên khi đọc số cũ)
+- P2 @2k qua cổng một phần nhờ EMA còn ~18 % trọng số v3.2 ⇒ **không có dư địa train thêm GAN**
+  nếu không sửa độ to (6c).
+- Mẫu 20 câu ⇒ p90 ≈ câu tệ thứ hai; phải lên ≥40 câu + CI trước khi dùng làm cổng chính.

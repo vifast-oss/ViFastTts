@@ -7,20 +7,24 @@
 
 Đã xuất (FP32, opset 18):
 
-| File | Kích thước | Nguồn |
+| File | Kích thước | Nguồn / trạng thái |
 |---|---:|---|
-| `artifacts/onnx/n0/acoustic.onnx` | ~30 MB | `runs/acoustic_ngochuyen/best.pt` |
-| `artifacts/onnx/n0/vocoder.onnx` | ~52 MB | `artifacts/pretrained/vocos-mel-24khz/pytorch_model.bin` |
+| `artifacts/onnx/n0_q/acoustic.onnx` | 31.626.449 B | `runs/acoustic_ngochuyen_q/init_q.pt` — **đang live**; sha256 `16e66b70…` |
+| `artifacts/onnx/n0_q/vocoder.onnx` | 54.158.691 B | Vocos pretrained; sha256 `b3eb09cf…` |
+| `artifacts/onnx/n0_q_ft/acoustic.onnx` | — | fine-tune 3k; sha256 `394fa657…` — **chưa live** |
+| `artifacts/onnx/n0/acoustic.onnx` | 31.626.449 B* | N0 cũ chưa có Q; sha256 `6c8bde3d…` — **bị từ chối** |
 
-Lệnh:
+\* ONNX N0 cũ vẫn giữ để đối chiếu, nhưng runtime mới từ chối vì thiếu `onset_has_q=true`.
+
+Lệnh export bản Q-init (đang live):
 
 ```bash
-vifasttts export-onnx --config configs/small_ngochuyen.yaml \
-  --checkpoint runs/acoustic_ngochuyen/best.pt \
-  --output artifacts/onnx/n0/acoustic.onnx --opset 18
+vifasttts export-onnx --config configs/small_ngochuyen_q.yaml \
+  --checkpoint runs/acoustic_ngochuyen_q/init_q.pt \
+  --output artifacts/onnx/n0_q/acoustic.onnx --opset 18
 vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   --checkpoint artifacts/pretrained/vocos-mel-24khz/pytorch_model.bin \
-  --output artifacts/onnx/n0/vocoder.onnx --opset 18
+  --output artifacts/onnx/n0_q/vocoder.onnx --opset 18
 ```
 
 Đã smoke-test `synthesize-onnx` CPU. Service dùng ONNX Runtime, **không cần torch**.
@@ -37,9 +41,10 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - TLS: Let's Encrypt (TLS-ALPN) tại Traefik LXD; cert hợp lệ.
 - Trang: nhập text 300 ký tự, play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
-- **Q (27/10/2026):** onset Q (ID cuối) cho `qu`; checkpoint/ONNX mới mang metadata
-  `onset_has_q=true`. Model/ONNX cũ thiếu cờ này bị từ chối, không có adapter Q→K;
-  chỉ deploy sau khi export ONNX mới. D/GI/R/V vẫn 4 token (Bắc Trung Bộ có thổ ngữ
+- **Q (27/10/2026, đang live):** onset Q (ID cuối) cho `qu`; ONNX đang phục vụ là
+  `n0_q/acoustic.onnx` (Q-init, `Q = K`, bit-exact với N0 Bắc cũ) và mang metadata
+  `onset_has_q=true`. Model/ONNX cũ thiếu cờ này bị từ chối, không có adapter Q→K.
+  Fine-tune 3k (`n0_q_ft`) **chưa deploy**. D/GI/R/V vẫn 4 token (Bắc Trung Bộ có thổ ngữ
   phân biệt; Trung bộ chính/Nam gộp D/GI — không ghi “Nam phân biệt D/GI”).
 - **Nhận diện:** nguồn logo ở `resources/brand/` (`vifasttts-icon.svg`,
   `vifasttts-lockup.svg`, favicon, `og-image.png`, manifest). Web phục vụ
@@ -110,13 +115,17 @@ curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
 
 - Model: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
 - License metadata `cc-by-nc-4.0`; có checkpoint, config/stats, Vocos, ONNX, demo, model card.
-- Commit upload: `6cfd13e16be700aaec68175086ee44be929bc01b`.
+- Commit upload checkpoint/model card gốc: `6cfd13e16be700aaec68175086ee44be929bc01b`;
+  commit ONNX Q: `0b08245ee96710a738d7b1e543151e026b4f6cde`.
 
 ## 4. ONNX trong release
 
-Release prod có asset `n0_onnx_fp32_q.zip` (Q, `onset_has_q=true`); asset cũ `n0_onnx_fp32.zip` vẫn còn cho lịch sử. Bản `n0_onnx_fp32.zip` (acoustic + vocoder ONNX + SHA256SUMS);
-có thể tải riêng nếu không dùng checkpoint PyTorch. Package chính vẫn chứa checkpoint +
-config + stats + Vocos pretrained.
+- `n0_onnx_fp32_q.zip` — **Q, đang live**: 79.437.883 B, sha256 `ef35567c4433cf…`;
+  bên trong có `n0_onnx_fp32/acoustic.onnx` (`16e66b70…`) + vocoder (`b3eb09cf…`) + SHA256SUMS.
+- `n0_onnx_fp32.zip` — N0 cũ chưa có Q, giữ lịch sử; runtime mới **từ chối**.
+- Package chính vẫn chứa checkpoint + config + stats + Vocos pretrained.
+- Release `q-preview-2026-10-27` chỉ có 2 WAV nghe thử (`init.wav`, `finetune.wav`), không phải
+  asset triển khai; xoá sau khi chọn model.
 
 ## 5. Giới hạn
 

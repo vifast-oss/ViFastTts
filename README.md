@@ -26,8 +26,8 @@ cd ViFastTts
 # mở http://127.0.0.1:8090
 ```
 
-Script tự tải ONNX FP32 (có kiểm sha256), tạo `.venv-demo`, cài `onnxruntime + fastapi + uvicorn`
-và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
+Script tự tải ONNX FP32 **Q-init** (`n0_onnx_fp32_q.zip`, có kiểm sha256), tạo `.venv-demo`,
+cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 
 - **Demo online:** https://vifasttts.hoctuthien.com/
 - **Hugging Face model:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
@@ -37,7 +37,8 @@ và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
   `ADMIN_PASSWORD` (nội dung bị khoá nếu chưa đặt).
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
-  [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1)
+  [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1) ·
+  [nghe thử Q](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27) (tạm)
 
 ### Chọn đúng luồng
 
@@ -54,7 +55,7 @@ cache, train, eval, export. Bắt đầu ở `docs/TRAINING_N0.md` (N0) hoặc `
 ![Luồng model N0](https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-research-v1/vifasttts_model_flow.png)
 
 > **Đọc nhanh:** muốn hiểu kiến trúc → mục 2–3; muốn train lại → `docs/TRAINING_N0.md`;
-> muốn triển khai → `docs/N0_DEPLOY.md`.
+> muốn triển khai → `docs/handoff/N0_DEPLOY.md`.
 
 ## 1. Dự án làm gì?
 
@@ -80,7 +81,7 @@ vị trí, và không có "từ lạ" với tiếng Việt chuẩn.
 | Hạng mục | Kết quả |
 | --- | --- |
 | Bộ test | **2.575 test pass / 24 skip**; `ruff` sạch |
-| Parser âm tiết | Vét cạn **49.166 tổ hợp = 0 lỗi**; 39K từ thật: 6.617/6.633 parse OK |
+| Parser âm tiết | Vét cạn **49.104 tổ hợp = 0 lỗi**; 39K từ thật: 6.617/6.633 parse OK |
 | Kho âm tiết | 25 âm đầu (thêm Q) · 2 âm đệm · 15 âm chính · 11 âm cuối · 6 thanh → **264 vần** |
 | Model | Acoustic small **6,1M** (N0) / base **16,4M**; Vocos pretrained **13,5M** |
 | Sinh giọng | Web demo + `vifasttts synthesize` end-to-end (WAV 16-bit, 24 kHz); văn bản dài tự chia câu |
@@ -110,7 +111,10 @@ Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
 
 > **Vocab Q:** từ commit `60b5cf9`, onset **Q** đứng cuối vocab (ID cũ không đổi) cho chữ `qu`.
 > Checkpoint/ONNX trước đó chưa có Q và không có `onset_has_q=true` sẽ bị từ chối rõ ràng;
-> không dùng adapter Q→K. Xem `CHANGELOG.md` và `docs/SYLLABLE_GUIDE.md`.
+> không dùng adapter Q→K. Bản **đang live** là Q-init (`Q = K`, bit-exact N0 Bắc cũ);
+> fine-tune Q 3k đã train/export nhưng **chưa chọn** — nghe A/B tại release tạm
+> [`q-preview-2026-10-27`](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27).
+> Xem `docs/Q_ONSET.md`, `CHANGELOG.md`, `docs/SYLLABLE_GUIDE.md`.
 
 ## 3. Luồng hoạt động trong 30 giây
 
@@ -277,14 +281,14 @@ resources/    brand/ (logo, favicon, OG image, manifest; xem resources/brand/REA
 deploy/       vifasttts_demo/ (FastAPI ONNX + Dockerfile + static page)
 scripts/      fetch_ngochuyen_models.sh · run_ngochuyen_demo.sh · run_A2_fixgap.sh
 tests/        2.575 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
-docs/         toàn bộ tài liệu (xem mục 10), gồm TRAINING_N0.md / NGOC_HUYEN.md / N0_DEPLOY.md
+docs/         toàn bộ tài liệu (xem mục 10 + docs/README.md); N0 deploy ở docs/handoff/N0_DEPLOY.md
 ```
 
 ## 9. Giới hạn hiện tại & việc còn lại
 
 - **Alignment**: pipeline N0 dùng **MFA thật** (6.989/6.989 TextGrid). Với dữ liệu mới, nên chạy MFA/aligner; nếu chưa có, code dùng chia theo trọng số (placeholder), chất lượng thấp hơn.
 - **Vocoder**: bản tham chiếu (GAN nhẹ MPD-lite) + **bản nâng cấp MPD đầy đủ 2/3/5/7/11 + MRD + MR-STFT**
-  (`discriminator: mpd_mrd`, chạy khối MPS) — xem `docs/REVISION_PLAN_V2.md` §10; GTA fine-tune sẽ làm sau.
+  (`discriminator: mpd_mrd`, chạy khối MPS) — xem `docs/archive/plans/REVISION_PLAN_V2.md` §10; GTA fine-tune sẽ làm sau.
 - **ONNX**: đã export N0 FP32 (acoustic + Vocos) và runtime CPU; demo dùng ONNX. Chưa gộp vocoder vào một graph duy nhất/INT8 calibration đầy đủ.
 - **OOV**: từ ngoài tiếng Việt đọc bằng fallback — muốn kiểm soát thì bật `resolve_oov=True`, dùng `--overrides file.json` hoặc thêm override.
 - **Một checkpoint = một giọng, một phương ngữ** (đúng thiết kế; muốn đa giọng phải tách lớp riêng).
@@ -293,36 +297,38 @@ Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 
 ## 10. Tài liệu — nên đọc gì trước?
 
+Mục lục đầy đủ + phân loại **hiện hành / tham chiếu / lịch sử**: **`docs/README.md`**.
+
 | Nhóm | Tài liệu | Nội dung |
 | --- | --- | --- |
-| **Bắt đầu ở đây** | `docs/handoff/TRANG_THAI.md` | Trạng thái tổng, quyết định quan trọng, việc còn lại |
+| **Bắt đầu ở đây** | `docs/README.md` | Bản đồ toàn bộ tài liệu, trạng thái từng nhóm |
+| | `docs/handoff/TRANG_THAI.md` | Trạng thái tổng, quyết định hiện hành, việc còn lại |
 | | `docs/MODEL_FLOW.md` | Luồng model chi tiết: data → train → inference → export |
 | | `docs/SYLLABLE_GUIDE.md` | Hướng dẫn tách âm tiết cho người không chuyên |
 | | `docs/GLOSSARY.md` | Thuật ngữ (âm đầu/đệm/chính/cuối, toàn ánh/song ánh...) |
-| **Frontend** | `docs/FRONTEND.md` | Parser, profile/lexicon, segments, G2P, OOV |
+| **Frontend** | `docs/FRONTEND.md` | Parser, profile/lexicon, segments, G2P, OOV, Q |
 | | `docs/NORMALIZER.md` | Số/ngày/giờ theo vùng miền, dấu thanh, i/y |
 | | `docs/STEM_NORMALIZER.md` | Toán/LaTeX, hoá học, đơn vị vật lý |
 | | `docs/G2P_VIETNAMESE.md` | Khảo sát sea-g2p, viG2P... và bảng IPA nội bộ |
 | **Model & dữ liệu** | `docs/ARCHITECTURE.md` | Sơ đồ as-built, quyết định thiết kế |
-| | `docs/DATA_PIPELINE.md` | 15 bước chuẩn bị dữ liệu |
-| | `docs/YOUTUBE_DATASET.md` | Lấy dataset sạch từ kênh YouTube của bạn (demo + chạy thật, giấy phép mở) — kèm quy trình tái hiện đầy đủ |
-| | `docs/R6_DIARIZATION_RESULTS.md` | **Lọc giọng tự động** (NVIDIA Nemotron 3 Diarization): tách TTS/AI/demo, số liệu + kiểm chứng |
+| | `docs/ACOUSTIC_V2.md` | Thiết kế + nhật ký đo acoustic v2 (§0–§51) |
+| | `docs/EVAL_TOOLS.md` | Danh mục thước đo, lệnh chạy, mốc so |
+| | `docs/DATA_PIPELINE.md` | Pipeline chuẩn bị dữ liệu |
+| | `docs/YOUTUBE_DATASET.md` | Lấy dataset sạch từ kênh YouTube của bạn |
 | | `docs/TRAINING.md` | Hướng dẫn train + cảnh báo alignment |
-| | `docs/TRAINING_N0.md` | **Run N0 Ngọc Huyền**: pipeline, thời gian, chọn 5–20 h small / 30–50 h base |
+| | `docs/TRAINING_N0.md` | **Run N0 Ngọc Huyền**: pipeline, thời gian, chọn dữ liệu |
 | | `docs/NGOC_HUYEN.md` | Model card model mẫu, license, quickstart |
-| | `docs/N0_DEPLOY.md` | ONNX + service `vifasttts.hoctuthien.com` |
+| | `docs/Q_ONSET.md` | Quyết định Q + fine-tune candidate |
+| | `docs/handoff/N0_DEPLOY.md` | ONNX + service `vifasttts.hoctuthien.com` |
 | | `docs/HUGGINGFACE.md` | Hugging Face model + Space static demo |
-| | `docs/TRAINING_RUN_CODELUNG.md` | **Run thật `small` trên kênh @codelung**: số đo MPS, cách chạy lại, triển khai |
-| | `docs/REVISION_PLAN_V2.md` | **Kế hoạch sửa nền tảng** trước khi lên base (A1 mel loss, A2 f0 contour, A3 SIL, MFA, mel log-magnitude) |
-| | `docs/ARCH_DISCUSSION_M6.md` | **Hồ sơ thảo luận kiến trúc/ngân sách** cho Mac mini M6 32GB + đặc thù dữ liệu @codelung (gửi chuyên gia vòng 4) |
-| | `docs/TRAINING_ESTIMATES.md` | **Ước lượng** dữ liệu/tham số/thời gian/máy/chi phí trước khi train |
-| | `docs/APPLE_SILICON.md` | **Mac/M-series**: MPS, MLX, ANE, provider ONNX (đo thật + quyết định) |
+| | `docs/TRAINING_ESTIMATES.md` | Ước lượng dữ liệu/tham số/thời gian/máy/chi phí |
+| | `docs/APPLE_SILICON.md` | Mac/M-series: MPS, MLX, ANE, provider ONNX |
 | | `docs/DEPLOYMENT.md` | ONNX Runtime, quantize, nền tảng |
-| **Nghiên cứu** | `docs/SYLLABLE_SYSTEMS_RESEARCH.md` | So sánh mô hình tách/gộp âm tiết (quốc tế + Việt Nam) và audit biên |
+| **Nghiên cứu** | `docs/SYLLABLE_SYSTEMS_RESEARCH.md` | So sánh mô hình tách/gộp âm tiết + audit biên |
 | | `docs/TTS_ARCHITECTURE_RESEARCH.md` | Khảo sát họ kiến trúc TTS + đề xuất tương lai |
-| **Thiết kế gốc** | `docs/DESIGN_V1_MIEN_BAC.md`, `docs/DESIGN_V2.md`, `docs/FULL_DESIGN.md` | Bản thiết kế ban đầu (tham khảo lịch sử) |
-| **Khác** | `docs/RUST_ROADMAP.md` | Kế hoạch port Rust (tối ưu triển khai) |
-| | `docs/LICENSES.md` | Giấy phép các thành phần tham chiếu |
+| | `docs/VI_TTS_DATA_REFERENCE.md` | Model/dataset TTS tiếng Việt công khai |
+| **Lịch sử** | `docs/archive/README.md` | Thiết kế gốc, kế hoạch/review cũ, báo cáo V08–V18.52 |
+| **Khác** | `docs/LICENSES.md` | Giấy phép các thành phần tham chiếu |
 
 ## 11. Giấy phép
 

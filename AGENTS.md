@@ -5,10 +5,11 @@
 
 ## 1. Tài liệu nguồn (đọc theo thứ tự)
 
-1. `docs/ACOUSTIC_V2.md` — **thiết kế chốt + số đo thực thi** acoustic v2 (§0–§14 thiết kế;
-   §15 preflight; §17–§29 các R/T; **§30–§39: chọn epoch/val theo số đo · b8 (small đạt ngưỡng) ·
-   base 40k (thắng small, đóng khoảng cách thanh) · L1≠tai người · rè ngã/nặng**).
-   Mâu thuẫn → mục mới hơn thắng (đọc §33.5/§36.4 để thấy 1 lần tự đính chính).
+0. **`docs/README.md` — mục lục toàn bộ tài liệu** (hiện hành / tham chiếu / archive). Đọc trước
+   khi tìm bất kỳ tài liệu nào; tài liệu cũ nằm ở `docs/archive/`, không dùng để quyết định.
+1. `docs/ACOUSTIC_V2.md` — **thiết kế chốt + nhật ký số đo thực thi** acoustic v2 (§0–§51;
+   §30–§51: chọn epoch/val theo số đo · b8 (small đạt ngưỡng) · base 40k · L1≠tai người ·
+   rè ngã/nặng · pause/steady · data v3.1). Mâu thuẫn → mục mới hơn thắng.
 2. **`docs/EVAL_TOOLS.md` — danh mục MỌI thước đo** (trong train + offline), lệnh chạy, bộ số mốc để so,
    quy trình "chấm một checkpoint" + **bẫy thống kê/điểm mù**. Đọc trước khi kết luận bất cứ điều gì.
 3. `docs/B0_BASELINE.md` — baseline B0 (mốc cũ): mel hữu thanh ~9,6–9,8 dB; free CER 0,54.
@@ -22,7 +23,7 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
 - Python: `.venv/bin/python` (3.12.15 · torch 2.14.1 · pyworld · onnxruntime · typer · ruff).
 - **Chạy lệnh từ repo root** (working dir `/Users/.../ViFastTts`).
 - Lint (phải sạch): `.venv/bin/ruff check .` → tự sửa `--fix`.
-- Test (phải pass 100%, ~2.350 test ≈ 20 s): `.venv/bin/python -m pytest -q`.
+- Test (phải pass 100%, **2.575 test pass / 24 skip**, ~40 s): `.venv/bin/python -m pytest -q`.
 - CLI: `.venv/bin/vifasttts <command>` (`cache-features`, `train`, `export`, `synthesize-onnx`…).
 - Push cần: `git -c credential.helper='!gh auth git-credential' push` (dòng
   `fatal: failed to store: -61` là vô hại, push vẫn thành công).
@@ -91,20 +92,25 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
 - Quy trình 3 vai: Agent 0 (kiến trúc, ra addendum khi số đo khác kỳ vọng) · Agent 1 (soát code) ·
   Agent 2 (chạy trên M6). Sub-agent khi được giao việc **không tự commit** — trả file + cách chạy cho phiên chính.
 
-## 7. Hiện trạng (14/10/2026 sáng)
+## 7. Hiện trạng (27/10/2026)
 
-- **Xong (v2)**: R2/T2.1/R5a/R5b/Addendum 6/R6/R4/T2.2 · cache v3 (verify 100%) · **task 5** (model
-  `v2_slot5` + dataset/loss/trainer/export/runtime) · **eval v2** (§24–§29) · **small đạt ngưỡng**:
-  `runs/acoustic_v2_b8` (batch 8, 60k; best @46k; mel_z 1,1603 · CER 0,198) · **BASE 40k**
-  `runs/acoustic_v2_base` (best 18k/val · **last 40k = bản chính theo tai user**: mel_z 1,1411 ·
-  dB 8,51 · F0 NGÃ 177 · **thanh C 0,798 ≈ thật 0,799** · 6 thanh phân biệt được) · **4 thước đo**
-  (§`docs/EVAL_TOOLS.md`): L1 + **độ nét `val_rough`** + **thanh `tone_ruler` (0,762 trần thật)** +
-  **rè `eval_creak`** (+ CER holdout). Code thêm: `train_v2` early-stop + `val_rough`; loss
-  **`tone_disc`** (CE phân biệt thanh, mặc định tắt); tool `tone_ruler`/`eval_creak`/`eval_tone_paths`.
-- **Đang chạy**: extension acoustic **40k→60k** (`runs/acoustic_v2_base_60k`, cosine mới tới 60k,
-  đo `val_rough` từng mốc) · **GTA Vocos** (sub-agent; §39: GTA nhắm phần *jitter* của rè).
-- **Chốt kỹ thuật mới**: chọn checkpoint cuối = **L1 + độ nét + thanh + rè + CER + tai**, KHÔNG chỉ L1
-  (§37); patience **0** cho lịch cosine dài (§32.1); batch 8 bắt buộc + `SameNBatchSampler`.
+> Chi tiết + việc còn lại: `docs/handoff/TRANG_THAI.md`. Mục lục tài liệu: `docs/README.md`.
+
+- **Live:** `https://vifasttts.hoctuthien.com/` — ONNX FP32, `arch=v2_slot5`,
+  `onset_has_q=true`, alpha 1,5, `pause_mode=model`; model **N0 Ngọc Huyền Q-init** (`Q` = `K`,
+  bit-exact với N0 Bắc cũ). Checkpoint nguồn `runs/acoustic_ngochuyen_q/init_q.pt`
+  (sha256 `3c330cfc…`); ONNX live `artifacts/onnx/n0_q/acoustic.onnx` (sha256 `16e66b70…`).
+- **Q:** onset thứ 25 ở cuối vocab; model/ONNX cũ thiếu `onset_has_q=true` bị từ chối rõ ràng;
+  **không có adapter Q→K**. Fine-tune Q 3k (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export
+  nhưng **chưa live**; so tai qua release tạm `q-preview-2026-10-27`.
+- **Demo:** custom reading local-first (gửi duyệt khi bật checkbox), 570 quy tắc có sẵn,
+  mục STEM (hoá học/toán/vật lý/LaTeX), feedback/báo lỗi, admin thống kê. Feedback content
+  còn khoá đến khi đặt `ADMIN_PASSWORD`.
+- **Test:** 2.575 pass / 24 skip; `ruff` sạch. Parser audit: 49.104 tổ hợp, 0 lỗi.
+- **Tài liệu:** tài liệu cũ đã gom vào `docs/archive/`; `TRANG_THAI.md` là nguồn trạng thái duy nhất.
+- **Chốt kỹ thuật giữ nguyên:** chọn checkpoint cuối = **L1 + độ nét + thanh + rè + CER + tai**,
+  KHÔNG chỉ L1; patience **0** cho cosine dài; batch 8 + `SameNBatchSampler`; batch 8 là mức tối ưu
+  đã đo trên M6. Baseline codelung v2 (B0/b8/base 40k) giữ trong `docs/ACOUSTIC_V2.md` + `EVAL_TOOLS.md`.
 - **Bẫy MPS đã gặp (đừng quên)**: SDPA+dropout cần grad; `ConvPredictor` backward N=1 abort → lọc
   `min_syllables=2` khi train; mọi test N=1-backward **không** được chạy trên MPS (giết tiến trình pytest);
   watchdog phải đặt **cả** HIGH+**LOW** watermark; `torch.onnx.export` v2 cần `no_grad` + submodule wrapper.

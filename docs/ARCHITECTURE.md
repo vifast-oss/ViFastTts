@@ -2,6 +2,10 @@
 
 ViFastTts dùng frontend tiếng Việt chung và checkpoint single-speaker, single-dialect. Tài liệu này mô tả **trạng thái as-built** trong `src/vifasttts`; **luồng chi tiết train → inference → export** nằm ở `docs/MODEL_FLOW.md`; trạng thái tổng hợp và nhật ký quyết định ở `docs/handoff/TRANG_THAI.md`; đề xuất nâng cấp dài hạn ở `docs/TTS_ARCHITECTURE_RESEARCH.md` (mục 9).
 
+**Model đang live (27/10/2026):** N0 Ngọc Huyền `v2_slot5` small 6,1M, ONNX FP32 +
+Vocos pretrained; `onset_has_q=true`, Q-init. N0 dùng MFA thật (6.989/6.989 TextGrid),
+không dùng alignment chia đều. Xem `docs/handoff/N0_DEPLOY.md`.
+
 ## Sơ đồ as-built
 
 ```text
@@ -19,7 +23,8 @@ raw text
        LengthRegulator vector hoá (cumsum + gather, không vòng lặp Python)
        frame-position 0..1 trong âm tiết
        ConformerLite decoder + mel head 100 bins
-  → models/istftnet.ISTFTNetLite (ConvTranspose ×4 rồi iSTFT) → PCM 24 kHz
+  → models/vocos.VocosGenerator (N0, pretrained) hoặc models/istftnet.ISTFTNetLite
+       (ConvTranspose ×4 rồi iSTFT) → PCM 24 kHz
 ```
 
 ## Điểm quan trọng
@@ -32,11 +37,13 @@ raw text
 - **Vocoder**: `ISTFTNetLite` upsample mel ×4 trước khi dự đoán STFT. Đã có vòng train tham chiếu
   (`vifasttts train-vocoder`, MPD-lite + mel L1 + feature matching + adversarial — `docs/MODEL_FLOW.md` §5)
   và **bản nâng cấp** `discriminator: mpd_mrd` (MPD đầy đủ 2/3/5/7/11 + MRD + MR-STFT, chạy theo khối
-  MPS — `docs/REVISION_PLAN_V2.md` §10).
-- **Export ONNX**: exporter TorchScript, 8 output có tên (`mel`, `log_duration`, `durations`, `f0`,
-  `vuv_logits`, `energy`, `tone_logits`, `lengths`) — 9 nếu bật `model.use_phonation`; dynamic axes cho
-  batch/số âm tiết. Dùng `exp-1` thay `expm1` để export được. Hỗ trợ `--precision fp16|int8`.
-  Kèm custom metadata (sample_rate...).
+  MPS — `docs/archive/plans/REVISION_PLAN_V2.md` §10).
+- **Export ONNX**: exporter TorchScript. `v1_syl`: 8 output có tên (`mel`, `log_duration`,
+  `durations`, `f0`, `vuv_logits`, `energy`, `tone_logits`, `lengths`) — 9 nếu bật
+  `model.use_phonation`. `v2_slot5`: 11 output (thêm `phonation` nếu bật, `slot_durations`,
+  `pause_gate` ở cuối), input thêm `speed` + `gate_threshold`; dynamic axes cho batch/số âm tiết/
+  frame. Dùng `exp-1` thay `expm1` để export được. Hỗ trợ `--precision fp16|int8`; metadata
+  có `arch`, `onset_has_q`, `seg_method`, `mel_hash`.
 - **Runtime ONNX**: `runtime/` chạy acoustic + vocoder ONNX bằng onnxruntime (không cần
   PyTorch), ghép waveform bằng iSTFT numpy, có chia câu dài + fade/peak-normalize —
   `vifasttts synthesize-onnx`; chi tiết `docs/MODEL_FLOW.md` §6.4.
@@ -72,11 +79,13 @@ Lớp IPA trong `frontend/g2p.py` và các hệ ngoài (sea-g2p, viG2P, WikiPron
 Các hạng mục thiết kế trong `docs/TTS_ARCHITECTURE_RESEARCH.md` và trạng thái as-built:
 
 1. ✅ **Segment Expander** — `frontend/segments.py` (duration cấp role, tách `IÊ/UÔ/ƯƠ`).
-2. ⬜ **Alignment thật** (MFA; forward-sum + Viterbi + static prior về sau) — hiện chia đều/trọng số.
+2. ✅ **Alignment thật cho N0** (MFA 6.989/6.989 TextGrid); code mặc định vẫn có chia đều/trọng số
+   cho dữ liệu chưa align.
 3. ✅ **Phonation** — trích `data/phonation.py` + điều kiện hoá `model.use_phonation` (reference).
 4. ✅ **Vocoder tham chiếu + nâng cấp** — `train-vocoder` (MPD-lite mặc định; `mpd_mrd` = MPD đầy đủ + MRD
    + MR-STFT, chạy khối MPS); ⬜ GTA fine-tune trên mel acoustic.
-5. ✅ **ONNX + quantization** FP16/INT8 động; ⬜ ONNX vocoder + calibration đầy đủ.
+5. ✅ **ONNX + quantization** FP16/INT8 động; ✅ ONNX vocoder (Vocos pretrained cho N0);
+   ⬜ calibration INT8 đầy đủ cho mọi nhánh.
 
 Chi tiết luồng: `docs/MODEL_FLOW.md`; trạng thái đầy đủ: `docs/handoff/TRANG_THAI.md`.
 

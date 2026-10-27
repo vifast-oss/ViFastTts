@@ -10,7 +10,7 @@
 1. Đọc manifest JSONL (`audio_path` + `syllables` + tùy chọn `durations`).
 2. `data/features.py` trích **mel**, **log-energy**, **F0 và VUV** từ WAV tại chỗ; mel mặc định là
    log-power như cũ, cấu hình mới (`mel.log_magnitude` + `mel.normalize_path` + `f0.method: pyworld`)
-   dùng log-magnitude chuẩn hoá toàn cục + pyworld harvest/stonemask (xem `docs/REVISION_PLAN_V2.md` §2).
+   dùng log-magnitude chuẩn hoá toàn cục + pyworld harvest/stonemask (xem `docs/archive/plans/REVISION_PLAN_V2.md` §2).
    Đọc WAV bằng `soundfile` nếu có, fallback stdlib `wave`.
 3. `data/dataset.py` mã hoá âm tiết thành 7 ID, gom target cấp âm tiết (f0/vuv/energy) theo duration, collate có padding + mask.
 4. Train với teacher forcing: decoder mở rộng theo **duration thật** để sinh mel đúng độ dài; duration/f0/vuv/energy/tone dự đoán từ syllable state (chuẩn FastSpeech 2).
@@ -63,7 +63,7 @@ vifasttts train-vocoder --config configs/base_24k.yaml \
 ```
 
 > **Pipeline đầy đủ cho run thật** (cache → acoustic → vocoder → ONNX → demo) đóng gói trong
-> `tools/run_small_codelung.sh`; kết quả đo + hướng dẫn triển khai: `docs/TRAINING_RUN_CODELUNG.md`.
+> `tools/run_small_codelung.sh`; kết quả đo + hướng dẫn triển khai: `docs/archive/training/TRAINING_RUN_CODELUNG.md`.
 
 ### Chạy song song acoustic + vocoder (tối ưu thời gian)
 
@@ -111,7 +111,7 @@ Checkpoint lưu khóa `vocoder` nên `vifasttts synthesize` tự dùng ngay (kh�
 (mặc định 0) bật **random crop ngắn** mỗi bước — chuẩn GAN vocoder, giữ bước train nhanh và ổn
 định dù clip dài 3–20 giây. Đo trên Mac M6 (batch 8): crop 64 · MPD+MRD ch=16 → **0,67 s/bước trên
 MPS** (1,35 s/bước CPU); ch=32 (D 31M) → 1,49 s/bước MPS — **MPS nhanh hơn CPU 3,8–4,7× khi
-discriminator lớn**, kết luận "CPU nhanh hơn" trước đây đã đảo chiều (`docs/REVISION_PLAN_V2.md` §10).
+discriminator lớn**, kết luận "CPU nhanh hơn" trước đây đã đảo chiều (`docs/archive/plans/REVISION_PLAN_V2.md` §10).
 GAN cần **100k+ bước**; chạy theo khối bằng `python tools/train_vocoder_chunked.py` (chống OOM MPS).
 
 ## Phonation (tùy chọn)
@@ -125,7 +125,7 @@ Cache feature tự khoá theo cấu hình phonation nên không lẫn bản có/
 
 1. Train iSTFTNet bằng mel thật; train thêm HiFi-GAN baseline để A/B. `train-vocoder` đã có cả
    MPD-lite lẫn **MPD đầy đủ + MRD + MR-STFT** (`discriminator: mpd_mrd`) — bản nâng cấp đang chạy
-   cho run @codelung (`docs/REVISION_PLAN_V2.md` §3 bước 2).
+   cho run @codelung (`docs/archive/plans/REVISION_PLAN_V2.md` §3 bước 2).
 2. Train acoustic model với duration, F0, energy thật.
 3. Train predictors (đóng băng decoder hoặc giảm LR).
 4. Suy luận hoàn toàn bằng predicted features.

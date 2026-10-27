@@ -50,3 +50,18 @@ an toàn cho N0 Bắc, giữ đúng giọng đã được nghe. Candidate fine-t
 - Đã reparse N0 train/val/holdout (`*_slot4`): 6.961 + 436 + 404 âm tiết đổi sang Q.
   Validator train: 7 cảnh báo `spelling-k-before-back`; val/holdout: 0.
 - Feature cache không chứa token; không cần rebuild cache, chỉ reparse manifest.
+
+## 5. Trạng thái triển khai (27/10/2026)
+
+- **Đang live:** Q-init, `Q = K`, output **bit-exact** với N0 Bắc cũ.
+  - Checkpoint: `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…`.
+  - ONNX: `artifacts/onnx/n0_q/acoustic.onnx` sha256 `16e66b70b9c49c…`;
+    vocoder `b3eb09cf5c3baa…`; `healthz` báo `"onset_has_q":true`.
+  - Release asset: `n0_onnx_fp32_q.zip` sha256 `ef35567c4433cf…`
+    (trong `n0-ngochuyen-prod-v1`).
+- **Chưa live:** fine-tune 3k `runs/acoustic_ngochuyen_q/best.pt`
+  (sha256 `30dc41642461…`), ONNX `artifacts/onnx/n0_q_ft/acoustic.onnx`
+  (sha256 `394fa657fc6e52…`). Nghe A/B tại `q-preview-2026-10-27`
+  (`init.wav` / `finetune.wav`); xoá preview sau khi chọn.
+- **Bản cũ bị từ chối:** ONNX N0 `6c8bde3d…` thiếu `onset_has_q`; không có adapter Q→K.
+- Quyết định chọn model + hash/release cập nhật ở `docs/handoff/TRANG_THAI.md`.

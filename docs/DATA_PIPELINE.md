@@ -38,4 +38,4 @@ Nếu dữ liệu nằm trên kênh YouTube bạn sở hữu, dùng `vifasttts y
 4–5 dùng `tools/clip_quality.py` + `tools/fallback_review.py`; bước 6 dùng
 `tools/diarize_filter.py` (lọc TTS/AI/demo/khách tự động, NVIDIA Nemotron 3 Diarization). Forced
 alignment (bước 14–15) vẫn chạy riêng để có `durations` cấp âm tiết. **Quy trình tái hiện đầy đủ
-kèm lệnh**: `docs/YOUTUBE_DATASET.md` mục 5 và 9; số liệu thực: `docs/R6_DIARIZATION_RESULTS.md`.
+kèm lệnh**: `docs/YOUTUBE_DATASET.md` mục 5 và 9; số liệu thực: `docs/archive/research/R6_DIARIZATION_RESULTS.md`.

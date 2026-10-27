@@ -7,6 +7,9 @@
 >
 > Nguyên tắc: ngoại lệ **không** phải "pass toàn bộ"; nó chỉ miễn một tiêu chí cụ thể
 > cho một input cụ thể, trong một phạm vi cụ thể. Ngoài phạm vi, tiêu chí chung vẫn áp dụng.
+>
+> **Lưu ý 27/10/2026:** N0 Q ONNX đang live là nhánh model/ONNX khác (Q-init, Vocos pretrained);
+> `ONNX-EXC-001` dưới đây thuộc nhánh P2 cũ và **không** áp dụng cho N0/Q.
 
 ---
 
@@ -74,7 +77,7 @@ Khi hết hiệu lực: chạy lại parity đầy đủ; ngoại lệ **không*
         "real": 0.023357868194580078,
         "imag": 0.017773866653442383
       },
-      "source": "A0 v18.41; xem V1841_agent2.md §1, artifacts/bench/v1840_onnx_parity/result.json"
+      "source": "A0 v18.41; xem `docs/archive/handoff/V1841_agent2.md` §1, artifacts/bench/v1840_onnx_parity/result.json"
     }
   ]
 }
