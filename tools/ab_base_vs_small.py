@@ -79,6 +79,7 @@ def main() -> None:
     parser.add_argument("--clips", type=int, default=24)
     parser.add_argument("--device", default="mps")
     parser.add_argument("--sharpen-alpha", type=float, default=1.5)
+    parser.add_argument("--no-real", action="store_true", help="bỏ audio thật, chỉ A/B")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
@@ -88,18 +89,20 @@ def main() -> None:
     key_path = Path(args.key) if args.key else out.parent / f"{out.name}_key.json"
     staging = out.parent / f".{out.name}_src"
     rows = json.loads(Path(args.texts).read_text(encoding="utf-8"))[: args.clips]
-    audio = _manifest_audio()
-    rows = [row for row in rows if str(row.get("id")) in audio]
-    if not rows:
-        raise SystemExit("Không có câu demo nào có audio holdout")
-
-    real = out / "real"
-    real.mkdir(parents=True, exist_ok=True)
-    for row in rows:
-        rid = str(row["id"])
-        dst = real / f"{rid}.wav"
-        if not dst.exists() or args.force:
-            shutil.copyfile(_ROOT / audio[rid], dst)
+    if not args.no_real:
+        audio = _manifest_audio()
+        rows = [row for row in rows if str(row.get("id")) in audio]
+        if not rows:
+            raise SystemExit("Không có câu demo nào có audio holdout")
+        real = out / "real"
+        real.mkdir(parents=True, exist_ok=True)
+        for row in rows:
+            rid = str(row["id"])
+            dst = real / f"{rid}.wav"
+            if not dst.exists() or args.force:
+                shutil.copyfile(_ROOT / audio[rid], dst)
+    else:
+        shutil.rmtree(out / "real", ignore_errors=True)
 
     _generate("small", Path(args.small_config), Path(args.small_checkpoint), rows, staging,
               args.device, args.sharpen_alpha, args.force)
@@ -138,10 +141,11 @@ def main() -> None:
     sections: list[str] = []
     for item in key:
         rid = html.escape(item["id"])
+        real_row = "" if args.no_real else f'<div class="row"><span>Thật</span><audio controls preload="none" src="real/{rid}.wav"></audio></div>'
         sections.append(f"""
 <section class="item" data-id="{rid}">
   <p class="text"><b>{rid}</b> — {html.escape(item['text'])}</p>
-  <div class="row"><span>Thật</span><audio controls preload="none" src="real/{rid}.wav"></audio></div>
+  {real_row}
   <div class="row"><span>A</span><audio controls preload="none" src="A/{rid}.wav"></audio></div>
   <div class="row"><span>B</span><audio controls preload="none" src="B/{rid}.wav"></audio></div>
   <div class="choices">
@@ -164,7 +168,7 @@ audio{{width:100%;margin:5px 0}} .choices{{display:flex;gap:18px;flex-wrap:wrap;
 button{{padding:8px 14px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-weight:600}}
 </style></head><body>
 <h1>Nghe A/B blind — N0 small vs base</h1>
-<p class="note">A/B đã xáo ngẫu nhiên. Nghe <b>Thật</b> để tham chiếu, rồi chọn bản A/B nghe tự nhiên, rõ và ít rè hơn. Kết quả chỉ tải CSV ở máy bạn.</p>
+<p class="note">A/B đã xáo ngẫu nhiên. {'' if args.no_real else 'Nghe <b>Thật</b> để tham chiếu, rồi '}chọn bản A/B nghe tự nhiên, rõ và ít rè hơn. Kết quả chỉ tải CSV ở máy bạn.</p>
 {''.join(sections)}
 <div id="bar"><span id="p">0/{len(key)}</span><button onclick="downloadCsv()">Tải CSV kết quả</button></div>
 <script>
