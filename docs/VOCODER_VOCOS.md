@@ -5,6 +5,10 @@
 > **khớp biểu diễn mel với checkpoint MIT `charactr/vocos-mel-24khz`** trước khi tính lại
 > stats/cache. Căn cứ đo đạc: R7-1 (mel/filterbank) và các benchmark trong tài liệu này.
 > Cập nhật: 12/10/2026.
+>
+> **Trạng thái N0 (27/10/2026):** dùng **Vocos pretrained**; fine-tune 10k bị loại vì còn rè;
+> GTA không vào đường chính. Xem `docs/handoff/N0_agent2.md` §9/§12 và
+> `docs/handoff/TRANG_THAI.md`. Các bước GTA dưới đây là quy trình tham chiếu, không phải việc đang chạy.
 
 ## 0. Vì sao đổi (số đo thật)
 

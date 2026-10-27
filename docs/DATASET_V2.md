@@ -1,5 +1,9 @@
-# DATASET V2 — trạng thái thực thi (12/10/2026)
+# DATASET V2 — trạng thái thực thi (12/10/2026, ảnh chụp lịch sử)
 
+> **Đây là ảnh chụp giai đoạn 12–13/10/2026, không phải trạng thái hiện tại.** Các câu
+> “đang chạy” bên dưới thuộc lúc ghi; hiện N0 dùng dataset `ngochuyen_voice` (xem
+> `docs/handoff/NGUYEN_DATA.md`) và trạng thái hiện hành ở `docs/handoff/TRANG_THAI.md`.
+>
 > Chủ dự án giao "làm dữ liệu sạch nhất/tốt nhất theo ý agent". Tài liệu này ghi **quyết
 > định + kết quả thực thi** của bước dựng lại dữ liệu codelung v2 (REBUILD_PLAN_M6 §3, lịch sử).
 > Nguồn sự thật kỹ thuật: `docs/archive/plans/REBUILD_PLAN_M6.md`,

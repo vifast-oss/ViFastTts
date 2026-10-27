@@ -71,14 +71,14 @@
 | `docs/ACOUSTIC_V2.md` | Nhật ký thiết kế/đo acoustic v2 (§0–§51) |
 | `docs/EVAL_TOOLS.md` | Danh mục thước đo, lệnh, mốc so, bẫy thống kê |
 | `docs/B0_BASELINE.md` | Mốc B0 acoustic v1 (13/10/2026) |
-| `docs/DATASET_V2.md` | Dataset codelung v2 (lọc, split, chuẩn hoá) |
+| `docs/DATASET_V2.md` | Ảnh chụp dataset codelung v2 (lọc, split, chuẩn hoá; 12–13/10) |
 | `docs/TRAINING.md` | Quy trình train tổng quát + cảnh báo alignment |
 | `docs/TRAINING_N0.md` | Run N0 Ngọc Huyền: pipeline, thời gian, chọn dữ liệu |
 | `docs/TRAINING_ESTIMATES.md` | Ước lượng dữ liệu/tham số/thời gian/máy/chi phí |
 | `docs/APPLE_SILICON.md` | MPS/MLX/ANE, provider ONNX trên Mac |
 | `docs/DATA_PIPELINE.md` | Pipeline dữ liệu từ YouTube → manifest |
 | `docs/YOUTUBE_DATASET.md` | `vifasttts youtube-fetch` và giấy phép dữ liệu |
-| `docs/VOCODER_VOCOS.md` | Vocos pretrained + fine-tune, quy trình chốt |
+| `docs/VOCODER_VOCOS.md` | Vocos pretrained + fine-tune, quy trình chốt (N0 dùng pretrained) |
 
 ### 2.4 Nghiên cứu & tham chiếu
 
