@@ -1,8 +1,8 @@
 ---
-title: ViFastTTS Ngọc Huyền small
+title: ViFastTts Ngọc Huyền small
 emoji: 🎙️
-colorFrom: teal
-colorTo: green
+colorFrom: red
+colorTo: yellow
 sdk: gradio
 sdk_version: 5.50.0
 app_file: app.py
@@ -10,7 +10,9 @@ pinned: false
 license: cc-by-nc-4.0
 ---
 
-# ViFastTTS · Ngọc Huyền small
+![ViFastTts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/vifasttts-lockup-cream.png)
+
+# ViFastTts · Ngọc Huyền small
 
 Demo nghe thử model TTS tiếng Việt **small 6,1M acoustic**, 24 kHz, ONNX CPU.
 

@@ -37,6 +37,9 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - TLS: Let's Encrypt (TLS-ALPN) tại Traefik LXD; cert hợp lệ.
 - Trang: nhập text 300 ký tự, play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
+- **Nhận diện:** nguồn logo ở `resources/brand/` (`vifasttts-icon.svg`,
+  `vifasttts-lockup.svg`, favicon, `og-image.png`, manifest). Web phục vụ
+  `/static/brand/`; `app.py` mount `StaticFiles` và có route `/favicon.ico`.
 - Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 300 ký tự,
   không lưu text/audio.
 - **Thống kê:** `/admin` (HTML) và `/admin.json`; tổng người dùng, tổng lượt tạo, lượt xem trang,

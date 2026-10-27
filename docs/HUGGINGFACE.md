@@ -22,6 +22,7 @@
 | `mel_stats.json`, `f0_stats_v2.json` | để load/verify |
 | `acoustic.onnx`, `vocoder.onnx` | runtime CPU không torch |
 | `LICENSE.md` | CC-BY-NC + attribution dataset |
+| `assets/vifasttts-lockup-cream.png` | logo model card (nguồn `resources/brand/`) |
 | `sample.wav` (tuỳ chọn) | 1–3 câu demo, ghi rõ research |
 
 Không đưa audio/transcript gốc của dataset.
@@ -69,6 +70,13 @@ Cần một trong hai:
 Sau khi upload phải kiểm tra bằng `HfApi.model_info(...)` + tải thử một file, giống quy trình
 release GitHub.
 
+
+## Logo trên model card
+
+- Nguồn: `resources/brand/`; bản dùng cho model card là `vifasttts-lockup-cream.png`
+  (nền kem, đọc được ở dark mode).
+- Asset trên HF: `assets/vifasttts-lockup-cream.png`; README model dùng URL
+  `https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/vifasttts-lockup-cream.png`.
 
 ## Space demo
 

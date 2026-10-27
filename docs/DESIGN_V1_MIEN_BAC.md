@@ -49,7 +49,7 @@ Kiến trúc cuối cùng được đề xuất là:
 
 Tên tạm dùng trong tài liệu:
 
-> **ViFastTTS**
+> **ViFastTts**
 
 Đây không phải tên một dự án mã nguồn mở có sẵn. Nó là tên tạm cho kiến trúc sẽ được tự xây dựng bằng cách tham khảo các ý tưởng tốt từ FastSpeech 2, JETS, Kokoro, VITS và VITS2.
 
@@ -1475,7 +1475,7 @@ Frame-level streaming có thể làm sau, nhưng không cần cho batch lồng t
 ## 21.1 Bản Base
 
 ```yaml
-model_name: ViFastTTS-Base
+model_name: ViFastTts-Base
 language: vi
 accent: north
 speakers: 1
@@ -1700,7 +1700,7 @@ Nên tách frontend thành package độc lập. Sau này có thể viết lại
 - Xác nhận dữ liệu có thể tạo TTS.
 - Không tối ưu kiến trúc quá sớm.
 
-## Giai đoạn D: ViFastTTS Base, 8 đến 16 tuần
+## Giai đoạn D: ViFastTts Base, 8 đến 16 tuần
 
 - Train iSTFTNet.
 - Train acoustic model.
@@ -1807,7 +1807,7 @@ Các con số sau là mục tiêu kỹ thuật, không phải benchmark đã đ�
 - RTX 3060: RTF dưới 0,02 sau warm-up.
 - Raspberry Pi 5: RTF dưới 0,50 với bản phù hợp.
 
-VieNeu-TTS v3 Turbo hiện công bố CPU RTF khoảng 0,55 đến 0,61 ở FP32 và khoảng 0,35 ở INT8 trên CPU 6 nhân; v3 Nano được mô tả ở khoảng 0,11 đến 0,22 trên CPU desktop [5][6]. Các mốc ViFastTTS phía trên là mục tiêu ước tính dựa trên việc mô hình chỉ có một giọng, một ngôn ngữ, 24 kHz và suy luận hoàn toàn non-autoregressive.
+VieNeu-TTS v3 Turbo hiện công bố CPU RTF khoảng 0,55 đến 0,61 ở FP32 và khoảng 0,35 ở INT8 trên CPU 6 nhân; v3 Nano được mô tả ở khoảng 0,11 đến 0,22 trên CPU desktop [5][6]. Các mốc ViFastTts phía trên là mục tiêu ước tính dựa trên việc mô hình chỉ có một giọng, một ngôn ngữ, 24 kHz và suy luận hoàn toàn non-autoregressive.
 
 ## Triển khai
 

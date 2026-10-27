@@ -3,9 +3,11 @@
 ONNX-only demo (không cần torch):
 - `app.py` — FastAPI, ONNX acoustic + Vocos, alpha 1.5, model tự nghỉ mặc định.
 - `static/index.html` — trang nhập câu, play/tải WAV.
+- `static/brand/` — icon, lockup, favicon, OG image, manifest (nguồn: `resources/brand/`).
 - `Dockerfile` / `requirements.txt` / `docker-compose.yml`.
 
-Build context phải có `src/`, `models/{acoustic,vocoder}.onnx`, `app.py`, `static/`.
+Build context phải có `src/`, `models/{acoustic,vocoder}.onnx`, `app.py`, `static/`
+(kèm `static/brand/`).
 Trên VPS, staging ở `/opt/vifasttts` dùng `docker compose up -d --build`; container join
 network `coolify`, Traefik label route `vifasttts.hoctuthien.com` → `http://vifasttts:8000`.
 

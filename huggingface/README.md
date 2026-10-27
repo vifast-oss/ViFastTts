@@ -12,6 +12,10 @@ pipeline_tag: text-to-speech
 library_name: vifasttts
 ---
 
+<p align="center">
+  <img src="https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/vifasttts-lockup-cream.png" alt="ViFastTts · Giọng đọc tiếng Việt" width="620">
+</p>
+
 # ViFastTts N0 — Ngọc Huyền (research, non-commercial)
 
 > **Model nghiên cứu, KHÔNG production thương mại.**

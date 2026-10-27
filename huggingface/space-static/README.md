@@ -1,15 +1,17 @@
 ---
-title: ViFastTTS Ngọc Huyền small demo
+title: ViFastTts Ngọc Huyền small demo
 emoji: 🎙️
-colorFrom: green
-colorTo: blue
+colorFrom: red
+colorTo: yellow
 sdk: static
 app_file: index.html
 pinned: false
 license: cc-by-nc-4.0
 ---
 
-# ViFastTTS · Ngọc Huyền small
+![ViFastTts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/vifasttts-lockup-cream.png)
+
+# ViFastTts · Ngọc Huyền small
 
 Static demo miễn phí cho model TTS tiếng Việt small 6,1M, 24 kHz, ONNX CPU.
 

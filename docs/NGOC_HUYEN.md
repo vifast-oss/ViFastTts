@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../resources/brand/vifasttts-lockup-cream.png" alt="ViFastTts · Giọng đọc tiếng Việt" width="560">
+</p>
+
 # Ngọc Huyền — model TTS tiếng Việt (research, phi thương mại)
 
 > **Model duy nhất được đóng gói kèm repo dưới dạng “model mẫu”.**

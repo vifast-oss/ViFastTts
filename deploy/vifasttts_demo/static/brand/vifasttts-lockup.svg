@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 400" width="1400" height="400" role="img" aria-labelledby="vifasttts-lockup-title">
+  <title id="vifasttts-lockup-title">ViFastTts · Giọng đọc tiếng Việt</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8352B"/><stop offset="1" stop-color="#B3150F"/>
+    </linearGradient>
+    <linearGradient id="st" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE04A"/><stop offset="1" stop-color="#FFB800"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(44,44) scale(0.609)">
+    <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+    <g stroke="#FFD84D" stroke-linecap="round" opacity="0.85">
+      <line x1="40" y1="215" x2="92" y2="215" stroke-width="14"/>
+      <line x1="58" y1="262" x2="92" y2="262" stroke-width="14"/>
+      <line x1="40" y1="309" x2="92" y2="309" stroke-width="14"/>
+    </g>
+    <polygon points="210.0,144.0 236.5,225.5 322.2,225.5 252.9,275.9 279.4,357.5 210.0,307.1 140.6,357.5 167.1,275.9 97.8,225.5 183.5,225.5" fill="url(#st)" stroke="#FFE680" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="none" stroke="#FFFFFF" stroke-linecap="round">
+      <path d="M 352 212 A 70 70 0 0 1 352 312" stroke-width="20"/>
+      <path d="M 392 172 A 126 126 0 0 1 392 352" stroke-width="20" opacity="0.8"/>
+      <path d="M 432 132 A 182 182 0 0 1 432 392" stroke-width="20" opacity="0.55"/>
+    </g>
+  </g>
+  <text x="420" y="240" font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif" font-size="170" font-weight="800" letter-spacing="-4">
+    <tspan fill="#D42A20">Vi</tspan><tspan fill="#1F2430" font-style="italic">Fast</tspan><tspan fill="#D42A20">Tts</tspan>
+  </text>
+  <text x="426" y="318" font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif" font-size="44" font-weight="500" fill="#6B7280" letter-spacing="6">GIỌNG ĐỌC TIẾNG VIỆT</text>
+</svg>

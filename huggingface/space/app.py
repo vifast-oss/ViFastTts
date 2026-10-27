@@ -57,9 +57,10 @@ def synthesize(text: str, speed: float, fixed_pauses: bool):
     return SAMPLE_RATE, postprocess(np.concatenate(pieces), SAMPLE_RATE)
 
 
-with gr.Blocks(title="ViFastTTS · Ngọc Huyền small") as demo:
+with gr.Blocks(title="ViFastTts · Ngọc Huyền small") as demo:
     gr.Markdown(
-        "# ViFastTTS · Ngọc Huyền small\n"
+        "![ViFastTts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/vifasttts-lockup-cream.png)\n\n"
+        "# ViFastTts · Ngọc Huyền small\n"
         "**Research demo, phi thương mại.** Model acoustic 6,1M, ONNX CPU, 24 kHz. "
         "Mặc định để model tự ngắt nghỉ; nghỉ cố định là tuỳ chọn và đang tắt."
     )

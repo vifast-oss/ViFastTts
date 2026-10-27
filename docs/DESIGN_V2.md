@@ -1590,7 +1590,7 @@ Thận trọng:
 # 31. Cấu hình mô hình đề xuất
 
 ```yaml
-model_name: ViFastTTS-Base-v2
+model_name: ViFastTts-Base-v2
 language: vi
 sample_rate: 24000
 speakers: 1
@@ -1784,7 +1784,7 @@ vifasttts/
 2. Xác minh dataset.
 3. Xác minh parser.
 
-## Giai đoạn D: ViFastTTS v2
+## Giai đoạn D: ViFastTts v2
 
 1. iSTFTNet.
 2. Component embeddings.

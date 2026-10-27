@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="resources/brand/vifasttts-lockup-cream.png" alt="ViFastTts · Giọng đọc tiếng Việt" width="620">
+</p>
+
 # ViFastTts — Text-to-Speech tiếng Việt
 
 **TTS tiếng Việt mã nguồn mở: nhỏ, nhanh, tự train được.** Toolkit nghiên cứu + triển khai
@@ -5,9 +9,9 @@ TTS **một giọng**, hiểu văn bản tiếng Việt, sinh giọng 24 kHz và
 Mỗi checkpoint là một người nói, một phương ngữ — không cần `speaker_id`, `dialect_id`
 hay audio mẫu.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-0f766e)](https://www.python.org/)
-[![ONNX](https://img.shields.io/badge/runtime-ONNX%20CPU-0f766e)](docs/DEPLOYMENT.md)
-[![Code MIT](https://img.shields.io/badge/code-MIT-18212b)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-C6281E)](https://www.python.org/)
+[![ONNX](https://img.shields.io/badge/runtime-ONNX%20CPU-C6281E)](docs/DEPLOYMENT.md)
+[![Code MIT](https://img.shields.io/badge/code-MIT-1F2430)](LICENSE)
 [![Model research](https://img.shields.io/badge/model-research%20%2F%20non--commercial-b45309)](docs/NGOC_HUYEN.md)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow)](https://huggingface.co/dvchd/vifasttts-ngochuyen-small)
 
@@ -258,7 +262,8 @@ src/vifasttts/
   infer.py    text → WAV (PyTorch)
   export.py   ONNX (acoustic + vocoder) + quantization
 configs/      base_24k.yaml + small_24k.yaml + large_24k.yaml + small_ngochuyen.yaml + ...
-tools/        parser_audit, compute_mel_stats, train_chunked, n0_social_card, ... 
+tools/        parser_audit, compute_mel_stats, train_chunked, n0_social_card, ...
+resources/    brand/ (logo, favicon, OG image, manifest; xem resources/brand/README.md)
 deploy/       vifasttts_demo/ (FastAPI ONNX + Dockerfile + static page)
 scripts/      fetch_ngochuyen_models.sh · run_ngochuyen_demo.sh · run_A2_fixgap.sh
 tests/        2.565 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server

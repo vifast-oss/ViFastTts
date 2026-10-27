@@ -3,29 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ViFastTTS · Ngọc Huyền (Small 6,1M)</title>
+<title>ViFastTts · Ngọc Huyền (Small 6,1M)</title>
+<meta name="description" content="Demo TTS tiếng Việt nhỏ, nhanh, chạy CPU: model Ngọc Huyền small 6,1M, 24 kHz, ONNX.">
+<meta name="theme-color" content="#D42A20">
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16.png">
+<link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png">
+<link rel="manifest" href="/static/brand/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ViFastTts">
+<meta property="og:title" content="ViFastTts · Ngọc Huyền (Small 6,1M)">
+<meta property="og:description" content="TTS tiếng Việt nhỏ, nhanh, chạy CPU. Nghe thử model Ngọc Huyền 6,1M, 24 kHz.">
+<meta property="og:image" content="https://vifasttts.hoctuthien.com/static/brand/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ViFastTts · Giọng đọc tiếng Việt">
+<meta property="og:url" content="https://vifasttts.hoctuthien.com/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://vifasttts.hoctuthien.com/static/brand/og-image.png">
 <style>
-  :root { --ink:#18212b; --muted:#637083; --accent:#0f766e; --line:#dbe3ea; --bg:#f4f7f8; }
+  :root { --ink:#1F2430; --muted:#6B7280; --accent:#C6281E; --accent-dark:#991B1B;
+          --gold:#B77900; --line:#E8DDD0; --bg:#FBF6EE; }
   * { box-sizing:border-box; }
   body { margin:0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-         color:var(--ink); background:linear-gradient(180deg,#eef5f3 0%,var(--bg) 45%); line-height:1.5; }
-  main { max-width:860px; margin:0 auto; padding:34px 18px 70px; }
-  .links { float:right; display:flex; gap:14px; margin-top:4px; }
+         color:var(--ink); background:linear-gradient(180deg,#FFF8EC 0%,var(--bg) 48%); line-height:1.5; }
+  main { max-width:880px; margin:0 auto; padding:26px 18px 70px; }
+  .brandbar { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:20px; }
+  .brand { display:block; line-height:0; }
+  .brand-lockup { display:block; width:clamp(270px, 42vw, 390px); height:auto; }
+  .links { display:flex; flex-wrap:wrap; gap:14px; justify-content:flex-end; margin-top:4px; }
   .src { color:var(--accent); font-weight:700; font-size:.9rem; text-decoration:none; }
   .src:hover { text-decoration:underline; }
   .badge { display:inline-block; font-size:.76rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-           color:#8a4b00; background:#fff1d6; border:1px solid #ffd89a; padding:5px 9px; border-radius:999px; }
-  h1 { font-size:clamp(1.6rem, 4vw, 2.35rem); letter-spacing:-.03em; margin:16px 0 8px; }
+           color:#8A2B1A; background:#FFF0EB; border:1px solid #F1C3B8; padding:5px 9px; border-radius:999px; }
+  h1 { font-size:clamp(1.65rem, 4vw, 2.4rem); letter-spacing:-.03em; margin:14px 0 6px; }
   h1 span { color:var(--accent); }
   .tier { display:inline-flex; gap:8px; align-items:center; margin:0 0 12px; padding:5px 10px;
-          border:1px solid #cfe3df; background:#eaf5f2; color:#245c57; border-radius:999px;
+          border:1px solid #F0D49A; background:#FFF4D6; color:#7A4B00; border-radius:999px;
           font-size:.76rem; font-weight:800; letter-spacing:.07em; }
   .sub { color:var(--muted); margin:0 0 22px; max-width:640px; }
-  .card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 12px 34px rgba(25,50,60,.06); }
+  .card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
+          box-shadow:0 12px 34px rgba(90,45,25,.07); }
   label { font-weight:650; font-size:.94rem; }
   textarea { width:100%; min-height:124px; resize:vertical; margin-top:8px; padding:13px 14px; font:inherit; font-size:1.02rem;
-             border:1px solid #cbd6df; border-radius:12px; outline:none; background:#fbfdfd; }
-  textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(15,118,110,.12); }
+             border:1px solid #E3D2C2; border-radius:12px; outline:none; background:#FFFDF9; }
+  textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(198,40,30,.13); }
   .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:.82rem; margin-top:6px; }
   .controls { display:flex; flex-wrap:wrap; gap:16px 22px; align-items:center; margin:15px 0 4px; }
   .controls label { font-weight:500; color:var(--muted); font-size:.9rem; }
@@ -35,38 +58,53 @@
   button { border:0; border-radius:10px; padding:10px 15px; font:inherit; font-weight:700; cursor:pointer; }
   .primary { background:var(--accent); color:#fff; padding:12px 20px; font-size:1rem; }
   .primary:disabled { opacity:.55; cursor:wait; }
-  .ghost { background:#edf3f2; color:#245c57; border:1px solid #d5e5e2; font-weight:600; }
+  .ghost { background:#FBF0EC; color:#9B2C20; border:1px solid #F0D2CA; font-weight:600; }
   .examples { margin:16px 0 0; padding-top:14px; border-top:1px dashed var(--line); }
   .examples p { margin:0 0 8px; color:var(--muted); font-size:.83rem; }
-  .examples button { background:#f6f9fa; color:#334; border:1px solid var(--line); font-weight:500; font-size:.86rem; padding:7px 10px; }
+  .examples button { background:#FFFCF7; color:#3F3A36; border:1px solid var(--line); font-weight:500; font-size:.86rem; padding:7px 10px; }
   #status { min-height:1.3em; color:var(--muted); font-size:.88rem; margin-top:12px; }
-  #status.err { color:#b42318; }
+  #status.err { color:#B42318; }
   #player { display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
   #player audio { width:100%; }
   .fine { color:var(--muted); font-size:.79rem; margin:14px 0 0; }
   .fine a { color:var(--accent); }
   footer { color:var(--muted); font-size:.78rem; margin-top:24px; }
-  code { background:#eef3f4; padding:1px 5px; border-radius:5px; }
+  footer a { color:var(--accent); text-decoration:none; }
+  footer a:hover { text-decoration:underline; }
+  code { background:#FBF0EC; padding:1px 5px; border-radius:5px; }
   .adv { margin-top:20px; border-top:1px dashed var(--line); padding-top:14px; }
   .adv summary { cursor:pointer; font-weight:750; color:var(--accent); }
   .adv p { color:var(--muted); font-size:.84rem; margin:10px 0 8px; }
   .adv textarea { min-height:82px; font-family: Consolas, "Liberation Mono", monospace; font-size:.88rem; }
-  #builtin { max-height:220px; overflow:auto; white-space:pre-wrap; background:#f4f8f8;
+  #builtin { max-height:220px; overflow:auto; white-space:pre-wrap; background:#FFFCF7;
              border:1px solid var(--line); border-radius:10px; padding:10px; font-size:.78rem; }
   #overrideStatus { color:var(--muted); font-size:.8rem; margin-top:6px; }
   .share { display:flex; gap:7px; align-items:center; margin:9px 0 2px; color:var(--muted); font-size:.84rem; }
+  button:focus-visible, a:focus-visible, textarea:focus-visible { outline:3px solid rgba(198,40,30,.28); outline-offset:2px; }
+  @media (max-width:600px) {
+    .brandbar { flex-wrap:wrap; gap:10px; }
+    .brand-lockup { width:min(320px,84vw); }
+    .links { width:100%; justify-content:flex-start; }
+    main { padding-top:20px; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <div class="links">
+<header class="brandbar">
+  <a class="brand" href="/" aria-label="ViFastTts · trang chủ">
+    <img class="brand-lockup" src="/static/brand/vifasttts-lockup.png" width="420" height="120"
+         alt="ViFastTts · Giọng đọc tiếng Việt">
+  </a>
+  <nav class="links" aria-label="Liên kết">
     <a class="src" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub ↗</a>
     <a class="src" href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face ↗</a>
     <a class="src" href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space ↗</a>
-  </div>
-  <span class="badge">Research demo · phi thương mại</span>
-  <h1>ViFastTTS <span>· Ngọc Huyền</span></h1>
-  <div class="tier">SMALL · 6,1M · 24 kHz</div>
+  </nav>
+</header>
+<span class="badge">Research demo · phi thương mại</span>
+<h1>Ngọc Huyền</h1>
+<div class="tier">SMALL · 6,1M · 24 kHz</div>
   <p class="sub">Nhập một câu tiếng Việt (tối đa 300 ký tự). Model tự ngắt nghỉ theo dữ liệu;
     Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
 

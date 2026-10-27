@@ -50,7 +50,7 @@ def main() -> None:
     # faint top band
     d.rectangle((0, 0, W, 12), fill=TEAL)
     x0, bw = 150, 900
-    d.text((80, 55), "ViFastTTS  /  N0", font=font(24, True), fill=TEAL)
+    d.text((80, 55), "ViFastTts  /  N0", font=font(24, True), fill=TEAL)
     d.text((80, 92), "TTS tiếng Việt nhỏ,", font=font(58, True), fill=INK)
     d.text((80, 158), "tự train được", font=font(58, True), fill=TEAL)
     d.text((82, 236), "6,1M tham số acoustic · 24 kHz · ONNX CPU · một giọng", font=font(23), fill=MUTED)

@@ -26,7 +26,8 @@ from pathlib import Path
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from vifasttts.frontend.chunking import (
@@ -57,7 +58,8 @@ VN_TZ = timezone(timedelta(hours=7))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("vifasttts-demo")
 
-app = FastAPI(title="ViFastTTS research demo", docs_url=None, redoc_url=None)
+app = FastAPI(title="ViFastTts research demo", docs_url=None, redoc_url=None)
+app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://huggingface.co"],
@@ -374,23 +376,25 @@ def _admin_html(stats: dict) -> str:
     return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
-<title>ViFastTTS · Thống kê</title>
+<title>ViFastTts · Thống kê</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any">
 <style>
-body{{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#f4f7f8;color:#18212b;margin:0;padding:28px}}
-main{{max-width:980px;margin:0 auto}} h1{{letter-spacing:-.03em;margin:0 0 4px}}
+body{{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#FBF6EE;color:#1F2430;margin:0;padding:28px}}
+main{{max-width:980px;margin:0 auto}} h1{{letter-spacing:-.03em;margin:0 0 4px;display:flex;align-items:center;gap:9px}}
+.mark{{width:38px;height:38px;border-radius:9px;flex:0 0 auto}}
 .sub{{color:#637083;margin:0 0 20px}} .grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
 .card{{background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:14px}}
-.card b{{display:block;font-size:1.6rem;color:#0f766e}} .card span{{color:#637083;font-size:.84rem}}
+.card b{{display:block;font-size:1.6rem;color:#C6281E}} .card span{{color:#637083;font-size:.84rem}}
 table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dbe3ea;border-radius:12px;overflow:hidden;margin-top:18px}}
 th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid #edf1f3;font-size:.86rem}}
-th{{background:#edf3f2;color:#245c57}} a{{color:#0f766e}}
+th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 .note{{background:#fff8e8;border:1px solid #f0d49a;padding:10px 12px;border-radius:10px;color:#7a4b00;font-size:.86rem;margin-top:16px}}
 .tiny{{padding:4px 8px;font-size:.78rem;border-radius:7px;border:1px solid #cbd6df;background:#f4f7f8;cursor:pointer}}
 .tiny.ok{{background:#e5f5ec;border-color:#b8e2c8;color:#166534}} .tiny.no{{background:#fff0f0;border-color:#f0c4c4;color:#9b1c1c}}
 .tiny:disabled{{opacity:.45;cursor:not-allowed}}
 @media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
 </style></head><body><main>
-<h1>ViFastTTS · Thống kê</h1>
+<h1><img class="mark" src="/static/brand/vifasttts-icon.svg" alt=""> ViFastTts · Thống kê</h1>
 <p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">về trang chủ</a></p>
 <div class="grid">
   <div class="card"><b>{stats['users_total']}</b><span>người dùng (hash IP)</span></div>
@@ -579,6 +583,11 @@ def review_suggestion(suggestion_id: int, action: str, request: Request) -> Resp
         finally:
             connection.close()
     return RedirectResponse(url="/admin", status_code=303)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return FileResponse(ROOT / "static" / "brand" / "favicon.ico", media_type="image/x-icon")
 
 
 @app.get("/healthz")
