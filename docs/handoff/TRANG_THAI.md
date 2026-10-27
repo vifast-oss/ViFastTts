@@ -1,7 +1,7 @@
 # TRẠNG THÁI (STATUS) — nguồn sự thật duy nhất
 
 > **Vòng hiện hành:** N0 + Q (27/10/2026) · **Tệp đặc tả:** `docs/Q_ONSET.md` +
-> `docs/handoff/N0_DEPLOY.md` · **Commit code:** `a835f8b` · **Trạng thái:** **LIVE (Q-init)** —
+> `docs/handoff/N0_DEPLOY.md` · **Commit code:** `474475a` · **Trạng thái:** **LIVE (Q-init)** —
 > chờ chọn Q-init hay fine-tune 3k.
 >
 > Tài liệu cũ: `docs/archive/handoff/TRANG_THAI_2026-10-27_pre_N0_live.md` (lịch sử, không hiệu lực).
@@ -65,6 +65,8 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
   checkbox bật; server chỉ lưu cặp `key = value` dạng pending, không lưu câu/IP.
 - Quy tắc người dùng **ưu tiên trước** STEM và 179 quy tắc có sẵn; fallback tiếng Anh
   (CASE_INSENSITIVE_ENGLISH + acronym) vẫn áp dụng sau parser.
+- Ngày 27/10 đã kiểm lại từ điển: bỏ alias ASR/tiền tố rác, bỏ key một chữ cái; thêm
+  viết tắt Việt + tên công nghệ; chi tiết ở `docs/NORMALIZER.md` mục “Kiểm toán từ điển”.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.
