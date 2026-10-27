@@ -1,7 +1,6 @@
 # ViFastTts brand assets
 
-Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastTts** (PascalCase), không viết
-`ViFastTTS`.
+Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastTts** (PascalCase).
 
 ## File
 
