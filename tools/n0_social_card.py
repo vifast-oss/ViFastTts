@@ -7,16 +7,16 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1200, 1500
-BG = (244, 248, 247)
+BG = (251, 246, 238)
 INK = (24, 33, 43)
-MUTED = (99, 112, 131)
-TEAL = (15, 118, 110)
-TEAL_D = (10, 78, 73)
-ORANGE = (194, 101, 8)
+MUTED = (107, 114, 128)
+TEAL = (198, 40, 30)
+TEAL_D = (153, 27, 27)
+ORANGE = (183, 121, 0)
 PURPLE = (98, 70, 160)
 GREEN = (28, 120, 76)
 WHITE = (255, 255, 255)
-LINE = (219, 229, 232)
+LINE = (232, 221, 208)
 FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 
@@ -47,8 +47,13 @@ def box(draw, xy, fill, radius=18, outline=None):
 def main() -> None:
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
-    # faint top band
+    # brand band + icon
     d.rectangle((0, 0, W, 12), fill=TEAL)
+    d.rectangle((0, 12, W, 18), fill=(255, 184, 0))
+    icon_path = Path("resources/brand/vifasttts-icon-512.png")
+    if icon_path.exists():
+        icon = Image.open(icon_path).convert("RGBA").resize((116, 116), Image.Resampling.LANCZOS)
+        img.paste(icon, (W - 160, 38), icon)
     x0, bw = 150, 900
     d.text((80, 55), "ViFastTts  /  N0", font=font(24, True), fill=TEAL)
     d.text((80, 92), "TTS tiếng Việt nhỏ,", font=font(58, True), fill=INK)
@@ -114,10 +119,10 @@ def main() -> None:
         d.text((x + 14, yy + 41), label, font=font(15), fill=MUTED)
 
     # footer
-    d.rectangle((0, 1440, W, H), fill=(19, 44, 47))
-    d.text((80, 1448), "CODE MỞ  ·  WEIGHTS RESEARCH  ·  CC-BY-NC-4.0", font=font(16, True), fill=(171, 220, 210))
-    d.text((80, 1471), "github.com/dvchd/ViFastTts   ·   vifasttts.hoctuthien.com", font=font(17), fill=(220, 235, 230))
-    d.text((820, 1451), "N0  ·  2026", font=font(18, True), fill=(171, 220, 210))
+    d.rectangle((0, 1440, W, H), fill=(43, 20, 18))
+    d.text((80, 1448), "CODE MỞ  ·  WEIGHTS RESEARCH  ·  CC-BY-NC-4.0", font=font(16, True), fill=(255, 224, 160))
+    d.text((80, 1471), "github.com/dvchd/ViFastTts   ·   vifasttts.hoctuthien.com", font=font(17), fill=(255, 244, 220))
+    d.text((820, 1451), "N0  ·  2026", font=font(18, True), fill=(255, 224, 160))
 
     out = Path("artifacts/ngochuyen/vifasttts_model_flow.png")
     out.parent.mkdir(parents=True, exist_ok=True)
