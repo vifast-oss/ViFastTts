@@ -29,3 +29,6 @@ eval/baselines/*
 
 # Static Space samples are uploaded to the Space, not committed
 huggingface/space-static/samples/
+
+# runtime stats DB (local/VPS)
+deploy/vifasttts_demo/data/

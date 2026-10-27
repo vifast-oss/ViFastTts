@@ -39,6 +39,10 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt.
 - Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 300 ký tự,
   không lưu text/audio.
+- **Thống kê:** `/admin` (HTML) và `/admin.json`; đếm unique visitor theo hash IP, tổng lượt
+  tạo, lượt xem trang, audio đã tạo, 20 lượt gần nhất. Không lưu IP/text.
+  Nếu `ADMIN_PASSWORD` rỗng hoặc chưa đặt, `/admin` mở công khai. Đặt env này để bật Basic Auth.
+  DB: `/app/data/stats.sqlite3`, bind mount `./data:/app/data` nên giữ qua restart.
 - **RTF thực tế:** 5 câu, tổng audio **22,44 s**, tổng xử lý **1,01 s** trên VPS CPU
   (HTTP loopback trong container), **RTF 0,045**, khoảng 22 lần nhanh hơn thời gian thực.
   Chưa tính độ trễ mạng từ trình duyệt.

@@ -25,3 +25,12 @@ docker run --rm -p 8090:8000 vifasttts-demo
 ```
 
 Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Docker).
+
+
+## Thống kê
+
+- `/admin` và `/admin.json`.
+- Mặc định mở công khai nếu `ADMIN_PASSWORD` chưa đặt.
+- Đặt `ADMIN_PASSWORD` trong compose để bật Basic Auth.
+- DB `data/stats.sqlite3`; compose bind mount `./data:/app/data`.
+- Chỉ lưu hash IP, số ký tự, thời lượng audio, thời gian xử lý; không lưu IP/text.

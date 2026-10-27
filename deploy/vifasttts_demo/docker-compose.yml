@@ -6,6 +6,10 @@ services:
     environment:
       VIFASTT_SHARPEN_ALPHA: "1.5"
       VIFASTT_INTRA_THREADS: "2"
+      DATA_DIR: "/app/data"
+      # ADMIN_PASSWORD: "..."   # bỏ trống = /admin mở công khai
+    volumes:
+      - ./data:/app/data
     expose:
       - "8000"
     networks:

@@ -5,13 +5,20 @@ Chạy trong Docker; không cần torch. Mặc định model tự nghỉ, alpha 
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import io
+import json
 import logging
 import os
+import secrets
+import sqlite3
 import threading
 import time
 import wave
 from collections import defaultdict, deque
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -38,6 +45,10 @@ MAX_CHARS = 300
 RATE_LIMIT = 6
 RATE_WINDOW = 60.0
 ALPHA = float(os.environ.get("VIFASTT_SHARPEN_ALPHA", "1.5"))
+DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
+DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
+VN_TZ = timezone(timedelta(hours=7))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("vifasttts-demo")
@@ -52,6 +63,218 @@ app.add_middleware(
 )
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
+_STATS_LOCK = threading.Lock()
+_SALT: str | None = None
+
+
+def _connect() -> sqlite3.Connection:
+    connection = sqlite3.connect(str(DB_PATH), timeout=10)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def _init_stats() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.executescript("""
+                CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS visitors (
+                    visitor TEXT PRIMARY KEY,
+                    first_seen REAL NOT NULL,
+                    last_seen REAL NOT NULL,
+                    page_views INTEGER NOT NULL DEFAULT 0,
+                    tts_count INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS usage (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts REAL NOT NULL,
+                    visitor TEXT NOT NULL,
+                    chars INTEGER NOT NULL,
+                    audio_seconds REAL NOT NULL,
+                    elapsed REAL NOT NULL,
+                    fixed_pauses INTEGER NOT NULL,
+                    speed REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS usage_ts ON usage(ts);
+            """)
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _get_salt() -> str:
+    global _SALT
+    if _SALT:
+        return _SALT
+    configured = os.environ.get("STATS_SALT", "").strip()
+    if configured:
+        _SALT = configured
+        return _SALT
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            row = connection.execute("SELECT value FROM meta WHERE key='salt'").fetchone()
+            if row:
+                _SALT = str(row["value"])
+            else:
+                _SALT = secrets.token_hex(16)
+                connection.execute("INSERT INTO meta(key, value) VALUES('salt', ?)", (_SALT,))
+                connection.commit()
+        finally:
+            connection.close()
+    return _SALT
+
+
+def _visitor_hash(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for", "")
+    client = forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+    return hashlib.sha256(f"{_get_salt()}:{client}".encode()).hexdigest()[:24]
+
+
+def _record_page(visitor: str) -> None:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "INSERT INTO visitors(visitor, first_seen, last_seen, page_views) VALUES(?,?,?,1) "
+                "ON CONFLICT(visitor) DO UPDATE SET last_seen=excluded.last_seen, "
+                "page_views=visitors.page_views+1",
+                (visitor, now, now),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _record_tts(visitor: str, chars: int, audio_seconds: float, elapsed: float,
+                fixed_pauses: bool, speed: float) -> None:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "INSERT INTO usage(ts, visitor, chars, audio_seconds, elapsed, fixed_pauses, speed) "
+                "VALUES(?,?,?,?,?,?,?)",
+                (now, visitor, chars, audio_seconds, elapsed, int(fixed_pauses), speed),
+            )
+            connection.execute(
+                "INSERT INTO visitors(visitor, first_seen, last_seen, tts_count) VALUES(?,?,?,1) "
+                "ON CONFLICT(visitor) DO UPDATE SET last_seen=excluded.last_seen, "
+                "tts_count=visitors.tts_count+1",
+                (visitor, now, now),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _stats_payload() -> dict:
+    now = time.time()
+    local_now = datetime.fromtimestamp(now, VN_TZ)
+    day_start = local_now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    week_start = (local_now - timedelta(days=7)).timestamp()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            users = connection.execute("SELECT COUNT(*) AS n FROM visitors").fetchone()["n"]
+            pages = connection.execute("SELECT COALESCE(SUM(page_views),0) AS n FROM visitors").fetchone()["n"]
+            tts = connection.execute("SELECT COUNT(*) AS n FROM usage").fetchone()["n"]
+            users_today = connection.execute(
+                "SELECT COUNT(*) AS n FROM visitors WHERE last_seen >= ?", (day_start,)
+            ).fetchone()["n"]
+            users_week = connection.execute(
+                "SELECT COUNT(*) AS n FROM visitors WHERE last_seen >= ?", (week_start,)
+            ).fetchone()["n"]
+            tts_today = connection.execute(
+                "SELECT COUNT(*) AS n FROM usage WHERE ts >= ?", (day_start,)
+            ).fetchone()["n"]
+            totals = connection.execute(
+                "SELECT COALESCE(SUM(audio_seconds),0) AS audio, "
+                "COALESCE(SUM(chars),0) AS chars, "
+                "COALESCE(AVG(elapsed),0) AS elapsed FROM usage"
+            ).fetchone()
+            recent = [dict(row) for row in connection.execute(
+                "SELECT ts, visitor, chars, audio_seconds, elapsed, fixed_pauses, speed "
+                "FROM usage ORDER BY id DESC LIMIT 20"
+            ).fetchall()]
+        finally:
+            connection.close()
+    return {
+        "generated_at": datetime.fromtimestamp(now, VN_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+        "timezone": "UTC+07:00",
+        "users_total": int(users),
+        "users_today": int(users_today),
+        "users_7d": int(users_week),
+        "page_views": int(pages),
+        "tts_total": int(tts),
+        "tts_today": int(tts_today),
+        "audio_seconds": round(float(totals["audio"]), 2),
+        "chars_total": int(totals["chars"]),
+        "avg_chars": round(float(totals["chars"]) / tts, 1) if tts else 0.0,
+        "avg_elapsed": round(float(totals["elapsed"]), 3) if tts else 0.0,
+        "recent": [
+            {**row, "time": datetime.fromtimestamp(float(row["ts"]), VN_TZ).strftime("%m-%d %H:%M:%S"),
+             "visitor": str(row["visitor"])[:10], "audio_seconds": round(float(row["audio_seconds"]), 2),
+             "elapsed": round(float(row["elapsed"]), 3)}
+            for row in recent
+        ],
+    }
+
+
+def _admin_authorized(request: Request) -> bool:
+    if not ADMIN_PASSWORD:
+        return True
+    header = request.headers.get("authorization", "")
+    expected = "Basic " + base64.b64encode(f"admin:{ADMIN_PASSWORD}".encode()).decode("ascii")
+    return hmac.compare_digest(header, expected)
+
+
+def _admin_html(stats: dict) -> str:
+    rows = "".join(
+        f"<tr><td>{item['time']}</td><td>{item['visitor']}</td><td>{item['chars']}</td>"
+        f"<td>{item['audio_seconds']:.2f}s</td><td>{item['elapsed']:.2f}s</td>"
+        f"<td>{'có' if item['fixed_pauses'] else 'không'}</td></tr>"
+        for item in stats["recent"]
+    ) or "<tr><td colspan='6'>Chưa có lượt tạo nào.</td></tr>"
+    auth_note = "Đang mở công khai, chưa đặt ADMIN_PASSWORD." if not ADMIN_PASSWORD else "Đã bật Basic Auth."
+    return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="30">
+<title>ViFastTTS · Thống kê</title>
+<style>
+body{{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#f4f7f8;color:#18212b;margin:0;padding:28px}}
+main{{max-width:980px;margin:0 auto}} h1{{letter-spacing:-.03em;margin:0 0 4px}}
+.sub{{color:#637083;margin:0 0 20px}} .grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
+.card{{background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:14px}}
+.card b{{display:block;font-size:1.6rem;color:#0f766e}} .card span{{color:#637083;font-size:.84rem}}
+table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dbe3ea;border-radius:12px;overflow:hidden;margin-top:18px}}
+th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid #edf1f3;font-size:.86rem}}
+th{{background:#edf3f2;color:#245c57}} a{{color:#0f766e}}
+.note{{background:#fff8e8;border:1px solid #f0d49a;padding:10px 12px;border-radius:10px;color:#7a4b00;font-size:.86rem;margin-top:16px}}
+@media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
+</style></head><body><main>
+<h1>ViFastTTS · Thống kê</h1>
+<p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">về trang chủ</a></p>
+<div class="grid">
+  <div class="card"><b>{stats['users_total']}</b><span>người dùng (hash IP)</span></div>
+  <div class="card"><b>{stats['tts_total']}</b><span>lượt tạo audio</span></div>
+  <div class="card"><b>{stats['page_views']}</b><span>lượt xem trang</span></div>
+  <div class="card"><b>{stats['tts_today']}</b><span>lượt tạo hôm nay</span></div>
+  <div class="card"><b>{stats['users_today']}</b><span>người dùng hôm nay</span></div>
+  <div class="card"><b>{stats['users_7d']}</b><span>người dùng 7 ngày</span></div>
+  <div class="card"><b>{stats['audio_seconds'] / 60:.1f} phút</b><span>audio đã tạo</span></div>
+  <div class="card"><b>{stats['avg_chars']}</b><span>ký tự / lượt</span></div>
+</div>
+<table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>Nghỉ cố định</th></tr></thead>
+<tbody>{rows}</tbody></table>
+<div class="note">Số “người dùng” là ước lượng theo hash IP, không lưu IP hay nội dung text. {auth_note}</div>
+</main></body></html>"""
+
+
+_init_stats()
 
 if not ACOUSTIC.exists() or not VOCODER.exists():
     raise RuntimeError(f"Thiếu ONNX: {ACOUSTIC} / {VOCODER}")
@@ -89,7 +312,7 @@ def _rate_ok(client: str) -> bool:
     return True
 
 
-def _synthesize(text: str, speed: float, fixed_pauses: bool) -> tuple[bytes, float]:
+def _synthesize(text: str, speed: float, fixed_pauses: bool) -> tuple[bytes, float, float]:
     started = time.perf_counter()
     options = NormalizerOptions(dialect="north")
     chunks = (split_clauses(text, max_chars=MAX_CHARS) if fixed_pauses
@@ -109,12 +332,37 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool) -> tuple[bytes, flo
             if pause:
                 pieces.append(np.zeros(pause, dtype=np.float32))
     waveform = postprocess(np.concatenate(pieces), SAMPLE_RATE)
-    return _wav_bytes(waveform, SAMPLE_RATE), time.perf_counter() - started
+    return _wav_bytes(waveform, SAMPLE_RATE), time.perf_counter() - started, waveform.size / SAMPLE_RATE
 
 
 @app.get("/", response_class=HTMLResponse)
-def index() -> str:
-    return (ROOT / "static" / "index.html").read_text(encoding="utf-8")
+def index(request: Request) -> HTMLResponse:
+    try:
+        _record_page(_visitor_hash(request))
+    except Exception:
+        logger.exception("page stats failed")
+    return HTMLResponse((ROOT / "static" / "index.html").read_text(encoding="utf-8"),
+                        headers={"Cache-Control": "no-store"})
+
+
+def _admin_denied() -> Response:
+    return Response(status_code=401, content="Cần đăng nhập admin.",
+                    headers={"WWW-Authenticate": 'Basic realm="vifasttts-admin"'})
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin(request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    return HTMLResponse(_admin_html(_stats_payload()), headers={"Cache-Control": "no-store"})
+
+
+@app.get("/admin.json")
+def admin_json(request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    return Response(content=json.dumps(_stats_payload(), ensure_ascii=False),
+                    media_type="application/json", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/healthz")
@@ -137,10 +385,15 @@ def tts(payload: TtsRequest, request: Request) -> Response:
     client = forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
     if not _rate_ok(client):
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút")
+    try:
+        visitor = _visitor_hash(request)
+    except Exception:
+        logger.exception("visitor stats failed")
+        visitor = "unknown"
     if not _lock.acquire(timeout=45):
         raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau")
     try:
-        audio, elapsed = _synthesize(text, speed, bool(payload.fixed_pauses))
+        audio, elapsed, audio_seconds = _synthesize(text, speed, bool(payload.fixed_pauses))
     except HTTPException:
         raise
     except Exception as exc:
@@ -148,6 +401,10 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         raise HTTPException(status_code=500, detail="Lỗi tổng hợp; thử câu khác") from exc
     finally:
         _lock.release()
+    try:
+        _record_tts(visitor, len(text), audio_seconds, elapsed, bool(payload.fixed_pauses), speed)
+    except Exception:
+        logger.exception("tts stats failed")
     logger.info("tts ok %.2fs chars=%d fixed=%s", elapsed, len(text), payload.fixed_pauses)
     return Response(content=audio, media_type="audio/wav", headers={
         "Content-Disposition": 'inline; filename="vifasttts-demo.wav"',

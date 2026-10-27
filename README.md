@@ -28,6 +28,7 @@ và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 - **Demo online:** https://vifasttts.hoctuthien.com/
 - **Hugging Face model:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - **Space demo miễn phí:** https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
+- **Thống kê demo:** https://vifasttts.hoctuthien.com/admin
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
   [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1)
