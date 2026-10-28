@@ -9,6 +9,20 @@
 - Đã có: checkpoint, config, mel/f0 stats, Vocos, ONNX FP32, 10 demo, model card, license.
 - Đã kiểm tra `model_info` + tải thử `onnx/acoustic.onnx` (HTTP 200, 31.626.168 byte).
 
+## Download stats — cần query file ở root
+
+HF chỉ đếm lượt tải qua **query file** mặc định (`config.json`, `config.yaml`,
+`hyperparams.yaml`, `params.json`, `meta.yaml`) hoặc filter của library. Repo hiện chỉ có
+`configs/small_ngochuyen.yaml` (thư mục con), nên API trả `downloads: 0` dù có người tải
+ONNX trực tiếp.
+
+- Thêm **`config.yaml` ở root** (copy từ `configs/small_ngochuyen.yaml`) để có query file;
+  sau đó `hf_hub_download(..., "config.yaml")` mới được đếm.
+- Tải thẳng `onnx/acoustic.onnx` **không** được đếm nếu không có filter riêng. Muốn đếm
+  đúng ONNX, cần đăng ký `countDownloads` cho library `vifasttts` trong
+  `huggingface.js` hoặc chấp nhận undercount.
+- Không tự tạo request để tăng số — số chỉ có ý nghĩa khi người dùng thật tải.
+
 ## Gợi ý repo (đã dùng)
 
 - `dvchd/vifasttts-ngochuyen-small` (model)
