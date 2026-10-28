@@ -8,7 +8,7 @@ các mục sau.
 
 ## Windows 10/11 (x64) — ưu tiên
 
-1. Tải `vifasttts-desktop-windows-x64.zip` (hoặc `vifasttts-server-windows-x64.zip`
+1. Tải `vifasttts-desktop-windows-x64.zip` (hoặc `vifasttts-cli-windows-x64.zip`
    nếu chỉ chạy server).
 2. Chuột phải → **Extract All** (đừng chạy trực tiếp trong file ZIP).
 3. Mở thư mục, chạy `vifasttts-desktop.exe`.
@@ -21,7 +21,7 @@ Trong desktop:
 - **Dùng server này** → chuyển chế độ remote sang server vừa bật.
 - TUI: mở PowerShell/CMD tại thư mục giải nén:
   ```powershell
-  .\vifasttts-tui.exe --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx
+  .\vifasttts-rs.exe
   ```
 
 Không cần cài Python/Node/Visual C++ redistributable (bản release đã gom runtime
@@ -44,9 +44,8 @@ TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
 # mặc định mở TUI
 /Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs
 # TUI độc lập
-/Applications/ViFastTts.app/Contents/MacOS/vifasttts-tui \
-  --acoustic /Applications/ViFastTts.app/Contents/Resources/acoustic.onnx \
-  --vocoder /Applications/ViFastTts.app/Contents/Resources/vocoder.onnx
+# TUI/CLI/server nằm trong vifasttts-rs
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs
 # server + web (nếu có web/ cạnh binary)
 /Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs server
 ```
@@ -57,7 +56,7 @@ TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
 tar -xzf vifasttts-desktop-linux-x64.tar.gz
 cd vifasttts-desktop-linux-x64
 ./run.sh
-./vifasttts-tui --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx
+./vifasttts-rs
 ```
 
 Cần `libasound2`, `libxkbcommon`, X11/Wayland, OpenGL. Ubuntu/Debian:
@@ -68,9 +67,10 @@ Nếu chạy headless: `./vifasttts-desktop --smoke`.
 
 ## Server (Windows/macOS/Linux)
 
-- Windows: `vifasttts-server-windows-x64.zip` → `vifasttts-server.exe`.
-- macOS: `vifasttts-server-macos-arm64.tar.gz` → `./run.sh`.
-- Linux: `vifasttts-server-linux-x64.tar.gz` → `./run.sh`.
+- Windows: `vifasttts-cli-windows-x64.zip` → `vifasttts-rs.exe`.
+- macOS: `vifasttts-cli-macos-arm64.tar.gz` → `./run.sh`.
+- Linux: `vifasttts-cli-linux-x64.tar.gz` → `./run.sh`.
+- Chạy server: `vifasttts-rs server`; API-only: `--api-only`.
 
 ```bash
 ./run.sh --host 127.0.0.1 --port 8000
@@ -122,8 +122,8 @@ Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 ```bash
 # Rust CLI + TUI + server (CLI chứa TUI mặc định)
 cargo build --release --manifest-path rust/Cargo.toml \
-  -p vifasttts-cli -p vifasttts-tui -p vifasttts-http-server
-# binary: rust/target/release/{vifasttts-rs,vifasttts-tui,vifasttts-server}
+  -p vifasttts-cli
+# binary: rust/target/release/vifasttts-rs (TUI/CLI/server)
 # ./vifasttts-rs              -> TUI
 # ./vifasttts-rs server       -> server + web
 # ./vifasttts-rs synth ...    -> CLI

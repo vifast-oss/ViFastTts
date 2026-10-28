@@ -55,7 +55,7 @@ rust/target/release/vifasttts-rs stream --text "..." --output out-stream.wav \
   --karaoke out-stream.json
 
 # Server tối thiểu
-cargo run --release -p vifasttts-http-server -- --port 8000
+cargo run --release -p vifasttts-cli -- server --port 8000
 curl -s http://127.0.0.1:8000/healthz
 curl -sS -X POST http://127.0.0.1:8000/api/tts \
   -H 'Content-Type: application/json' \
@@ -65,7 +65,7 @@ curl -sS -N -X POST http://127.0.0.1:8000/api/tts/stream \
   -d '{"text":"Xin chào"}'
 
 # Desktop GUI + TUI + server + CLI (cần model local)
-cargo build --release -p vifasttts-desktop -p vifasttts-tui -p vifasttts-http-server -p vifasttts-cli
+cargo build --release -p vifasttts-desktop -p vifasttts-cli
 ./target/release/vifasttts-desktop --smoke
 ./target/release/vifasttts-rs              # mặc định mở TUI
 ./target/release/vifasttts-rs server       # server + web (nếu có web/)
@@ -134,14 +134,14 @@ Kết quả chốt 28/10/2026:
 - `vifasttts-mobile`: mobile composition root — model, status, synth, `AudioSink` (iOS/Android).
 - `vifasttts-browser`: browser adapter — async engine + `ort-web`, parse/karaoke/DSP helpers.
 - `vifasttts-desktop`: app desktop egui (local + remote + server nội bộ, settings/dictionary/ETA, audio playback).
-- `vifasttts-tui`: terminal UI ratatui/crossterm (local/remote, lưu WAV).
+- `vifasttts-tui`: library TUI ratatui/crossterm; CLI không args mở TUI.
 - `vifasttts-http-client`: HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke).
 - `vifasttts-cli`: CLI production (synth/stream/bench/inspect).
 - `vifasttts-tools`: parity model (mel-ids, synth-ids).
 - `vifasttts-parse`: parse/parse-batch text-only (không ORT).
 - `vifasttts-ffi`: C ABI cho iOS/Android/desktop; header trong `include/`;
   hướng dẫn mobile trong `rust/crates/adapters/inbound/ffi/README.md`.
-- `vifasttts-http-server`: axum `/healthz`, `/api/config`, `/api/tts` (+karaoke JSON), `/api/tts/stream` (NDJSON).
+- `vifasttts-http-server`: library axum; CLI `server` là entrypoint; `/healthz`, `/api/tts`, stream, web/API-only.
 
 ## Browser local
 

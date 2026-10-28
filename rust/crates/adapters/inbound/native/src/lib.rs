@@ -170,6 +170,30 @@ pub fn load_vfts(path: impl AsRef<std::path::Path>) -> Result<NativeEngine, Stri
     from_bytes(&bundle.acoustic, &bundle.vocoder)
 }
 
+fn vocoder_candidates() -> Vec<std::path::PathBuf> {
+    let mut candidates = Vec::new();
+    for key in ["VIFASTT_VOCODER", "VIFASTT_VOCODER_PATH"] {
+        if let Ok(value) = std::env::var(key) {
+            if !value.trim().is_empty() {
+                candidates.push(std::path::PathBuf::from(value));
+            }
+        }
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        candidates.push(cwd.join("models/vocoder.onnx"));
+        candidates.push(cwd.join("vocoder.onnx"));
+        candidates.push(cwd.join("artifacts/onnx/n0_q/vocoder.onnx"));
+    }
+    if let Ok(exe) = std::env::current_exe()
+        && let Some(directory) = exe.parent()
+    {
+        candidates.push(directory.join("models/vocoder.onnx"));
+        candidates.push(directory.join("vocoder.onnx"));
+        candidates.push(directory.join("Resources/vocoder.onnx"));
+    }
+    candidates
+}
+
 /// Nạp acoustic-only `.vfa` với vocoder dùng chung.
 pub fn load_vfa(
     vfa: impl AsRef<std::path::Path>,
@@ -181,6 +205,27 @@ pub fn load_vfa(
         .map_err(|error| format!("đọc {}: {error}", vocoder.as_ref().display()))?;
     bundle.verify_vocoder(&vocoder)?;
     from_bytes(&bundle.acoustic, &vocoder)
+}
+
+/// Nạp `.vfa` tự tìm vocoder đi kèm app/package, kiểm SHA256 trong manifest.
+pub fn load_vfa_auto(vfa: impl AsRef<std::path::Path>) -> Result<NativeEngine, String> {
+    let bundle = VfaBundle::read_path(vfa)?;
+    bundle.verify_runtime_vocab()?;
+    let expected = &bundle.manifest.vocoder.sha256;
+    let mut tried = Vec::new();
+    for path in vocoder_candidates() {
+        tried.push(path.display().to_string());
+        let Ok(bytes) = std::fs::read(&path) else {
+            continue;
+        };
+        if bundle.verify_vocoder(&bytes).is_ok() {
+            return from_bytes(&bundle.acoustic, &bytes);
+        }
+    }
+    Err(format!(
+        "không tìm thấy vocoder khớp {}; đặt VIFASTT_VOCODER hoặc --vocoder. Đã thử: {:?}",
+        expected, tried
+    ))
 }
 
 /// Nạp model từ bytes (iOS/Android/browser bundle không có path).

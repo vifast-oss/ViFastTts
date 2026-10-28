@@ -8,7 +8,8 @@ use clap::{Parser, Subcommand};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_native::{
     KaraokeDocument, PackOptions, StreamControl, SynthesisOptions, TimedUnit, VfaBundle,
-    VfaOptions, VftsBundle, from_bytes, load, load_verified, load_vfa, load_vfts, ort_info,
+    VfaOptions, VftsBundle, from_bytes, load, load_verified, load_vfa, load_vfa_auto, load_vfts,
+    ort_info,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::{ParseOptions, live_parse_options};
@@ -400,7 +401,11 @@ fn main() -> Result<()> {
                 return Ok(());
             }
             let mut engine = if let Some(path) = vfa {
-                load_vfa(path, &vocoder).map_err(anyhow::Error::msg)?
+                if vocoder.exists() {
+                    load_vfa(path, &vocoder).map_err(anyhow::Error::msg)?
+                } else {
+                    load_vfa_auto(path).map_err(anyhow::Error::msg)?
+                }
             } else if let Some(path) = vfts {
                 load_vfts(path).map_err(anyhow::Error::msg)?
             } else {

@@ -11,7 +11,8 @@ use std::ptr;
 use std::slice;
 
 use vifasttts_native::{
-    NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfa, load_vfts, ort_info,
+    NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfa, load_vfa_auto,
+    load_vfts, ort_info,
 };
 
 thread_local! {
@@ -156,6 +157,16 @@ pub extern "C" fn vifasttts_engine_new_vfa(
         let vfa = c_path(vfa)?;
         let vocoder = c_path(vocoder)?;
         let engine = load_vfa(vfa, vocoder)?;
+        Ok(Box::into_raw(Box::new(engine)))
+    })
+}
+
+/// Nạp `.vfa` tự tìm vocoder bundled cạnh app/package.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_engine_new_vfa_auto(vfa: *const c_char) -> *mut NativeEngine {
+    guard(ptr::null_mut(), || {
+        let vfa = c_path(vfa)?;
+        let engine = load_vfa_auto(vfa)?;
         Ok(Box::into_raw(Box::new(engine)))
     })
 }

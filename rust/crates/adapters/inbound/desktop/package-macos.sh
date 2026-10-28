@@ -34,13 +34,11 @@ fi
 [ -f "$ORT_LIB" ] || { echo "Thiếu ORT: $ORT_LIB" >&2; exit 2; }
 
 cd "$ROOT/rust"
-cargo build --release -p vifasttts-desktop -p vifasttts-http-server -p vifasttts-tui -p vifasttts-cli
+cargo build --release -p vifasttts-desktop -p vifasttts-cli
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-desktop"
-cp "$ROOT/rust/target/release/vifasttts-server" "$APP/Contents/MacOS/vifasttts-server"
-cp "$ROOT/rust/target/release/vifasttts-tui" "$APP/Contents/MacOS/vifasttts-tui"
 cp "$ROOT/rust/target/release/vifasttts-rs" "$APP/Contents/MacOS/vifasttts-rs"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then cp -R "$WEB_DIR" "$APP/Contents/MacOS/web"; fi
 cp "$ORT_LIB" "$APP/Contents/MacOS/libonnxruntime.dylib"
@@ -65,7 +63,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-chmod +x "$APP/Contents/MacOS/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-server" "$APP/Contents/MacOS/vifasttts-tui" "$APP/Contents/MacOS/vifasttts-rs"
+chmod +x "$APP/Contents/MacOS/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-rs"
 if command -v codesign >/dev/null; then
   codesign --force --deep --sign - "$APP" >/dev/null
 fi

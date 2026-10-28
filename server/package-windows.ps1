@@ -9,8 +9,8 @@ $ErrorActionPreference = "Stop"
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Root = Resolve-Path (Join-Path $Here "..")
 if (-not $ModelDir) { $ModelDir = Join-Path $Root "artifacts/onnx/n0_q" }
-if (-not $Out) { $Out = Join-Path $Root "desktop/dist/vifasttts-server-windows-x64" }
-if (-not $Archive) { $Archive = Join-Path $Root "desktop/dist/vifasttts-server-windows-x64.zip" }
+if (-not $Out) { $Out = Join-Path $Root "desktop/dist/vifasttts-cli-windows-x64" }
+if (-not $Archive) { $Archive = Join-Path $Root "desktop/dist/vifasttts-cli-windows-x64.zip" }
 $Acoustic = Join-Path $ModelDir "acoustic.onnx"
 $Vocoder = Join-Path $ModelDir "vocoder.onnx"
 if (-not (Test-Path $Acoustic)) { throw "Thiếu $Acoustic" }
@@ -24,10 +24,10 @@ if (-not (Test-Path $Zip)) {
 $Extract = Join-Path $Cache "onnxruntime-win-x64-$OrtVersion"
 if (-not (Test-Path $Extract)) { Expand-Archive -Path $Zip -DestinationPath $Cache -Force }
 Push-Location (Join-Path $Root "rust")
-try { cargo build --release -p vifasttts-http-server; if ($LASTEXITCODE -ne 0) { throw "cargo build failed" } } finally { Pop-Location }
+try { cargo build --release -p vifasttts-cli; if ($LASTEXITCODE -ne 0) { throw "cargo build failed" } } finally { Pop-Location }
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path (Join-Path $Out "models") | Out-Null
-Copy-Item (Join-Path $Root "rust/target/release/vifasttts-server.exe") (Join-Path $Out "vifasttts-server.exe")
+Copy-Item (Join-Path $Root "rust/target/release/vifasttts-rs.exe") (Join-Path $Out "vifasttts-rs.exe")
 Copy-Item (Join-Path $Extract "lib/onnxruntime.dll") (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
@@ -35,8 +35,9 @@ if ($WebDir -and (Test-Path $WebDir)) {
     Copy-Item -Recurse -Force $WebDir (Join-Path $Out "web")
 }
 @"
-ViFastTts HTTP server (Windows x64)
-Chạy: .\vifasttts-server.exe --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
+ViFastTts CLI/TUI/server (Windows x64)
+Chạy server: .\vifasttts-rs.exe server --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
+TUI/CLI: .\vifasttts-rs.exe
 Web UI: thêm --web-dir web nếu có thư mục web.
 Model: models\acoustic.onnx + models\vocoder.onnx
 ORT: onnxruntime.dll 1.31.1

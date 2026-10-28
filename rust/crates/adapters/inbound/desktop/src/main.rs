@@ -810,9 +810,9 @@ impl DesktopApp {
 
     fn server_binary() -> PathBuf {
         let name = if cfg!(windows) {
-            "vifasttts-server.exe"
+            "vifasttts-rs.exe"
         } else {
-            "vifasttts-server"
+            "vifasttts-rs"
         };
         if let Ok(executable) = std::env::current_exe()
             && let Some(directory) = executable.parent()
@@ -837,6 +837,7 @@ impl DesktopApp {
         };
         let mut command = std::process::Command::new(&binary);
         command
+            .arg("server")
             .arg("--host")
             .arg(host)
             .arg("--port")

@@ -19,7 +19,7 @@ pre-release, chưa ký):
    `xattr -dr com.apple.quarantine /Applications/ViFastTts.app`.
 3. **Linux x64:** `vifasttts-desktop-linux-x64.tar.gz` → giải nén → `./run.sh`.
 4. Desktop có sẵn **server nội bộ** + **TUI**; extension remote trỏ tới
-   `http://127.0.0.1:8000`. Server riêng: `vifasttts-server-*`.
+   `http://127.0.0.1:8000`. CLI/TUI/server dùng chung: `vifasttts-cli-*`.
 5. Android: `app-debug.apk`; iOS: simulator-only `.zip`; extension:
    `extension.zip`; web: `web-dist.tar.gz`.
 

@@ -26,13 +26,11 @@ if [ -z "$ORT_LIB" ] || [ ! -f "$ORT_LIB" ]; then
   ORT_LIB="$CACHE/onnxruntime-linux-x64-$ORT_VERSION/lib/libonnxruntime.so"
 fi
 
-(cd "$ROOT/rust" && cargo build --release -p vifasttts-desktop -p vifasttts-http-server -p vifasttts-tui -p vifasttts-cli)
+(cd "$ROOT/rust" && cargo build --release -p vifasttts-desktop -p vifasttts-cli)
 
 rm -rf "$OUT"
 mkdir -p "$OUT/models"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$OUT/vifasttts-desktop"
-cp "$ROOT/rust/target/release/vifasttts-server" "$OUT/vifasttts-server"
-cp "$ROOT/rust/target/release/vifasttts-tui" "$OUT/vifasttts-tui"
 cp "$ROOT/rust/target/release/vifasttts-rs" "$OUT/vifasttts-rs"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then cp -R "$WEB_DIR" "$OUT/web"; fi
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
@@ -44,14 +42,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 exec ./vifasttts-desktop "$@"
 SH
-chmod +x "$OUT/vifasttts-desktop" "$OUT/vifasttts-server" "$OUT/vifasttts-tui" "$OUT/vifasttts-rs" "$OUT/run.sh"
+chmod +x "$OUT/vifasttts-desktop" "$OUT/vifasttts-rs" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'
 ViFastTts Desktop + server + TUI (Linux x64)
 Chạy GUI: ./run.sh
-TUI mặc định: ./vifasttts-rs
-TUI riêng: ./vifasttts-tui --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx
+TUI: ./vifasttts-rs
 Server + web: ./vifasttts-rs server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx --port 8000
-Server riêng: ./vifasttts-server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx --port 8000
+CLI: ./vifasttts-rs synth --text "..." --output out.wav
 Kiểm tra headless: ./vifasttts-desktop --smoke
 Model: models/acoustic.onnx + models/vocoder.onnx
 ORT: libonnxruntime.so (1.31.1, load-dynamic)

@@ -22,7 +22,7 @@ use tower_http::services::ServeDir;
 use vifasttts_app::parse_dictionary;
 use vifasttts_native::{
     KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified, load_vfa,
-    load_vfts,
+    load_vfa_auto, load_vfts,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
@@ -388,7 +388,11 @@ impl TapAudio for Response {
 
 pub async fn serve(args: Args) -> Result<(), String> {
     let engine = if let Some(path) = args.vfa {
-        load_vfa(path, &args.vocoder)?
+        if args.vocoder.exists() {
+            load_vfa(path, &args.vocoder)?
+        } else {
+            load_vfa_auto(path)?
+        }
     } else if let Some(path) = args.vfts {
         load_vfts(path)?
     } else {

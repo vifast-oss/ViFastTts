@@ -6,7 +6,7 @@ use vifasttts_audio_sink::AudioSink;
 use vifasttts_model_source::ModelSource;
 use vifasttts_native::{
     ModelInfo, NativeEngine, StreamControl, StreamSummary, SynthesisOptions, SynthesisResult,
-    from_bytes, load, load_vfa, load_vfts,
+    from_bytes, load, load_vfa, load_vfa_auto, load_vfts,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -46,6 +46,17 @@ impl MobileRuntime {
     ) -> Result<Self, String> {
         Ok(Self {
             engine: load_vfts(path)?,
+            config,
+        })
+    }
+
+    /// Nạp `.vfa` tự tìm vocoder bundled cạnh app.
+    pub fn from_vfa_auto(
+        vfa: impl AsRef<std::path::Path>,
+        config: MobileConfig,
+    ) -> Result<Self, String> {
+        Ok(Self {
+            engine: load_vfa_auto(vfa)?,
             config,
         })
     }

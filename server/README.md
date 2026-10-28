@@ -18,7 +18,7 @@ Server axum tối giản dùng chung `vifasttts-native`/`vifasttts-app`:
 ## Build
 
 ```bash
-cargo build --release -p vifasttts-http-server --manifest-path rust/Cargo.toml
+cargo build --release -p vifasttts-cli --manifest-path rust/Cargo.toml
 
 # package có ORT + model + run.sh (macOS/Linux)
 server/package-unix.sh
@@ -34,19 +34,19 @@ server/package-windows.ps1
 ./run.sh --host 127.0.0.1 --port 8000
 
 # hoặc từ source (model local)
-rust/target/release/vifasttts-server \
+rust/target/release/vifasttts-rs server \
   --acoustic artifacts/onnx/n0_q/acoustic.onnx \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx \
   --host 127.0.0.1 --port 8000
 
 # gộp web UI + auth
-rust/target/release/vifasttts-server \
+rust/target/release/vifasttts-rs server \
   --acoustic artifacts/onnx/n0_q/acoustic.onnx \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx \
   --web-dir web/dist --token 'đổi-token' --port 8000
 
 # hoặc bundle .vfts
-rust/target/release/vifasttts-server --vfts n0.vfts --port 8000
+rust/target/release/vifasttts-rs server --vfts n0.vfts --port 8000
 ```
 
 ## Desktop → server → extension/điện thoại/IoT
