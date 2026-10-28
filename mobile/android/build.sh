@@ -27,8 +27,10 @@ export ANDROID_SDK_ROOT="$SDK"
 export ANDROID_NDK_HOME="$NDK"
 export PATH="$SDK/platform-tools:$PATH"
 # AGP 9.0 cần JDK 21; JDK 27 làm jlink/desugar lỗi.
-JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
-[ -n "$JAVA_HOME" ] || { echo "Cần JDK 21 (brew install --cask temurin@21)" >&2; exit 2; }
+if [ -z "${JAVA_HOME:-}" ] || ! "$JAVA_HOME/bin/java" -version 2>&1 | grep -q 'version "21'; then
+  JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
+fi
+[ -n "${JAVA_HOME:-}" ] || { echo "Cần JDK 21 (đặt JAVA_HOME; macOS: brew install --cask temurin@21)" >&2; exit 2; }
 export JAVA_HOME
 
 APP="$ROOT/mobile/android/app/src/main"

@@ -67,19 +67,21 @@ async function loadHistory() {
   history = Array.isArray(stored[HISTORY_KEY]) ? stored[HISTORY_KEY] : [];
 }
 
-function estimateFor(mode, chars) {
-  if (!chars || !history.length) return null;
-  const samples = history
-    .filter((item) => item.mode === mode && item.chars > 0 && item.elapsed_ms > 0)
-    .slice(-8)
-    .map((item) => item.elapsed_ms / item.chars)
-    .sort((a, b) => a - b);
-  if (!samples.length) return null;
-  const median = samples[Math.floor(samples.length / 2)];
-  return {
-    ms: Math.round(median * chars),
-    runs: samples.length,
-  };
+async function estimateFor(mode, chars) {
+  if (!chars) return null;
+  try {
+    const response = await chrome.runtime.sendMessage({
+      target: 'vifasttts-background',
+      type: 'estimate',
+      mode,
+      chars,
+    });
+    return response?.ok && Number.isFinite(response.result)
+      ? { ms: Number(response.result), runs: history.length }
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function saveSettings() {
@@ -216,7 +218,7 @@ async function run() {
 
   const mode = modeEl.value;
   const streaming = streamEl.checked || text.length > 1500;
-  const estimate = estimateFor(mode, text.length);
+  const estimate = await estimateFor(mode, text.length);
   const estimateText = estimate
     ? ` (ước tính ~${(estimate.ms / 1000).toFixed(1)} s, ${estimate.runs} lần trước)`
     : '';

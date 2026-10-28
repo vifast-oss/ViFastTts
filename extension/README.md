@@ -141,9 +141,19 @@ Giá trị phải là âm tiết tiếng Việt hợp lệ. Ví dụ chữ Z nê
 - Lưu trong `chrome.storage.local`;
 - Local: merge với built-in `overrides_vi.json` rồi đưa vào
   `synthesize_with_options`;
-- Remote: gửi object `overrides` tới server; cả Python demo và Rust server
-  hiện đã đọc field này;
+- Remote: gửi object `overrides` + raw `dictionary` tới server; Python demo đọc
+  `overrides`, Rust server parse `dictionary` bằng `vifasttts-app::parse_dictionary`;
 - `custom_reading` token-level chưa có UI riêng.
+
+## Logic dùng chung `vifasttts-app`
+
+- `offscreen.js` gọi wasm `dictionary_json` (parse/validate/warnings từ Rust),
+  không còn parser `key = value` riêng.
+- `background.js` gọi wasm `eta_estimate` (`EtaEstimator`) cho ETA; history vẫn
+  lưu bằng `chrome.storage` vì đó là adapter UI.
+- Engine/synth/karaoke/iSTFT dùng `vifasttts-browser`/`vifasttts-engine`.
+- Settings form vẫn là JS (adapter `chrome.storage`); chưa có binding wasm cho
+  toàn bộ `AppSettings`.
 
 ## Cache model
 

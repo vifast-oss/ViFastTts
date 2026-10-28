@@ -2,6 +2,7 @@
 // Service worker không có DOM; popup chỉ là UI.
 
 import init, {
+  dictionary_json,
   karaoke_from_units,
   karaoke_to_srt,
   karaoke_to_vtt,
@@ -13,6 +14,7 @@ import * as ort from './vendor/ort/ort.wasm.min.mjs';
 const MODEL_CACHE = 'vifasttts-models-v1';
 
 let localReady = null;
+let wasmReady = null;
 let acousticSession = null;
 let vocoderSession = null;
 let lastAudioUrl = null;
@@ -90,7 +92,7 @@ async function initLocal(request) {
   if (localReady) return localReady;
   localReady = (async () => {
     notifyPopup('Đang khởi tạo WASM…');
-    await init(chrome.runtime.getURL('vendor/pkg/vifasttts_wasm_bg.wasm'));
+    await ensureWasm();
 
     ort.env.wasm.wasmPaths = chrome.runtime.getURL('vendor/ort/');
     ort.env.wasm.numThreads = 1;
@@ -184,18 +186,21 @@ function makeAudioUrl(bytes) {
   return lastAudioUrl;
 }
 
-function parseDictionary(text) {
-  const map = {};
-  for (const rawLine of String(text || '').split('\n')) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const separator = line.indexOf('=');
-    if (separator <= 0) continue;
-    const key = line.slice(0, separator).trim();
-    const value = line.slice(separator + 1).trim();
-    if (key && value) map[key] = value;
+async function ensureWasm() {
+  if (!wasmReady) {
+    wasmReady = init(chrome.runtime.getURL('vendor/pkg/vifasttts_wasm_bg.wasm')).catch((error) => {
+      wasmReady = null;
+      throw error;
+    });
   }
-  return map;
+  return wasmReady;
+}
+
+/// Parse bằng `vifasttts-app` trong wasm, không lặp logic JS.
+async function parseDictionary(text) {
+  await ensureWasm();
+  const raw = await dictionary_json(String(text || ''));
+  return JSON.parse(raw).overrides || {};
 }
 
 async function ensureAudioContext() {
@@ -307,7 +312,7 @@ async function runLocalStream(request) {
   resetStream();
   const context = await ensureAudioContext();
   streamNextTime = context.currentTime + 0.06;
-  const dictionary = parseDictionary(request.dictionary);
+  const dictionary = await parseDictionary(request.dictionary);
   const summary = await synthesize_stream_with_options(
     request.text,
     request.speed,
@@ -357,7 +362,8 @@ async function runRemoteStream(request) {
       text: request.text,
       speed: request.speed,
       fixed_pauses: request.fixedPauses,
-      overrides: parseDictionary(request.dictionary),
+      overrides: await parseDictionary(request.dictionary),
+      dictionary: request.dictionary,
     }),
   });
   if (!response.ok) {
@@ -412,7 +418,7 @@ async function runRemoteStream(request) {
 
 async function runLocal(request) {
   await initLocal(request);
-  const dictionary = parseDictionary(request.dictionary);
+  const dictionary = await parseDictionary(request.dictionary);
   const result = await synthesize_with_options(
     request.text,
     request.speed,
@@ -453,7 +459,8 @@ async function runRemote(request) {
       speed: request.speed,
       fixed_pauses: request.fixedPauses,
       karaoke: true,
-      overrides: parseDictionary(request.dictionary),
+      overrides: await parseDictionary(request.dictionary),
+      dictionary: request.dictionary,
     }),
   });
   if (!response.ok) {

@@ -14,7 +14,7 @@ pub struct DictionaryRule {
     pub line: usize,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Dictionary {
     pub rules: Vec<DictionaryRule>,
     pub warnings: Vec<String>,

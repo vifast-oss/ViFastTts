@@ -11,6 +11,7 @@ mod wasm {
     use serde::{Deserialize, Serialize};
     use wasm_bindgen::prelude::*;
 
+    use vifasttts_app::{EtaEstimator, EtaSample, parse_dictionary};
     use vifasttts_audio as audio;
     use vifasttts_engine::{
         StreamControl, SynthesisEngine, SynthesisOptions, timed_units_from_slots,
@@ -43,6 +44,35 @@ mod wasm {
             .collect();
         serde_wasm_bindgen::to_value(&ParsedPayload { features, items })
             .map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
+    /// Dùng chung parser từ điển của `vifasttts-app`; trả JSON
+    /// `{rules, warnings, overrides}` để UI/offscreen không parse lại bằng JS.
+    #[wasm_bindgen]
+    pub fn dictionary_json(text: &str) -> Result<String, JsValue> {
+        let dictionary = parse_dictionary(text);
+        let payload = serde_json::json!({
+            "rules": dictionary.rules,
+            "warnings": dictionary.warnings,
+            "overrides": dictionary.overrides(),
+        });
+        serde_json::to_string(&payload)
+            .map_err(|error| JsValue::from_str(&format!("dictionary JSON: {error}")))
+    }
+
+    /// Ước lượng ETA bằng đúng median `EtaEstimator` của application app.
+    #[wasm_bindgen]
+    pub fn eta_estimate(
+        samples_json: &str,
+        mode: &str,
+        chars: usize,
+        max_samples: usize,
+    ) -> Result<JsValue, JsValue> {
+        let samples: Vec<EtaSample> = serde_json::from_str(samples_json)
+            .map_err(|error| JsValue::from_str(&format!("history JSON: {error}")))?;
+        let estimator = EtaEstimator::from_samples(samples, max_samples.max(1));
+        serde_wasm_bindgen::to_value(&estimator.estimate_ms(mode, chars))
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen]

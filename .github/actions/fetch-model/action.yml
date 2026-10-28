@@ -1,0 +1,25 @@
+name: Fetch N0 model
+description: Download the pinned N0 FP32 ONNX model release into artifacts/onnx/n0_q.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p artifacts/onnx/n0_q
+        if [ -f artifacts/onnx/n0_q/acoustic.onnx ] && [ -f artifacts/onnx/n0_q/vocoder.onnx ]; then
+          echo "Model đã có trong cache/workspace."
+          exit 0
+        fi
+        archive="${RUNNER_TEMP:-/tmp}/n0_onnx_fp32.zip"
+        curl -L --fail -o "$archive" \
+          https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32.zip
+        if command -v unzip >/dev/null; then
+          unzip -j -o "$archive" 'n0_onnx_fp32/acoustic.onnx' 'n0_onnx_fp32/vocoder.onnx' -d artifacts/onnx/n0_q
+        else
+          python -m zipfile -e "$archive" "${RUNNER_TEMP:-/tmp}/n0_onnx_fp32"
+          cp "${RUNNER_TEMP:-/tmp}/n0_onnx_fp32/n0_onnx_fp32/acoustic.onnx" artifacts/onnx/n0_q/
+          cp "${RUNNER_TEMP:-/tmp}/n0_onnx_fp32/n0_onnx_fp32/vocoder.onnx" artifacts/onnx/n0_q/
+        fi
+        ls -lh artifacts/onnx/n0_q

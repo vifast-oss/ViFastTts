@@ -15,6 +15,7 @@ serde.workspace = true
 serde-wasm-bindgen = "0.6"
 serde_json.workspace = true
 js-sys = "0.3"
+vifasttts-app = { path = "../../../core/application/app" }
 vifasttts-audio = { path = "../../../core/domain/audio" }
 vifasttts-engine = { path = "../../../core/application/engine" }
 vifasttts-ort-web = { path = "../../outbound/ort-web" }

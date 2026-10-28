@@ -29,15 +29,38 @@ rust/target/release/vifasttts-desktop --smoke
 # SMOKE OK 24000 Hz · 2.51 s · 120364 B WAV · riff=true
 ```
 
-## Đóng gói macOS `.app`
+## Đóng gói
+
+### macOS
 
 ```bash
 rust/crates/adapters/inbound/desktop/package-macos.sh --run
 # APP: .../desktop/dist/ViFastTts.app
+# ZIP: .../desktop/dist/ViFastTts-macos-<arch>.zip
 ```
 
 App tự tìm model trong `Contents/Resources/` và ORT trong `Contents/MacOS/`
 (nhờ `resolve_model_path` + `load-dynamic`). Bundle ~127 MB (model FP32 86 MB + ORT 32 MB + binary 13 MB). Chưa ký notarize; `codesign --sign -` chỉ là ad-hoc.
+
+### Linux x64
+
+```bash
+rust/crates/adapters/inbound/desktop/package-linux.sh
+# .../desktop/dist/vifasttts-desktop-linux-x64.tar.gz
+# giải nén: ./run.sh hoặc ./vifasttts-desktop --smoke
+```
+
+### Windows x64
+
+```powershell
+rust/crates/adapters/inbound/desktop/package-windows.ps1
+# ...\desktop\dist\vifasttts-desktop-windows-x64.zip
+# giải nén: .\vifasttts-desktop.exe --smoke
+```
+
+Cả hai package chứa `models/acoustic.onnx`, `models/vocoder.onnx` và
+`libonnxruntime`/`onnxruntime.dll`; app tự tìm theo thư mục executable.
+CI build cả ba nền tảng; macOS đã test local, Linux/Windows do CI/SSH test.
 
 ## Cấu hình
 
@@ -52,7 +75,7 @@ App tự tìm model trong `Contents/Resources/` và ORT trong `Contents/MacOS/`
 - Local synth chạy trên worker thread nhưng **chưa streaming PCM**; nút **Dừng phát**
   chỉ dừng audio, request local đang chạy vẫn hoàn tất (engine không có cancel cho
   `synthesize` thường).
-- Chưa có system tray, menu native, auto-update, ký notarize, Windows/Linux
-  packaging; source dùng egui nên build được các nền tảng đó khi có target/ORT.
+- Chưa có system tray, menu native, auto-update, ký notarize; Linux/Windows
+  package do CI tạo, chưa test tay trên máy thật.
 - UI chưa dùng chung asset/theme với extension; sẽ gom branding khi chốt Flutter
   vs native.

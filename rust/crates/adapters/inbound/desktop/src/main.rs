@@ -134,17 +134,18 @@ fn resolve_model_path(value: &str) -> PathBuf {
         return path;
     };
     if let Ok(executable) = std::env::current_exe()
-        && let Some(macos_dir) = executable.parent()
+        && let Some(exe_dir) = executable.parent()
     {
-        if let Some(contents) = macos_dir.parent() {
+        if let Some(contents) = exe_dir.parent() {
             let candidate = contents.join("Resources").join(name);
             if candidate.exists() {
                 return candidate;
             }
         }
-        let candidate = macos_dir.join(name);
-        if candidate.exists() {
-            return candidate;
+        for candidate in [exe_dir.join("models").join(name), exe_dir.join(name)] {
+            if candidate.exists() {
+                return candidate;
+            }
         }
     }
     path

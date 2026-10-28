@@ -1,0 +1,288 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+        with:
+          components: rustfmt, clippy
+      - name: Linux desktop deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libasound2-dev libudev-dev \
+            libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev \
+            libx11-dev libxcb1-dev libxrandr-dev libxi-dev libxcursor-dev
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: test
+        run: cargo test --workspace
+      - name: wasm core check
+        if: runner.os == 'Linux'
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo check -p vifasttts-text -p vifasttts-audio -p vifasttts-ports \
+            -p vifasttts-engine -p vifasttts-app -p vifasttts-ort-web \
+            -p vifasttts-browser --target wasm32-unknown-unknown
+          cargo clippy -p vifasttts-app -p vifasttts-ort-web \
+            -p vifasttts-browser --target wasm32-unknown-unknown -- -D warnings
+
+  python:
+    name: python 3.12
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,audio,onnx,train]"
+      - name: ruff
+        run: ruff check .
+      - name: pytest
+        run: pytest -q
+
+  web-extension:
+    name: web + extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: ./.github/actions/fetch-model
+      - name: wasm tooling
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - name: npm ci
+        working-directory: web
+        run: npm ci
+      - name: build wasm + extension
+        run: |
+          chmod +x extension/build.sh web/build.sh
+          ./extension/build.sh
+          ./web/build.sh
+          (cd web && npm run build)
+      - name: package extension
+        run: |
+          cd extension
+          zip -qr "$GITHUB_WORKSPACE/extension.zip" . -x "*/.*"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-extension
+          path: |
+            extension.zip
+            web/dist
+          if-no-files-found: error
+
+  desktop:
+    name: desktop (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: macos
+            artifact: desktop/dist/ViFastTts-macos-*.zip
+          - os: ubuntu-latest
+            platform: linux
+            artifact: desktop/dist/vifasttts-desktop-linux-x64.tar.gz
+          - os: windows-latest
+            platform: windows
+            artifact: desktop/dist/vifasttts-desktop-windows-x64.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - name: Linux desktop deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libasound2-dev libudev-dev \
+            libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev \
+            libx11-dev libxcb1-dev libxrandr-dev libxi-dev libxcursor-dev
+      - uses: ./.github/actions/fetch-model
+      - name: package macOS
+        if: runner.os == 'macOS'
+        run: |
+          arch="$(uname -m)"
+          case "$arch" in
+            arm64) ort_arch=arm64 ;;
+            x86_64) ort_arch=x64 ;;
+            *) exit 2 ;;
+          esac
+          mkdir -p desktop/dist/cache
+          curl -L --fail -o /tmp/ort.tgz \
+            "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-osx-$ort_arch-1.31.1.tgz"
+          tar -xzf /tmp/ort.tgz -C desktop/dist/cache
+          ORT_LIB="desktop/dist/cache/onnxruntime-osx-$ort_arch-1.31.1/lib/libonnxruntime.dylib" \
+            rust/crates/adapters/inbound/desktop/package-macos.sh
+          desktop/dist/ViFastTts.app/Contents/MacOS/vifasttts-desktop --smoke
+      - name: package Linux
+        if: runner.os == 'Linux'
+        run: |
+          rust/crates/adapters/inbound/desktop/package-linux.sh
+          (cd desktop/dist/vifasttts-desktop-linux-x64 && ./vifasttts-desktop --smoke)
+      - name: package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          rust/crates/adapters/inbound/desktop/package-windows.ps1
+          & desktop/dist/vifasttts-desktop-windows-x64/vifasttts-desktop.exe --smoke
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+
+  server:
+    name: server (linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: ./.github/actions/fetch-model
+      - name: build + package
+        run: |
+          cargo build --manifest-path rust/Cargo.toml --release -p vifasttts-http-server
+          mkdir -p desktop/dist/vifasttts-server-linux-x64/models desktop/dist/cache
+          curl -L --fail -o /tmp/ort.tgz \
+            https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-linux-x64-1.31.1.tgz
+          tar -xzf /tmp/ort.tgz -C desktop/dist/cache
+          cp -L desktop/dist/cache/onnxruntime-linux-x64-1.31.1/lib/libonnxruntime.so \
+            desktop/dist/vifasttts-server-linux-x64/
+          cp rust/target/release/vifasttts-server desktop/dist/vifasttts-server-linux-x64/
+          cp artifacts/onnx/n0_q/*.onnx desktop/dist/vifasttts-server-linux-x64/models/
+          cat > desktop/dist/vifasttts-server-linux-x64/run.sh <<'SH'
+          #!/usr/bin/env bash
+          cd "$(dirname "$0")"
+          exec ./vifasttts-server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx "$@"
+          SH
+          chmod +x desktop/dist/vifasttts-server-linux-x64/run.sh
+          desktop/dist/vifasttts-server-linux-x64/vifasttts-server --help >/dev/null
+          tar -czf desktop/dist/vifasttts-server-linux-x64.tar.gz \
+            -C desktop/dist/vifasttts-server-linux-x64 .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-linux
+          path: desktop/dist/vifasttts-server-linux-x64.tar.gz
+          if-no-files-found: error
+
+  android:
+    name: android apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: latest
+      - uses: ./.github/actions/fetch-model
+      - name: android sdk + rust targets
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
+            "ndk;28.2.13676358"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
+          rustup target add x86_64-linux-android aarch64-linux-android
+          cargo install cargo-ndk --locked
+      - name: build apk
+        run: |
+          chmod +x mobile/android/build.sh
+          mobile/android/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  ios:
+    name: ios simulator (best effort)
+    runs-on: macos-15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: ./.github/actions/fetch-model
+      - name: Xcode tooling
+        run: |
+          xcodebuild -version
+          brew install xcodegen
+          rustup target add aarch64-apple-ios-sim aarch64-apple-ios
+          curl -L --fail -o /tmp/ort-ios.zip \
+            https://download.onnxruntime.ai/pod-archive-onnxruntime-c-1.30.0.zip
+          unzip -q /tmp/ort-ios.zip -d /tmp/ort-ios
+      - name: build simulator app
+        run: |
+          chmod +x mobile/ios/build-ios.sh
+          ONNXRUNTIME_XCFRAMEWORK=/tmp/ort-ios/onnxruntime.xcframework \
+            mobile/ios/build-ios.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: mobile/ios/build/ViFastTtsMobile-ios-simulator.zip
+          if-no-files-found: error
+
+  release:
+    name: publish release
+    if: always() && startsWith(github.ref, 'refs/tags/')
+    needs: [desktop, android, web-extension, server, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: show assets
+        run: find release-assets -type f -maxdepth 4 -print
+      - name: create/update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          assets=$(find release-assets -type f -print)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" $assets --clobber
+          else
+            gh release create "$tag" $assets --generate-notes
+          fi

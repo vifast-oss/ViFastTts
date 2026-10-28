@@ -17,6 +17,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
+use vifasttts_app::parse_dictionary;
 use vifasttts_native::{
     KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified,
 };
@@ -58,12 +59,16 @@ struct HttpTtsRequest {
     /// Từ điển local: `{"AI": "ây ai"}`.
     #[serde(default)]
     overrides: Option<HashMap<String, String>>,
+    /// Từ điển dạng text `key = cách đọc` (dùng chung parser `vifasttts-app`).
+    #[serde(default)]
+    dictionary: Option<String>,
 }
 
 fn synth_options(
     speed: f32,
     fixed_pauses: bool,
     overrides: Option<&HashMap<String, String>>,
+    dictionary: Option<&str>,
 ) -> SynthesisOptions {
     let mut options = SynthesisOptions {
         speed,
@@ -71,8 +76,19 @@ fn synth_options(
         alpha: 1.5,
         ..SynthesisOptions::default()
     };
+    let mut merged = HashMap::new();
     if let Some(overrides) = overrides {
-        options.parse = live_parse_options(Dialect::North, Some(overrides), None);
+        merged.extend(
+            overrides
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone())),
+        );
+    }
+    if let Some(text) = dictionary {
+        merged.extend(parse_dictionary(text).overrides());
+    }
+    if !merged.is_empty() {
+        options.parse = live_parse_options(Dialect::North, Some(&merged), None);
     }
     if fixed_pauses {
         options.gate_threshold = 1.01;
@@ -183,7 +199,12 @@ async fn tts_stream(
                 return;
             }
         };
-        let options = synth_options(speed, fixed_pauses, payload.overrides.as_ref());
+        let options = synth_options(
+            speed,
+            fixed_pauses,
+            payload.overrides.as_ref(),
+            payload.dictionary.as_deref(),
+        );
         let audio_tx = tx.clone();
         let units_tx = tx.clone();
         let result = engine.synthesize_stream_with_units(
@@ -251,13 +272,19 @@ async fn tts(State(state): State<Arc<AppState>>, Json(payload): Json<HttpTtsRequ
     let fixed_pauses = payload.fixed_pauses;
     let karaoke = payload.karaoke;
     let overrides = payload.overrides;
+    let dictionary = payload.dictionary;
     let state_ref = Arc::clone(&state);
     let result = tokio::task::spawn_blocking(move || {
         let mut engine = state_ref
             .engine
             .lock()
             .map_err(|_| "engine lock".to_string())?;
-        let options = synth_options(speed, fixed_pauses, overrides.as_ref());
+        let options = synth_options(
+            speed,
+            fixed_pauses,
+            overrides.as_ref(),
+            dictionary.as_deref(),
+        );
         engine.synthesize(&text, &options)
     })
     .await;

@@ -1,4 +1,5 @@
 ViFastTtsFFI/lib/
+ViFastTtsFFI/Frameworks/
 Resources/*.onnx
 build/
 DerivedData/

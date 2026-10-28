@@ -3950,6 +3950,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "vifasttts-app",
  "vifasttts-audio",
  "vifasttts-engine",
  "vifasttts-ort-web",
@@ -4030,6 +4031,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tower-http",
+ "vifasttts-app",
  "vifasttts-native",
  "vifasttts-text",
 ]

@@ -1,6 +1,8 @@
 // MV3 service worker: menu, chọn cách đọc, route request sang offscreen.
 // Không có DOM/audio trong service worker.
 
+import init, { eta_estimate } from './vendor/pkg/vifasttts_wasm.js';
+
 const OFFSCREEN_URL = 'offscreen.html';
 const MENU_ROOT = 'vifasttts-selection';
 const MENU_READ = 'vifasttts-read-selection';
@@ -22,6 +24,17 @@ const MAX_TEXT = 50000;
 
 let creating = null;
 let directTtsId = null;
+let wasmReady = null;
+
+async function ensureWasm() {
+  if (!wasmReady) {
+    wasmReady = init(chrome.runtime.getURL('vendor/pkg/vifasttts_wasm_bg.wasm')).catch((error) => {
+      wasmReady = null;
+      throw error;
+    });
+  }
+  return wasmReady;
+}
 
 async function recordHistory(mode, chars, elapsedMs, audioSeconds) {
   if (!chars || !Number.isFinite(elapsedMs) || elapsedMs <= 0) return;
@@ -318,6 +331,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendToOffscreen({ type: 'stop-stream' })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
+    return true;
+  }
+
+  if (message.type === 'estimate') {
+    (async () => {
+      const stored = await chrome.storage.local.get({ [HISTORY_KEY]: [] });
+      const history = Array.isArray(stored[HISTORY_KEY]) ? stored[HISTORY_KEY] : [];
+      await ensureWasm();
+      const estimate = await eta_estimate(
+        JSON.stringify(history),
+        String(message.mode || 'local'),
+        Number(message.chars) || 0,
+        8,
+      );
+      sendResponse({ ok: true, result: estimate });
+    })().catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
     return true;
   }
 

@@ -8,8 +8,8 @@ ROOT="$(cd "$HERE/../.." && pwd)"
 FFI_DIR="$HERE/ViFastTtsFFI"
 MODEL_DIR="${MODEL_DIR:-$ROOT/artifacts/onnx/n0_q}"
 SIM_TARGET="${SIM_TARGET:-aarch64-apple-ios-sim}"
-SIM_LIB="${ONNXRUNTIME_SIM_LIB:-${ONNXRUNTIME_LIB:-}}"
-DEVICE_LIB="${ONNXRUNTIME_DEVICE_LIB:-${ONNXRUNTIME_LIB:-}}"
+ORT_FRAMEWORK="${ONNXRUNTIME_FRAMEWORK:-}"
+ORT_XCFRAMEWORK="${ONNXRUNTIME_XCFRAMEWORK:-}"
 
 command -v xcodebuild >/dev/null || { echo "Thiếu xcodebuild" >&2; exit 2; }
 if ! xcodebuild -version >/dev/null 2>&1; then
@@ -18,11 +18,22 @@ if ! xcodebuild -version >/dev/null 2>&1; then
   exit 2
 fi
 [ -f "$MODEL_DIR/acoustic.onnx" ] || { echo "Thiếu model $MODEL_DIR" >&2; exit 2; }
-[ -n "$SIM_LIB" ] && [ -f "$SIM_LIB" ] || {
-  echo "Thiếu ORT iOS static lib cho simulator; đặt ONNXRUNTIME_SIM_LIB." >&2
-  echo "ORT iOS lấy từ onnxruntime-c/onnxruntime.xcframework (đúng bản 1.31.1)." >&2
+
+# ORT iOS: nhận framework đã tách hoặc xcframework gốc (onnxruntime-c).
+SIM_FRAMEWORK="$FFI_DIR/Frameworks/onnxruntime.framework"
+rm -rf "$SIM_FRAMEWORK"
+mkdir -p "$FFI_DIR/Frameworks"
+if [ -n "$ORT_FRAMEWORK" ] && [ -d "$ORT_FRAMEWORK" ]; then
+  cp -R "$ORT_FRAMEWORK" "$SIM_FRAMEWORK"
+elif [ -n "$ORT_XCFRAMEWORK" ] && [ -d "$ORT_XCFRAMEWORK/ios-arm64_x86_64-simulator/onnxruntime.framework" ]; then
+  cp -R "$ORT_XCFRAMEWORK/ios-arm64_x86_64-simulator/onnxruntime.framework" "$SIM_FRAMEWORK"
+elif [ -n "$ORT_XCFRAMEWORK" ] && [ -d "$ORT_XCFRAMEWORK/onnxruntime.framework" ]; then
+  cp -R "$ORT_XCFRAMEWORK/onnxruntime.framework" "$SIM_FRAMEWORK"
+else
+  echo "Thiếu ORT iOS framework; đặt ONNXRUNTIME_FRAMEWORK hoặc ONNXRUNTIME_XCFRAMEWORK." >&2
+  echo "Ví dụ: ONNXRUNTIME_XCFRAMEWORK=/tmp/onnxruntime.xcframework (onnxruntime-c)." >&2
   exit 2
-}
+fi
 
 rustup target add "$SIM_TARGET" aarch64-apple-ios >/dev/null 2>&1 || true
 (cd "$ROOT/rust" && cargo build --release -p vifasttts-ffi --target "$SIM_TARGET")
@@ -30,7 +41,6 @@ rustup target add "$SIM_TARGET" aarch64-apple-ios >/dev/null 2>&1 || true
 
 mkdir -p "$FFI_DIR/lib" "$HERE/Resources"
 cp "$ROOT/rust/target/$SIM_TARGET/release/libvifasttts_ffi.a" "$FFI_DIR/lib/libvifasttts_ffi.a"
-cp "$SIM_LIB" "$FFI_DIR/lib/libonnxruntime.a"
 cp "$MODEL_DIR/acoustic.onnx" "$HERE/Resources/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$HERE/Resources/vocoder.onnx"
 
@@ -46,9 +56,17 @@ xcodebuild \
   -scheme ViFastTtsMobile \
   -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath "$HERE/build" \
   -configuration Debug \
+  ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
   build \
   CODE_SIGNING_ALLOWED=NO
 
-echo "Build xong. Mở Xcode: open $HERE/ViFastTtsMobile.xcodeproj"
-echo "Thiết bị thật cần thêm libonnxruntime thiết bị + ký Apple Developer."
+APP="$HERE/build/Build/Products/Debug-iphonesimulator/ViFastTtsMobile.app"
+[ -d "$APP" ] || { echo "Không thấy app: $APP" >&2; exit 1; }
+ARCHIVE="$HERE/build/ViFastTtsMobile-ios-simulator.zip"
+rm -f "$ARCHIVE"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ARCHIVE"
+echo "APP: $APP"
+echo "ARCHIVE: $ARCHIVE"
+echo "Thiết bị thật cần framework device + ký Apple Developer."

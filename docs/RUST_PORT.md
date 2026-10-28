@@ -916,7 +916,7 @@ Workspace `rust/` gồm 21 crate, khoảng **9.4k dòng** Rust + resources:
 | `vifasttts-ort-web` | JS callback → async backend; kiểm shape/contract | Chỉ wasm32; ORT Web chạy model, crate này là adapter |
 | `vifasttts-native` | native adapter: async engine + ORT, API sync `load`/`from_bytes`/`load_verified` | `block_on` tại biên; CLI/desktop/server/FFI dùng sync |
 | `vifasttts-mobile` | mobile composition root: model, status, synth, `AudioSink` | iOS/Android; chưa có audio adapter/UI |
-| `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS `.app` đã build/chạy smoke; Windows/Linux chưa đóng gói |
+| `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS `.app` + package Linux/Windows; CI build cả ba; Linux/Windows chưa test tay |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
 | `vifasttts-cli` | `inspect`, `synth` (+`--server`, `--srt/--vtt/--vtt-karaoke/--karaoke`), `stream` (+timing), `bench` | CLI production; local hoặc HTTP server |
@@ -1137,6 +1137,29 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
 - Không build được: `xcodebuild` cần Xcode đầy đủ; máy chỉ có Command Line
   Tools, không có iOS SDK. Không thể tự cài Xcode vì cần Apple ID/2FA.
 - Thiếu ORT iOS `.a`/XCFramework và ký Apple Developer; chưa có bằng chứng chạy.
+
+### 15.8c CI/CD đa nền tảng (29/10/2026)
+
+Workflow `.github/workflows/ci.yml` (push main/PR/tag, dispatch):
+
+| Job | Nội dung |
+|---|---|
+| `rust` | fmt + clippy + test trên macOS/Ubuntu/Windows; wasm check |
+| `python` | Python 3.12, ruff + 2.936 test (cần torch/onnx) |
+| `web-extension` | build wasm-bindgen + ORT Web; zip extension; Vite web dist |
+| `desktop` | macOS `.app` zip, Linux tar.gz, Windows zip; `--smoke` từng gói |
+| `server` | binary Linux + ORT + model + run.sh, tar.gz |
+| `android` | SDK 36/NDK 28.2, cargo-ndk, APK, upload |
+| `ios` | best-effort macOS runner: Rust staticlib + ORT pod `1.30.0` + xcodebuild simulator |
+| `release` | tag `v*`: tải artifact và tạo/cập nhật GitHub Release |
+
+- Model CI lấy từ release `n0-ngochuyen-prod-v1/n0_onnx_fp32.zip` (pin), ORT
+  desktop/Android tải bản 1.31.1; iOS dùng pod archive 1.30.0 vì CocoaPods chưa
+  có 1.31.1.
+- iOS job có `continue-on-error` vì ORT iOS 1.30.0 chưa được test runtime với
+  Rust `load-dynamic` 1.31.1; artifact simulator vẫn được phát hành nếu build được.
+- Linux/Windows desktop package đã có script; CI là nơi build/kiểm tra thật,
+  máy dev hiện chỉ test macOS.
 
 ### 15.9 Lệnh parity và benchmark
 
@@ -1397,6 +1420,9 @@ SwiftUI / Compose / Flutter
 - Không mở localhost server trên mobile.
 - Karaoke: `vifasttts_synthesize_karaoke` trả WAV + JSON; UI tự highlight.
 - `vifasttts-mobile` là composition root; `vifasttts-ffi` chỉ là cửa vào C ABI.
+- Extension local dùng `vifasttts-browser`; dictionary/ETA của extension gọi wasm
+  `vifasttts-app` (`dictionary_json`, `eta_estimate`). Settings form vẫn là JS vì
+  `chrome.storage` là adapter UI.
 
 ### 17.5 Luồng server/web
 
@@ -1412,6 +1438,9 @@ Web/Extension/CLI remote
 - `/api/tts` mặc định WAV; `karaoke:true` trả JSON + audio base64.
 - `/api/tts/stream` trả NDJSON: `units` → `audio` (PCM16 base64) → `done`.
 - Local server mode dùng **cùng binary**; chỉ khác host/token/auth.
+- Request `/api/tts` nhận `dictionary` text; server parse bằng
+  `vifasttts-app::parse_dictionary` (dùng chung với extension/desktop), không có
+  parser `key = value` riêng trong server.
 
 ### 17.6 Target / feature
 

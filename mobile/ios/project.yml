@@ -34,9 +34,13 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: ViFastTtsMobile/ViFastTtsMobile-Bridging-Header.h
         LIBRARY_SEARCH_PATHS:
           - "$(SRCROOT)/ViFastTtsFFI/lib"
+        FRAMEWORK_SEARCH_PATHS:
+          - "$(SRCROOT)/ViFastTtsFFI/Frameworks"
         OTHER_LDFLAGS:
           - "-lvifasttts_ffi"
-          - "-lonnxruntime"
+          - "-framework"
+          - "onnxruntime"
+          - "-lc++"
         ENABLE_BITCODE: NO
     resources:
       - path: Resources
