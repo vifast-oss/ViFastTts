@@ -1,0 +1,87 @@
+{
+ "version": "vi-q25-v1",
+ "hash": "1a33a9622a13443f296ee3c1f6fe5190bd0d72845ec61a1756a3d10784f1785a",
+ "onset": [
+  "NONE",
+  "B",
+  "M",
+  "PH",
+  "V",
+  "T",
+  "TH",
+  "Đ",
+  "N",
+  "D",
+  "GI",
+  "R",
+  "X",
+  "S",
+  "CH",
+  "TR",
+  "NH",
+  "L",
+  "K",
+  "KH",
+  "NG",
+  "G",
+  "H",
+  "P",
+  "Q"
+ ],
+ "medial": [
+  "NONE",
+  "W"
+ ],
+ "nucleus": [
+  "A",
+  "Ă",
+  "Â",
+  "E",
+  "Ê",
+  "I",
+  "O",
+  "Ô",
+  "Ơ",
+  "U",
+  "Ư",
+  "IÊ",
+  "UÔ",
+  "ƯƠ",
+  "OO"
+ ],
+ "coda": [
+  "NONE",
+  "M",
+  "N",
+  "NG",
+  "NH",
+  "P",
+  "T",
+  "C",
+  "CH",
+  "J",
+  "W"
+ ],
+ "tone": [
+  "NGANG",
+  "HUYEN",
+  "SAC",
+  "HOI",
+  "NGA",
+  "NANG"
+ ],
+ "boundary": [
+  "NONE",
+  "WORD",
+  "PHRASE",
+  "SENTENCE"
+ ],
+ "punctuation": [
+  "NONE",
+  "COMMA",
+  "PERIOD",
+  "QUESTION",
+  "EXCLAMATION",
+  "OTHER"
+ ]
+}

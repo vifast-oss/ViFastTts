@@ -1,0 +1,4 @@
+ViFastTtsFFI/lib/
+Resources/*.onnx
+build/
+DerivedData/

@@ -1,0 +1,23 @@
+{
+ "format": "vifasttts-model-v1",
+ "arch": "v2_slot5",
+ "sample_rate": 24000,
+ "n_mels": 100,
+ "n_fft": 1024,
+ "hop_length": 256,
+ "vocab_version": "vi-q25-v1",
+ "vocab_hash": "1a33a9622a13443f296ee3c1f6fe5190bd0d72845ec61a1756a3d10784f1785a",
+ "acoustic": {
+  "file": "acoustic.onnx",
+  "sha256": "df61599a15984dccbf61c37d616258d22fc1af79abc681926e74142de7a376a3"
+ },
+ "vocoder": {
+  "file": "vocoder.onnx",
+  "sha256": "b3eb09cf5c3baac334b1c0bbea070d02e33e55572e3755865b986cd05cf6b03f"
+ },
+ "ort": {
+  "tested": "1.31.1",
+  "mode": "load-dynamic"
+ },
+ "license": "research/non-commercial; dataset CC-BY-NC-4.0"
+}

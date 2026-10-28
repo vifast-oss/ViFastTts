@@ -1,0 +1,24 @@
+[package]
+name = "vifasttts-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Desktop GUI for ViFastTts (local ONNX + remote server)"
+
+[[bin]]
+name = "vifasttts-desktop"
+path = "src/main.rs"
+
+[dependencies]
+directories = "6.0"
+eframe = { version = "0.32", default-features = false, features = ["default_fonts", "glow"] }
+rfd = "0.15"
+rodio = "0.21"
+serde.workspace = true
+serde_json.workspace = true
+vifasttts-app = { path = "../../../core/application/app" }
+vifasttts-engine = { path = "../../../core/application/engine" }
+vifasttts-http-client = { path = "../../outbound/http-client" }
+vifasttts-native = { path = "../native" }
+vifasttts-text = { path = "../../../core/domain/text" }

@@ -1,0 +1,12 @@
+[package]
+name = "vifasttts-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Backend-agnostic ViFastTts orchestration (chunk, parse, stream, audio)"
+
+[dependencies]
+vifasttts-audio = { path = "../../domain/audio" }
+vifasttts-ports = { path = "../../ports/backend" }
+vifasttts-text = { path = "../../domain/text" }

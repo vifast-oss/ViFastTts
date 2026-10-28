@@ -1,0 +1,23 @@
+[package]
+name = "vifasttts-http-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Minimal axum HTTP server for ViFastTts Rust inference"
+
+[[bin]]
+name = "vifasttts-server"
+path = "src/main.rs"
+
+[dependencies]
+axum = "0.8"
+base64.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "sync"] }
+tokio-stream = "0.1"
+tower-http = { version = "0.6", features = ["limit"] }
+vifasttts-native = { path = "../native" }
+vifasttts-text = { path = "../../../core/domain/text" }

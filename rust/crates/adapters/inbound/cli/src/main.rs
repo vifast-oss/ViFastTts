@@ -1,0 +1,454 @@
+//! CLI Rust cho ViFastTts.
+
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
+use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
+use vifasttts_native::{
+    KaraokeDocument, StreamControl, SynthesisOptions, TimedUnit, from_bytes, load, load_verified,
+    ort_info,
+};
+use vifasttts_text::dialect::Dialect;
+use vifasttts_text::pipeline::{ParseOptions, live_parse_options};
+
+#[derive(Parser, Debug)]
+#[command(name = "vifasttts-rs", version, about = "ViFastTts Rust inference")]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Xem metadata/input/output của model.
+    Inspect {
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long)]
+        manifest: Option<PathBuf>,
+        /// Nạp model từ bytes (kiểm API mobile/embedded).
+        #[arg(long)]
+        from_bytes: bool,
+    },
+    /// Tổng hợp từ text.
+    Synth {
+        #[arg(long)]
+        text: String,
+        #[arg(long, default_value = "out-rust.wav")]
+        output: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long, default_value_t = 1.0)]
+        speed: f32,
+        #[arg(long, default_value_t = 1.5)]
+        alpha: f32,
+        #[arg(long, default_value_t = 300)]
+        max_chars: usize,
+        #[arg(long)]
+        fixed_pauses: bool,
+        #[arg(long)]
+        peak_normalize: bool,
+        #[arg(long)]
+        resolve_oov: bool,
+        #[arg(long, default_value = "north")]
+        dialect: String,
+        #[arg(long)]
+        overrides: Option<PathBuf>,
+        #[arg(long)]
+        custom_reading: Option<PathBuf>,
+        /// Gọi server thay vì chạy local (ví dụ http://127.0.0.1:8000).
+        #[arg(long)]
+        server: Option<String>,
+        /// Bearer token nếu server yêu cầu.
+        #[arg(long)]
+        token: Option<String>,
+        /// Xuất SRT (line-level) từ timing acoustic.
+        #[arg(long)]
+        srt: Option<PathBuf>,
+        /// Xuất WebVTT (line-level).
+        #[arg(long)]
+        vtt: Option<PathBuf>,
+        /// Xuất WebVTT karaoke (timestamp từng âm tiết).
+        #[arg(long)]
+        vtt_karaoke: Option<PathBuf>,
+        /// Xuất JSON timing/karaoke.
+        #[arg(long)]
+        karaoke: Option<PathBuf>,
+    },
+    /// Streaming PCM (callback); CLI gom lại để kiểm tra WAV.
+    Stream {
+        #[arg(long)]
+        text: String,
+        #[arg(long, default_value = "out-stream.wav")]
+        output: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long, default_value_t = 1.0)]
+        speed: f32,
+        #[arg(long, default_value_t = 1.5)]
+        alpha: f32,
+        #[arg(long, default_value_t = 300)]
+        max_chars: usize,
+        #[arg(long)]
+        fixed_pauses: bool,
+        /// Xuất SRT sau khi stream xong.
+        #[arg(long)]
+        srt: Option<PathBuf>,
+        #[arg(long)]
+        vtt: Option<PathBuf>,
+        #[arg(long)]
+        vtt_karaoke: Option<PathBuf>,
+        #[arg(long)]
+        karaoke: Option<PathBuf>,
+    },
+    /// Benchmark trong một process (load một lần, chạy nhiều lần).
+    Bench {
+        #[arg(long)]
+        text: String,
+        #[arg(long, default_value_t = 10)]
+        runs: usize,
+        #[arg(long, default_value_t = 3)]
+        warmup: usize,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long, default_value_t = 1.0)]
+        speed: f32,
+        #[arg(long, default_value_t = 1.5)]
+        alpha: f32,
+        #[arg(long, default_value_t = 300)]
+        max_chars: usize,
+        #[arg(long)]
+        fixed_pauses: bool,
+    },
+}
+
+fn load_map(path: &Option<PathBuf>) -> Result<Option<HashMap<String, String>>> {
+    let Some(path) = path else {
+        return Ok(None);
+    };
+    let text = std::fs::read_to_string(path).with_context(|| format!("đọc {}", path.display()))?;
+    let map =
+        serde_json::from_str(&text).with_context(|| format!("parse JSON {}", path.display()))?;
+    Ok(Some(map))
+}
+
+fn parse_options(
+    dialect: &str,
+    resolve_oov: bool,
+    overrides: &Option<PathBuf>,
+    custom_reading: &Option<PathBuf>,
+) -> Result<ParseOptions> {
+    let dialect = Dialect::from_name(dialect).map_err(anyhow::Error::msg)?;
+    let user = load_map(overrides)?;
+    let mut options = live_parse_options(dialect, user.as_ref(), None);
+    options.resolve_oov = resolve_oov;
+    if let Some(map) = user {
+        for (key, value) in &map {
+            options
+                .normalizer
+                .exact_overrides
+                .insert(key.clone(), value.clone());
+            if key.is_ascii() {
+                options
+                    .normalizer
+                    .english_overrides
+                    .insert(key.to_lowercase(), value.clone());
+            }
+        }
+    }
+    if let Some(map) = load_map(custom_reading)? {
+        options.custom_reading = Some(map);
+    }
+    Ok(options)
+}
+
+fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "vifasttts_rs=info,ort=warn".into()),
+        )
+        .init();
+    let cli = Cli::parse();
+    match cli.command {
+        Command::Inspect {
+            acoustic,
+            vocoder,
+            manifest,
+            from_bytes: use_bytes,
+        } => {
+            let engine = if use_bytes {
+                let acoustic_bytes = std::fs::read(&acoustic)?;
+                let vocoder_bytes = std::fs::read(&vocoder)?;
+                from_bytes(&acoustic_bytes, &vocoder_bytes).map_err(anyhow::Error::msg)?
+            } else {
+                match manifest {
+                    Some(path) => {
+                        load_verified(&acoustic, &vocoder, path).map_err(anyhow::Error::msg)?
+                    }
+                    None => load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?,
+                }
+            };
+            println!("ort: {}", ort_info());
+            println!("acoustic: {}", acoustic.display());
+            println!("vocoder:  {}", vocoder.display());
+            let info = engine.info();
+            println!("sha256 acoustic: {}", info.acoustic_sha256);
+            println!("sha256 vocoder:  {}", info.vocoder_sha256);
+            println!("metadata: {:?}", info.metadata);
+            println!("inputs: {:?}", engine.acoustic().input_names);
+            println!("outputs: {:?}", engine.acoustic().output_names);
+        }
+        Command::Synth {
+            text,
+            output,
+            acoustic,
+            vocoder,
+            speed,
+            alpha,
+            max_chars,
+            fixed_pauses,
+            peak_normalize,
+            resolve_oov,
+            dialect,
+            overrides,
+            custom_reading,
+            server,
+            token,
+            srt,
+            vtt,
+            vtt_karaoke,
+            karaoke,
+        } => {
+            if let Some(server_url) = server {
+                let client = HttpTtsClient::new(server_url.clone(), token);
+                let request = HttpTtsRequest {
+                    text: text.clone(),
+                    speed,
+                    fixed_pauses,
+                };
+                let wants_subtitles =
+                    srt.is_some() || vtt.is_some() || vtt_karaoke.is_some() || karaoke.is_some();
+                if wants_subtitles {
+                    let response = client
+                        .synthesize_karaoke(&request)
+                        .map_err(anyhow::Error::msg)?;
+                    std::fs::write(&output, response.audio_bytes().map_err(anyhow::Error::msg)?)?;
+                    if let Some(path) = srt {
+                        std::fs::write(&path, &response.srt)?;
+                    }
+                    if let Some(path) = vtt {
+                        std::fs::write(&path, &response.vtt)?;
+                    }
+                    if let Some(path) = vtt_karaoke {
+                        std::fs::write(&path, &response.vtt_karaoke)?;
+                    }
+                    if let Some(path) = karaoke {
+                        std::fs::write(&path, serde_json::to_string_pretty(&response.karaoke)?)?;
+                    }
+                    eprintln!(
+                        "server {}: wrote {} ({} ms, {} units, {} lines)",
+                        server_url,
+                        output.display(),
+                        response.duration_ms,
+                        response.karaoke.units.len(),
+                        response.karaoke.lines.len()
+                    );
+                } else {
+                    let wav = client
+                        .synthesize_wav(&request)
+                        .map_err(anyhow::Error::msg)?;
+                    std::fs::write(&output, wav)?;
+                    eprintln!("server {}: wrote {}", server_url, output.display());
+                }
+                return Ok(());
+            }
+            let mut engine = load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?;
+            let mut options = SynthesisOptions {
+                speed,
+                alpha,
+                max_chars,
+                fixed_pauses,
+                peak_normalize,
+                parse: parse_options(&dialect, resolve_oov, &overrides, &custom_reading)?,
+                ..SynthesisOptions::default()
+            };
+            if fixed_pauses {
+                options.gate_threshold = 1.01;
+            }
+            let synthesis = engine
+                .synthesize(&text, &options)
+                .map_err(anyhow::Error::msg)?;
+            std::fs::write(&output, &synthesis.wav)?;
+            if let Some(document) = &synthesis.karaoke {
+                if let Some(path) = srt {
+                    std::fs::write(&path, document.to_srt())?;
+                }
+                if let Some(path) = vtt {
+                    std::fs::write(&path, document.to_vtt())?;
+                }
+                if let Some(path) = vtt_karaoke {
+                    std::fs::write(&path, document.to_vtt_karaoke())?;
+                }
+                if let Some(path) = karaoke {
+                    std::fs::write(&path, serde_json::to_string_pretty(document)?)?;
+                }
+            } else if srt.is_some() || vtt.is_some() || vtt_karaoke.is_some() || karaoke.is_some() {
+                eprintln!("model không xuất timing (slot_durations); bỏ qua phụ đề");
+            }
+            eprintln!(
+                "wrote {} ({} samples, {:.2}s @ {} Hz)",
+                output.display(),
+                synthesis.waveform.len(),
+                synthesis.waveform.len() as f64 / synthesis.sample_rate as f64,
+                synthesis.sample_rate
+            );
+        }
+        Command::Stream {
+            text,
+            output,
+            acoustic,
+            vocoder,
+            speed,
+            alpha,
+            max_chars,
+            fixed_pauses,
+            srt,
+            vtt,
+            vtt_karaoke,
+            karaoke,
+        } => {
+            let mut engine = load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?;
+            let mut options = SynthesisOptions {
+                speed,
+                alpha,
+                max_chars,
+                fixed_pauses,
+                ..SynthesisOptions::default()
+            };
+            if fixed_pauses {
+                options.gate_threshold = 1.01;
+            }
+            let mut all = Vec::new();
+            let mut units: Vec<TimedUnit> = Vec::new();
+            let summary = engine
+                .synthesize_stream_with_units(
+                    &text,
+                    &options,
+                    |samples, _| {
+                        all.extend_from_slice(samples);
+                        StreamControl::Continue
+                    },
+                    |chunk_units| units.extend_from_slice(chunk_units),
+                )
+                .map_err(anyhow::Error::msg)?;
+            let wav = vifasttts_audio::wav_bytes(&all, summary.sample_rate);
+            std::fs::write(&output, wav)?;
+            if !units.is_empty() {
+                let duration_ms = (all.len() as u64) * 1000 / summary.sample_rate.max(1) as u64;
+                let document =
+                    KaraokeDocument::from_units(units, summary.sample_rate, duration_ms, 80);
+                if let Some(path) = srt {
+                    std::fs::write(&path, document.to_srt())?;
+                }
+                if let Some(path) = vtt {
+                    std::fs::write(&path, document.to_vtt())?;
+                }
+                if let Some(path) = vtt_karaoke {
+                    std::fs::write(&path, document.to_vtt_karaoke())?;
+                }
+                if let Some(path) = karaoke {
+                    std::fs::write(&path, serde_json::to_string_pretty(&document)?)?;
+                }
+            }
+            eprintln!(
+                "wrote {} ({} samples, {} chunks, cancelled={})",
+                output.display(),
+                all.len(),
+                summary.chunks,
+                summary.cancelled
+            );
+        }
+        Command::Bench {
+            text,
+            runs,
+            warmup,
+            acoustic,
+            vocoder,
+            speed,
+            alpha,
+            max_chars,
+            fixed_pauses,
+        } => {
+            let load_started = std::time::Instant::now();
+            let mut engine = load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?;
+            let load_ms = load_started.elapsed().as_secs_f64() * 1000.0;
+            let mut options = SynthesisOptions {
+                speed,
+                alpha,
+                max_chars,
+                fixed_pauses,
+                ..SynthesisOptions::default()
+            };
+            options.parse = live_parse_options(Dialect::North, None, None);
+            if fixed_pauses {
+                options.gate_threshold = 1.01;
+            }
+            for _ in 0..warmup {
+                engine
+                    .synthesize(&text, &options)
+                    .map_err(anyhow::Error::msg)?;
+            }
+            let mut times = Vec::with_capacity(runs);
+            let mut audio_seconds = 0.0;
+            for _ in 0..runs {
+                let started = std::time::Instant::now();
+                let result = engine
+                    .synthesize(&text, &options)
+                    .map_err(anyhow::Error::msg)?;
+                times.push(started.elapsed().as_secs_f64());
+                audio_seconds = result.waveform.len() as f64 / result.sample_rate as f64;
+            }
+            times.sort_by(f64::total_cmp);
+            let p50 = times
+                .get(times.len().saturating_sub(1) / 2)
+                .copied()
+                .unwrap_or(0.0);
+            let p95_index = ((times.len() as f64 * 0.95).ceil() as usize).saturating_sub(1);
+            let p95 = times
+                .get(p95_index.min(times.len().saturating_sub(1)))
+                .copied()
+                .unwrap_or(0.0);
+            let mean = times.iter().sum::<f64>() / times.len().max(1) as f64;
+            let rtf = if audio_seconds > 0.0 {
+                mean / audio_seconds
+            } else {
+                0.0
+            };
+            println!(
+                "{}",
+                serde_json::to_string(&serde_json::json!({
+                    "load_ms": load_ms,
+                    "runs": runs,
+                    "chars": text.chars().count(),
+                    "audio_seconds": audio_seconds,
+                    "mean_ms": mean * 1000.0,
+                    "p50_ms": p50 * 1000.0,
+                    "p95_ms": p95 * 1000.0,
+                    "rtf": rtf,
+                }))?
+            );
+        }
+    }
+    Ok(())
+}

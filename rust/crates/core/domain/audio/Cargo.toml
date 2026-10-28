@@ -1,0 +1,10 @@
+[package]
+name = "vifasttts-audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Audio DSP for ViFastTts: iSTFT, sharpen, fade, WAV"
+
+[dependencies]
+rustfft.workspace = true

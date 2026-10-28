@@ -1,0 +1,343 @@
+//! HTTP server tối thiểu: /healthz, /api/config, /api/tts.
+
+use std::collections::HashMap;
+use std::convert::Infallible;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+
+use axum::body::Body;
+use axum::extract::{DefaultBodyLimit, State};
+use axum::http::{StatusCode, header};
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, post};
+use axum::{Json, Router};
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
+use clap::Parser;
+use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
+use vifasttts_native::{
+    KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified,
+};
+use vifasttts_text::dialect::Dialect;
+use vifasttts_text::pipeline::live_parse_options;
+
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+    acoustic: PathBuf,
+    #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+    vocoder: PathBuf,
+    #[arg(long)]
+    manifest: Option<PathBuf>,
+    #[arg(long, default_value = "127.0.0.1")]
+    host: String,
+    #[arg(long, default_value_t = 8000)]
+    port: u16,
+    #[arg(long, default_value_t = 3000)]
+    max_chars: usize,
+}
+
+struct AppState {
+    engine: Mutex<NativeEngine>,
+    max_chars: usize,
+    alpha: f32,
+}
+
+#[derive(Debug, Deserialize)]
+struct HttpTtsRequest {
+    text: String,
+    #[serde(default = "one")]
+    speed: f32,
+    #[serde(default)]
+    fixed_pauses: bool,
+    /// Trả JSON kèm audio base64 + timing/karaoke thay vì WAV.
+    #[serde(default)]
+    karaoke: bool,
+    /// Từ điển local: `{"AI": "ây ai"}`.
+    #[serde(default)]
+    overrides: Option<HashMap<String, String>>,
+}
+
+fn synth_options(
+    speed: f32,
+    fixed_pauses: bool,
+    overrides: Option<&HashMap<String, String>>,
+) -> SynthesisOptions {
+    let mut options = SynthesisOptions {
+        speed,
+        fixed_pauses,
+        alpha: 1.5,
+        ..SynthesisOptions::default()
+    };
+    if let Some(overrides) = overrides {
+        options.parse = live_parse_options(Dialect::North, Some(overrides), None);
+    }
+    if fixed_pauses {
+        options.gate_threshold = 1.01;
+    }
+    options
+}
+
+#[derive(Debug, Serialize)]
+struct HttpTtsResponse {
+    sample_rate: u32,
+    duration_ms: u64,
+    audio_base64: String,
+    karaoke: KaraokeDocument,
+    srt: String,
+    vtt: String,
+    vtt_karaoke: String,
+}
+
+fn one() -> f32 {
+    1.0
+}
+
+#[derive(Debug, Serialize)]
+struct HealthResponse {
+    ok: bool,
+    sample_rate: u32,
+    arch: String,
+    vocab_version: String,
+    vocab_hash: String,
+    alpha: f32,
+    pause: &'static str,
+}
+
+#[derive(Debug, Serialize)]
+struct ConfigResponse {
+    max_chars: usize,
+    rate_limit: u32,
+    rate_window: f64,
+}
+
+async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
+    let engine = state.engine.lock().expect("engine lock");
+    let info = engine.info();
+    Json(HealthResponse {
+        ok: true,
+        sample_rate: info.sample_rate,
+        arch: info.arch.clone(),
+        vocab_version: info.vocab_version.clone(),
+        vocab_hash: info.vocab_hash.clone(),
+        alpha: state.alpha,
+        pause: "model",
+    })
+}
+
+async fn config(State(state): State<Arc<AppState>>) -> Json<ConfigResponse> {
+    Json(ConfigResponse {
+        max_chars: state.max_chars,
+        rate_limit: 0,
+        rate_window: 60.0,
+    })
+}
+
+fn pcm16_base64(samples: &[f32]) -> String {
+    let mut bytes = Vec::with_capacity(samples.len() * 2);
+    for value in samples {
+        let pcm = (value.clamp(-1.0, 1.0) * 32767.0)
+            .round_ties_even()
+            .clamp(-32768.0, 32767.0) as i16;
+        bytes.extend_from_slice(&pcm.to_le_bytes());
+    }
+    BASE64.encode(bytes)
+}
+
+/// NDJSON streaming: audio chunk (PCM16 base64), units, done.
+async fn tts_stream(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<HttpTtsRequest>,
+) -> Response {
+    let text = payload
+        .text
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    if text.is_empty() {
+        return (StatusCode::UNPROCESSABLE_ENTITY, "Nhập câu cần đọc").into_response();
+    }
+    if text.chars().count() > state.max_chars {
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("Tối đa {} ký tự", state.max_chars),
+        )
+            .into_response();
+    }
+    if !text.chars().any(char::is_alphabetic) {
+        return (StatusCode::UNPROCESSABLE_ENTITY, "Cần ít nhất một chữ cái").into_response();
+    }
+    let speed = payload.speed.clamp(0.8, 1.2);
+    let fixed_pauses = payload.fixed_pauses;
+    let state_ref = Arc::clone(&state);
+    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(64);
+    tokio::task::spawn_blocking(move || {
+        let mut engine = match state_ref.engine.lock() {
+            Ok(engine) => engine,
+            Err(_) => {
+                let _ = tx.blocking_send(Ok(
+                    "{\"type\":\"error\",\"message\":\"engine lock\"}\n".to_string()
+                ));
+                return;
+            }
+        };
+        let options = synth_options(speed, fixed_pauses, payload.overrides.as_ref());
+        let audio_tx = tx.clone();
+        let units_tx = tx.clone();
+        let result = engine.synthesize_stream_with_units(
+            &text,
+            &options,
+            |samples, sample_rate| {
+                let event = serde_json::json!({
+                    "type": "audio",
+                    "sample_rate": sample_rate,
+                    "pcm_base64": pcm16_base64(samples),
+                });
+                match audio_tx.blocking_send(Ok(format!("{event}\n"))) {
+                    Ok(()) => StreamControl::Continue,
+                    Err(_) => StreamControl::Cancel,
+                }
+            },
+            |units| {
+                let event = serde_json::json!({"type": "units", "units": units});
+                let _ = units_tx.blocking_send(Ok(format!("{event}\n")));
+            },
+        );
+        let event = match result {
+            Ok(summary) => serde_json::json!({
+                "type": "done",
+                "samples": summary.samples,
+                "chunks": summary.chunks,
+                "cancelled": summary.cancelled,
+                "sample_rate": summary.sample_rate,
+            }),
+            Err(error) => serde_json::json!({"type": "error", "message": error}),
+        };
+        let _ = tx.blocking_send(Ok(format!("{event}\n")));
+    });
+    (
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, "application/x-ndjson"),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        Body::from_stream(ReceiverStream::new(rx)),
+    )
+        .into_response()
+}
+
+async fn tts(State(state): State<Arc<AppState>>, Json(payload): Json<HttpTtsRequest>) -> Response {
+    let text = payload
+        .text
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    if text.is_empty() {
+        return (StatusCode::UNPROCESSABLE_ENTITY, "Nhập câu cần đọc").into_response();
+    }
+    if text.chars().count() > state.max_chars {
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("Tối đa {} ký tự", state.max_chars),
+        )
+            .into_response();
+    }
+    if !text.chars().any(char::is_alphabetic) {
+        return (StatusCode::UNPROCESSABLE_ENTITY, "Cần ít nhất một chữ cái").into_response();
+    }
+    let speed = payload.speed.clamp(0.8, 1.2);
+    let fixed_pauses = payload.fixed_pauses;
+    let karaoke = payload.karaoke;
+    let overrides = payload.overrides;
+    let state_ref = Arc::clone(&state);
+    let result = tokio::task::spawn_blocking(move || {
+        let mut engine = state_ref
+            .engine
+            .lock()
+            .map_err(|_| "engine lock".to_string())?;
+        let options = synth_options(speed, fixed_pauses, overrides.as_ref());
+        engine.synthesize(&text, &options)
+    })
+    .await;
+    let synthesis = match result {
+        Ok(Ok(value)) => value,
+        Ok(Err(error)) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, error).into_response();
+        }
+        Err(error) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
+        }
+    };
+    let audio_seconds = synthesis.waveform.len() as f64 / synthesis.sample_rate as f64;
+    if karaoke {
+        let Some(document) = synthesis.karaoke else {
+            return (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "model không xuất timing (slot_durations)",
+            )
+                .into_response();
+        };
+        let payload = HttpTtsResponse {
+            sample_rate: synthesis.sample_rate,
+            duration_ms: document.duration_ms,
+            audio_base64: BASE64.encode(&synthesis.wav),
+            srt: document.to_srt(),
+            vtt: document.to_vtt(),
+            vtt_karaoke: document.to_vtt_karaoke(),
+            karaoke: document,
+        };
+        return (StatusCode::OK, Json(payload)).into_response();
+    }
+    (
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, "audio/wav"),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        synthesis.wav,
+    )
+        .into_response()
+        .tap_audio(audio_seconds)
+}
+
+trait TapAudio {
+    fn tap_audio(self, seconds: f64) -> Self;
+}
+
+impl TapAudio for Response {
+    fn tap_audio(mut self, seconds: f64) -> Self {
+        if let Ok(value) = header::HeaderValue::from_str(&format!("{seconds:.2}")) {
+            self.headers_mut().insert("x-audio-seconds", value);
+        }
+        self
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), String> {
+    let args = Args::parse();
+    let engine = match args.manifest {
+        Some(path) => load_verified(&args.acoustic, &args.vocoder, path)?,
+        None => load(&args.acoustic, &args.vocoder)?,
+    };
+    let state = Arc::new(AppState {
+        engine: Mutex::new(engine),
+        max_chars: args.max_chars,
+        alpha: 1.5,
+    });
+    let app = Router::new()
+        .route("/healthz", get(health))
+        .route("/api/config", get(config))
+        .route("/api/tts", post(tts))
+        .route("/api/tts/stream", post(tts_stream))
+        .layer(DefaultBodyLimit::max(64 * 1024))
+        .with_state(state);
+    let listener = tokio::net::TcpListener::bind((args.host.as_str(), args.port))
+        .await
+        .map_err(|err| format!("bind {}:{}: {err}", args.host, args.port))?;
+    axum::serve(listener, app)
+        .await
+        .map_err(|err| format!("serve: {err}"))
+}

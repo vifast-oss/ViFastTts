@@ -1,0 +1,12 @@
+[package]
+name = "vifasttts-mobile"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Mobile composition/runtime for ViFastTts (iOS/Android): model, synth, audio sink"
+
+[dependencies]
+vifasttts-audio-sink = { path = "../../../core/ports/audio-sink" }
+vifasttts-model-source = { path = "../../../core/ports/model-source" }
+vifasttts-native = { path = "../native" }

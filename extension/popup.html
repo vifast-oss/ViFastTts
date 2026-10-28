@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ViFastTts</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --ink: #1f2430;
+        --muted: #6b7280;
+        --accent: #c6281e;
+        --accent-dark: #991b1b;
+        --gold: #b77900;
+        --line: #e8ddd0;
+        --bg: #fbf6ee;
+        --cream: #fff8ec;
+        --panel: #ffffff;
+        --soft: #fbf0ec;
+        --ok: #15803d;
+        --warn: #b45309;
+        --err: #b91c1c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #fff4e8;
+          --muted: #c0a49c;
+          --accent: #ff6b5f;
+          --accent-dark: #e8352b;
+          --gold: #ffd84d;
+          --line: #4a2e29;
+          --bg: #1b1110;
+          --cream: #251816;
+          --panel: #251816;
+          --soft: #3a221d;
+          --ok: #4ade80;
+          --warn: #fbbf24;
+          --err: #f87171;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        width: 420px;
+        margin: 0;
+        background: linear-gradient(180deg, var(--cream) 0%, var(--bg) 48%);
+        color: var(--ink);
+        font: 13px/1.45 Arial, "Helvetica Neue", Helvetica, sans-serif;
+      }
+      .brandbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 14px 10px;
+      }
+      .logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        box-shadow: 0 6px 16px #5a2d191f;
+      }
+      .brandText { flex: 1; min-width: 0; }
+      .brandText h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        font-weight: 800;
+      }
+      .brandText .vi, .brandText .tts { color: var(--accent); }
+      .brandText .fast { color: var(--ink); font-style: italic; }
+      .brandText p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+      }
+      .pill {
+        max-width: 130px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--soft);
+        border: 1px solid #f0d2ca;
+        color: #9b2c20;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      main { padding: 0 14px 14px; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 10px 28px #5a2d190f;
+        padding: 13px;
+      }
+      .cardHead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+      .cardHead h2 { margin: 0; font-size: 13px; letter-spacing: -0.1px; }
+      label { display: block; margin: 8px 0 4px; font-weight: 650; font-size: 12px; }
+      textarea, input, select, button { font: inherit; }
+      textarea {
+        width: 100%;
+        min-height: 90px;
+        resize: vertical;
+        margin-top: 2px;
+        padding: 9px 10px;
+        border: 1px solid #e3d2c2;
+        border-radius: 10px;
+        outline: none;
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 13px;
+      }
+      textarea:focus, input:focus, select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px #c6281e22;
+      }
+      input[type="text"], input[type="url"], input[type="password"], select {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #e3d2c2;
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--ink);
+      }
+      input[type="range"] { accent-color: var(--accent); width: 100%; }
+      input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 5px;
+      }
+      .actions { display: flex; gap: 7px; margin-top: 8px; }
+      button, .button {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        background: var(--soft);
+        color: var(--ink);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+        text-align: center;
+      }
+      button.primary {
+        flex: 1;
+        background: var(--accent);
+        color: #fff;
+        padding: 9px 16px;
+      }
+      button.primary:hover { background: var(--accent-dark); }
+      button.ghost, .button.ghost {
+        background: var(--soft);
+        color: var(--accent-dark);
+        border: 1px solid #f0d2ca;
+        font-weight: 650;
+      }
+      button.ghost:hover, .button.ghost:hover { background: #fff3ee; }
+      button:disabled { opacity: 0.55; cursor: default; }
+      .speedRow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 3px;
+      }
+      .speedRow input { flex: 1; }
+      .check { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 12px; font-weight: 500; }
+      .hidden { display: none !important; }
+      details {
+        margin-top: 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+      summary { cursor: pointer; padding: 8px 10px; font-weight: 700; font-size: 12px; }
+      .detailsBody { padding: 0 10px 10px; }
+      .hint { color: var(--muted); font-size: 10px; margin: 5px 0 0; }
+      code { background: var(--soft); padding: 1px 4px; border-radius: 4px; }
+      #status {
+        min-height: 2.3em;
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 11px;
+        white-space: pre-wrap;
+      }
+      #status.ok { color: var(--ok); }
+      #status.err { color: var(--err); }
+      #status.busy { color: var(--warn); }
+      .player {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+      audio { width: 100%; }
+      .subActions { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+      #karaoke { line-height: 1.85; font-size: 15px; margin-top: 5px; }
+      #karaoke span { padding: 0.08rem 0.14rem; border-radius: 0.2rem; }
+      #karaoke span.active { background: #fde68a; color: #111; }
+      .examples { margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line); }
+      .examples p { margin: 0 0 5px; color: var(--muted); font-size: 10px; }
+      .examples .row { display: flex; gap: 5px; flex-wrap: wrap; }
+      .examples button {
+        background: var(--cream);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        font-size: 11px;
+        font-weight: 500;
+        padding: 4px 7px;
+      }
+      pre {
+        background: var(--panel);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        max-height: 120px;
+        overflow: auto;
+        font-size: 10px;
+        margin: 8px 0 0;
+      }
+      footer { color: var(--muted); font-size: 10px; text-align: center; padding: 0 14px 12px; }
+      @media (prefers-color-scheme: dark) {
+        textarea, input[type="text"], input[type="url"], input[type="password"], select {
+          border-color: var(--line);
+        }
+        .pill { border-color: var(--line); color: var(--accent); }
+        #karaoke span.active { background: var(--gold); color: #2b1b18; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="brandbar">
+      <img class="logo" src="icons/icon48.png" alt="" />
+      <div class="brandText">
+        <h1><span class="vi">Vi</span><span class="fast">Fast</span><span class="tts">Tts</span></h1>
+        <p>Giọng đọc tiếng Việt</p>
+      </div>
+      <span id="statusPill" class="pill">Sẵn sàng</span>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="cardHead">
+          <h2>Câu cần đọc</h2>
+          <span class="pill">Ctrl/⌘ + Enter</span>
+        </div>
+        <textarea id="text">Xin chào các bạn, hôm nay trời đẹp.</textarea>
+        <div class="meta">
+          <span id="count">0 ký tự</span>
+          <span>Local-first · không gửi text khi ở Local</span>
+        </div>
+
+        <div class="actions">
+          <button id="run" class="primary">Đọc</button>
+          <button id="readPage" class="ghost">Đọc trang</button>
+          <button id="clearText" class="ghost">Xoá</button>
+          <button id="stopStream" class="ghost hidden">Dừng</button>
+        </div>
+
+        <div class="speedRow">
+          <span>Tốc độ</span>
+          <input id="speed" type="range" min="0.8" max="1.2" step="0.05" value="1" />
+          <span id="speedValue">1.00×</span>
+          <label class="check"><input id="fixed" type="checkbox" /> đọc đều</label>
+          <label class="check"><input id="stream" type="checkbox" /> stream</label>
+        </div>
+
+        <details class="settings">
+          <summary>Cài đặt</summary>
+          <div class="detailsBody">
+            <label for="mode">Chế độ</label>
+            <select id="mode">
+              <option value="local">Local (WASM + ORT Web)</option>
+              <option value="remote">Remote server</option>
+            </select>
+            <p class="hint">
+              Local không cắt ở 3000 ký tự. Remote theo giới hạn server
+              (mặc định 3000; có thể tăng bằng <code>MAX_CHARS</code>).
+            </p>
+
+            <div id="remoteFields" class="hidden">
+              <label for="serverUrl">Server URL</label>
+              <input id="serverUrl" type="url" placeholder="https://tts.domain.vn" />
+              <label for="token">Bearer token (nếu có)</label>
+              <input id="token" type="password" autocomplete="off" />
+            </div>
+
+            <div id="localFields">
+              <label for="modelBaseUrl">Model base URL (tuỳ chọn)</label>
+              <input id="modelBaseUrl" type="url" placeholder="https://cdn.domain.vn/models/" />
+              <p class="hint">
+                Model bundle trong extension được ưu tiên. Nếu không có, tải từ URL
+                này và cache vào Cache Storage.
+              </p>
+            </div>
+
+            <label for="selectionAction">Khi bôi đen</label>
+            <select id="selectionAction">
+              <option value="hidden">Đọc ẩn — không mở tab</option>
+              <option value="popup">Mở popup đọc</option>
+              <option value="tab">Mở tab mới đọc</option>
+            </select>
+            <p class="hint">
+              Context menu vẫn có các lựa chọn riêng: đọc ẩn, popup, tab.
+            </p>
+
+            <label for="dictionary">Từ điển local</label>
+            <textarea id="dictionary" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com" style="min-height:70px;font-family:Consolas,monospace;font-size:11px"></textarea>
+            <p class="hint">
+              Mỗi dòng “từ gốc = cách đọc”; lưu trong extension. Giá trị phải là
+              âm tiết tiếng Việt hợp lệ: Z nên viết <code>dét</code> hoặc
+              <code>giét</code>; viết <code>zét</code> sẽ bị fallback thành “a”.
+              Local áp dụng trực tiếp; remote gửi `overrides` nếu server hỗ trợ.
+            </p>
+
+            <button id="clearCache" class="ghost" style="margin-top: 8px">Xoá cache model</button>
+          </div>
+        </details>
+
+        <div class="examples">
+          <p>Thử nhanh:</p>
+          <div class="row">
+            <button data-text="Sáng nay trời đẹp, chúng ta cùng đi dạo quanh hồ nhé.">Đi dạo</button>
+            <button data-text="Cô giáo nhẹ nhàng nhắc học sinh kiểm tra lại bài tập trước khi vào tiết mới.">Lời nhắc</button>
+            <button data-text="Chiếc tàu rời bến từ sớm, mang theo những giỏ cá tươi vừa được đánh bắt ngoài khơi.">Buổi sớm</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="status" role="status">Sẵn sàng.</div>
+
+      <section id="player" class="player hidden">
+        <audio id="audio" controls preload="none"></audio>
+        <div class="subActions">
+          <a id="downloadWav" class="button ghost" download="vifasttts.wav">Tải WAV</a>
+          <button id="downloadSrt" class="ghost">Tải SRT</button>
+          <button id="downloadVtt" class="ghost">Tải WebVTT</button>
+        </div>
+        <div id="karaoke"></div>
+        <pre id="srt"></pre>
+      </section>
+    </main>
+
+    <footer>WASM + ONNX Runtime Web · research demo · CC-BY-NC-4.0</footer>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

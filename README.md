@@ -68,7 +68,7 @@ Văn bản  ──▶  FRONTEND (tiếng Việt)  ──▶  MODEL (mel + thời
 
 | Khối | Nhiệm vụ | Điểm mạnh |
 | --- | --- | --- |
-| **Frontend** | Chuẩn hoá số/ngày/giờ/đơn vị, tách âm tiết, chuyển thành **7 ID/âm tiết** | Phủ toàn bộ tiếng Việt chuẩn, không UNK; 3 vùng miền Bắc/Trung/Nam |
+| **Frontend** | Chuẩn hoá số/ngày/giờ/đơn vị, tách âm tiết, chuyển thành **7 ID/âm tiết** | Phủ toàn bộ tiếng Việt chuẩn, không UNK; normalizer có nhánh Bắc/Trung/Nam (mức văn bản) |
 | **Model acoustic** | Từ 7 ID → dự đoán mel + thời lượng + f0/vuv/energy | Non-autoregressive, chạy tất định, xuất ONNX được |
 | **Vocoder** | Từ mel → sóng 24 kHz | iSTFTNet nhẹ, có vòng huấn luyện GAN tham chiếu |
 
@@ -292,7 +292,11 @@ docs/         toàn bộ tài liệu (xem mục 10 + docs/README.md); N0 deploy 
   (`discriminator: mpd_mrd`, chạy khối MPS) — xem `docs/archive/plans/REVISION_PLAN_V2.md` §10; GTA fine-tune sẽ làm sau.
 - **ONNX**: đã export N0 FP32 (acoustic + Vocos) và runtime CPU; demo dùng ONNX. Chưa gộp vocoder vào một graph duy nhất/INT8 calibration đầy đủ.
 - **OOV**: từ ngoài tiếng Việt đọc bằng fallback — muốn kiểm soát thì bật `resolve_oov=True`, dùng `--overrides file.json` hoặc thêm override.
-- **Một checkpoint = một giọng, một phương ngữ** (đúng thiết kế; muốn đa giọng phải tách lớp riêng).
+- **Một checkpoint = một giọng, một phương ngữ** (đúng thiết kế; không có `speaker_id`/`dialect_id`
+  nên không đổi giọng lúc chạy). Bộ mã hoá 5 ô dùng chung cho mọi vùng, nên **có 15–20 h dữ liệu
+  sạch của một giọng/vùng là train được checkpoint riêng** mà không sửa kiến trúc
+  (xem `docs/TRAINING_N0.md`, `docs/SYLLABLE_GUIDE.md`). Muốn **một model phục vụ nhiều vùng**
+  thì phải thêm conditioning vùng/người nói — chưa làm.
 
 Roadmap chi tiết có đánh dấu ✅/⬜: `docs/handoff/TRANG_THAI.md`.
 
@@ -303,6 +307,7 @@ Mục lục đầy đủ + phân loại **hiện hành / tham chiếu / lịch s
 | Nhóm | Tài liệu | Nội dung |
 | --- | --- | --- |
 | **Bắt đầu ở đây** | `docs/README.md` | Bản đồ toàn bộ tài liệu, trạng thái từng nhóm |
+| **Rust port** | `docs/RUST_PORT.md` · `desktop/README.md` · `mobile/android/README.md` | Port inference Rust, app desktop egui, APK local-first |
 | | `docs/handoff/TRANG_THAI.md` | Trạng thái tổng, quyết định hiện hành, việc còn lại |
 | | `docs/MODEL_FLOW.md` | Luồng model chi tiết: data → train → inference → export |
 | | `docs/SYLLABLE_GUIDE.md` | Hướng dẫn tách âm tiết cho người không chuyên |

@@ -35,3 +35,11 @@ deploy/vifasttts_demo/static/samples/
 
 # runtime stats DB (local/VPS)
 deploy/vifasttts_demo/data/
+
+# Rust build artifacts
+rust/target/
+rust/lib/*.dylib
+rust/lib/*.so
+rust/lib/*.dll
+rust/lib/*.dylib.*
+rust/lib/*.so.*

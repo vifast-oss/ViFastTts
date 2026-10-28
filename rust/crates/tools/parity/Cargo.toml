@@ -1,0 +1,17 @@
+[package]
+name = "vifasttts-tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Parity/debug tools for ViFastTts (parse, mel, synth-ids)"
+
+[[bin]]
+name = "vifasttts-tools"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+vifasttts-native = { path = "../../adapters/inbound/native" }

@@ -1,0 +1,14 @@
+[package]
+name = "vifasttts-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Headless UI-facing commands/events and ETA for ViFastTts"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+vifasttts-engine = { path = "../engine" }
+vifasttts-settings = { path = "../../ports/settings" }
+vifasttts-text = { path = "../../domain/text" }

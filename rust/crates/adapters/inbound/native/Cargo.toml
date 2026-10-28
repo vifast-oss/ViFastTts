@@ -1,0 +1,11 @@
+[package]
+name = "vifasttts-native"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Native adapter: async engine + ORT backend, sync API"
+
+[dependencies]
+vifasttts-engine = { path = "../../../core/application/engine" }
+vifasttts-ort = { path = "../../outbound/ort" }

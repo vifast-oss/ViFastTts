@@ -1,0 +1,22 @@
+[package]
+name = "vifasttts-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "CLI for the Rust ViFastTts inference port"
+
+[[bin]]
+name = "vifasttts-rs"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+vifasttts-audio = { path = "../../../core/domain/audio" }
+vifasttts-text = { path = "../../../core/domain/text" }
+vifasttts-http-client = { path = "../../outbound/http-client" }
+vifasttts-native = { path = "../native" }

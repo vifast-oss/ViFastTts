@@ -1,6 +1,6 @@
 # Tài liệu ViFastTts — bản đồ & trạng thái
 
-> **Cập nhật:** 27/10/2026 · **Trạng thái hiện hành:** xem `docs/handoff/TRANG_THAI.md`.
+> **Cập nhật:** 28/10/2026 · **Trạng thái hiện hành:** xem `docs/handoff/TRANG_THAI.md`.
 > Đây là **trang mục lục duy nhất** cho toàn bộ `docs/`. Khi có mâu thuẫn, thứ tự ưu tiên:
 > `TRANG_THAI.md` (trạng thái) → `docs/README.md` (mục lục) → tài liệu chuyên đề đang hiệu lực
 > → tài liệu tham chiếu → `docs/archive/` (lịch sử, không dùng để quyết định).
@@ -20,6 +20,7 @@
 | Train lại N0 | `docs/TRAINING_N0.md` |
 | Triển khai ONNX/demo | `docs/handoff/N0_DEPLOY.md` |
 | Xem quyết định Q | `docs/Q_ONSET.md` |
+| Xem kế hoạch + trạng thái port Rust | `docs/RUST_PORT.md` |
 | Xem lịch sử cũ | `docs/archive/README.md` |
 
 ## 1. Trạng thái hiện tại (tóm tắt)
@@ -89,6 +90,16 @@
 | `docs/SYLLABLE_SYSTEMS_RESEARCH.md` | So sánh mô hình tách/gộp âm tiết + audit biên |
 | `docs/VI_TTS_DATA_REFERENCE.md` | Model/dataset TTS tiếng Việt công khai |
 | `docs/SOCIAL_POST.md`, `docs/SOCIAL_POST_GROUPS.md` | Nội dung công bố (không phải trạng thái kỹ thuật) |
+
+### 2.5 Port Rust (kế hoạch + trạng thái WIP)
+
+| Tài liệu | Nội dung |
+| --- | --- |
+| `docs/RUST_PORT.md` | Kế hoạch + trạng thái 29/10/2026: phạm vi, hợp đồng, phase/gate, parity, karaoke, mô hình crate, desktop/mobile, rủi ro, chi phí |
+| `web/README.md` | Demo browser local: wasm frontend + ONNX Runtime Web, karaoke/SRT |
+| `desktop/README.md` | App desktop egui: local ONNX/remote, settings/từ điển/ETA, phát audio, lưu WAV/SRT/VTT |
+| `mobile/android/README.md` | APK local-first đã build/chạy emulator; JNA + C ABI + ORT Android |
+| `mobile/ios/README.md` | Scaffold SwiftUI + script; chưa build vì thiếu Xcode/iOS SDK |
 
 ## 3. Kho lịch sử
 

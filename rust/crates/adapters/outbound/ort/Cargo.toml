@@ -1,0 +1,16 @@
+[package]
+name = "vifasttts-ort"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "ONNX Runtime backends for ViFastTts"
+
+[dependencies]
+hex.workspace = true
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31"] }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+vifasttts-ports = { path = "../../../core/ports/backend" }
+vifasttts-text = { path = "../../../core/domain/text" }

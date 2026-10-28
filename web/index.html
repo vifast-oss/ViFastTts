@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ViFastTts — local browser</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      textarea { width: 100%; min-height: 8rem; font: inherit; }
+      button { padding: .5rem 1rem; font: inherit; }
+      #status { white-space: pre-wrap; color: #555; }
+      #karaoke { line-height: 1.8; font-size: 1.2rem; }
+      #karaoke span { padding: .1rem .15rem; border-radius: .2rem; }
+      #karaoke span.active { background: #ffe08a; }
+      pre { background: #f6f6f6; padding: 1rem; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>ViFastTts — chạy local trong trình duyệt</h1>
+    <p id="status">Đang nạp wasm/model…</p>
+    <textarea id="text">Xin chào các bạn, hôm nay trời đẹp.</textarea>
+    <p>
+      <label><input type="checkbox" id="fixed" /> đọc đều (fixed pauses)</label>
+      <button id="run" disabled>Đọc</button>
+    </p>
+    <audio id="audio" controls></audio>
+    <div id="karaoke"></div>
+    <pre id="srt"></pre>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

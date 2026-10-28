@@ -1,0 +1,52 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/core/domain/text",
+    "crates/core/domain/audio",
+    "crates/core/application/engine",
+    "crates/core/application/app",
+    "crates/core/ports/backend",
+    "crates/core/ports/audio-sink",
+    "crates/core/ports/transport",
+    "crates/core/ports/settings",
+    "crates/core/ports/model-source",
+    "crates/adapters/outbound/ort",
+    "crates/adapters/outbound/ort-web",
+    "crates/adapters/outbound/http-client",
+    "crates/adapters/inbound/native",
+    "crates/adapters/inbound/mobile",
+    "crates/adapters/inbound/desktop",
+    "crates/adapters/inbound/browser",
+    "crates/adapters/inbound/ffi",
+    "crates/adapters/inbound/http-server",
+    "crates/adapters/inbound/cli",
+    "crates/tools/parse",
+    "crates/tools/parity",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.99"
+
+[workspace.dependencies]
+anyhow = "1.0"
+base64 = "0.22"
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+hex = "0.4"
+regex = "1.11"
+fancy-regex = "0.16"
+unicode-normalization = "0.1"
+unicode-ccc = "0.1"
+num-bigint = "0.4"
+num-traits = "0.2"
+rustfft = "6.4"
+realfft = "3.5"
+ndarray = "0.17"
+clap = { version = "4.5", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
