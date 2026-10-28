@@ -79,8 +79,8 @@ Server nhận `dictionary` text hoặc `overrides` JSON. Extension remote trỏ 
 
 - Extension: tải `extension.zip` → `chrome://extensions` → Developer mode →
   **Load unpacked** → chọn thư mục đã giải nén. Không dùng `ttsEngine`.
-- Web local: `web-dist.tar.gz` giải nén, phục vụ static bằng `python -m http.server`;
-  cần model trong `models/` cạnh `index.html` (release web chỉ là frontend).
+- Web local: `web-dist.tar.gz` giải nén (đã kèm `models/` + ORT wasm), phục vụ
+  static bằng `python -m http.server` rồi mở `http://127.0.0.1:8000`.
 
 ## Android
 
