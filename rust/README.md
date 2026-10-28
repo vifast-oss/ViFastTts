@@ -68,6 +68,7 @@ curl -sS -N -X POST http://127.0.0.1:8000/api/tts/stream \
 cargo build --release -p vifasttts-desktop -p vifasttts-cli
 ./target/release/vifasttts-desktop --smoke
 ./target/release/vifasttts-rs              # mặc định mở TUI
+# package release có alias: vifasttts, vtfs
 ./target/release/vifasttts-rs server       # server + web (nếu có web/)
 ./target/release/vifasttts-rs server --api-only  # chỉ API
 ./target/release/vifasttts-rs --help

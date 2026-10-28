@@ -46,6 +46,8 @@ if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path (Join-Path $Out "models") | Out-Null
 Copy-Item (Join-Path $Root "rust/target/release/vifasttts-desktop.exe") (Join-Path $Out "vifasttts-desktop.exe")
 Copy-Item (Join-Path $Root "rust/target/release/vifasttts-rs.exe") (Join-Path $Out "vifasttts-rs.exe")
+Copy-Item (Join-Path $Out "vifasttts-rs.exe") (Join-Path $Out "vifasttts.exe")
+Copy-Item (Join-Path $Out "vifasttts-rs.exe") (Join-Path $Out "vtfs.exe")
 if ($WebDir -and (Test-Path $WebDir)) { Copy-Item -Recurse -Force $WebDir (Join-Path $Out "web") }
 Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
