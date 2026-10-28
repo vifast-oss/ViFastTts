@@ -20,7 +20,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tower_http::services::ServeDir;
 use vifasttts_app::parse_dictionary;
 use vifasttts_native::{
-    KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified,
+    KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified, load_vfts,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
@@ -45,6 +45,9 @@ struct Args {
     /// Thư mục web đã build (web/dist); server phục vụ SPA tại `/`.
     #[arg(long)]
     web_dir: Option<PathBuf>,
+    /// Nạp model từ bundle `.vfts` (thay acoustic/vocoder).
+    #[arg(long)]
+    vfts: Option<PathBuf>,
 }
 
 struct AppState {
@@ -375,9 +378,13 @@ impl TapAudio for Response {
 #[tokio::main]
 async fn main() -> Result<(), String> {
     let args = Args::parse();
-    let engine = match args.manifest {
-        Some(path) => load_verified(&args.acoustic, &args.vocoder, path)?,
-        None => load(&args.acoustic, &args.vocoder)?,
+    let engine = if let Some(path) = args.vfts {
+        load_vfts(path)?
+    } else {
+        match args.manifest {
+            Some(path) => load_verified(&args.acoustic, &args.vocoder, path)?,
+            None => load(&args.acoustic, &args.vocoder)?,
+        }
     };
     let state = Arc::new(AppState {
         engine: Mutex::new(engine),

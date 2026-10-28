@@ -1,8 +1,8 @@
 # Định dạng model `.vfts` (đề xuất, chưa triển khai)
 
-> Trạng thái: **đề xuất** — repo hiện chỉ có manifest JSON
-> `rust/models/n0-q.manifest.json` + 2 file ONNX. Không tìm thấy spec/implementation
-> `.vfts` trong lịch sử repo. Không đổi loader hiện tại khi chưa chốt.
+> Trạng thái: **đã triển khai core** (crate `vifasttts-vfts`, CLI `vifasttts-rs vfts`);
+> bundle là optional, loader ONNX hiện tại vẫn là canonical. Trước đây repo chỉ có
+> manifest JSON + 2 file ONNX; không có spec `.vfts` cũ để tương thích.
 
 ## Mục tiêu
 
@@ -49,13 +49,39 @@ Giữ tương thích schema hiện tại:
   `from_bytes` hiện tại.
 - Chữ ký số (minisign/cosign) là phase sau; sha256 trong manifest không thay chữ ký.
 
-## Phase triển khai đề xuất
+## Đã có trong code
 
-1. `vifasttts-vfts` crate: `pack`, `read`, `inspect`; test với byte giả.
-2. CLI `vifasttts-rs vfts pack|inspect|unpack`.
-3. Desktop/mobile mở `.vfts` → `ModelSource` → `from_bytes`.
-4. CI: tạo `.vfts` từ release ONNX; upload cạnh model ZIP.
-5. Sau khi có spec ổn định mới đổi `rust/models/n0-q.manifest.json` sang bundle.
+```bash
+# đóng gói ONNX + snapshot frontend resources
+rust/target/release/vifasttts-rs vfts pack \
+  --output n0.vfts
+
+# xem manifest/hash/frontend
+rust/target/release/vifasttts-rs vfts inspect n0.vfts
+
+# giải nén
+rust/target/release/vifasttts-rs vfts unpack n0.vfts --output /tmp/n0
+```
+
+- `vifasttts-vfts`: `VftsBundle` + `ModelSource`; kiểm ZIP traversal/zip-bomb,
+  SHA256, manifest, `frontend/vocab.json` runtime hash.
+- `vifasttts-native::load_vfts`; CLI `--vfts`; server `--vfts`; TUI `--vfts`;
+  desktop có ô chọn `.vfts`; FFI `vifasttts_engine_new_vfts`; mobile
+  `MobileRuntime::from_vfts`.
+- CI job `model-vfts` tạo `n0-ngochuyen.vfts` từ release ONNX.
+- Frontend resources được đóng gói để audit/version; runtime vẫn dùng resource
+  nhúng trong `vifasttts-text` (vocab được kiểm khớp). Chưa override dictionary
+  runtime từ bundle — cần refactor resource loader nếu muốn thay hoàn toàn.
+
+## Phase triển khai tiếp
+
+1. ✅ `vifasttts-vfts` crate: `pack/read/inspect/unpack`; test traversal/zip-bomb/hash.
+2. ✅ CLI `vifasttts-rs vfts pack|inspect|unpack`; `--vfts` cho synth/inspect.
+3. ✅ Desktop/TUI/server/FFI/mobile có loader `.vfts`; web extension chưa cần.
+4. ✅ CI job `model-vfts` tạo bundle từ release ONNX.
+5. ⬜ Runtime override toàn bộ dictionary/frontend resource từ bundle (hiện dùng
+   resource nhúng; chỉ kiểm vocab khớp).
+6. ⬜ Đổi manifest/thư mục hiện tại sang `.vfts` mặc định.
 
 **Chưa nên** thay manifest/thư mục hiện tại ngay: sẽ phá CLI, desktop, mobile và
 các script parity đang dùng path ONNX.

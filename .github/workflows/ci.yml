@@ -198,6 +198,27 @@ jobs:
           path: ${{ matrix.artifact }}
           if-no-files-found: error
 
+  model-vfts:
+    name: model .vfts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: ./.github/actions/fetch-model
+      - name: pack bundle
+        run: |
+          cargo build --release -p vifasttts-cli --manifest-path rust/Cargo.toml
+          mkdir -p desktop/dist
+          rust/target/release/vifasttts-rs vfts pack \
+            --output desktop/dist/n0-ngochuyen.vfts
+          rust/target/release/vifasttts-rs vfts inspect \
+            desktop/dist/n0-ngochuyen.vfts >/dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: model-vfts
+          path: desktop/dist/n0-ngochuyen.vfts
+          if-no-files-found: error
+
   android:
     name: android apk
     runs-on: ubuntu-latest
@@ -266,7 +287,7 @@ jobs:
   release:
     name: publish release
     if: always() && startsWith(github.ref, 'refs/tags/')
-    needs: [desktop, android, web-extension, server, ios]
+    needs: [desktop, android, web-extension, server, ios, model-vfts]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

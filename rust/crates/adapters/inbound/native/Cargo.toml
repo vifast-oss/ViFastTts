@@ -9,3 +9,4 @@ description = "Native adapter: async engine + ORT backend, sync API"
 [dependencies]
 vifasttts-engine = { path = "../../../core/application/engine" }
 vifasttts-ort = { path = "../../outbound/ort" }
+vifasttts-vfts = { path = "../../../core/domain/vfts" }

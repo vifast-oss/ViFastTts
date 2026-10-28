@@ -65,9 +65,8 @@ smoke, Windows do CI test.
 
 ## Cấu hình
 
-- `~/Library/Application Support/...`? Thực tế dùng
-  `~/Library/Application Support/com.vifasttts.ViFastTts/desktop.json` (theo
-  `directories`); lưu settings + history ETA + đường dẫn model.
+- `~/Library/Application Support/com.vifasttts.ViFastTts/desktop.json` (theo
+  `directories`); lưu settings + history ETA + đường dẫn model/`.vfts`.
 - Model mặc định tương đối `artifacts/onnx/n0_q/` khi chạy từ repo.
 - Remote mặc định `http://127.0.0.1:8000`; token Bearer tuỳ chọn.
 

@@ -19,6 +19,7 @@ pub use vifasttts_ort::{
     OrtModelMetadata, OrtVocoderModel, from_bytes as ort_from_bytes, load_paths,
     load_paths_with_manifest, ort_info,
 };
+pub use vifasttts_vfts::{PackOptions, VftsBundle, VftsManifest};
 
 struct ThreadWaker(std::thread::Thread);
 
@@ -158,6 +159,13 @@ pub fn load(
         components.vocoder,
         components.info,
     ))
+}
+
+/// Nạp model từ bundle `.vfts` (manifest + ONNX + snapshot frontend).
+pub fn load_vfts(path: impl AsRef<std::path::Path>) -> Result<NativeEngine, String> {
+    let bundle = VftsBundle::read_path(path)?;
+    bundle.verify_runtime_vocab()?;
+    from_bytes(&bundle.acoustic, &bundle.vocoder)
 }
 
 /// Nạp model từ bytes (iOS/Android/browser bundle không có path).

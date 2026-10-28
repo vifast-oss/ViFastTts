@@ -1,7 +1,7 @@
 # Port Rust — kế hoạch + trạng thái triển khai
 
 > **Trạng thái:** KẾ HOẠCH + TRIỂN KHAI WIP — **đã có mã Rust** (workspace
-> `rust/`, 22 crate, ~10.1k dòng Rust, chưa đổi production).
+> `rust/`, 23 crate, ~11.0k dòng Rust, chưa đổi production).
 > Xem **§15** cho trạng thái thực tế và lộ trình đa nền tảng.
 > **Ngày:** 29/10/2026 (cập nhật trạng thái triển khai).
 > **Phạm vi:** đường **inference production** của ViFastTts.
@@ -172,8 +172,8 @@ khớp hành vi production hiện tại. Rust nên có profile:
 ### 2.5 Toolchain Rust
 
 Đã cài và ghim `rust-toolchain.toml` (**1.99.1**, rustfmt + clippy); workspace
-`rust/` có **22 crate** (`text`, `audio`, `engine`, `app`, `ports`, `audio-sink`,
-`transport`, `settings`, `model-source`, `ort`, `ort-web`, `http-client`,
+`rust/` có **23 crate** (`text`, `audio`, `engine`, `app`, `ports`, `audio-sink`,
+`transport`, `settings`, `model-source`, `vfts`, `ort`, `ort-web`, `http-client`,
 `native`, `mobile`, `desktop`, `tui`, `browser`, `ffi`, `http-server`, `cli`, `parse`, `tools`).
 CI hiện chạy green trên macOS/Ubuntu/Windows, build desktop/server/Android/iOS/web/extension;
 chưa đo VPS/mobile thật.
@@ -900,7 +900,7 @@ phải làm để chạy web + desktop + iOS + Android. Mã Rust **chưa đổi 
 
 ### 15.1 Mã đang có
 
-Workspace `rust/` gồm 22 crate, khoảng **10.1k dòng** Rust + resources:
+Workspace `rust/` gồm 23 crate, khoảng **11.0k dòng** Rust + resources:
 
 | Crate | Nội dung | Ghi chú |
 |---|---|---|
@@ -919,6 +919,7 @@ Workspace `rust/` gồm 22 crate, khoảng **10.1k dòng** Rust + resources:
 | `vifasttts-mobile` | mobile composition root: model, status, synth, `AudioSink` | iOS/Android; chưa có audio adapter/UI |
 | `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP + server nội bộ, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS/Linux/Windows package; CI smoke cả ba |
 | `vifasttts-tui` | terminal UI ratatui/crossterm: nhập text, synth local/remote, lưu WAV | có trong package desktop; model/ORT dùng chung |
+| `vifasttts-vfts` | bundle `.vfts`: manifest + ONNX + snapshot frontend; hash/traversal/zip-bomb | loader native/CLI/server/TUI/FFI/mobile |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
 | `vifasttts-cli` | `inspect`, `synth` (+`--server`, `--srt/--vtt/--vtt-karaoke/--karaoke`), `stream` (+timing), `bench` | CLI production; local hoặc HTTP server |

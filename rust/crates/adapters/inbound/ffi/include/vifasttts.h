@@ -25,6 +25,7 @@ const char *vifasttts_version(void);
 const char *vifasttts_ort_info(void);
 
 VifasttEngine vifasttts_engine_new(const char *acoustic, const char *vocoder);
+VifasttEngine vifasttts_engine_new_vfts(const char *vfts);
 VifasttEngine vifasttts_engine_new_verified(const char *acoustic,
                                             const char *vocoder,
                                             const char *manifest);

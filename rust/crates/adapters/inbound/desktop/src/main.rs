@@ -22,7 +22,7 @@ use vifasttts_app::{
 };
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_native::{
-    KaraokeDocument, ModelInfo, NativeEngine, SynthesisOptions, SynthesisResult, load,
+    KaraokeDocument, ModelInfo, NativeEngine, SynthesisOptions, SynthesisResult, load, load_vfts,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
@@ -59,7 +59,15 @@ fn run_smoke() -> eframe::Result {
         std::env::var("VIFASTT_VOCODER").unwrap_or_else(|_| settings.vocoder_path.clone());
     let acoustic = resolve_model_path(&acoustic);
     let vocoder = resolve_model_path(&vocoder);
-    let mut engine = match load(&acoustic, &vocoder) {
+    let vfts = std::env::var("VIFASTT_VFTS")
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| (!settings.vfts_path.trim().is_empty()).then(|| settings.vfts_path.clone()));
+    let loaded = match vfts {
+        Some(path) => load_vfts(path),
+        None => load(&acoustic, &vocoder),
+    };
+    let mut engine = match loaded {
         Ok(engine) => engine,
         Err(error) => {
             eprintln!("SMOKE FAIL load: {error}");
@@ -99,6 +107,7 @@ struct DesktopSettings {
     app: AppSettings,
     acoustic_path: String,
     vocoder_path: String,
+    vfts_path: String,
     dialect: String,
     peak_normalize: bool,
     resolve_oov: bool,
@@ -119,6 +128,7 @@ impl Default for DesktopSettings {
             },
             acoustic_path: DEFAULT_ACOUSTIC.to_string(),
             vocoder_path: DEFAULT_VOCODER.to_string(),
+            vfts_path: String::new(),
             dialect: "north".to_string(),
             peak_normalize: false,
             resolve_oov: false,
@@ -247,6 +257,7 @@ enum LocalCommand {
     Load {
         acoustic: PathBuf,
         vocoder: PathBuf,
+        vfts: Option<PathBuf>,
     },
     Synthesize {
         text: String,
@@ -264,10 +275,19 @@ fn local_worker(command_rx: Receiver<LocalCommand>, event_tx: Sender<BackendEven
     let mut engine: Option<NativeEngine> = None;
     while let Ok(command) = command_rx.recv() {
         match command {
-            LocalCommand::Load { acoustic, vocoder } => {
+            LocalCommand::Load {
+                acoustic,
+                vocoder,
+                vfts,
+            } => {
                 engine = None;
                 let _ = event_tx.send(BackendEvent::ModelLoading);
-                match load(&acoustic, &vocoder) {
+                let loaded = if let Some(vfts) = vfts {
+                    load_vfts(vfts)
+                } else {
+                    load(&acoustic, &vocoder)
+                };
+                match loaded {
                     Ok(loaded) => {
                         let summary = ModelSummary::from(loaded.info());
                         engine = Some(loaded);
@@ -477,6 +497,8 @@ impl DesktopApp {
             .send(LocalCommand::Load {
                 acoustic: resolve_model_path(&settings.acoustic_path),
                 vocoder: resolve_model_path(&settings.vocoder_path),
+                vfts: (!settings.vfts_path.trim().is_empty())
+                    .then(|| PathBuf::from(&settings.vfts_path)),
             })
             .ok();
 
@@ -670,6 +692,8 @@ impl DesktopApp {
         if let Err(error) = self.local_tx.send(LocalCommand::Load {
             acoustic: resolve_model_path(&self.settings.acoustic_path),
             vocoder: resolve_model_path(&self.settings.vocoder_path),
+            vfts: (!self.settings.vfts_path.trim().is_empty())
+                .then(|| PathBuf::from(&self.settings.vfts_path)),
         }) {
             self.error = Some(format!("worker local đã dừng: {error}"));
         }
@@ -805,11 +829,17 @@ impl DesktopApp {
             .arg("--host")
             .arg(host)
             .arg("--port")
-            .arg(self.settings.server_port.to_string())
-            .arg("--acoustic")
-            .arg(resolve_model_path(&self.settings.acoustic_path))
-            .arg("--vocoder")
-            .arg(resolve_model_path(&self.settings.vocoder_path))
+            .arg(self.settings.server_port.to_string());
+        if !self.settings.vfts_path.trim().is_empty() {
+            command.arg("--vfts").arg(&self.settings.vfts_path);
+        } else {
+            command
+                .arg("--acoustic")
+                .arg(resolve_model_path(&self.settings.acoustic_path))
+                .arg("--vocoder")
+                .arg(resolve_model_path(&self.settings.vocoder_path));
+        }
+        command
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null());
         if !self.settings.server_token.trim().is_empty() {
@@ -924,6 +954,24 @@ impl DesktopApp {
 
         if self.settings.app.mode == SynthesisMode::Local {
             ui.add_space(6.0);
+            ui.label("Bundle .vfts (tuỳ chọn)");
+            ui.horizontal(|ui| {
+                if ui
+                    .add(egui::TextEdit::singleline(&mut self.settings.vfts_path))
+                    .changed()
+                {
+                    self.settings_dirty = true;
+                }
+                if ui.button("…").clicked()
+                    && let Some(path) = rfd::FileDialog::new()
+                        .add_filter("ViFastTts bundle", &["vfts"])
+                        .pick_file()
+                {
+                    self.settings.vfts_path = path.display().to_string();
+                    self.settings_dirty = true;
+                }
+            });
+            ui.small("Nếu có .vfts, acoustic/vocoder bên dưới bị bỏ qua.");
             ui.label("Acoustic ONNX");
             ui.horizontal(|ui| {
                 let changed = ui

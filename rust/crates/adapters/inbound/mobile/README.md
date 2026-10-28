@@ -25,6 +25,7 @@ UI SwiftUI / Compose / Flutter
 
 ```rust
 MobileRuntime::from_paths(...)
+MobileRuntime::from_vfts(...)
 MobileRuntime::from_bytes(...)
 MobileRuntime::from_source(&impl ModelSource, ...)
 runtime.info()

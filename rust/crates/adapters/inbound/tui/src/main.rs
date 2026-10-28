@@ -27,7 +27,7 @@ use ratatui::{Frame, Terminal};
 
 use vifasttts_app::parse_dictionary;
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
-use vifasttts_native::{NativeEngine, SynthesisOptions, load};
+use vifasttts_native::{NativeEngine, SynthesisOptions, load, load_vfts};
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
 
@@ -54,6 +54,9 @@ struct Args {
     /// File từ điển `key = cách đọc` (tuỳ chọn).
     #[arg(long)]
     dictionary: Option<PathBuf>,
+    /// Nạp model từ bundle `.vfts`.
+    #[arg(long)]
+    vfts: Option<PathBuf>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -282,12 +285,18 @@ impl App {
 fn spawn_local(
     acoustic: PathBuf,
     vocoder: PathBuf,
+    vfts: Option<PathBuf>,
     event_tx: Sender<TuiEvent>,
 ) -> Sender<LocalCommand> {
     let (command_tx, command_rx) = mpsc::channel();
     thread::spawn(move || {
         let _ = event_tx.send(TuiEvent::Status("Đang nạp model local…".to_string()));
-        let mut engine: Option<NativeEngine> = match load(&acoustic, &vocoder) {
+        let loaded = if let Some(path) = vfts {
+            load_vfts(path)
+        } else {
+            load(&acoustic, &vocoder)
+        };
+        let mut engine: Option<NativeEngine> = match loaded {
             Ok(engine) => {
                 let info = engine.info();
                 let _ = event_tx.send(TuiEvent::Ready(format!(
@@ -334,6 +343,7 @@ fn main() -> Result<()> {
         Some(spawn_local(
             args.acoustic.clone(),
             args.vocoder.clone(),
+            args.vfts.clone(),
             event_tx.clone(),
         ))
     } else {

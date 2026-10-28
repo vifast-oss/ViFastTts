@@ -69,6 +69,11 @@ cargo build --release -p vifasttts-desktop -p vifasttts-tui -p vifasttts-http-se
 ./target/release/vifasttts-desktop --smoke
 ./target/release/vifasttts-tui --help
 
+# Model bundle .vfts (manifest + ONNX + snapshot resources)
+rust/target/release/vifasttts-rs vfts pack --output n0.vfts
+rust/target/release/vifasttts-rs vfts inspect n0.vfts
+rust/target/release/vifasttts-rs synth --vfts n0.vfts --text "Xin chào" --output out.wav
+
 # C ABI (macOS; Linux/Windows build tương tự)
 cargo build --release -p vifasttts-ffi
 # header: crates/adapters/inbound/ffi/include/vifasttts.h
@@ -109,6 +114,7 @@ Kết quả chốt 28/10/2026:
 
 - `vifasttts-text`: frontend/parser/vocab/normalizer/chunk/karaoke text; tài nguyên nhúng `resources/`.
 - `vifasttts-audio`: iSTFT/sharpen/fade/WAV.
+- `vifasttts-vfts`: bundle `.vfts` (manifest + ONNX + snapshot frontend; hash/loader).
 - `vifasttts-ports`: async trait `AcousticModel`/`VocoderModel` + `MelSpectrogram`/`ComplexSpectrogram`/`ModelInfo`.
 - `vifasttts-audio-sink`, `vifasttts-transport`, `vifasttts-settings`, `vifasttts-model-source`: port contracts cho UI/native.
 - `vifasttts-engine`: orchestration async backend-agnostic + streaming + timing.

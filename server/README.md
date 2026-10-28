@@ -9,7 +9,8 @@ Server axum tối giản dùng chung `vifasttts-native`/`vifasttts-app`:
 - nhận `dictionary` dạng text hoặc `overrides` JSON; parse bằng
   `vifasttts-app::parse_dictionary`;
 - `--web-dir web/dist` phục vụ luôn web UI (SPA + model/ORT) tại `/`;
-- `--token` (hoặc env `VIFASTTS_TOKEN`) bảo vệ `/api/*` bằng Bearer.
+- `--token` (hoặc env `VIFASTTS_TOKEN`) bảo vệ `/api/*` bằng Bearer;
+- `--vfts model.vfts` nạp bundle thay cho `--acoustic/--vocoder`.
 
 ## Build
 
@@ -40,6 +41,9 @@ rust/target/release/vifasttts-server \
   --acoustic artifacts/onnx/n0_q/acoustic.onnx \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx \
   --web-dir web/dist --token 'đổi-token' --port 8000
+
+# hoặc bundle .vfts
+rust/target/release/vifasttts-server --vfts n0.vfts --port 8000
 ```
 
 ## Desktop → server → extension/điện thoại/IoT

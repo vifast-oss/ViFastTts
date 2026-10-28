@@ -1,0 +1,16 @@
+[package]
+name = "vifasttts-vfts"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Optional .vfts model bundle (manifest + ONNX + frontend resources)"
+
+[dependencies]
+hex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+vifasttts-model-source = { path = "../../ports/model-source" }
+vifasttts-text = { path = "../text" }
+zip = { version = "9.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }

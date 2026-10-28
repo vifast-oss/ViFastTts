@@ -1674,8 +1674,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi 6.0.0",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -4836,6 +4838,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "typed-path"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ce898823d8cd0f028662d2f349694b1af0a5cc9be83f1d213a00d3147445e1e"
+
+[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5060,6 +5068,7 @@ dependencies = [
  "vifasttts-http-client",
  "vifasttts-native",
  "vifasttts-text",
+ "vifasttts-vfts",
 ]
 
 [[package]]
@@ -5143,6 +5152,7 @@ version = "0.1.0"
 dependencies = [
  "vifasttts-engine",
  "vifasttts-ort",
+ "vifasttts-vfts",
 ]
 
 [[package]]
@@ -5230,6 +5240,19 @@ dependencies = [
  "vifasttts-http-client",
  "vifasttts-native",
  "vifasttts-text",
+]
+
+[[package]]
+name = "vifasttts-vfts"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "vifasttts-model-source",
+ "vifasttts-text",
+ "zip",
 ]
 
 [[package]]
@@ -6206,6 +6229,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.9",
+]
+
+[[package]]
+name = "zip"
+version = "9.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1156b39d142a34b999c2310a50455e0cb3760bf7efad0122f796d813bee26ccb"
+dependencies = [
+ "crc32fast",
+ "flate2",
+ "getrandom 0.4.3",
+ "indexmap",
+ "memchr",
+ "nix 0.31.3",
+ "typed-path",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

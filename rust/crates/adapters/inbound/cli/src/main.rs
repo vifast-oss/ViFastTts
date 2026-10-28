@@ -7,11 +7,35 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_native::{
-    KaraokeDocument, StreamControl, SynthesisOptions, TimedUnit, from_bytes, load, load_verified,
-    ort_info,
+    KaraokeDocument, PackOptions, StreamControl, SynthesisOptions, TimedUnit, VftsBundle,
+    from_bytes, load, load_verified, load_vfts, ort_info,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::{ParseOptions, live_parse_options};
+
+#[derive(Subcommand, Debug)]
+enum VftsAction {
+    /// Đóng gói ONNX + snapshot frontend resources.
+    Pack {
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        /// Thư mục `resources/*.json`; mặc định lấy resource chuẩn của repo.
+        #[arg(long)]
+        frontend_dir: Option<PathBuf>,
+    },
+    /// Xem manifest/entry/hash, không nạp ORT.
+    Inspect { input: PathBuf },
+    /// Giải nén bundle ra thư mục.
+    Unpack {
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "vifasttts-rs", version, about = "ViFastTts Rust inference")]
@@ -30,6 +54,9 @@ enum Command {
         vocoder: PathBuf,
         #[arg(long)]
         manifest: Option<PathBuf>,
+        /// Nạp model từ bundle `.vfts`.
+        #[arg(long)]
+        vfts: Option<PathBuf>,
         /// Nạp model từ bytes (kiểm API mobile/embedded).
         #[arg(long)]
         from_bytes: bool,
@@ -62,6 +89,9 @@ enum Command {
         overrides: Option<PathBuf>,
         #[arg(long)]
         custom_reading: Option<PathBuf>,
+        /// Nạp model từ bundle `.vfts`.
+        #[arg(long)]
+        vfts: Option<PathBuf>,
         /// Gọi server thay vì chạy local (ví dụ http://127.0.0.1:8000).
         #[arg(long)]
         server: Option<String>,
@@ -109,6 +139,11 @@ enum Command {
         #[arg(long)]
         karaoke: Option<PathBuf>,
     },
+    /// Đóng gói/kiểm tra/giải nén model `.vfts`.
+    Vfts {
+        #[command(subcommand)]
+        action: VftsAction,
+    },
     /// Benchmark trong một process (load một lần, chạy nhiều lần).
     Bench {
         #[arg(long)]
@@ -130,6 +165,15 @@ enum Command {
         #[arg(long)]
         fixed_pauses: bool,
     },
+}
+
+fn default_frontend_dir() -> Option<PathBuf> {
+    [
+        PathBuf::from("rust/crates/core/domain/text/resources"),
+        PathBuf::from("crates/core/domain/text/resources"),
+    ]
+    .into_iter()
+    .find(|path| path.is_dir())
 }
 
 fn load_map(path: &Option<PathBuf>) -> Result<Option<HashMap<String, String>>> {
@@ -185,9 +229,12 @@ fn main() -> Result<()> {
             acoustic,
             vocoder,
             manifest,
+            vfts,
             from_bytes: use_bytes,
         } => {
-            let engine = if use_bytes {
+            let engine = if let Some(path) = vfts {
+                load_vfts(path).map_err(anyhow::Error::msg)?
+            } else if use_bytes {
                 let acoustic_bytes = std::fs::read(&acoustic)?;
                 let vocoder_bytes = std::fs::read(&vocoder)?;
                 from_bytes(&acoustic_bytes, &vocoder_bytes).map_err(anyhow::Error::msg)?
@@ -223,6 +270,7 @@ fn main() -> Result<()> {
             dialect,
             overrides,
             custom_reading,
+            vfts,
             server,
             token,
             srt,
@@ -273,7 +321,10 @@ fn main() -> Result<()> {
                 }
                 return Ok(());
             }
-            let mut engine = load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?;
+            let mut engine = match vfts {
+                Some(path) => load_vfts(path).map_err(anyhow::Error::msg)?,
+                None => load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?,
+            };
             let mut options = SynthesisOptions {
                 speed,
                 alpha,
@@ -379,6 +430,55 @@ fn main() -> Result<()> {
                 summary.cancelled
             );
         }
+        Command::Vfts { action } => match action {
+            VftsAction::Pack {
+                acoustic,
+                vocoder,
+                output,
+                frontend_dir,
+            } => {
+                let frontend = frontend_dir.or_else(default_frontend_dir);
+                let bundle = VftsBundle::from_paths(
+                    &acoustic,
+                    &vocoder,
+                    frontend.as_deref(),
+                    PackOptions::default(),
+                )
+                .map_err(anyhow::Error::msg)?;
+                bundle.verify_runtime_vocab().map_err(anyhow::Error::msg)?;
+                bundle.write_path(&output).map_err(anyhow::Error::msg)?;
+                println!(
+                    "wrote {} ({} B)",
+                    output.display(),
+                    std::fs::metadata(&output)?.len()
+                );
+            }
+            VftsAction::Inspect { input } => {
+                let bundle = VftsBundle::read_path(&input).map_err(anyhow::Error::msg)?;
+                println!("{}", serde_json::to_string_pretty(&bundle.manifest)?);
+                println!(
+                    "bytes: acoustic={} vocoder={}",
+                    bundle.acoustic.len(),
+                    bundle.vocoder.len()
+                );
+                println!(
+                    "frontend: {}",
+                    bundle
+                        .frontend
+                        .keys()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
+                bundle.verify_runtime_vocab().map_err(anyhow::Error::msg)?;
+                println!("runtime vocab: OK");
+            }
+            VftsAction::Unpack { input, output } => {
+                let bundle = VftsBundle::read_path(&input).map_err(anyhow::Error::msg)?;
+                bundle.unpack_to(&output).map_err(anyhow::Error::msg)?;
+                println!("unpacked {}", output.display());
+            }
+        },
         Command::Bench {
             text,
             runs,

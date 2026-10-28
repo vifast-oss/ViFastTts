@@ -6,7 +6,7 @@ use vifasttts_audio_sink::AudioSink;
 use vifasttts_model_source::ModelSource;
 use vifasttts_native::{
     ModelInfo, NativeEngine, StreamControl, StreamSummary, SynthesisOptions, SynthesisResult,
-    from_bytes, load,
+    from_bytes, load, load_vfts,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -36,6 +36,16 @@ impl MobileRuntime {
     ) -> Result<Self, String> {
         Ok(Self {
             engine: load(acoustic, vocoder)?,
+            config,
+        })
+    }
+
+    pub fn from_vfts(
+        path: impl AsRef<std::path::Path>,
+        config: MobileConfig,
+    ) -> Result<Self, String> {
+        Ok(Self {
+            engine: load_vfts(path)?,
             config,
         })
     }

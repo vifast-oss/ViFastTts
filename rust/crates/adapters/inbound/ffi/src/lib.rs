@@ -10,7 +10,9 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::ptr;
 use std::slice;
 
-use vifasttts_native::{NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, ort_info};
+use vifasttts_native::{
+    NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfts, ort_info,
+};
 
 thread_local! {
     static LAST_ERROR: RefCell<CString> = RefCell::new(CString::new("").unwrap());
@@ -130,6 +132,16 @@ pub extern "C" fn vifasttts_engine_new(
         let acoustic = c_path(acoustic)?;
         let vocoder = c_path(vocoder)?;
         let engine = load(acoustic, vocoder)?;
+        Ok(Box::into_raw(Box::new(engine)))
+    })
+}
+
+/// Nạp model từ bundle `.vfts` (manifest + ONNX + snapshot frontend).
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_engine_new_vfts(path: *const c_char) -> *mut NativeEngine {
+    guard(ptr::null_mut(), || {
+        let path = c_path(path)?;
+        let engine = load_vfts(path)?;
         Ok(Box::into_raw(Box::new(engine)))
     })
 }

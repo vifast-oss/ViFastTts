@@ -109,7 +109,13 @@ cargo build --release --manifest-path rust/Cargo.toml \
 # binary: rust/target/release/{vifasttts-rs,vifasttts-tui,vifasttts-server}
 ```
 
-Cần model ONNX + ORT 1.31.1 (`rust/lib/`) như `rust/README.md`.
+Cần model ONNX + ORT 1.31.1 (`rust/lib/`) như `rust/README.md`. Có thể dùng
+bundle `.vfts`:
+
+```bash
+rust/target/release/vifasttts-rs vfts pack --output n0.vfts
+rust/target/release/vifasttts-rs synth --vfts n0.vfts --text "Xin chào"
+```
 
 ## Kênh phân phối
 
