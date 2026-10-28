@@ -156,6 +156,7 @@ jobs:
 
   server:
     name: server (${{ matrix.platform }})
+    needs: web-extension
     strategy:
       fail-fast: false
       matrix:
@@ -179,18 +180,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config libasound2-dev libudev-dev
       - uses: ./.github/actions/fetch-model
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-extension
+          path: web-artifact
+      - name: prepare web
+        run: |
+          mkdir -p web-dist
+          tar -xzf web-artifact/web-dist.tar.gz -C web-dist
       - name: package unix
         if: runner.os != 'Windows'
         run: |
           chmod +x server/package-unix.sh
-          server/package-unix.sh
+          WEB_DIR=web-dist server/package-unix.sh
           server_bin="$(find desktop/dist -path '*vifasttts-server-*' -type d -name 'vifasttts-server-*' | head -1)/vifasttts-server"
           "$server_bin" --help >/dev/null
       - name: package windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          server/package-windows.ps1
+          server/package-windows.ps1 -WebDir web-dist
           & desktop/dist/vifasttts-server-windows-x64/vifasttts-server.exe --help | Out-Null
       - uses: actions/upload-artifact@v4
         with:
