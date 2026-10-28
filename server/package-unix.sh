@@ -34,10 +34,16 @@ cp "$ROOT/rust/target/release/vifasttts-server" "$OUT/vifasttts-server"
 cp -L "$ortlib" "$OUT/$(basename "$ortlib")"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"
+if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then
+  rm -rf "$OUT/web"
+  cp -R "$WEB_DIR" "$OUT/web"
+fi
 cat > "$OUT/run.sh" <<'SH'
 #!/usr/bin/env bash
 cd "$(dirname "$0")"
-exec ./vifasttts-server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx "$@"
+args=(--acoustic models/acoustic.onnx --vocoder models/vocoder.onnx)
+[ -d web ] && args+=(--web-dir web)
+exec ./vifasttts-server "${args[@]}" "$@"
 SH
 chmod +x "$OUT/vifasttts-server" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'

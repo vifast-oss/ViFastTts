@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use axum::body::Body;
 use axum::extract::{DefaultBodyLimit, State};
-use axum::http::{StatusCode, header};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
@@ -17,6 +17,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
+use tower_http::services::ServeDir;
 use vifasttts_app::parse_dictionary;
 use vifasttts_native::{
     KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified,
@@ -38,12 +39,30 @@ struct Args {
     port: u16,
     #[arg(long, default_value_t = 3000)]
     max_chars: usize,
+    /// Bearer token tuỳ chọn; nếu đặt, /api/* yêu cầu Authorization.
+    #[arg(long, env = "VIFASTTS_TOKEN")]
+    token: Option<String>,
+    /// Thư mục web đã build (web/dist); server phục vụ SPA tại `/`.
+    #[arg(long)]
+    web_dir: Option<PathBuf>,
 }
 
 struct AppState {
     engine: Mutex<NativeEngine>,
     max_chars: usize,
     alpha: f32,
+    token: Option<String>,
+}
+
+fn authorized(headers: &HeaderMap, token: Option<&str>) -> bool {
+    let Some(expected) = token else {
+        return true;
+    };
+    headers
+        .get(header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .is_some_and(|value| value == expected)
 }
 
 #[derive(Debug, Deserialize)]
@@ -165,8 +184,12 @@ fn pcm16_base64(samples: &[f32]) -> String {
 /// NDJSON streaming: audio chunk (PCM16 base64), units, done.
 async fn tts_stream(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(payload): Json<HttpTtsRequest>,
 ) -> Response {
+    if !authorized(&headers, state.token.as_deref()) {
+        return (StatusCode::UNAUTHORIZED, "Bearer token không hợp lệ").into_response();
+    }
     let text = payload
         .text
         .split_whitespace()
@@ -249,7 +272,14 @@ async fn tts_stream(
         .into_response()
 }
 
-async fn tts(State(state): State<Arc<AppState>>, Json(payload): Json<HttpTtsRequest>) -> Response {
+async fn tts(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(payload): Json<HttpTtsRequest>,
+) -> Response {
+    if !authorized(&headers, state.token.as_deref()) {
+        return (StatusCode::UNAUTHORIZED, "Bearer token không hợp lệ").into_response();
+    }
     let text = payload
         .text
         .split_whitespace()
@@ -353,14 +383,22 @@ async fn main() -> Result<(), String> {
         engine: Mutex::new(engine),
         max_chars: args.max_chars,
         alpha: 1.5,
+        token: args.token.filter(|value| !value.trim().is_empty()),
     });
-    let app = Router::new()
+    let mut app = Router::new()
         .route("/healthz", get(health))
         .route("/api/config", get(config))
         .route("/api/tts", post(tts))
         .route("/api/tts/stream", post(tts_stream))
         .layer(DefaultBodyLimit::max(64 * 1024))
         .with_state(state);
+    if let Some(web_dir) = args.web_dir {
+        if web_dir.is_dir() {
+            app = app.fallback_service(ServeDir::new(web_dir));
+        } else {
+            return Err(format!("web-dir không tồn tại: {}", web_dir.display()));
+        }
+    }
     let listener = tokio::net::TcpListener::bind((args.host.as_str(), args.port))
         .await
         .map_err(|err| format!("bind {}:{}: {err}", args.host, args.port))?;

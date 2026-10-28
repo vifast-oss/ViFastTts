@@ -7,7 +7,9 @@ Server axum tối giản dùng chung `vifasttts-native`/`vifasttts-app`:
 - `POST /api/tts` (WAV hoặc JSON karaoke)
 - `POST /api/tts/stream` (NDJSON PCM16)
 - nhận `dictionary` dạng text hoặc `overrides` JSON; parse bằng
-  `vifasttts-app::parse_dictionary`.
+  `vifasttts-app::parse_dictionary`;
+- `--web-dir web/dist` phục vụ luôn web UI (SPA + model/ORT) tại `/`;
+- `--token` (hoặc env `VIFASTTS_TOKEN`) bảo vệ `/api/*` bằng Bearer.
 
 ## Build
 
@@ -32,13 +34,29 @@ rust/target/release/vifasttts-server \
   --acoustic artifacts/onnx/n0_q/acoustic.onnx \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx \
   --host 127.0.0.1 --port 8000
+
+# gộp web UI + auth
+rust/target/release/vifasttts-server \
+  --acoustic artifacts/onnx/n0_q/acoustic.onnx \
+  --vocoder artifacts/onnx/n0_q/vocoder.onnx \
+  --web-dir web/dist --token 'đổi-token' --port 8000
 ```
 
-## Desktop → server → extension
+## Desktop → server → extension/điện thoại/IoT
 
-Desktop có nút **Bật server** (cùng port, cùng model). Extension remote trỏ tới
-`http://127.0.0.1:8000` (hoặc port đã đổi), cấp host permission localhost.
-Đây là cầu nối khuyến nghị; extension **không** gọi trực tiếp native app.
+Desktop có nút **Bật server** (cùng port, cùng model), mặc định bind
+`127.0.0.1`. Bật **Cho phép LAN** để bind `0.0.0.0` và dùng từ điện thoại/IoT:
+
+```text
+http://<LAN-IP>:8000/api/tts        (POST JSON, trả WAV)
+http://<LAN-IP>:8000/api/tts/stream (NDJSON)
+```
+
+- Chỉ dùng LAN tin cậy; **đặt token** và firewall. Server chưa có TLS.
+- Extension remote trỏ tới `http://127.0.0.1:8000` (hoặc LAN URL), cấp host
+  permission. Đây là cầu nối khuyến nghị; extension **không** gọi trực tiếp native app.
+- Web UI có thể được server phục vụ bằng `--web-dir web/dist` (cùng origin,
+  không cần CORS).
 
 ## Giới hạn
 

@@ -72,8 +72,15 @@ Nếu chạy headless: `./vifasttts-desktop --smoke`.
 curl -s http://127.0.0.1:8000/healthz
 ```
 
-Server nhận `dictionary` text hoặc `overrides` JSON. Extension remote trỏ tới
-`http://127.0.0.1:8000`; desktop có nút bật/tắt server cùng port.
+Server nhận `dictionary` text hoặc `overrides` JSON; có thể phục vụ web UI:
+
+```bash
+./run.sh --web-dir web --token 'đổi-token' --host 127.0.0.1 --port 8000
+```
+
+Extension remote trỏ tới `http://127.0.0.1:8000`; desktop có nút bật/tắt server
+cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép LAN** (bind
+`0.0.0.0`), đặt token, giới hạn firewall; server chưa có TLS.
 
 ## Extension + Web
 

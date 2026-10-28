@@ -105,6 +105,8 @@ struct DesktopSettings {
     auto_play: bool,
     output_dir: String,
     server_port: u16,
+    server_lan: bool,
+    server_token: String,
     history: Vec<EtaSample>,
 }
 
@@ -123,6 +125,8 @@ impl Default for DesktopSettings {
             auto_play: true,
             output_dir: default_output_dir(),
             server_port: 8000,
+            server_lan: false,
+            server_token: String::new(),
             history: Vec::new(),
         }
     }
@@ -763,6 +767,12 @@ impl DesktopApp {
         self.dictionary = parse_dictionary(&self.dictionary_source);
     }
 
+    fn lan_ip() -> Option<String> {
+        let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+        socket.connect("8.8.8.8:80").ok()?;
+        Some(socket.local_addr().ok()?.ip().to_string())
+    }
+
     fn server_binary() -> PathBuf {
         let name = if cfg!(windows) {
             "vifasttts-server.exe"
@@ -785,10 +795,15 @@ impl DesktopApp {
             return;
         }
         let binary = Self::server_binary();
+        let host = if self.settings.server_lan {
+            "0.0.0.0"
+        } else {
+            "127.0.0.1"
+        };
         let mut command = std::process::Command::new(&binary);
         command
             .arg("--host")
-            .arg("127.0.0.1")
+            .arg(host)
             .arg("--port")
             .arg(self.settings.server_port.to_string())
             .arg("--acoustic")
@@ -797,13 +812,22 @@ impl DesktopApp {
             .arg(resolve_model_path(&self.settings.vocoder_path))
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null());
+        if !self.settings.server_token.trim().is_empty() {
+            command
+                .arg("--token")
+                .arg(self.settings.server_token.trim());
+        }
         match command.spawn() {
             Ok(child) => {
                 self.server_child = Some(child);
-                self.server_status = format!(
-                    "Server đang chạy tại http://127.0.0.1:{}",
-                    self.settings.server_port
-                );
+                let url = if self.settings.server_lan {
+                    Self::lan_ip()
+                        .map(|ip| format!("http://{ip}:{}", self.settings.server_port))
+                        .unwrap_or_else(|| format!("http://0.0.0.0:{}", self.settings.server_port))
+                } else {
+                    format!("http://127.0.0.1:{}", self.settings.server_port)
+                };
+                self.server_status = format!("Server đang chạy tại {url}");
             }
             Err(error) => {
                 self.server_status = format!("Không mở được server: {error}");
@@ -862,8 +886,31 @@ impl DesktopApp {
                 self.settings_dirty = true;
             }
         });
+        if ui
+            .checkbox(&mut self.settings.server_lan, "Cho phép LAN (bind 0.0.0.0)")
+            .changed()
+        {
+            self.settings_dirty = true;
+        }
+        ui.label("Token (tuỳ chọn)");
+        if ui
+            .add(
+                egui::TextEdit::singleline(&mut self.settings.server_token)
+                    .password(true)
+                    .hint_text("Bearer token cho /api/*"),
+            )
+            .changed()
+        {
+            self.settings_dirty = true;
+        }
+        if self.settings.server_lan {
+            ui.colored_label(
+                egui::Color32::YELLOW,
+                "LAN: chỉ dùng mạng tin cậy; nên đặt token và firewall. Server không có TLS.",
+            );
+        }
         ui.small(&self.server_status);
-        ui.small("Extension remote trỏ tới URL này; server dùng cùng model/ORT.");
+        ui.small("Extension/điện thoại/IoT remote trỏ tới URL này; server dùng cùng model/ORT.");
     }
 
     fn settings_panel(&mut self, ui: &mut egui::Ui) {

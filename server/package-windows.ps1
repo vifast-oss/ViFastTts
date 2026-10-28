@@ -2,7 +2,8 @@ param(
     [string]$ModelDir = "",
     [string]$Out = "",
     [string]$Archive = "",
-    [string]$OrtVersion = "1.31.1"
+    [string]$OrtVersion = "1.31.1",
+    [string]$WebDir = ""
 )
 $ErrorActionPreference = "Stop"
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -30,9 +31,13 @@ Copy-Item (Join-Path $Root "rust/target/release/vifasttts-server.exe") (Join-Pat
 Copy-Item (Join-Path $Extract "lib/onnxruntime.dll") (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
+if ($WebDir -and (Test-Path $WebDir)) {
+    Copy-Item -Recurse -Force $WebDir (Join-Path $Out "web")
+}
 @"
 ViFastTts HTTP server (Windows x64)
 Chạy: .\vifasttts-server.exe --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
+Web UI: thêm --web-dir web nếu có thư mục web.
 Model: models\acoustic.onnx + models\vocoder.onnx
 ORT: onnxruntime.dll 1.31.1
 "@ | Set-Content (Join-Path $Out "README.txt")

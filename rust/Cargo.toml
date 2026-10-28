@@ -48,6 +48,6 @@ num-traits = "0.2"
 rustfft = "6.4"
 realfft = "3.5"
 ndarray = "0.17"
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.5", features = ["derive", "env"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
