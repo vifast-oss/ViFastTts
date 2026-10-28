@@ -24,17 +24,17 @@ npm run dev
 - chạy `wasm-bindgen --target web` vào `web/pkg/`;
 - `npm install`;
 - copy `onnxruntime-web/dist/*.wasm` + `*.mjs` vào `web/public/ort/`;
-- copy model từ `artifacts/onnx/n0_q/` vào `web/models/` nếu có.
+- copy model từ `artifacts/onnx/n0_q/` vào `web/public/models/` nếu có.
 
 ## Model
 
 ```bash
-mkdir -p web/models
-cp artifacts/onnx/n0_q/acoustic.onnx web/models/
-cp artifacts/onnx/n0_q/vocoder.onnx web/models/
+mkdir -p web/public/models
+cp artifacts/onnx/n0_q/acoustic.onnx web/public/models/
+cp artifacts/onnx/n0_q/vocoder.onnx web/public/models/
 ```
 
-Model ~86 MB; lần đầu tải lâu. Không commit `web/models/`, `web/pkg/`,
+Model ~86 MB; lần đầu tải lâu. Không commit `web/public/models/`, `web/pkg/`,
 `web/node_modules/`, `web/public/ort/`.
 
 ## Lưu ý

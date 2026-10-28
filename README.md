@@ -6,10 +6,25 @@
 
 [![ci](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml/badge.svg)](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml)
 
-> **Cài đặt nhanh:** Windows/macOS/Linux dùng release portable tại
-> [Releases](https://github.com/dvchd/ViFastTts/releases); hướng dẫn chi tiết
-> (desktop, server, TUI, extension, Android/iOS) ở **`docs/INSTALL.md`**.
-> Ưu tiên Windows → macOS → Linux.
+## Cài đặt nhanh
+
+Thứ tự ưu tiên: **Windows → macOS → Linux**. Tải release portable tại
+[Releases](https://github.com/dvchd/ViFastTts/releases) (bản `-rc*` là
+pre-release, chưa ký):
+
+1. **Windows x64:** `vifasttts-desktop-windows-x64.zip` → giải nén → chạy
+   `vifasttts-desktop.exe` (SmartScreen: More info → Run anyway).
+2. **macOS arm64:** `ViFastTts-macos-arm64.zip` → kéo `ViFastTts.app` vào
+   Applications → chuột phải **Open**. Nếu Gatekeeper chặn:
+   `xattr -dr com.apple.quarantine /Applications/ViFastTts.app`.
+3. **Linux x64:** `vifasttts-desktop-linux-x64.tar.gz` → giải nén → `./run.sh`.
+4. Desktop có sẵn **server nội bộ** + **TUI**; extension remote trỏ tới
+   `http://127.0.0.1:8000`. Server riêng: `vifasttts-server-*`.
+5. Android: `app-debug.apk`; iOS: simulator-only `.zip`; extension:
+   `extension.zip`; web: `web-dist.tar.gz`.
+
+Hướng dẫn đầy đủ, gồm build từ source và xử lý lỗi:
+**`docs/INSTALL.md`**.
 
 
 **TTS tiếng Việt mã nguồn mở: nhỏ, nhanh, tự train được.** Toolkit nghiên cứu + triển khai

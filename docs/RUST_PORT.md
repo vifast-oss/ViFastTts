@@ -174,9 +174,9 @@ khớp hành vi production hiện tại. Rust nên có profile:
 Đã cài và ghim `rust-toolchain.toml` (**1.99.1**, rustfmt + clippy); workspace
 `rust/` có **22 crate** (`text`, `audio`, `engine`, `app`, `ports`, `audio-sink`,
 `transport`, `settings`, `model-source`, `ort`, `ort-web`, `http-client`,
-`native`, `mobile`, `desktop`, `browser`, `ffi`, `http-server`, `cli`, `parse`, `tools`).
-Đã có workflow CI desktop + wasm text/audio/ports/engine/ort-web/browser, build
-release và benchmark macOS; chưa chạy CI green trên Windows/Linux, chưa đo VPS/mobile.
+`native`, `mobile`, `desktop`, `tui`, `browser`, `ffi`, `http-server`, `cli`, `parse`, `tools`).
+CI hiện chạy green trên macOS/Ubuntu/Windows, build desktop/server/Android/iOS/web/extension;
+chưa đo VPS/mobile thật.
 
 ---
 

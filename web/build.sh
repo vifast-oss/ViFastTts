@@ -15,14 +15,14 @@ wasm-bindgen --target web \
 
 cd "$ROOT/web"
 npm install
-mkdir -p public/ort models
+mkdir -p public/ort public/models
 if [ -d node_modules/onnxruntime-web/dist ]; then
   cp node_modules/onnxruntime-web/dist/*.wasm public/ort/ 2>/dev/null || true
   cp node_modules/onnxruntime-web/dist/*.mjs public/ort/ 2>/dev/null || true
 fi
 if [ -f "$ROOT/artifacts/onnx/n0_q/acoustic.onnx" ]; then
-  cp "$ROOT/artifacts/onnx/n0_q/acoustic.onnx" models/
-  cp "$ROOT/artifacts/onnx/n0_q/vocoder.onnx" models/
+  cp "$ROOT/artifacts/onnx/n0_q/acoustic.onnx" public/models/
+  cp "$ROOT/artifacts/onnx/n0_q/vocoder.onnx" public/models/
 fi
 
 echo "Xong. Chạy: cd web && npm run dev"
