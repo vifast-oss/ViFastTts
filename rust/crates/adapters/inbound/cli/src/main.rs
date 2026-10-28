@@ -38,10 +38,15 @@ enum VftsAction {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "vifasttts-rs", version, about = "ViFastTts Rust inference")]
+#[command(
+    name = "vifasttts-rs",
+    version,
+    about = "ViFastTts Rust: TUI mặc định, CLI hoặc server"
+)]
 struct Cli {
+    /// Không truyền subcommand = mở TUI.
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -144,6 +149,32 @@ enum Command {
         #[command(subcommand)]
         action: VftsAction,
     },
+    /// Mở TUI (tương đương chạy không tham số).
+    Tui,
+    /// Chạy HTTP server + web UI (mặc định dùng thư mục `web` nếu có).
+    Server {
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long)]
+        manifest: Option<PathBuf>,
+        #[arg(long)]
+        vfts: Option<PathBuf>,
+        #[arg(long, default_value = "127.0.0.1")]
+        host: String,
+        #[arg(long, default_value_t = 8000)]
+        port: u16,
+        #[arg(long, default_value_t = 3000)]
+        max_chars: usize,
+        #[arg(long)]
+        token: Option<String>,
+        #[arg(long)]
+        web_dir: Option<PathBuf>,
+        /// Cho phép web UI ở origin khác gọi API (CORS).
+        #[arg(long)]
+        cors: bool,
+    },
     /// Benchmark trong một process (load một lần, chạy nhiều lần).
     Bench {
         #[arg(long)]
@@ -224,7 +255,14 @@ fn main() -> Result<()> {
         )
         .init();
     let cli = Cli::parse();
-    match cli.command {
+    let command = match cli.command {
+        Some(command) => command,
+        None => {
+            return vifasttts_tui::run(vifasttts_tui::TuiArgs::default())
+                .map_err(anyhow::Error::msg);
+        }
+    };
+    match command {
         Command::Inspect {
             acoustic,
             vocoder,
@@ -429,6 +467,62 @@ fn main() -> Result<()> {
                 summary.chunks,
                 summary.cancelled
             );
+        }
+        Command::Tui => {
+            vifasttts_tui::run(vifasttts_tui::TuiArgs::default()).map_err(anyhow::Error::msg)?
+        }
+        Command::Server {
+            acoustic,
+            vocoder,
+            manifest,
+            vfts,
+            host,
+            port,
+            max_chars,
+            token,
+            web_dir,
+            cors,
+        } => {
+            let web_dir = web_dir.or_else(|| {
+                let dist = PathBuf::from("web/dist");
+                if dist.is_dir() {
+                    return Some(dist);
+                }
+                let web = PathBuf::from("web");
+                web.is_dir().then_some(web)
+            });
+            let acoustic = if acoustic.exists() {
+                acoustic
+            } else {
+                let packaged = PathBuf::from("models/acoustic.onnx");
+                if packaged.exists() {
+                    packaged
+                } else {
+                    acoustic
+                }
+            };
+            let vocoder = if vocoder.exists() {
+                vocoder
+            } else {
+                let packaged = PathBuf::from("models/vocoder.onnx");
+                if packaged.exists() { packaged } else { vocoder }
+            };
+            let config = vifasttts_http_server::Args {
+                acoustic,
+                vocoder,
+                manifest,
+                vfts,
+                host,
+                port,
+                max_chars,
+                token,
+                web_dir,
+                cors,
+            };
+            let runtime = tokio::runtime::Runtime::new().map_err(anyhow::Error::msg)?;
+            runtime
+                .block_on(vifasttts_http_server::serve(config))
+                .map_err(anyhow::Error::msg)?;
         }
         Command::Vfts { action } => match action {
             VftsAction::Pack {

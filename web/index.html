@@ -13,6 +13,8 @@
       #karaoke span { padding: .1rem .15rem; border-radius: .2rem; }
       #karaoke span.active { background: #ffe08a; }
       pre { background: #f6f6f6; padding: 1rem; overflow: auto; }
+    .hidden { display: none; }
+    input, select { font: inherit; }
     </style>
   </head>
   <body>
@@ -20,9 +22,19 @@
     <p id="status">Đang nạp wasm/model…</p>
     <textarea id="text">Xin chào các bạn, hôm nay trời đẹp.</textarea>
     <p>
+      <label>Chế độ
+        <select id="mode">
+          <option value="local">Local WASM</option>
+          <option value="remote">Remote server</option>
+        </select>
+      </label>
       <label><input type="checkbox" id="fixed" /> đọc đều (fixed pauses)</label>
-      <button id="run" disabled>Đọc</button>
     </p>
+    <p id="remoteFields" class="hidden">
+      <label>Server URL <input id="serverUrl" size="34" value="http://127.0.0.1:8000" /></label>
+      <label>Token <input id="token" type="password" size="20" /></label>
+    </p>
+    <p><button id="run">Đọc</button></p>
     <audio id="audio" controls></audio>
     <div id="karaoke"></div>
     <pre id="srt"></pre>

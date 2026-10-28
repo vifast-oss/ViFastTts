@@ -1,15 +1,15 @@
+// Local WASM hoặc remote server; cùng một UI/karaoke.
 import * as ort from 'onnxruntime-web';
 import init, { synthesize, karaoke_to_srt, karaoke_to_vtt } from './pkg/vifasttts_wasm.js';
-
-const SAMPLE_RATE = 24000;
-const N_FFT = 1024;
-const HOP = 256;
-const N_MELS = 100;
 
 const statusEl = document.getElementById('status');
 const runEl = document.getElementById('run');
 const textEl = document.getElementById('text');
 const fixedEl = document.getElementById('fixed');
+const modeEl = document.getElementById('mode');
+const serverUrlEl = document.getElementById('serverUrl');
+const tokenEl = document.getElementById('token');
+const remoteFields = document.getElementById('remoteFields');
 const audioEl = document.getElementById('audio');
 const karaokeEl = document.getElementById('karaoke');
 const srtEl = document.getElementById('srt');
@@ -17,17 +17,39 @@ const srtEl = document.getElementById('srt');
 let acousticSession = null;
 let vocoderSession = null;
 let document_ = null;
+let localReady = false;
+let currentAudioUrl = null;
 
 function setStatus(text) {
   statusEl.textContent = text;
 }
 
+function setModeFields() {
+  remoteFields.classList.toggle('hidden', modeEl.value !== 'remote');
+}
+
+function base64ToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function playBytes(bytes) {
+  if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+  currentAudioUrl = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
+  audioEl.src = currentAudioUrl;
+  audioEl.load();
+  return audioEl.play().catch(() => {});
+}
+
 async function loadModels() {
+  if (localReady) return;
   setStatus('Đang nạp ONNX Runtime Web…');
   ort.env.wasm.wasmPaths = '/ort/';
   ort.env.wasm.numThreads = 1;
   ort.env.wasm.simd = true;
-
+  await init();
   const [acousticBuf, vocoderBuf] = await Promise.all([
     fetch('/models/acoustic.onnx').then((r) => r.arrayBuffer()),
     fetch('/models/vocoder.onnx').then((r) => r.arrayBuffer()),
@@ -41,8 +63,8 @@ async function loadModels() {
     executionProviders: ['wasm'],
     graphOptimizationLevel: 'all',
   });
-  setStatus('Sẵn sàng — chạy hoàn toàn local trong trình duyệt.');
-  runEl.disabled = false;
+  localReady = true;
+  setStatus('Local sẵn sàng — chạy hoàn toàn trong trình duyệt.');
 }
 
 async function acoustic(features, speed, gate) {
@@ -77,21 +99,53 @@ async function vocoder(mel, frames, mels) {
   };
 }
 
+async function runLocal(text) {
+  await loadModels();
+  setStatus('Đang tổng hợp local…');
+  const result = await synthesize(text, 1.0, fixedEl.checked, acoustic, vocoder);
+  await playBytes(new Uint8Array(result.wav));
+  document_ = result.karaoke;
+  renderKaraoke(document_);
+  srtEl.textContent = await karaoke_to_srt(document_);
+  window.__vifastttVtt = await karaoke_to_vtt(document_);
+  setStatus(`Xong local: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_.units.length} âm tiết.`);
+}
+
+async function runRemote(text) {
+  let base = serverUrlEl.value.trim().replace(/\/+$/, '');
+  if (!base) base = window.location.origin;
+  const url = base.endsWith('/api/tts') ? base : `${base}/api/tts`;
+  setStatus(`Đang gọi ${url}…`);
+  const headers = { 'content-type': 'application/json' };
+  if (tokenEl.value.trim()) headers.authorization = `Bearer ${tokenEl.value.trim()}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      text,
+      speed: 1.0,
+      fixed_pauses: fixedEl.checked,
+      karaoke: true,
+    }),
+  });
+  if (!response.ok) throw new Error(`Server HTTP ${response.status}: ${await response.text()}`);
+  const result = await response.json();
+  if (!result.audio_base64) throw new Error('Server không trả audio_base64');
+  await playBytes(base64ToBytes(result.audio_base64));
+  document_ = result.karaoke;
+  renderKaraoke(document_);
+  srtEl.textContent = result.srt || (document_ ? await karaoke_to_srt(document_) : '');
+  window.__vifastttVtt = result.vtt || result.vtt_karaoke || '';
+  setStatus(`Xong remote: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_?.units?.length || 0} âm tiết.`);
+}
+
 async function run() {
   runEl.disabled = true;
   try {
-    setStatus('Đang tổng hợp…');
     const text = textEl.value.trim();
     if (!text) throw new Error('Nhập câu cần đọc');
-    const result = await synthesize(text, 1.0, fixedEl.checked, acoustic, vocoder);
-    const wav = new Uint8Array(result.wav);
-    audioEl.src = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
-    document_ = result.karaoke;
-    renderKaraoke(document_);
-    srtEl.textContent = await karaoke_to_srt(document_);
-    window.__vifasttVtt = await karaoke_to_vtt(document_);
-    setStatus(`Xong: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_.units.length} âm tiết.`);
-    await audioEl.play();
+    if (modeEl.value === 'remote') await runRemote(text);
+    else await runLocal(text);
   } catch (error) {
     console.error(error);
     setStatus(`Lỗi: ${error?.message || error}`);
@@ -102,6 +156,7 @@ async function run() {
 
 function renderKaraoke(doc) {
   karaokeEl.innerHTML = '';
+  if (!doc?.lines?.length) return;
   for (const line of doc.lines) {
     const lineEl = document.createElement('div');
     for (const unit of line.units) {
@@ -125,14 +180,11 @@ audioEl.addEventListener('timeupdate', () => {
   }
 });
 
+modeEl.addEventListener('change', () => {
+  setModeFields();
+  setStatus(modeEl.value === 'remote' ? 'Remote: nhập server URL.' : 'Local: bấm Đọc để nạp model.');
+});
 runEl.addEventListener('click', run);
-
-(async () => {
-  try {
-    await init();
-    await loadModels();
-  } catch (error) {
-    console.error(error);
-    setStatus(`Không nạp được: ${error?.message || error}`);
-  }
-})();
+setModeFields();
+runEl.disabled = false;
+setStatus('Chọn Local WASM hoặc Remote server.');

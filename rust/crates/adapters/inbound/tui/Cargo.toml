@@ -6,6 +6,10 @@ license.workspace = true
 rust-version.workspace = true
 description = "Terminal UI for ViFastTts (local ONNX or remote HTTP)"
 
+[lib]
+name = "vifasttts_tui"
+path = "src/lib.rs"
+
 [[bin]]
 name = "vifasttts-tui"
 path = "src/main.rs"

@@ -41,9 +41,14 @@ Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
 
 TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
 ```bash
+# mặc định mở TUI
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs
+# TUI độc lập
 /Applications/ViFastTts.app/Contents/MacOS/vifasttts-tui \
   --acoustic /Applications/ViFastTts.app/Contents/Resources/acoustic.onnx \
   --vocoder /Applications/ViFastTts.app/Contents/Resources/vocoder.onnx
+# server + web (nếu có web/ cạnh binary)
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs server
 ```
 
 ## Linux x64
@@ -76,6 +81,9 @@ Server nhận `dictionary` text hoặc `overrides` JSON; có thể phục vụ w
 
 ```bash
 ./run.sh --web-dir web --token 'đổi-token' --host 127.0.0.1 --port 8000
+# CLI hợp nhất: server + web + auth
+vifasttts-rs server --web-dir web --token 'đổi-token' --port 8000
+# web ở origin khác cần thêm --cors
 ```
 
 Extension remote trỏ tới `http://127.0.0.1:8000`; desktop có nút bật/tắt server
@@ -103,10 +111,13 @@ Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 ## Từ source
 
 ```bash
-# Rust CLI + TUI + server
+# Rust CLI + TUI + server (CLI chứa TUI mặc định)
 cargo build --release --manifest-path rust/Cargo.toml \
   -p vifasttts-cli -p vifasttts-tui -p vifasttts-http-server
 # binary: rust/target/release/{vifasttts-rs,vifasttts-tui,vifasttts-server}
+# ./vifasttts-rs              -> TUI
+# ./vifasttts-rs server       -> server + web
+# ./vifasttts-rs synth ...    -> CLI
 ```
 
 Cần model ONNX + ORT 1.31.1 (`rust/lib/`) như `rust/README.md`. Có thể dùng

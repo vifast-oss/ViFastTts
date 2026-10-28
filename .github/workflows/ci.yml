@@ -107,6 +107,7 @@ jobs:
 
   desktop:
     name: desktop (${{ matrix.platform }})
+    needs: web-extension
     strategy:
       fail-fast: false
       matrix:
@@ -132,21 +133,30 @@ jobs:
             libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev \
             libx11-dev libxcb1-dev libxrandr-dev libxi-dev libxcursor-dev
       - uses: ./.github/actions/fetch-model
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-extension
+          path: web-artifact
+      - name: prepare web
+        shell: bash
+        run: |
+          mkdir -p web-dist
+          tar -xzf web-artifact/web-dist.tar.gz -C web-dist
       - name: package macOS
         if: runner.os == 'macOS'
         run: |
-          rust/crates/adapters/inbound/desktop/package-macos.sh
+          WEB_DIR=web-dist rust/crates/adapters/inbound/desktop/package-macos.sh
           desktop/dist/ViFastTts.app/Contents/MacOS/vifasttts-desktop --smoke
       - name: package Linux
         if: runner.os == 'Linux'
         run: |
-          rust/crates/adapters/inbound/desktop/package-linux.sh
+          WEB_DIR=web-dist rust/crates/adapters/inbound/desktop/package-linux.sh
           (cd desktop/dist/vifasttts-desktop-linux-x64 && ./vifasttts-desktop --smoke)
       - name: package Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          rust/crates/adapters/inbound/desktop/package-windows.ps1
+          rust/crates/adapters/inbound/desktop/package-windows.ps1 -WebDir web-dist
           & desktop/dist/vifasttts-desktop-windows-x64/vifasttts-desktop.exe --smoke
       - uses: actions/upload-artifact@v4
         with:

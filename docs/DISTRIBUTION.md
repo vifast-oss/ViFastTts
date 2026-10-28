@@ -8,6 +8,7 @@ thêm khi bản desktop đã ổn định.
 | Ưu tiên | Kênh | Trạng thái / ghi chú |
 |---:|---|---|
 | 1 | GitHub Release portable | **Đã có** (CI tag `v*`); zip/tar + model + ORT |
+| CLI/TUI/server dùng chung | `vifasttts-rs` mặc định TUI; `server` = server + web |
 | 2 | Windows installer (MSI/NSIS) + Winget/Scoop | Sau khi ký code; hiện zip portable |
 | 3 | macOS `.dmg` + Homebrew cask | Sau notarize; hiện `.app` zip |
 | 4 | Linux AppImage/Flatpak | Sau tar portable; cần đo desktop/audio |

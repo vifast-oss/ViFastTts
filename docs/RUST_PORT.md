@@ -922,7 +922,7 @@ Workspace `rust/` gồm 23 crate, khoảng **11.0k dòng** Rust + resources:
 | `vifasttts-vfts` | bundle `.vfts`: manifest + ONNX + snapshot frontend; hash/traversal/zip-bomb | loader native/CLI/server/TUI/FFI/mobile |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
-| `vifasttts-cli` | `inspect`, `synth` (+`--server`, `--srt/--vtt/--vtt-karaoke/--karaoke`), `stream` (+timing), `bench` | CLI production; local hoặc HTTP server |
+| `vifasttts-cli` | không args = TUI; `server` = HTTP + web; `inspect/synth/stream/bench/vfts` | CLI production; TUI/server dùng chung binary |
 | `vifasttts-tools` | `mel-ids`, `synth-ids` | Parity model; cần native |
 | `vifasttts-parse` | `parse`, `parse-batch` | Text-only; **không link ORT** |
 | `vifasttts-ffi` | C ABI `cdylib`/`staticlib`, header; `vifasttts_synthesize_karaoke` trả WAV + JSON timing | `catch_unwind`, lỗi qua `vifasttts_last_error`, bytes/streaming |
@@ -1462,7 +1462,7 @@ Web/Extension/CLI remote
 | `native` | ✅ | ❌ | ✅ | adapter native, sync `block_on` |
 | `mobile` | ✅ (desktop build) | ❌ | ✅ | composition root iOS/Android |
 | `desktop` | ✅ | ❌ | ❌ | GUI egui + rodio; dùng native/http-client |
-| `tui` | ✅ | ❌ | ✅ | terminal UI ratatui/crossterm |
+| `tui` | ✅ | ❌ | ✅ | library + binary; CLI không args mở TUI |
 | `browser` | ❌ (chỉ wasm) | ✅ | ❌ | adapter browser, async |
 | `http-client` | ✅ | ✅ (HTTP) | ✅ | ureq; không ORT |
 | `cli` | ✅ | ❌ | ❌ | production |

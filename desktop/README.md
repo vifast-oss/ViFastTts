@@ -59,8 +59,9 @@ rust/crates/adapters/inbound/desktop/package-windows.ps1
 ```
 
 Cả hai package chứa `models/acoustic.onnx`, `models/vocoder.onnx`,
-`libonnxruntime`/`onnxruntime.dll`, kèm `vifasttts-server` và `vifasttts-tui`;
-app tự tìm theo thư mục executable. CI build cả ba nền tảng; macOS/Linux đã test
+`libonnxruntime`/`onnxruntime.dll`, kèm `vifasttts-rs` (CLI/TUI/server),
+`vifasttts-server`, `vifasttts-tui` và `web/` nếu build có web; app tự tìm theo
+thư mục executable. CI build cả ba nền tảng; macOS/Linux đã test
 smoke, Windows do CI test.
 
 ## Cấu hình
@@ -79,7 +80,8 @@ smoke, Windows do CI test.
   extension/điện thoại/IoT remote trỏ tới `http://127.0.0.1:<port>` (không gọi
   native trực tiếp). Đặt thư mục `web/` cạnh binary (giải nén `web-dist.tar.gz`)
   để server nội bộ tự phục vụ web UI.
-- Có **TUI** `vifasttts-tui` trong cùng package (terminal UI, local/remote).
+- Có **TUI** `vifasttts-tui` và `vifasttts-rs` (không tham số = TUI) trong cùng
+  package; `vifasttts-rs server` = HTTP server + web nếu có `web/`.
 - Chưa có system tray, menu native, auto-update, ký notarize; Linux/Windows
   package do CI tạo và smoke, chưa test tay trên máy thật.
 - UI chưa dùng chung asset/theme với extension; sẽ gom branding khi chốt Flutter

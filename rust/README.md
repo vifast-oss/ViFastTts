@@ -64,10 +64,12 @@ curl -sS -N -X POST http://127.0.0.1:8000/api/tts/stream \
   -H 'Content-Type: application/json' \
   -d '{"text":"Xin chào"}'
 
-# Desktop GUI + TUI + server (cần model local)
-cargo build --release -p vifasttts-desktop -p vifasttts-tui -p vifasttts-http-server
+# Desktop GUI + TUI + server + CLI (cần model local)
+cargo build --release -p vifasttts-desktop -p vifasttts-tui -p vifasttts-http-server -p vifasttts-cli
 ./target/release/vifasttts-desktop --smoke
-./target/release/vifasttts-tui --help
+./target/release/vifasttts-rs              # mặc định mở TUI
+./target/release/vifasttts-rs server       # server + web (nếu có web/)
+./target/release/vifasttts-rs --help
 
 # Model bundle .vfts (manifest + ONNX + snapshot resources)
 rust/target/release/vifasttts-rs vfts pack --output n0.vfts

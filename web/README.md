@@ -37,6 +37,15 @@ cp artifacts/onnx/n0_q/vocoder.onnx web/public/models/
 Model ~86 MB; lần đầu tải lâu. Không commit `web/public/models/`, `web/pkg/`,
 `web/node_modules/`, `web/public/ort/`.
 
+## Chế độ
+
+- **Local WASM**: mặc định, chạy model trong browser.
+- **Remote server**: nhập server URL (local `http://127.0.0.1:8000` hoặc
+  server online), token nếu có; gọi `/api/tts` với `karaoke:true`.
+- Server cùng origin có thể phục vụ web bằng `--web-dir web/dist`; server khác
+  origin cần bật `--cors` và cấu hình TLS/reverse proxy nếu public.
+- Nếu dùng remote, browser không cần tải model local.
+
 ## Lưu ý
 
 - `web/app.js` dùng ONNX Runtime Web WASM (`numThreads=1`).

@@ -19,5 +19,8 @@ tracing-subscriber.workspace = true
 vifasttts-audio = { path = "../../../core/domain/audio" }
 vifasttts-text = { path = "../../../core/domain/text" }
 vifasttts-vfts = { path = "../../../core/domain/vfts" }
+vifasttts-tui = { path = "../tui" }
+vifasttts-http-server = { path = "../http-server" }
+tokio = { version = "1", features = ["rt-multi-thread"] }
 vifasttts-http-client = { path = "../../outbound/http-client" }
 vifasttts-native = { path = "../native" }

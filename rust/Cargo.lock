@@ -5062,12 +5062,15 @@ dependencies = [
  "anyhow",
  "clap",
  "serde_json",
+ "tokio",
  "tracing",
  "tracing-subscriber",
  "vifasttts-audio",
  "vifasttts-http-client",
+ "vifasttts-http-server",
  "vifasttts-native",
  "vifasttts-text",
+ "vifasttts-tui",
  "vifasttts-vfts",
 ]
 

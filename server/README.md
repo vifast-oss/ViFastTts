@@ -9,6 +9,7 @@ Server axum tối giản dùng chung `vifasttts-native`/`vifasttts-app`:
 - nhận `dictionary` dạng text hoặc `overrides` JSON; parse bằng
   `vifasttts-app::parse_dictionary`;
 - `--web-dir web/dist` phục vụ luôn web UI (SPA + model/ORT) tại `/`;
+- `--cors` cho web UI ở origin khác gọi API (chỉ bật khi cần);
 - `--token` (hoặc env `VIFASTTS_TOKEN`) bảo vệ `/api/*` bằng Bearer;
 - `--vfts model.vfts` nạp bundle thay cho `--acoustic/--vocoder`.
 
