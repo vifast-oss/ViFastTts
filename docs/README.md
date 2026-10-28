@@ -24,6 +24,7 @@
 | Cài đặt desktop/server/TUI/extension | `docs/INSTALL.md` |
 | Định dạng model `.vfts` | `docs/VFTS_FORMAT.md` |
 | Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
+| Mobile: model bundle/tải nhiều giọng | `docs/MOBILE_MODELS.md` |
 | Xem lịch sử cũ | `docs/archive/README.md` |
 
 ## 1. Trạng thái hiện tại (tóm tắt)
