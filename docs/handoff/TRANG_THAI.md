@@ -1,7 +1,7 @@
 # TRẠNG THÁI (STATUS) — nguồn sự thật duy nhất
 
 > **Vòng hiện hành:** N0 + Q (27/10/2026) · **Tệp đặc tả:** `docs/Q_ONSET.md` +
-> `docs/handoff/N0_DEPLOY.md` · **Commit code:** `aaf844a` · **Trạng thái:** **LIVE (Q-init)** —
+> `docs/handoff/N0_DEPLOY.md` · **Commit code:** `9c53749` · **Trạng thái:** **LIVE (Q-init)** —
 > chờ chọn Q-init hay fine-tune 3k.
 >
 > Tài liệu cũ: `docs/archive/handoff/TRANG_THAI_2026-10-27_pre_N0_live.md` (lịch sử, không hiệu lực).
@@ -74,6 +74,8 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
   chưa thắng rõ (speech dB 14,49 vs 14,37; pause F1 0,819 vs 0,834); chưa thay production.
   Người nghe nghiêng base nhưng alpha0 5/8 hòa. Đang chạy tiếp **40k → 60k** (cosine mới)
   để kiểm tra trần; chi tiết ở `docs/TRAINING_N0.md` §3.1–3.3.
+- **Benchmark N0:** bộ `bench200` đóng băng; internal small/base40 + tham chiếu ZeroTTS/
+  VieNeu v3 Turbo đã chấm; chi tiết + license/online policy ở `docs/BENCHMARK_N0.md`.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.
