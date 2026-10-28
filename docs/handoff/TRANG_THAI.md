@@ -70,10 +70,9 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 - Đã duyệt **32** đề xuất đọc trong backend; **15** đề xuất sai/không phù hợp bị loại;
   **0 pending**. Sửa nhẹ `canxi cacbonat`/`hiđrocacbonat`; `protein` được thêm bản đúng
   vào từ điển (các đề xuất `prô tê in`, `rô tê in` bị loại).
-- **Base N0 @40k đã xong**: teacher-forced tốt hơn small (~9–11% mel) nhưng free-run
-  chưa thắng rõ (speech dB 14,49 vs 14,37; pause F1 0,819 vs 0,834); chưa thay production.
-  Người nghe nghiêng base nhưng alpha0 5/8 hòa. Đang chạy tiếp **40k → 60k** (cosine mới)
-  để kiểm tra trần; chi tiết ở `docs/TRAINING_N0.md` §3.1–3.3.
+- **Base N0 @60k đã xong**: 40k → 60k chỉ cải thiện val ~0,7%, đã bão hòa thực dụng.
+  Benchmark 200: base60 mel z 0,2637 / dB 3,576 / CER 0,0843 / pause 0,831 / tone C 0,980;
+  base40 nhỉnh CER, base60 nhỉnh mel/pause/tone. Chưa thay production; cần A/B 50–100 câu.
 - **Benchmark N0:** bộ `bench200` đóng băng; internal small/base40 + tham chiếu ZeroTTS/
   VieNeu v3 Turbo đã chấm; chi tiết + license/online policy ở `docs/BENCHMARK_N0.md`.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,

@@ -1,6 +1,6 @@
 # Benchmark N0 — nội bộ & tham chiếu bên ngoài
 
-> Ngày: 28/10/2026 · Trạng thái: **chuẩn bị + đo lần đầu**, base 60k chưa xong.
+> Ngày: 28/10/2026 · Trạng thái: **đã đo small / base40 / base60 + tham chiếu ngoài**; A/B cuối chưa chốt.
 > Mục tiêu: cùng một bộ test đóng băng, cùng script, tách rõ **so sánh nội bộ**
 > (cùng giọng) và **tham chiếu ngoài** (khác giọng, chỉ CER/RTF/nghe).
 
@@ -31,14 +31,15 @@ Chấm nội bộ:
 
 | Model | mel z | mel dB | CER-100 | pause F1 | tone C |
 |---|---:|---:|---:|---:|---:|
-| small Q-init @60k | 0,2947 | 3,994 | 0,0868 | **0,8279** | **0,9778** |
-| base @40k | **0,2641** | **3,584** | **0,0819** | 0,8224 | 0,9774 |
+| small Q-init @60k | 0,2947 | 3,994 | 0,0868 | 0,8279 | 0,9778 |
+| base @40k | 0,2641 | 3,584 | **0,0819** | 0,8224 | 0,9774 |
+| base @60k | **0,2637** | **3,576** | 0,0843 | **0,8310** | **0,9800** |
 
 Đọc:
 
-- Base tốt hơn **mel/CER**, nhỉnh hơn pause; tone gần như hòa.
+- Base tốt hơn **mel/CER**; base60 nhỉnh pause/tone nhưng CER hơi xấu hơn base40.
 - Đây là **cùng giọng, cùng test**, nên so được trực tiếp.
-- Base 60k sẽ chấm lại sau khi train xong; chưa đưa vào bảng này.
+- 40k → 60k gần như bão hòa: mel −0,15%, CER +0,0024; khác biệt nhỏ.
 
 ## 3. Tham chiếu model ngoài — cùng 10 câu mới, alpha 0
 
@@ -50,6 +51,7 @@ Không có audio thật; **khác giọng** nên chỉ so CER/RTF/nghe, không so
 | ZeroTTS | 202M | MIT | **0,0415** | 0,469 | ONNX CPU, 48 kHz, voice `maichi`; actual |
 | VieNeu-TTS v3 Turbo | 131M | Apache-2.0 | 0,0520 | **0,333** | 48 kHz, actual |
 | N0 base @40k | 17,1M | nội bộ | 0,0609 | 0,0148* | *MPS; khác phần cứng |
+| N0 base @60k | 17,1M | nội bộ | 0,0585 | 0,0114* | *MPS; khác phần cứng |
 | N0 small @60k | 7,0M | nội bộ | 0,0675 | 0,0141* | *MPS; khác phần cứng |
 
 - **Không đọc CER này như xếp hạng chất lượng**: ZeroTTS/VieNeu có 1.000–10.000+ giờ,
@@ -113,7 +115,7 @@ Có thể dùng để tham khảo:
 
 ## 6. Việc tiếp theo
 
-1. Base 60k xong → chạy lại `tools/bench_n0.py` với `base60`.
+1. Đã chấm base60; cần A/B base60 vs small trên 50–100 câu mới.
 2. A/B 50–100 câu mới, alpha 0; chỉ chốt nếu base thắng rõ.
 3. Nếu base thắng: export ONNX, đo RTF CPU thật, cập nhật model card.
 4. Không submit online trước khi rà license và có bộ test cuối.

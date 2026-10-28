@@ -120,6 +120,22 @@ Large ≈ 32M.
 - Cổng sau 60k: TF val/holdout không xấu; free speech dB/pause/CER không xấu hơn small;
   A/B fresh alpha 0 phải nghiêng base rõ; nếu không → giữ small.
 
+### 3.4 Base 60k — kết quả sơ bộ (28/10/2026)
+
+- Hoàn tất **60.000/60.000** lúc 11:59. Val: 40k **0,24934** → 59k **0,24757**
+  (best) → 60k **0,24762**; từ 40k → 60k chỉ **~0,7%**, đã bão hòa thực dụng.
+- Benchmark 200 segment đóng băng:
+
+| Model | mel z | mel dB | CER-100 | pause F1 | tone C |
+|---|---:|---:|---:|---:|---:|
+| small @60k | 0,2947 | 3,994 | 0,0868 | 0,8279 | 0,9778 |
+| base @40k | 0,2641 | 3,584 | **0,0819** | 0,8224 | 0,9774 |
+| base @60k | **0,2637** | **3,576** | 0,0843 | **0,8310** | **0,9800** |
+
+- Text-only 10 câu mới, alpha 0: base60 CER **0,0585** · base40 0,0609 · small 0,0675.
+- Kết luận: **base60 không vượt base40 rõ**; một số thước nhỉnh, CER hơi xấu; chưa đổi
+  production. Cần A/B base60 vs small trên 50–100 câu trước khi quyết định.
+
 ## 4. Mặc định suy luận N0
 
 - **Vocos pretrained mặc định** (không fine-tune; fine-tune bị loại vì rè).

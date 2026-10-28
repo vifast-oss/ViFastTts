@@ -59,3 +59,5 @@
 - Thêm `smartphone → sờ mát phôn`; sửa đề xuất tương ứng từ `sờ mát phone` và duyệt.
 - Base N0 40k: kết quả teacher-forced + A/B + nhận xét tai người; tiếp tục 40k → 60k
   bằng cosine mới, chưa production.
+- Base N0 60k xong: val plateau (40k 0,2493 → 60k 0,2476), benchmark 200 cho thấy
+  base60 không vượt base40 rõ; chưa đổi production, chờ A/B 50–100 câu.
