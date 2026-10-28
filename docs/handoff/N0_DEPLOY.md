@@ -9,7 +9,7 @@
 
 | File | Kích thước | Nguồn / trạng thái |
 |---|---:|---|
-| `artifacts/onnx/n0_q/acoustic.onnx` | 31.626.449 B | `runs/acoustic_ngochuyen_q/init_q.pt` — **đang live**; sha256 `df61599a…` |
+| `artifacts/onnx/n0_q/acoustic.onnx` | 31.626.536 B | `runs/acoustic_ngochuyen_q/init_q.pt` — **đang live**; sha256 `df61599a…` |
 | `artifacts/onnx/n0_q/vocoder.onnx` | 54.158.691 B | Vocos pretrained; sha256 `b3eb09cf…` |
 | `artifacts/onnx/n0_q_ft/acoustic.onnx` | 31.626.447 B | fine-tune 3k; sha256 `394fa657…` — **chưa live** |
 | `artifacts/onnx/n0/acoustic.onnx` | 31.626.168 B* | N0 cũ chưa có Q; sha256 `6c8bde3d…` — **bị từ chối** |
