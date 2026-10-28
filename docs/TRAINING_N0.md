@@ -141,8 +141,8 @@ Large ≈ 32M.
 - Bộ câu mới, nhiều từ hiếm/dễ rè (`khúc khuỷu`, `lởm chởm`, `sột soạt`, `xộc xệch`,
   `nhễ nhại`, thuật ngữ/viết tắt, công thức).
 - 18 câu, alpha 1,5, không audio thật.
-- Kết quả người nghe: **base 6 · small 2 · hòa 10** (chỉ 8 câu phân biệt).
-  Khác biệt **không đủ mạnh** (6–2, p ≈ 0,29); small vẫn ổn.
+- Kết quả người nghe (trang đã sửa từ điển): **base 7 · small 2 · hòa 9** (9 câu phân biệt).
+  Khác biệt **chưa đủ mạnh** (7–2, p ≈ 0,18); small vẫn ổn.
 - Lỗi từ điển phát hiện trong lượt này: `Qualcomm` và `H2SO4` bị fallback thành "a"
   trong benchmark local vì chưa nạp đủ built-in/approved; đã merge các quy tắc lõi vào
   `configs/overrides_tech_vi.json` (229 quy tắc) + test; A/B mới chuẩn hoá bằng từ điển production.
