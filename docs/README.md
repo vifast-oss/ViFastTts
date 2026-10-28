@@ -22,7 +22,8 @@
 | Xem quyết định Q | `docs/Q_ONSET.md` |
 | Xem kế hoạch + trạng thái port Rust | `docs/RUST_PORT.md` |
 | Cài đặt desktop/server/TUI/extension | `docs/INSTALL.md` |
-| Định dạng model `.vfts` (đề xuất) | `docs/VFTS_FORMAT.md` |
+| Định dạng model `.vfts` | `docs/VFTS_FORMAT.md` |
+| Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
 | Xem lịch sử cũ | `docs/archive/README.md` |
 
 ## 1. Trạng thái hiện tại (tóm tắt)
