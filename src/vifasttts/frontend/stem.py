@@ -7,6 +7,10 @@ from collections.abc import Callable
 
 NumberReader = Callable[[int], str]
 
+# Lũy thừa dạng trần: a^2, x^3, 2^3, a^{n+1}. Chỉ nhận base 1 chữ cái/số,
+# exponent số đơn/chữ đơn/gói {...}; bỏ qua số thập phân và chữ dính sau.
+_BARE_POWER_RE = re.compile(r"(?<![\w\\])([A-Za-z]|\d+)\s*\^\s*(\{[^{}]+\}|-?\d+|[A-Za-z])(?![\w.])")
+
 GREEK = {
     "alpha":"an pha", "beta":"bê ta", "gamma":"gam ma", "delta":"đen ta",
     "epsilon":"ép xi lon", "theta":"thê ta", "lambda":"lam đa", "mu":"miu",
@@ -193,6 +197,9 @@ def normalize_stem(text: str, read_number: NumberReader) -> str:
     text=re.sub(rf"(?<!\w)(\d+(?:[,.]\d+)?)\s*({unit_keys})(?:\^?([23]))?(?:/({unit_keys})(?:\^?([23]))?)?(?![A-Za-zÀ-ỹĐđ])",lambda m:_read_measure(m,read_number),text)
     # Đơn vị ghép khi số đứng trước đã được đọc (ví dụ sau biểu thức LaTeX).
     text=re.sub(rf"(?<!\w)({unit_keys})(?:\^?([23]))?/({unit_keys})(?:\^?([23]))?(?![A-Za-zÀ-ỹĐđ])", lambda m: _read_composite_unit(m), text)
+    # Lũy thừa dạng trần chạy SAU đơn vị: "m/s^2"/"3 m^2" đã thành
+    # "mét trên giây bình phương"/"ba mét bình phương", không bị đổi lần nữa.
+    text=_BARE_POWER_RE.sub(lambda m: _read_bare_power(m, read_number), text)
     return re.sub(r"\s+"," ",text).strip()
 
 
@@ -218,3 +225,16 @@ def _read_composite_unit(m: re.Match[str]) -> str:
     denominator=UNITS[m.group(3)]
     if m.group(4): denominator += " bình phương" if m.group(4)=="2" else " lập phương"
     return numerator + " trên " + denominator
+
+
+def _read_bare_power(m: re.Match[str], read_number: NumberReader) -> str:
+    """Đọc lũy thừa dạng trần: a^2 → "a bình phương", 2^3 → "hai mũ ba"."""
+    base, exp = m.group(1), m.group(2)
+    if exp.startswith("{") and exp.endswith("}"):
+        exp = exp[1:-1]
+    if base.isdigit():
+        return f"{read_number(int(base))} mũ {read_math_expression(exp, read_number)}"
+    base = VARIABLES.get(base.lower(), base)
+    if exp in {"2", "3"}:
+        return f"{base} {'bình phương' if exp == '2' else 'lập phương'}"
+    return f"{base} mũ {read_math_expression(exp, read_number)}"
