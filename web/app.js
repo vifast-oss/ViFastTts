@@ -1,6 +1,7 @@
 // Local WASM hoặc remote server; cùng một UI/karaoke.
 import * as ort from 'onnxruntime-web';
 import init, { synthesize, karaoke_to_srt, karaoke_to_vtt } from './pkg/vifasttts_wasm.js';
+import { unzipSync, strFromU8 } from 'fflate';
 
 const statusEl = document.getElementById('status');
 const runEl = document.getElementById('run');
@@ -10,6 +11,7 @@ const modeEl = document.getElementById('mode');
 const serverUrlEl = document.getElementById('serverUrl');
 const tokenEl = document.getElementById('token');
 const remoteFields = document.getElementById('remoteFields');
+const modelFileEl = document.getElementById('modelFile');
 const audioEl = document.getElementById('audio');
 const karaokeEl = document.getElementById('karaoke');
 const srtEl = document.getElementById('srt');
@@ -43,17 +45,14 @@ function playBytes(bytes) {
   return audioEl.play().catch(() => {});
 }
 
-async function loadModels() {
-  if (localReady) return;
-  setStatus('Đang nạp ONNX Runtime Web…');
+async function ensureOrt() {
   ort.env.wasm.wasmPaths = '/ort/';
   ort.env.wasm.numThreads = 1;
   ort.env.wasm.simd = true;
   await init();
-  const [acousticBuf, vocoderBuf] = await Promise.all([
-    fetch('/models/acoustic.onnx').then((r) => r.arrayBuffer()),
-    fetch('/models/vocoder.onnx').then((r) => r.arrayBuffer()),
-  ]);
+}
+
+async function createSessions(acousticBuf, vocoderBuf) {
   setStatus(`Đang tạo session (${(acousticBuf.byteLength / 1e6).toFixed(1)} MB + ${(vocoderBuf.byteLength / 1e6).toFixed(1)} MB)…`);
   acousticSession = await ort.InferenceSession.create(acousticBuf, {
     executionProviders: ['wasm'],
@@ -64,7 +63,61 @@ async function loadModels() {
     graphOptimizationLevel: 'all',
   });
   localReady = true;
+}
+
+async function loadModels() {
+  if (localReady) return;
+  setStatus('Đang nạp ONNX Runtime Web…');
+  await ensureOrt();
+  const [acousticBuf, vocoderBuf] = await Promise.all([
+    fetch('/models/acoustic.onnx').then((r) => r.arrayBuffer()),
+    fetch('/models/vocoder.onnx').then((r) => r.arrayBuffer()),
+  ]);
+  await createSessions(acousticBuf, vocoderBuf);
   setStatus('Local sẵn sàng — chạy hoàn toàn trong trình duyệt.');
+}
+
+async function sha256Hex(bytes) {
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+async function loadBundle(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const entries = unzipSync(bytes);
+  const manifestName = 'manifest.json';
+  if (!entries[manifestName]) throw new Error('Bundle thiếu manifest.json');
+  const manifest = JSON.parse(strFromU8(entries[manifestName]));
+  const acousticName = manifest.acoustic?.file || 'acoustic.onnx';
+  const acoustic = entries[acousticName];
+  if (!acoustic) throw new Error(`Bundle thiếu ${acousticName}`);
+  if (manifest.acoustic?.sha256) {
+    const actual = await sha256Hex(acoustic);
+    if (actual !== manifest.acoustic.sha256) throw new Error('SHA256 acoustic không khớp');
+  }
+  let vocoderBytes;
+  if (manifest.vocoder?.file) {
+    const vocoder = entries[manifest.vocoder.file];
+    if (!vocoder) throw new Error(`Bundle thiếu ${manifest.vocoder.file}`);
+    const actual = await sha256Hex(vocoder);
+    if (manifest.vocoder.sha256 && actual !== manifest.vocoder.sha256) {
+      throw new Error('SHA256 vocoder không khớp');
+    }
+    vocoderBytes = vocoder;
+  } else {
+    // .vfa: dùng vocoder bundled của web/app; kiểm hash nếu manifest có.
+    const response = await fetch('/models/vocoder.onnx');
+    if (!response.ok) throw new Error('Không có /models/vocoder.onnx cho .vfa');
+    const bundled = new Uint8Array(await response.arrayBuffer());
+    if (manifest.vocoder?.sha256) {
+      const actual = await sha256Hex(bundled);
+      if (actual !== manifest.vocoder.sha256) throw new Error('.vfa cần vocoder khác (hash không khớp)');
+    }
+    vocoderBytes = bundled;
+  }
+  await ensureOrt();
+  await createSessions(acoustic, vocoderBytes);
+  setStatus(`Đã nạp ${file.name} — local WASM.`);
 }
 
 async function acoustic(features, speed, gate) {
@@ -184,7 +237,36 @@ modeEl.addEventListener('change', () => {
   setModeFields();
   setStatus(modeEl.value === 'remote' ? 'Remote: nhập server URL.' : 'Local: bấm Đọc để nạp model.');
 });
+modelFileEl.addEventListener('change', async () => {
+  const file = modelFileEl.files?.[0];
+  if (!file) return;
+  try {
+    modeEl.value = 'local';
+    setModeFields();
+    await loadBundle(file);
+  } catch (error) {
+    setStatus(`Lỗi model: ${error?.message || error}`);
+  }
+});
 runEl.addEventListener('click', run);
 setModeFields();
 runEl.disabled = false;
-setStatus('Chọn Local WASM hoặc Remote server.');
+
+(async () => {
+  setStatus('Đang kiểm tra server local…');
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    try {
+      const response = await fetch('/healthz', { cache: 'no-store' });
+      if (response.ok) {
+        modeEl.value = 'remote';
+        serverUrlEl.value = location.origin;
+        setModeFields();
+        setStatus(`Remote server: ${location.origin}`);
+        return;
+      }
+    } catch {
+      // fall through local
+    }
+  }
+  setStatus('Local WASM — bấm Đọc hoặc nạp .vfa/.vfts.');
+})();

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "onnxruntime-web": "^1.23.0"
   },
   "devDependencies": {

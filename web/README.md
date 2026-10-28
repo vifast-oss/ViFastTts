@@ -40,8 +40,12 @@ Model ~86 MB; lần đầu tải lâu. Không commit `web/public/models/`, `web/
 ## Chế độ
 
 - **Local WASM**: mặc định, chạy model trong browser.
-- **Remote server**: nhập server URL (local `http://127.0.0.1:8000` hoặc
-  server online), token nếu có; gọi `/api/tts` với `karaoke:true`.
+- **Remote server**: nếu web được server phục vụ, app tự kiểm tra `/healthz`
+  và mặc định dùng same-origin remote; nếu mở static/file thì mặc định local.
+  Nhập server URL local/online + token nếu cần.
+- **Nạp `.vfa`/`.vfts`**: input file trong web; kiểm manifest/SHA256, tạo ONNX
+  session ngay trong browser. `.vfa` dùng `/models/vocoder.onnx`; `.vfts` tự chứa
+  vocoder.
 - Server cùng origin có thể phục vụ web bằng `--web-dir web/dist`; server khác
   origin cần bật `--cors` và cấu hình TLS/reverse proxy nếu public.
 - Nếu dùng remote, browser không cần tải model local.
