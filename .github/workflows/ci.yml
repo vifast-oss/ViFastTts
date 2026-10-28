@@ -92,16 +92,17 @@ jobs:
           ./extension/build.sh
           ./web/build.sh
           (cd web && npm run build)
-      - name: package extension
+      - name: package extension + web
         run: |
           cd extension
           zip -qr "$GITHUB_WORKSPACE/extension.zip" . -x "*/.*"
+          tar -czf "$GITHUB_WORKSPACE/web-dist.tar.gz" -C web/dist .
       - uses: actions/upload-artifact@v4
         with:
           name: web-extension
           path: |
             extension.zip
-            web/dist
+            web-dist.tar.gz
           if-no-files-found: error
 
   desktop:
@@ -268,8 +269,12 @@ jobs:
         run: |
           tag="$GITHUB_REF_NAME"
           assets=$(find release-assets -type f -print)
+          prerelease=""
+          case "$tag" in
+            *-rc*|*-test*) prerelease="--prerelease" ;;
+          esac
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" $assets --clobber
           else
-            gh release create "$tag" $assets --generate-notes
+            gh release create "$tag" $assets --generate-notes $prerelease
           fi
