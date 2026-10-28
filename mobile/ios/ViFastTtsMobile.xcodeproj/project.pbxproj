@@ -8,23 +8,30 @@
 
 /* Begin PBXBuildFile section */
 		1FA506E67C9DFDF6F42D6C2A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72172E92AB370DE14DC3C667 /* App.swift */; };
+		459DB27C037FD291CF6FA50C /* .gitkeep in Resources */ = {isa = PBXBuildFile; fileRef = EAF71428C78B2A34BAE87B98 /* .gitkeep */; };
 		58BEFC72D97646F04C0A2DE3 /* TtsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5430608CBB478CB7841A3CD /* TtsEngine.swift */; };
 		834CC4F359BB7B5D42D35E7A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B760FF6380734375480A1CF6 /* ContentView.swift */; };
+		933D5181840B94DF8ACE3AA5 /* acoustic.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 882F8B80EEA3585A91ADC603 /* acoustic.onnx */; };
+		9BB2447D5F0C7AA2F98D65B0 /* vocoder.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ViFastTtsMobile-Bridging-Header.h"; sourceTree = "<group>"; };
+		70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */ = {isa = PBXFileReference; path = vocoder.onnx; sourceTree = "<group>"; };
 		72172E92AB370DE14DC3C667 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		882F8B80EEA3585A91ADC603 /* acoustic.onnx */ = {isa = PBXFileReference; path = acoustic.onnx; sourceTree = "<group>"; };
 		A40017915543C869B945B2F4 /* ViFastTtsMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViFastTtsMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5430608CBB478CB7841A3CD /* TtsEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TtsEngine.swift; sourceTree = "<group>"; };
 		B760FF6380734375480A1CF6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D154395D136B6DD5189A9A62 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		EAF71428C78B2A34BAE87B98 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		2A11606F05EA0041F442F4B5 = {
 			isa = PBXGroup;
 			children = (
+				BC9AF75431AC90FB22A46AFB /* Resources */,
 				6BE7643C3CABB512B885173F /* ViFastTtsMobile */,
 				B781C14A21968E79BB300679 /* Products */,
 			);
@@ -50,6 +57,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		BC9AF75431AC90FB22A46AFB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				EAF71428C78B2A34BAE87B98 /* .gitkeep */,
+				882F8B80EEA3585A91ADC603 /* acoustic.onnx */,
+				70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -58,6 +75,7 @@
 			buildConfigurationList = DF1CA6E22385DEA29E4E3DE3 /* Build configuration list for PBXNativeTarget "ViFastTtsMobile" */;
 			buildPhases = (
 				91A51C3DBEAC8AF6EF819108 /* Sources */,
+				52922C386C9B8518989CA07E /* Resources */,
 			);
 			buildRules = (
 			);
@@ -99,6 +117,19 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		52922C386C9B8518989CA07E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				459DB27C037FD291CF6FA50C /* .gitkeep in Resources */,
+				933D5181840B94DF8ACE3AA5 /* acoustic.onnx in Resources */,
+				9BB2447D5F0C7AA2F98D65B0 /* vocoder.onnx in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		91A51C3DBEAC8AF6EF819108 /* Sources */ = {

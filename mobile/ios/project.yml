@@ -19,6 +19,8 @@ targets:
     platform: iOS
     sources:
       - path: ViFastTtsMobile
+      - path: Resources
+        buildPhase: resources
     info:
       path: ViFastTtsMobile/Info.plist
       properties:
@@ -42,5 +44,3 @@ targets:
           - "onnxruntime"
           - "-lc++"
         ENABLE_BITCODE: NO
-    resources:
-      - path: Resources
