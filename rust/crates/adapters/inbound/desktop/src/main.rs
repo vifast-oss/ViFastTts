@@ -1056,6 +1056,22 @@ impl DesktopApp {
 
         let chars = self.input.chars().count();
         ui.horizontal(|ui| {
+            if ui.button("Mở tệp…").clicked()
+                && let Some(path) = rfd::FileDialog::new()
+                    .add_filter("Văn bản", &["txt", "md"])
+                    .pick_file()
+            {
+                match fs::read_to_string(&path) {
+                    Ok(text) => {
+                        self.input = text;
+                        self.status = format!("Đã mở {}", path.display());
+                    }
+                    Err(error) => self.error = Some(format!("đọc {}: {error}", path.display())),
+                }
+            }
+            if ui.button("Xoá").clicked() {
+                self.input.clear();
+            }
             ui.label(format!("{chars} ký tự"));
             if let Some(eta) = self.estimate_ms() {
                 ui.small(format!("ETA ~{:.1} s (lịch sử)", eta as f64 / 1000.0));
@@ -1140,6 +1156,16 @@ impl DesktopApp {
 impl eframe::App for DesktopApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_events();
+
+        if ctx.input(|input| input.modifiers.command && input.key_pressed(egui::Key::Enter))
+            && !self.busy
+            && (self.settings.app.mode == SynthesisMode::Remote || self.model_ready)
+        {
+            self.synthesize();
+        }
+        if ctx.input(|input| input.key_pressed(egui::Key::Escape)) {
+            self.audio.stop();
+        }
 
         ctx.set_visuals(egui::Visuals::dark());
         egui::TopBottomPanel::top("top").show(ctx, |ui| {

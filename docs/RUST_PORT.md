@@ -1120,7 +1120,7 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
   dictionary + ETA history, phát audio, lưu WAV/SRT/VTT, chọn model/dialect.
 - `.app` ~127 MB (model 86 MB + ORT 32 MB + binary 13 MB); app tự tìm model trong
   `Contents/Resources` và ORT cạnh executable (đã test smoke từ bundle).
-- Chưa streaming PCM trong UI; nút Huỷ chỉ dừng phát/UI.
+- Chưa streaming PCM trong UI; nút Dừng phát chỉ dừng audio, job local vẫn hoàn tất.
 
 **Android (đã chạy):**
 

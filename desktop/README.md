@@ -6,7 +6,8 @@ CLI, server, extension và mobile.
 - Local: nạp `acoustic.onnx` + `vocoder.onnx`, synth bằng `vifasttts-native`.
 - Remote: gọi server `/api/tts` (WAV + karaoke JSON) qua `vifasttts-http-client`.
 - Có: chọn phương ngữ, tốc độ, alpha, fixed pause, peak normalize, ETA theo lịch
-  sử, từ điển local, phát audio, lưu WAV/SRT/VTT, cấu hình model/thư mục xuất.
+  sử, từ điển local, phát audio, lưu WAV/SRT/VTT, cấu hình model/thư mục xuất,
+  mở tệp `.txt/.md`, `Cmd+Enter` để đọc, `Esc` để dừng phát.
 - Cùng `vifasttts-app` / `vifasttts-text` / `vifasttts-engine`; UI không chứa
   logic model.
 
@@ -48,8 +49,8 @@ App tự tìm model trong `Contents/Resources/` và ORT trong `Contents/MacOS/`
 
 ## Giới hạn hiện tại
 
-- Local synth chạy trên worker thread nhưng **chưa streaming PCM**; nút Huỷ chỉ
-  dừng phát/UI, request local đang chạy vẫn hoàn tất (engine không có cancel cho
+- Local synth chạy trên worker thread nhưng **chưa streaming PCM**; nút **Dừng phát**
+  chỉ dừng audio, request local đang chạy vẫn hoàn tất (engine không có cancel cho
   `synthesize` thường).
 - Chưa có system tray, menu native, auto-update, ký notarize, Windows/Linux
   packaging; source dùng egui nên build được các nền tảng đó khi có target/ORT.
