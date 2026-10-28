@@ -32,7 +32,6 @@ rm -rf "$OUT"
 mkdir -p "$OUT/models"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$OUT/vifasttts-desktop"
 cp "$ROOT/rust/target/release/vifasttts" "$OUT/vifasttts"
-ln -sf vifasttts "$OUT/vtfs"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then cp -R "$WEB_DIR" "$OUT/web"; fi
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"

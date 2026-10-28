@@ -41,7 +41,7 @@ Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
 
 TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
 ```bash
-# mặc định mở TUI (alias: vifasttts / vtfs)
+# mặc định mở TUI
 /Applications/ViFastTts.app/Contents/MacOS/vifasttts
 # TUI độc lập
 # TUI/CLI/server nằm trong vifasttts
@@ -125,7 +125,6 @@ cargo build --release --manifest-path rust/Cargo.toml \
   -p vifasttts-cli
 # binary: rust/target/release/vifasttts (TUI/CLI/server)
 # ./vifasttts              -> TUI
-# ./vifasttts  / ./vtfs       -> alias ngắn (package release)
 # ./vifasttts server       -> server + web
 # ./vifasttts synth ...    -> CLI
 ```
