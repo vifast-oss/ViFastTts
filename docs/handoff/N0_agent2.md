@@ -172,7 +172,7 @@ Nếu cần production: xử lý license trước; không tự chuyển.
   (`n0_ngochuyen_research_v1.zip`, sha256 `152d9059…f0d4fa`).
 - Cả hai gồm acoustic 60k, config/stats, Vocos pretrained, 10 demo; research thêm
   `TRAINING.md`/`REPORT.md`. **Không** kèm data gốc; **không** kèm Vocos fine-tune.
-- **Q (sau báo cáo gốc):** prod có thêm `n0_onnx_fp32_q.zip` (Q-init, đang live);
+- **Q (sau báo cáo gốc):** prod có thêm `n0_onnx_fp32.zip` (Q-init, đang live);
   preview tạm `q-preview-2026-10-27` có 2 WAV Q-init vs fine-tune 3k.
 - **Research/non-commercial — không production thương mại**, dataset CC-BY-NC-4.0.
 - Đã xoá toàn bộ release audio test cũ; hiện còn 2 release chính + preview Q + 3 mẫu VPS.
@@ -192,11 +192,10 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 ## 13. ONNX + demo service (27/10/2026)
 
 - Bản đầu: `artifacts/onnx/n0/` (N0 chưa Q; giờ bị runtime mới từ chối).
-- **Bản đang live:** `artifacts/onnx/n0_q/acoustic.onnx` (Q-init, sha256 `16e66b70…`) +
+- **Bản đang live:** `artifacts/onnx/n0_q/acoustic.onnx` (Q-init, sha256 `df61599a…`) +
   `vocoder.onnx` (`b3eb09cf…`), opset 18, FP32; `synthesize-onnx` smoke-test CPU pass.
 - Demo public: **https://vifasttts.hoctuthien.com/**
   (VPS `jp` qua Tailscale → LXD `hoctuthien-vps` → Docker `/opt/vifasttts` → Traefik).
 - Service dùng ONNX Runtime, alpha 1.5, Vocos pretrained, model tự nghỉ mặc định;
   fixed pause là checkbox tắt mặc định. Rate limit 6 request/phút/IP, text 3000 ký tự (env `MAX_CHARS`).
-- Release có `n0_onnx_fp32_q.zip` (sha256 `ef35567c…`); gói N0 cũ `n0_onnx_fp32.zip`
-  (sha256 `3521ac2e…`) vẫn còn cho lịch sử.
+- Release có `n0_onnx_fp32.zip` (sha256 `c613b120…`); gói N0 cũ đã được thay bằng bản Q.

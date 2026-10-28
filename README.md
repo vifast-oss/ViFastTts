@@ -26,7 +26,7 @@ cd ViFastTts
 # mở http://127.0.0.1:8090
 ```
 
-Script tự tải ONNX FP32 **Q-init** (`n0_onnx_fp32_q.zip`, có kiểm sha256), tạo `.venv-demo`,
+Script tự tải ONNX FP32 **Q-init** (`n0_onnx_fp32.zip`, có kiểm sha256), tạo `.venv-demo`,
 cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 
 - **Demo online:** https://vifasttts.hoctuthien.com/

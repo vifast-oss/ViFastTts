@@ -99,7 +99,7 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
 - **Live:** `https://vifasttts.hoctuthien.com/` — ONNX FP32, `arch=v2_slot5`,
   `vocab_version=vi-q25-v1` / `vocab_hash`, alpha 1,5, `pause_mode=model`; model **N0 Ngọc Huyền Q-init** (`Q` = `K`,
   bit-exact với N0 Bắc cũ). Checkpoint nguồn `runs/acoustic_ngochuyen_q/init_q.pt`
-  (sha256 `3c330cfc…`); ONNX live `artifacts/onnx/n0_q/acoustic.onnx` (sha256 `16e66b70…`).
+  (sha256 `3c330cfc…`); ONNX live `artifacts/onnx/n0_q/acoustic.onnx` (sha256 `df61599a…`).
 - **Q:** onset thứ 25 ở cuối vocab; cờ `onset_has_q` đã bỏ 28/10/2026, thay bằng
   `vocab_version` + `vocab_hash`; **không có adapter Q→K**. Fine-tune Q 3k (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export
   nhưng **chưa live**; so tai qua release tạm `q-preview-2026-10-27`.

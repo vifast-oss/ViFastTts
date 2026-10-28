@@ -26,8 +26,8 @@
 | URL | https://vifasttts.hoctuthien.com/ |
 | Health | `{"ok":true,"sample_rate":24000,"arch":"v2_slot5","vocab_version":"vi-q25-v1","vocab_hash":"…","alpha":1.5,"pause":"model"}` |
 | Acoustic | N0 Ngọc Huyền **Q-init**; `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…` |
-| ONNX live | `artifacts/onnx/n0_q/acoustic.onnx` sha256 `16e66b70b9c49c…`; vocoder `b3eb09cf5c3baa…` |
-| Release asset | `n0_onnx_fp32_q.zip` sha256 `ef35567c4433cf…` (trong release `n0-ngochuyen-prod-v1`) |
+| ONNX live | `artifacts/onnx/n0_q/acoustic.onnx` sha256 `df61599a15984dcc…`; vocoder `b3eb09cf5c3baa…` |
+| Release asset | `n0_onnx_fp32.zip` sha256 `c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a` (trong release `n0-ngochuyen-prod-v1`) |
 | Vocoder | Vocos pretrained `charactr/vocos-mel-24khz` (MIT), **không** fine-tune |
 | Mặc định | alpha 1,5 · pause do model tự quyết · fixed pause tắt |
 | Dữ liệu | `ngochuyen_voice` CC-BY-NC-4.0 · 19,89 h sạch · research/non-commercial |
@@ -51,9 +51,8 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 3. Release & Hugging Face
 
-- `n0-ngochuyen-prod-v1` — prod candidate nội bộ, có `n0_onnx_fp32.zip` (N0 cũ) và
-  **`n0_onnx_fp32_q.zip`** (Q-init, đang live).
-- `n0-ngochuyen-research-v1` — research, dùng ONNX N0 cũ; không có Q.
+- `n0-ngochuyen-prod-v1` — prod candidate nội bộ, có **`n0_onnx_fp32.zip`** (Q-init, đang live).
+- `n0-ngochuyen-research-v1` — research, đã cập nhật checkpoint/ONNX Q.
 - `q-preview-2026-10-27` — **preview tạm**, chỉ 2 WAV; xoá sau khi chọn xong.
 - `n0-demo-samples-v1` — 3 WAV mẫu nghe sẵn cho VPS (pre-release; `fetch_demo_samples.sh`).
 - Hugging Face model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small (ONNX Q đã cập nhật).

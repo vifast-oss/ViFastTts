@@ -9,8 +9,8 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $Venv = Join-Path $Root ".venv-demo"
 $Models = Join-Path $Root "artifacts\onnx\n0_q"
-$Url = "https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32_q.zip"
-$Sha = "ef35567c4433cf823db78ef90f716a259d14c79d62bed53e621f93b5231a01ed"
+$Url = "https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32.zip"
+$Sha = "c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a"
 
 function Resolve-Python {
     $candidates = @()

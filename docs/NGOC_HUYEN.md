@@ -60,7 +60,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 | RTF thực tế | **0,045** end-to-end trên VPS CPU (5 câu, 22,44 s audio / 1,01 s xử lý) |
 
 **Đang live:** **Q-init** (N0 cũ + hàng Q = K) — output bit-exact với N0 Bắc cũ; ONNX
-`n0_q/acoustic.onnx` sha256 `16e66b70…`, `healthz` báo `vocab_version` + `vocab_hash`.
+`n0_q/acoustic.onnx` sha256 `df61599a…`, `healthz` báo `vocab_version` + `vocab_hash`.
 Fine-tune Q 3k (`val mel 0,26320` · `rough 0,76318`) đã export nhưng **chưa chọn**;
 nghe A/B tại release `q-preview-2026-10-27`. Chi tiết: `docs/Q_ONSET.md`,
 `docs/handoff/N0_DEPLOY.md`, `docs/handoff/TRANG_THAI.md`.
@@ -120,7 +120,7 @@ Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùn
   `artifacts/onnx/n0_q_ft/`; bản N0 cũ `artifacts/onnx/n0/` bị runtime mới từ chối.
 - Release:
   - prod candidate nội bộ: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
-    (asset Q đang live: `n0_onnx_fp32_q.zip`, sha256 `ef35567c…`)
+    (asset Q đang live: `n0_onnx_fp32.zip`, sha256 `c613b120…`)
   - research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
   - nghe thử Q: https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27
   - 3 mẫu VPS: https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1

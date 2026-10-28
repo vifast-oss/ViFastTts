@@ -12,9 +12,9 @@
   sha256 `3c7673c98dc62892bb0a987eee5fb265728cf38bd35c80f98d017b586f294ea8`)
   + `prod_SHA256SUMS`.
 - ONNX:
-  - **`n0_onnx_fp32_q.zip`** — Q-init, **đang live**: 79.437.883 B,
-    sha256 `ef35567c4433cf823db78ef90f716a259d14c79d62bed53e621f93b5231a01ed`;
-    acoustic `16e66b70…`, vocoder `b3eb09cf…` (có `SHA256SUMS` bên trong).
+  - **`n0_onnx_fp32.zip`** — Q-init, **đang live**: 79.437.950 B,
+    sha256 `c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a`;
+    acoustic `df61599a…`, vocoder `b3eb09cf…` (có `SHA256SUMS` bên trong).
   - `n0_onnx_fp32.zip` — N0 cũ chưa có Q: 79.438.477 B,
     sha256 `3521ac2e79aabf179017a2ba7abcaf56f13bbf852efd10a3a7742b609045c687`;
     **bị runtime mới từ chối** vì thiếu `vocab_hash`, giữ lịch sử.

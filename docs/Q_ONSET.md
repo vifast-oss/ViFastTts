@@ -55,9 +55,9 @@ an toàn cho N0 Bắc, giữ đúng giọng đã được nghe. Candidate fine-t
 
 - **Đang live:** Q-init, `Q = K`, output **bit-exact** với N0 Bắc cũ.
   - Checkpoint: `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…`.
-  - ONNX: `artifacts/onnx/n0_q/acoustic.onnx` sha256 `16e66b70b9c49c…`;
+  - ONNX: `artifacts/onnx/n0_q/acoustic.onnx` sha256 `df61599a15984dcc…`;
     vocoder `b3eb09cf5c3baa…`; `healthz` báo `vocab_version` + `vocab_hash`.
-  - Release asset: `n0_onnx_fp32_q.zip` sha256 `c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a`
+  - Release asset: `n0_onnx_fp32.zip` sha256 `c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a`
     (trong `n0-ngochuyen-prod-v1`).
 - **Chưa live:** fine-tune 3k `runs/acoustic_ngochuyen_q/best.pt`
   (sha256 `30dc41642461…`), ONNX `artifacts/onnx/n0_q_ft/acoustic.onnx`

@@ -9,7 +9,7 @@
 
 | File | Kích thước | Nguồn / trạng thái |
 |---|---:|---|
-| `artifacts/onnx/n0_q/acoustic.onnx` | 31.626.449 B | `runs/acoustic_ngochuyen_q/init_q.pt` — **đang live**; sha256 `16e66b70…` |
+| `artifacts/onnx/n0_q/acoustic.onnx` | 31.626.449 B | `runs/acoustic_ngochuyen_q/init_q.pt` — **đang live**; sha256 `df61599a…` |
 | `artifacts/onnx/n0_q/vocoder.onnx` | 54.158.691 B | Vocos pretrained; sha256 `b3eb09cf…` |
 | `artifacts/onnx/n0_q_ft/acoustic.onnx` | 31.626.447 B | fine-tune 3k; sha256 `394fa657…` — **chưa live** |
 | `artifacts/onnx/n0/acoustic.onnx` | 31.626.168 B* | N0 cũ chưa có Q; sha256 `6c8bde3d…` — **bị từ chối** |
@@ -129,9 +129,9 @@ curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
 
 ## 4. ONNX trong release
 
-- `n0_onnx_fp32_q.zip` — **Q, đang live**: 79.437.883 B, sha256 `ef35567c4433cf…`;
-  bên trong có `n0_onnx_fp32/acoustic.onnx` (`16e66b70…`) + vocoder (`b3eb09cf…`) + SHA256SUMS.
-- `n0_onnx_fp32.zip` — N0 cũ chưa có Q, giữ lịch sử; runtime mới **từ chối**.
+- `n0_onnx_fp32.zip` — **Q, đang live**: 79.437.950 B, sha256 `c613b1206cb8b571…`;
+  bên trong có `n0_onnx_fp32/acoustic.onnx` (`df61599a…`) + vocoder (`b3eb09cf…`) + SHA256SUMS.
+- Asset N0 cũ không Q đã xoá khỏi release; chỉ còn bản Q.
 - Package chính vẫn chứa checkpoint + config + stats + Vocos pretrained.
 - Release `q-preview-2026-10-27` chỉ có 2 WAV nghe thử (`init.wav`, `finetune.wav`), không phải
   asset triển khai; xoá sau khi chọn model.
