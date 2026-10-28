@@ -2,6 +2,7 @@
 import * as ort from 'onnxruntime-web';
 import init, { synthesize, karaoke_to_srt, karaoke_to_vtt } from './pkg/vifasttts_wasm.js';
 import { unzipSync, strFromU8 } from 'fflate';
+import { sha256 } from 'js-sha256';
 
 const statusEl = document.getElementById('status');
 const runEl = document.getElementById('run');
@@ -77,9 +78,9 @@ async function loadModels() {
   setStatus('Local sẵn sàng — chạy hoàn toàn trong trình duyệt.');
 }
 
-async function sha256Hex(bytes) {
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
+function sha256Hex(bytes) {
+  // js-sha256 hoạt động cả trên HTTP LAN (không cần secure context như crypto.subtle).
+  return sha256(bytes);
 }
 
 async function loadBundle(file) {
