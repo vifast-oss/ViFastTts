@@ -22,7 +22,8 @@ use vifasttts_app::{
 };
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_native::{
-    KaraokeDocument, ModelInfo, NativeEngine, SynthesisOptions, SynthesisResult, load, load_vfts,
+    KaraokeDocument, ModelInfo, NativeEngine, SynthesisOptions, SynthesisResult, load, load_vfa,
+    load_vfts,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
@@ -108,6 +109,7 @@ struct DesktopSettings {
     acoustic_path: String,
     vocoder_path: String,
     vfts_path: String,
+    vfa_path: String,
     dialect: String,
     peak_normalize: bool,
     resolve_oov: bool,
@@ -129,6 +131,7 @@ impl Default for DesktopSettings {
             acoustic_path: DEFAULT_ACOUSTIC.to_string(),
             vocoder_path: DEFAULT_VOCODER.to_string(),
             vfts_path: String::new(),
+            vfa_path: String::new(),
             dialect: "north".to_string(),
             peak_normalize: false,
             resolve_oov: false,
@@ -258,6 +261,7 @@ enum LocalCommand {
         acoustic: PathBuf,
         vocoder: PathBuf,
         vfts: Option<PathBuf>,
+        vfa: Option<PathBuf>,
     },
     Synthesize {
         text: String,
@@ -279,10 +283,13 @@ fn local_worker(command_rx: Receiver<LocalCommand>, event_tx: Sender<BackendEven
                 acoustic,
                 vocoder,
                 vfts,
+                vfa,
             } => {
                 engine = None;
                 let _ = event_tx.send(BackendEvent::ModelLoading);
-                let loaded = if let Some(vfts) = vfts {
+                let loaded = if let Some(vfa) = vfa {
+                    load_vfa(vfa, &vocoder)
+                } else if let Some(vfts) = vfts {
                     load_vfts(vfts)
                 } else {
                     load(&acoustic, &vocoder)
@@ -499,6 +506,8 @@ impl DesktopApp {
                 vocoder: resolve_model_path(&settings.vocoder_path),
                 vfts: (!settings.vfts_path.trim().is_empty())
                     .then(|| PathBuf::from(&settings.vfts_path)),
+                vfa: (!settings.vfa_path.trim().is_empty())
+                    .then(|| PathBuf::from(&settings.vfa_path)),
             })
             .ok();
 
@@ -694,6 +703,8 @@ impl DesktopApp {
             vocoder: resolve_model_path(&self.settings.vocoder_path),
             vfts: (!self.settings.vfts_path.trim().is_empty())
                 .then(|| PathBuf::from(&self.settings.vfts_path)),
+            vfa: (!self.settings.vfa_path.trim().is_empty())
+                .then(|| PathBuf::from(&self.settings.vfa_path)),
         }) {
             self.error = Some(format!("worker local đã dừng: {error}"));
         }
@@ -830,7 +841,13 @@ impl DesktopApp {
             .arg(host)
             .arg("--port")
             .arg(self.settings.server_port.to_string());
-        if !self.settings.vfts_path.trim().is_empty() {
+        if !self.settings.vfa_path.trim().is_empty() {
+            command
+                .arg("--vfa")
+                .arg(&self.settings.vfa_path)
+                .arg("--vocoder")
+                .arg(resolve_model_path(&self.settings.vocoder_path));
+        } else if !self.settings.vfts_path.trim().is_empty() {
             command.arg("--vfts").arg(&self.settings.vfts_path);
         } else {
             command
@@ -980,6 +997,23 @@ impl DesktopApp {
                 }
             });
             ui.small("Nếu có .vfts, acoustic/vocoder bên dưới bị bỏ qua.");
+            ui.label("Acoustic-only .vfa (dùng vocoder bên dưới)");
+            ui.horizontal(|ui| {
+                if ui
+                    .add(egui::TextEdit::singleline(&mut self.settings.vfa_path))
+                    .changed()
+                {
+                    self.settings_dirty = true;
+                }
+                if ui.button("…").clicked()
+                    && let Some(path) = rfd::FileDialog::new()
+                        .add_filter("ViFastTts acoustic", &["vfa"])
+                        .pick_file()
+                {
+                    self.settings.vfa_path = path.display().to_string();
+                    self.settings_dirty = true;
+                }
+            });
             ui.label("Acoustic ONNX");
             ui.horizontal(|ui| {
                 let changed = ui

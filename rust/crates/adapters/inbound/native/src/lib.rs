@@ -19,7 +19,9 @@ pub use vifasttts_ort::{
     OrtModelMetadata, OrtVocoderModel, from_bytes as ort_from_bytes, load_paths,
     load_paths_with_manifest, ort_info,
 };
-pub use vifasttts_vfts::{PackOptions, VftsBundle, VftsManifest};
+pub use vifasttts_vfts::{
+    PackOptions, VfaBundle, VfaManifest, VfaOptions, VftsBundle, VftsManifest, VocoderRef,
+};
 
 struct ThreadWaker(std::thread::Thread);
 
@@ -166,6 +168,19 @@ pub fn load_vfts(path: impl AsRef<std::path::Path>) -> Result<NativeEngine, Stri
     let bundle = VftsBundle::read_path(path)?;
     bundle.verify_runtime_vocab()?;
     from_bytes(&bundle.acoustic, &bundle.vocoder)
+}
+
+/// Nạp acoustic-only `.vfa` với vocoder dùng chung.
+pub fn load_vfa(
+    vfa: impl AsRef<std::path::Path>,
+    vocoder: impl AsRef<std::path::Path>,
+) -> Result<NativeEngine, String> {
+    let bundle = VfaBundle::read_path(vfa)?;
+    bundle.verify_runtime_vocab()?;
+    let vocoder = std::fs::read(vocoder.as_ref())
+        .map_err(|error| format!("đọc {}: {error}", vocoder.as_ref().display()))?;
+    bundle.verify_vocoder(&vocoder)?;
+    from_bytes(&bundle.acoustic, &vocoder)
 }
 
 /// Nạp model từ bytes (iOS/Android/browser bundle không có path).

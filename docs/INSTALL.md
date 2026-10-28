@@ -83,6 +83,8 @@ Server nhận `dictionary` text hoặc `overrides` JSON; có thể phục vụ w
 ./run.sh --web-dir web --token 'đổi-token' --host 127.0.0.1 --port 8000
 # CLI hợp nhất: server + web + auth
 vifasttts-rs server --web-dir web --token 'đổi-token' --port 8000
+# chỉ API, không phục vụ web
+vifasttts-rs server --api-only --port 8000
 # web ở origin khác cần thêm --cors
 ```
 

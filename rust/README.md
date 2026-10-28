@@ -69,12 +69,19 @@ cargo build --release -p vifasttts-desktop -p vifasttts-tui -p vifasttts-http-se
 ./target/release/vifasttts-desktop --smoke
 ./target/release/vifasttts-rs              # mặc định mở TUI
 ./target/release/vifasttts-rs server       # server + web (nếu có web/)
+./target/release/vifasttts-rs server --api-only  # chỉ API
 ./target/release/vifasttts-rs --help
 
-# Model bundle .vfts (manifest + ONNX + snapshot resources)
+# Model bundle full .vfts (manifest + ONNX + snapshot resources)
 rust/target/release/vifasttts-rs vfts pack --output n0.vfts
 rust/target/release/vifasttts-rs vfts inspect n0.vfts
 rust/target/release/vifasttts-rs synth --vfts n0.vfts --text "Xin chào" --output out.wav
+
+# Acoustic-only .vfa (~28 MB) dùng chung Vocos pretrained
+rust/target/release/vifasttts-rs vfa pack --output n0.vfa \
+  --vocoder artifacts/onnx/n0_q/vocoder.onnx
+rust/target/release/vifasttts-rs synth --vfa n0.vfa \
+  --vocoder artifacts/onnx/n0_q/vocoder.onnx --text "Xin chào" --output out.wav
 
 # C ABI (macOS; Linux/Windows build tương tự)
 cargo build --release -p vifasttts-ffi

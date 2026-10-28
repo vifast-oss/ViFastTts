@@ -11,7 +11,7 @@ use std::ptr;
 use std::slice;
 
 use vifasttts_native::{
-    NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfts, ort_info,
+    NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfa, load_vfts, ort_info,
 };
 
 thread_local! {
@@ -142,6 +142,20 @@ pub extern "C" fn vifasttts_engine_new_vfts(path: *const c_char) -> *mut NativeE
     guard(ptr::null_mut(), || {
         let path = c_path(path)?;
         let engine = load_vfts(path)?;
+        Ok(Box::into_raw(Box::new(engine)))
+    })
+}
+
+/// Nạp acoustic-only `.vfa` + vocoder dùng chung.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_engine_new_vfa(
+    vfa: *const c_char,
+    vocoder: *const c_char,
+) -> *mut NativeEngine {
+    guard(ptr::null_mut(), || {
+        let vfa = c_path(vfa)?;
+        let vocoder = c_path(vocoder)?;
+        let engine = load_vfa(vfa, vocoder)?;
         Ok(Box::into_raw(Box::new(engine)))
     })
 }

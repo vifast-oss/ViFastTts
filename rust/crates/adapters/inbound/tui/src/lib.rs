@@ -27,7 +27,7 @@ use ratatui::{Frame, Terminal};
 
 use vifasttts_app::parse_dictionary;
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
-use vifasttts_native::{NativeEngine, SynthesisOptions, load, load_vfts};
+use vifasttts_native::{NativeEngine, SynthesisOptions, load, load_vfa, load_vfts};
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
 
@@ -57,6 +57,9 @@ pub struct TuiArgs {
     /// Nạp model từ bundle `.vfts`.
     #[arg(long)]
     vfts: Option<PathBuf>,
+    /// Nạp acoustic-only `.vfa` (dùng `--vocoder`).
+    #[arg(long)]
+    vfa: Option<PathBuf>,
 }
 
 fn default_model(name: &str) -> PathBuf {
@@ -81,6 +84,7 @@ impl Default for TuiArgs {
             fixed_pauses: false,
             dictionary: None,
             vfts: None,
+            vfa: None,
         }
     }
 }
@@ -312,12 +316,15 @@ fn spawn_local(
     acoustic: PathBuf,
     vocoder: PathBuf,
     vfts: Option<PathBuf>,
+    vfa: Option<PathBuf>,
     event_tx: Sender<TuiEvent>,
 ) -> Sender<LocalCommand> {
     let (command_tx, command_rx) = mpsc::channel();
     thread::spawn(move || {
         let _ = event_tx.send(TuiEvent::Status("Đang nạp model local…".to_string()));
-        let loaded = if let Some(path) = vfts {
+        let loaded = if let Some(path) = vfa {
+            load_vfa(path, &vocoder)
+        } else if let Some(path) = vfts {
             load_vfts(path)
         } else {
             load(&acoustic, &vocoder)
@@ -369,6 +376,7 @@ pub fn run(args: TuiArgs) -> Result<()> {
             args.acoustic.clone(),
             args.vocoder.clone(),
             args.vfts.clone(),
+            args.vfa.clone(),
             event_tx.clone(),
         ))
     } else {

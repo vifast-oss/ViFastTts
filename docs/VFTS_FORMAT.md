@@ -49,6 +49,26 @@ Giữ tương thích schema hiện tại:
   `from_bytes` hiện tại.
 - Chữ ký số (minisign/cosign) là phase sau; sha256 trong manifest không thay chữ ký.
 
+## `.vfa` — acoustic-only, vocoder dùng chung
+
+Vocoder hiện tại là **Vocos pretrained `charactr/vocos-mel-24khz`** (không phải
+fine-tune N0; fine-tune 10k đã bị loại vì rè). Vì vậy có thể dùng chung vocoder
+cho các acoustic model cùng contract mel.
+
+```bash
+# đóng gói acoustic-only (~28 MB thay vì ~76 MB full)
+rust/target/release/vifasttts-rs vfa pack \
+  --output n0.vfa \
+  --vocoder artifacts/onnx/n0_q/vocoder.onnx
+
+# synth
+rust/target/release/vifasttts-rs synth --vfa n0.vfa \
+  --vocoder artifacts/onnx/n0_q/vocoder.onnx --text "Xin chào"
+```
+
+`.vfa` manifest ghi `vocoder.id`, `vocoder.sha256`, sample contract; loader trả
+lỗi nếu vocoder không khớp hoặc frontend/vocab khác runtime.
+
 ## Đã có trong code
 
 ```bash

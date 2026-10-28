@@ -919,14 +919,14 @@ Workspace `rust/` gồm 23 crate, khoảng **11.0k dòng** Rust + resources:
 | `vifasttts-mobile` | mobile composition root: model, status, synth, `AudioSink` | iOS/Android; chưa có audio adapter/UI |
 | `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP + server nội bộ, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS/Linux/Windows package; CI smoke cả ba |
 | `vifasttts-tui` | terminal UI ratatui/crossterm: nhập text, synth local/remote, lưu WAV | có trong package desktop; model/ORT dùng chung |
-| `vifasttts-vfts` | bundle `.vfts`: manifest + ONNX + snapshot frontend; hash/traversal/zip-bomb | loader native/CLI/server/TUI/FFI/mobile |
+| `vifasttts-vfts` | `.vfts` full + `.vfa` acoustic-only (vocoder hash); hash/traversal/zip-bomb | loader native/CLI/server/TUI/FFI/mobile |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
 | `vifasttts-cli` | không args = TUI; `server` = HTTP + web; `inspect/synth/stream/bench/vfts` | CLI production; TUI/server dùng chung binary |
 | `vifasttts-tools` | `mel-ids`, `synth-ids` | Parity model; cần native |
 | `vifasttts-parse` | `parse`, `parse-batch` | Text-only; **không link ORT** |
 | `vifasttts-ffi` | C ABI `cdylib`/`staticlib`, header; `vifasttts_synthesize_karaoke` trả WAV + JSON timing | `catch_unwind`, lỗi qua `vifasttts_last_error`, bytes/streaming |
-| `vifasttts-http-server` | axum `/healthz`, `/api/config`, `/api/tts` (WAV hoặc JSON karaoke), `/api/tts/stream` (NDJSON) | Có streaming + karaoke; chưa auth/rate-limit/admin |
+| `vifasttts-http-server` | axum `/healthz`, `/api/config`, `/api/tts` (WAV/JSON), `/api/tts/stream`; `--web-dir`, `--api-only`, `--token`, `--cors` | Có streaming + karaoke |
 
 - Dữ liệu frontend: `rust/crates/core/domain/text/resources/*.json` (vocab,
   acronyms, english, products, letter_readings, overrides_vi, custom_reading,

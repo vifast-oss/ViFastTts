@@ -370,6 +370,306 @@ impl ModelSource for VftsBundle {
     }
 }
 
+// ---------------------------------------------------------------------------
+// `.vfa` — acoustic-only voice pack, dùng chung vocoder theo SHA256
+// ---------------------------------------------------------------------------
+
+pub const VFA_FORMAT: &str = "vifasttts-acoustic-v1";
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct VocoderRef {
+    pub id: String,
+    pub sha256: String,
+    pub sample_rate: u32,
+    pub n_mels: usize,
+    pub n_fft: usize,
+    pub hop_length: usize,
+    #[serde(default)]
+    pub mel_hash: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct VfaManifest {
+    pub format: String,
+    pub arch: String,
+    pub sample_rate: u32,
+    pub n_mels: usize,
+    pub n_fft: usize,
+    pub hop_length: usize,
+    pub vocab_version: String,
+    pub vocab_hash: String,
+    pub acoustic: BundleFile,
+    pub vocoder: VocoderRef,
+    pub license: String,
+    #[serde(default)]
+    pub frontend: BTreeMap<String, BundleFile>,
+}
+
+#[derive(Clone, Debug)]
+pub struct VfaBundle {
+    pub manifest: VfaManifest,
+    pub acoustic: Vec<u8>,
+    pub frontend: BTreeMap<String, Vec<u8>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct VfaOptions {
+    pub arch: String,
+    pub sample_rate: u32,
+    pub n_mels: usize,
+    pub n_fft: usize,
+    pub hop_length: usize,
+    pub vocab_version: String,
+    pub vocab_hash: String,
+    pub license: String,
+    pub vocoder: VocoderRef,
+}
+
+impl Default for VfaOptions {
+    fn default() -> Self {
+        Self {
+            arch: "v2_slot5".to_string(),
+            sample_rate: 24_000,
+            n_mels: 100,
+            n_fft: 1024,
+            hop_length: 256,
+            vocab_version: vifasttts_text::vocab::vocab_version(),
+            vocab_hash: vifasttts_text::vocab::vocab_hash(),
+            license: "research/non-commercial; dataset CC-BY-NC-4.0".to_string(),
+            vocoder: VocoderRef {
+                id: "vocos-mel-24khz".to_string(),
+                sha256: "b3eb09cf5c3baac334b1c0bbea070d02e33e55572e3755865b986cd05cf6b03f"
+                    .to_string(),
+                sample_rate: 24_000,
+                n_mels: 100,
+                n_fft: 1024,
+                hop_length: 256,
+                mel_hash: None,
+            },
+        }
+    }
+}
+
+fn read_frontend(dir: Option<&Path>) -> Result<BTreeMap<String, Vec<u8>>, String> {
+    let mut frontend = BTreeMap::new();
+    let Some(dir) = dir else {
+        return Ok(frontend);
+    };
+    if !dir.is_dir() {
+        return Err(format!("frontend dir không tồn tại: {}", dir.display()));
+    }
+    let mut paths: Vec<PathBuf> = std::fs::read_dir(dir)
+        .map_err(|error| format!("đọc {}: {error}", dir.display()))?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "json"))
+        .collect();
+    paths.sort();
+    for path in paths {
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| format!("tên frontend không UTF-8: {}", path.display()))?;
+        frontend.insert(name.to_string(), read_file(&path)?);
+    }
+    Ok(frontend)
+}
+
+impl VfaBundle {
+    pub fn from_paths(
+        acoustic: impl AsRef<Path>,
+        vocoder: impl AsRef<Path>,
+        frontend_dir: Option<&Path>,
+        mut options: VfaOptions,
+    ) -> Result<Self, String> {
+        let acoustic = read_file(acoustic.as_ref())?;
+        let vocoder_bytes = read_file(vocoder.as_ref())?;
+        options.vocoder.sha256 = sha256_bytes(&vocoder_bytes);
+        let frontend = read_frontend(frontend_dir)?;
+        let mut manifest = VfaManifest {
+            format: VFA_FORMAT.to_string(),
+            arch: options.arch,
+            sample_rate: options.sample_rate,
+            n_mels: options.n_mels,
+            n_fft: options.n_fft,
+            hop_length: options.hop_length,
+            vocab_version: options.vocab_version,
+            vocab_hash: options.vocab_hash,
+            acoustic: BundleFile {
+                file: ACOUSTIC_NAME.to_string(),
+                sha256: sha256_bytes(&acoustic),
+            },
+            vocoder: options.vocoder,
+            license: options.license,
+            frontend: BTreeMap::new(),
+        };
+        for (name, bytes) in &frontend {
+            manifest.frontend.insert(
+                name.clone(),
+                BundleFile {
+                    file: format!("frontend/{name}"),
+                    sha256: sha256_bytes(bytes),
+                },
+            );
+        }
+        Ok(Self {
+            manifest,
+            acoustic,
+            frontend,
+        })
+    }
+
+    pub fn to_bytes(&self) -> Result<Vec<u8>, String> {
+        self.validate()?;
+        let cursor = Cursor::new(Vec::new());
+        let mut zip = ZipWriter::new(cursor);
+        let manifest = serde_json::to_vec_pretty(&self.manifest)
+            .map_err(|error| format!("serialize VFA manifest: {error}"))?;
+        add_entry(&mut zip, MANIFEST_NAME, &manifest)?;
+        add_entry(&mut zip, ACOUSTIC_NAME, &self.acoustic)?;
+        for (name, bytes) in &self.frontend {
+            let entry = &self.manifest.frontend[name];
+            add_entry(&mut zip, &entry.file, bytes)?;
+        }
+        Ok(zip
+            .finish()
+            .map_err(|error| format!("finish VFA zip: {error}"))?
+            .into_inner())
+    }
+
+    pub fn write_path(&self, path: impl AsRef<Path>) -> Result<(), String> {
+        let bytes = self.to_bytes()?;
+        std::fs::write(path.as_ref(), bytes)
+            .map_err(|error| format!("ghi {}: {error}", path.as_ref().display()))
+    }
+
+    pub fn read_path(path: impl AsRef<Path>) -> Result<Self, String> {
+        Self::read_bytes(&read_file(path.as_ref())?)
+    }
+
+    pub fn read_bytes(bytes: &[u8]) -> Result<Self, String> {
+        let mut archive = ZipArchive::new(Cursor::new(bytes))
+            .map_err(|error| format!("không phải ZIP/.vfa hợp lệ: {error}"))?;
+        let mut entries = BTreeMap::<String, Vec<u8>>::new();
+        let mut total = 0u64;
+        for index in 0..archive.len() {
+            let mut file = archive
+                .by_index(index)
+                .map_err(|error| format!("đọc ZIP entry {index}: {error}"))?;
+            let name = file
+                .name()
+                .map_err(|error| format!("tên ZIP entry {index}: {error}"))?
+                .to_string();
+            if !safe_entry_name(&name) {
+                return Err(format!("entry .vfa không an toàn: {name}"));
+            }
+            if file.is_dir() {
+                continue;
+            }
+            total = total.saturating_add(file.size());
+            if total > MAX_UNCOMPRESSED {
+                return Err(".vfa vượt giới hạn giải nén".to_string());
+            }
+            let mut data = Vec::with_capacity(file.size() as usize);
+            file.read_to_end(&mut data)
+                .map_err(|error| format!("đọc {name}: {error}"))?;
+            entries.insert(name, data);
+        }
+        let manifest: VfaManifest = serde_json::from_slice(
+            entries
+                .remove(MANIFEST_NAME)
+                .ok_or_else(|| "thiếu manifest.json".to_string())?
+                .as_slice(),
+        )
+        .map_err(|error| format!("parse VFA manifest: {error}"))?;
+        if manifest.format != VFA_FORMAT {
+            return Err(format!("format {} không phải .vfa", manifest.format));
+        }
+        let acoustic = entries
+            .remove(&manifest.acoustic.file)
+            .or_else(|| entries.remove(ACOUSTIC_NAME))
+            .ok_or_else(|| "thiếu acoustic.onnx".to_string())?;
+        check_hash("acoustic", &acoustic, &manifest.acoustic.sha256)?;
+        let mut frontend = BTreeMap::new();
+        for (name, file) in &manifest.frontend {
+            let data = entries
+                .remove(&file.file)
+                .ok_or_else(|| format!("thiếu frontend {name}"))?;
+            check_hash(name, &data, &file.sha256)?;
+            frontend.insert(name.clone(), data);
+        }
+        let bundle = Self {
+            manifest,
+            acoustic,
+            frontend,
+        };
+        bundle.validate()?;
+        Ok(bundle)
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        if self.manifest.format != VFA_FORMAT {
+            return Err(format!("format không hỗ trợ: {}", self.manifest.format));
+        }
+        check_hash("acoustic", &self.acoustic, &self.manifest.acoustic.sha256)?;
+        for (name, bytes) in &self.frontend {
+            let entry = self
+                .manifest
+                .frontend
+                .get(name)
+                .ok_or_else(|| format!("frontend {name} thiếu manifest entry"))?;
+            check_hash(name, bytes, &entry.sha256)?;
+        }
+        Ok(())
+    }
+
+    pub fn verify_vocoder(&self, vocoder: &[u8]) -> Result<(), String> {
+        check_hash("vocoder", vocoder, &self.manifest.vocoder.sha256)?;
+        Ok(())
+    }
+
+    pub fn verify_runtime_vocab(&self) -> Result<(), String> {
+        let Some(vocab) = self.frontend.get("vocab.json") else {
+            return Ok(());
+        };
+        let value: serde_json::Value = serde_json::from_slice(vocab)
+            .map_err(|error| format!("frontend/vocab.json: {error}"))?;
+        let version = value.get("version").and_then(|v| v.as_str()).unwrap_or("");
+        let hash = value.get("hash").and_then(|v| v.as_str()).unwrap_or("");
+        if version != self.manifest.vocab_version || hash != self.manifest.vocab_hash {
+            return Err("vocab frontend không khớp manifest".to_string());
+        }
+        let runtime_hash = vifasttts_text::vocab::vocab_hash();
+        if hash != runtime_hash {
+            return Err(format!(
+                "vocab bundle {hash} != runtime {runtime_hash}; cần đúng frontend"
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn unpack_to(&self, output: impl AsRef<Path>) -> Result<(), String> {
+        let output = output.as_ref();
+        std::fs::create_dir_all(output)
+            .map_err(|error| format!("tạo {}: {error}", output.display()))?;
+        std::fs::write(
+            output.join(MANIFEST_NAME),
+            serde_json::to_vec_pretty(&self.manifest)
+                .map_err(|error| format!("serialize manifest: {error}"))?,
+        )
+        .map_err(|error| format!("ghi manifest: {error}"))?;
+        std::fs::write(output.join(ACOUSTIC_NAME), &self.acoustic)
+            .map_err(|error| format!("ghi acoustic: {error}"))?;
+        for (name, bytes) in &self.frontend {
+            let dir = output.join("frontend");
+            std::fs::create_dir_all(&dir).map_err(|error| format!("tạo frontend: {error}"))?;
+            std::fs::write(dir.join(name), bytes)
+                .map_err(|error| format!("ghi frontend {name}: {error}"))?;
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

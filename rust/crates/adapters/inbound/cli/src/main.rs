@@ -7,11 +7,36 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_native::{
-    KaraokeDocument, PackOptions, StreamControl, SynthesisOptions, TimedUnit, VftsBundle,
-    from_bytes, load, load_verified, load_vfts, ort_info,
+    KaraokeDocument, PackOptions, StreamControl, SynthesisOptions, TimedUnit, VfaBundle,
+    VfaOptions, VftsBundle, from_bytes, load, load_verified, load_vfa, load_vfts, ort_info,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::{ParseOptions, live_parse_options};
+
+#[derive(Subcommand, Debug)]
+enum VfaAction {
+    /// Đóng gói acoustic + snapshot frontend, tham chiếu vocoder.
+    Pack {
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        frontend_dir: Option<PathBuf>,
+        #[arg(long, default_value = "vocos-mel-24khz")]
+        vocoder_id: String,
+    },
+    Inspect {
+        input: PathBuf,
+    },
+    Unpack {
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+}
 
 #[derive(Subcommand, Debug)]
 enum VftsAction {
@@ -97,6 +122,9 @@ enum Command {
         /// Nạp model từ bundle `.vfts`.
         #[arg(long)]
         vfts: Option<PathBuf>,
+        /// Nạp acoustic-only `.vfa` (dùng `--vocoder` làm vocoder chung).
+        #[arg(long)]
+        vfa: Option<PathBuf>,
         /// Gọi server thay vì chạy local (ví dụ http://127.0.0.1:8000).
         #[arg(long)]
         server: Option<String>,
@@ -144,6 +172,11 @@ enum Command {
         #[arg(long)]
         karaoke: Option<PathBuf>,
     },
+    /// Đóng gói acoustic-only `.vfa` (dùng chung vocoder).
+    Vfa {
+        #[command(subcommand)]
+        action: VfaAction,
+    },
     /// Đóng gói/kiểm tra/giải nén model `.vfts`.
     Vfts {
         #[command(subcommand)]
@@ -161,6 +194,9 @@ enum Command {
         manifest: Option<PathBuf>,
         #[arg(long)]
         vfts: Option<PathBuf>,
+        /// Acoustic-only `.vfa`; dùng vocoder trong `--vocoder`.
+        #[arg(long)]
+        vfa: Option<PathBuf>,
         #[arg(long, default_value = "127.0.0.1")]
         host: String,
         #[arg(long, default_value_t = 8000)]
@@ -174,6 +210,9 @@ enum Command {
         /// Cho phép web UI ở origin khác gọi API (CORS).
         #[arg(long)]
         cors: bool,
+        /// Chỉ chạy API, không phục vụ web.
+        #[arg(long)]
+        api_only: bool,
     },
     /// Benchmark trong một process (load một lần, chạy nhiều lần).
     Bench {
@@ -309,6 +348,7 @@ fn main() -> Result<()> {
             overrides,
             custom_reading,
             vfts,
+            vfa,
             server,
             token,
             srt,
@@ -359,9 +399,12 @@ fn main() -> Result<()> {
                 }
                 return Ok(());
             }
-            let mut engine = match vfts {
-                Some(path) => load_vfts(path).map_err(anyhow::Error::msg)?,
-                None => load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?,
+            let mut engine = if let Some(path) = vfa {
+                load_vfa(path, &vocoder).map_err(anyhow::Error::msg)?
+            } else if let Some(path) = vfts {
+                load_vfts(path).map_err(anyhow::Error::msg)?
+            } else {
+                load(&acoustic, &vocoder).map_err(anyhow::Error::msg)?
             };
             let mut options = SynthesisOptions {
                 speed,
@@ -476,12 +519,14 @@ fn main() -> Result<()> {
             vocoder,
             manifest,
             vfts,
+            vfa,
             host,
             port,
             max_chars,
             token,
             web_dir,
             cors,
+            api_only,
         } => {
             let web_dir = web_dir.or_else(|| {
                 let dist = PathBuf::from("web/dist");
@@ -512,18 +557,59 @@ fn main() -> Result<()> {
                 vocoder,
                 manifest,
                 vfts,
+                vfa,
                 host,
                 port,
                 max_chars,
                 token,
                 web_dir,
                 cors,
+                api_only,
             };
             let runtime = tokio::runtime::Runtime::new().map_err(anyhow::Error::msg)?;
             runtime
                 .block_on(vifasttts_http_server::serve(config))
                 .map_err(anyhow::Error::msg)?;
         }
+        Command::Vfa { action } => match action {
+            VfaAction::Pack {
+                acoustic,
+                vocoder,
+                output,
+                frontend_dir,
+                vocoder_id,
+            } => {
+                let frontend = frontend_dir.or_else(default_frontend_dir);
+                let mut options = VfaOptions::default();
+                options.vocoder.id = vocoder_id;
+                let bundle =
+                    VfaBundle::from_paths(&acoustic, &vocoder, frontend.as_deref(), options)
+                        .map_err(anyhow::Error::msg)?;
+                bundle.verify_runtime_vocab().map_err(anyhow::Error::msg)?;
+                bundle.write_path(&output).map_err(anyhow::Error::msg)?;
+                println!(
+                    "wrote {} ({} B)",
+                    output.display(),
+                    std::fs::metadata(&output)?.len()
+                );
+            }
+            VfaAction::Inspect { input } => {
+                let bundle = VfaBundle::read_path(&input).map_err(anyhow::Error::msg)?;
+                println!("{}", serde_json::to_string_pretty(&bundle.manifest)?);
+                println!(
+                    "acoustic: {} B; frontend: {}",
+                    bundle.acoustic.len(),
+                    bundle.frontend.len()
+                );
+                bundle.verify_runtime_vocab().map_err(anyhow::Error::msg)?;
+                println!("runtime vocab: OK");
+            }
+            VfaAction::Unpack { input, output } => {
+                let bundle = VfaBundle::read_path(&input).map_err(anyhow::Error::msg)?;
+                bundle.unpack_to(&output).map_err(anyhow::Error::msg)?;
+                println!("unpacked {}", output.display());
+            }
+        },
         Command::Vfts { action } => match action {
             VftsAction::Pack {
                 acoustic,

@@ -21,7 +21,8 @@ use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use vifasttts_app::parse_dictionary;
 use vifasttts_native::{
-    KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified, load_vfts,
+    KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified, load_vfa,
+    load_vfts,
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
@@ -49,9 +50,15 @@ pub struct Args {
     /// Nạp model từ bundle `.vfts` (thay acoustic/vocoder).
     #[arg(long)]
     pub vfts: Option<PathBuf>,
+    /// Nạp acoustic-only `.vfa`; cần `--vocoder` dùng chung.
+    #[arg(long)]
+    pub vfa: Option<PathBuf>,
     /// Cho phép CORS cho web UI chạy ở origin khác (chỉ dùng khi cần).
     #[arg(long)]
     pub cors: bool,
+    /// Chỉ chạy API, không phục vụ web dù có `--web-dir`/`web`.
+    #[arg(long)]
+    pub api_only: bool,
 }
 
 struct AppState {
@@ -380,7 +387,9 @@ impl TapAudio for Response {
 }
 
 pub async fn serve(args: Args) -> Result<(), String> {
-    let engine = if let Some(path) = args.vfts {
+    let engine = if let Some(path) = args.vfa {
+        load_vfa(path, &args.vocoder)?
+    } else if let Some(path) = args.vfts {
         load_vfts(path)?
     } else {
         match args.manifest {
@@ -401,7 +410,9 @@ pub async fn serve(args: Args) -> Result<(), String> {
         .route("/api/tts/stream", post(tts_stream))
         .layer(DefaultBodyLimit::max(64 * 1024))
         .with_state(state);
-    if let Some(web_dir) = args.web_dir {
+    if !args.api_only
+        && let Some(web_dir) = args.web_dir
+    {
         if web_dir.is_dir() {
             app = app.fallback_service(ServeDir::new(web_dir));
         } else {
@@ -431,7 +442,9 @@ impl Default for Args {
             token: None,
             web_dir: None,
             vfts: None,
+            vfa: None,
             cors: false,
+            api_only: false,
         }
     }
 }

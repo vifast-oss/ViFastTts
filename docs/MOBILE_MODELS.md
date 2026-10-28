@@ -21,6 +21,14 @@ Giữ bundle như hiện tại:
 - không cần progress/retry/hash;
 - APK lớn ~110 MB (vẫn dưới giới hạn sideload; Play có thể dùng App Bundle).
 
+### Full bundle vs acoustic-only
+
+- `.vfts`: full, ~76 MB, an toàn/offline, chứa cả vocoder.
+- `.vfa`: acoustic + frontend, ~28 MB; tham chiếu vocoder bằng SHA256. Dùng khi
+  vocoder pretrained/shared đã có và khớp contract mel.
+- Mặc định tải full `.vfts`; client có thể chọn `.vfa` nếu `vocoder.sha256`
+  khớp vocoder đang có.
+
 ### Nếu ưu tiên APK nhỏ
 
 Thin APK + tải lần đầu:
