@@ -16,8 +16,9 @@ HF chỉ đếm lượt tải qua **query file** mặc định (`config.json`, `
 `configs/small_ngochuyen.yaml` (thư mục con), nên API trả `downloads: 0` dù có người tải
 ONNX trực tiếp.
 
-- Thêm **`config.yaml` ở root** (copy từ `configs/small_ngochuyen.yaml`) để có query file;
-  sau đó `hf_hub_download(..., "config.yaml")` mới được đếm.
+- Đã thêm **`config.yaml` ở root** (copy từ `configs/small_ngochuyen.yaml`) ở commit
+  `eb7a128f502b0047ef0a2d570f935ec53fd64f31`; sau đó `hf_hub_download(..., "config.yaml")`
+  mới được đếm.
 - Tải thẳng `onnx/acoustic.onnx` **không** được đếm nếu không có filter riêng. Muốn đếm
   đúng ONNX, cần đăng ký `countDownloads` cho library `vifasttts` trong
   `huggingface.js` hoặc chấp nhận undercount.
