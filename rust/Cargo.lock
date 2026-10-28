@@ -5068,6 +5068,7 @@ dependencies = [
  "vifasttts-audio",
  "vifasttts-http-client",
  "vifasttts-http-server",
+ "vifasttts-huggingface",
  "vifasttts-native",
  "vifasttts-text",
  "vifasttts-tui",
@@ -5087,6 +5088,7 @@ dependencies = [
  "vifasttts-app",
  "vifasttts-engine",
  "vifasttts-http-client",
+ "vifasttts-huggingface",
  "vifasttts-native",
  "vifasttts-text",
 ]
@@ -5134,6 +5136,16 @@ dependencies = [
  "vifasttts-app",
  "vifasttts-native",
  "vifasttts-text",
+]
+
+[[package]]
+name = "vifasttts-huggingface"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "ureq",
+ "urlencoding",
 ]
 
 [[package]]
