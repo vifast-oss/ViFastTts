@@ -15,10 +15,19 @@ Cả hai đều là file ZIP nhị phân thông thường, nên có thể đưa 
 | `models.json` catalog | HuggingFace | client đọc một URL, thêm giọng không cần app update |
 | Vocoder dùng chung | HuggingFace + app bundle | `.vfa` tham chiếu SHA256 |
 | Model nội bộ/riêng | private HF/server | không đưa public GitHub |
+| Raw `acoustic.onnx` | repo nội bộ/dev | **không phải file phân phối cho người dùng** |
 | App/CLI/server binary | GitHub Release | installer + changelog + checksum |
 
 Không nên nhét toàn bộ giọng vào mỗi GitHub release; sẽ phình artifact. GitHub
 Release giữ **mặc định + bundle tiêu biểu**, HuggingFace giữ **catalog giọng**.
+
+**Chỉ phân phối `.vfa`/`.vfts` cho người dùng.** Raw `acoustic.onnx` thiếu
+vocoder, manifest, `vocab_hash`, dictionary snapshot và license; tải riêng nó
+không đủ để chạy. Giữ raw ONNX trong repo/dev/export hoặc thư mục `internal/`
+của HF, không đặt làm link tải chính.
+
+`models.json` phải trỏ tới `.vfa` (thêm giọng) hoặc `.vfts` (full/offline),
+không trỏ `acoustic.onnx`.
 
 ## HuggingFace
 

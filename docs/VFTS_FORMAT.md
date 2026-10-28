@@ -45,8 +45,9 @@ Giữ tương thích schema hiện tại:
 - Đọc manifest trước, kiểm `format`, `arch`, `vocab_hash`, SHA256 của hai ONNX
   trước khi gọi ORT.
 - Giới hạn kích thước giải nén (ví dụ 512 MB) để chống zip bomb.
-- `.vfts` chỉ là **container phân phối**; `NativeEngine` vẫn nhận bytes ONNX như
-  `from_bytes` hiện tại.
+- `.vfts`/`.vfa` là **container phân phối chính thức**; raw `acoustic.onnx` chỉ
+  dùng nội bộ/dev vì thiếu vocoder/manifest/dictionary/license.
+- `NativeEngine` vẫn nhận bytes ONNX như `from_bytes` cho dev.
 - Chữ ký số (minisign/cosign) là phase sau; sha256 trong manifest không thay chữ ký.
 
 ## `.vfa` — acoustic-only, vocoder dùng chung
