@@ -25,12 +25,12 @@
 ## 1. Trạng thái hiện tại (tóm tắt)
 
 - **Live:** https://vifasttts.hoctuthien.com/ — ONNX FP32, `arch=v2_slot5`,
-  `onset_has_q=true`, `sharpen_alpha=1.5`, `pause_mode=model`.
+  `vocab_version=vi-q25-v1` / `vocab_hash`, `sharpen_alpha=1.5`, `pause_mode=model`.
 - **Model đang live:** N0 Ngọc Huyền **Q-init** (`Q` = `K`, bit-exact với N0 Bắc cũ);
   checkpoint nguồn `runs/acoustic_ngochuyen_q/init_q.pt`.
 - **Bản fine-tune Q 3k** (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export nhưng **chưa live**;
   chỉ dùng để so tai qua release tạm `q-preview-2026-10-27` (2 WAV).
-- **Model/ONNX cũ** không có `onset_has_q=true` bị từ chối rõ ràng; **không có adapter Q→K**.
+- **Model/ONNX cũ** thiếu `vocab_hash` không còn được hỗ trợ; **không có adapter Q→K**.
 - **Test:** 2.916 pass / 24 skip; `ruff` sạch (28/10/2026).
 - **Demo:** custom reading local-first, gửi duyệt khi bật checkbox, STEM examples,
   feedback/báo lỗi, admin thống kê; nội dung feedback chờ `ADMIN_PASSWORD`.

@@ -24,7 +24,7 @@
 | Hạng mục | Giá trị |
 | --- | --- |
 | URL | https://vifasttts.hoctuthien.com/ |
-| Health | `{"ok":true,"sample_rate":24000,"arch":"v2_slot5","onset_has_q":true,"alpha":1.5,"pause":"model"}` |
+| Health | `{"ok":true,"sample_rate":24000,"arch":"v2_slot5","vocab_version":"vi-q25-v1","vocab_hash":"…","alpha":1.5,"pause":"model"}` |
 | Acoustic | N0 Ngọc Huyền **Q-init**; `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…` |
 | ONNX live | `artifacts/onnx/n0_q/acoustic.onnx` sha256 `16e66b70b9c49c…`; vocoder `b3eb09cf5c3baa…` |
 | Release asset | `n0_onnx_fp32_q.zip` sha256 `ef35567c4433cf…` (trong release `n0-ngochuyen-prod-v1`) |
@@ -34,7 +34,7 @@
 
 **Vì sao Q-init:** Q là token thứ 25 ở cuối vocab; `Q = K` giữ output **bit-exact** với N0 Bắc cũ
 (đã kiểm mel/durations/f0 trên câu có `quốc/quê/qua/quyển/quân`). Không có adapter Q→K runtime:
-checkpoint/ONNX cũ thiếu `onset_has_q=true` bị từ chối rõ ràng.
+checkpoint/ONNX cũ thiếu `vocab_hash` không còn được hỗ trợ.
 
 ## 2. Bản ứng viên (chưa live)
 

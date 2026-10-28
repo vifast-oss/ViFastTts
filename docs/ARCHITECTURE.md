@@ -3,7 +3,7 @@
 ViFastTts dùng frontend tiếng Việt chung và checkpoint single-speaker, single-dialect. Tài liệu này mô tả **trạng thái as-built** trong `src/vifasttts`; **luồng chi tiết train → inference → export** nằm ở `docs/MODEL_FLOW.md`; trạng thái tổng hợp và nhật ký quyết định ở `docs/handoff/TRANG_THAI.md`; đề xuất nâng cấp dài hạn ở `docs/TTS_ARCHITECTURE_RESEARCH.md` (mục 9).
 
 **Model đang live (27/10/2026):** N0 Ngọc Huyền `v2_slot5` small 6,1M, ONNX FP32 +
-Vocos pretrained; `onset_has_q=true`, Q-init. N0 dùng MFA thật (6.989/6.989 TextGrid),
+Vocos pretrained; `vocab_version` + `vocab_hash`, Q-init. N0 dùng MFA thật (6.989/6.989 TextGrid),
 không dùng alignment chia đều. Xem `docs/handoff/N0_DEPLOY.md`.
 
 ## Sơ đồ as-built
@@ -43,7 +43,7 @@ raw text
   `model.use_phonation`. `v2_slot5`: 11 output (thêm `phonation` nếu bật, `slot_durations`,
   `pause_gate` ở cuối), input thêm `speed` + `gate_threshold`; dynamic axes cho batch/số âm tiết/
   frame. Dùng `exp-1` thay `expm1` để export được. Hỗ trợ `--precision fp16|int8`; metadata
-  có `arch`, `onset_has_q`, `seg_method`, `mel_hash`.
+  có `arch`, `vocab_version`, `vocab_hash`, `seg_method`, `mel_hash`.
 - **Runtime ONNX**: `runtime/` chạy acoustic + vocoder ONNX bằng onnxruntime (không cần
   PyTorch), ghép waveform bằng iSTFT numpy, có chia câu dài + fade/peak-normalize —
   `vifasttts synthesize-onnx`; chi tiết `docs/MODEL_FLOW.md` §6.4.

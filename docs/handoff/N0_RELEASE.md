@@ -17,7 +17,7 @@
     acoustic `16e66b70…`, vocoder `b3eb09cf…` (có `SHA256SUMS` bên trong).
   - `n0_onnx_fp32.zip` — N0 cũ chưa có Q: 79.438.477 B,
     sha256 `3521ac2e79aabf179017a2ba7abcaf56f13bbf852efd10a3a7742b609045c687`;
-    **bị runtime mới từ chối** vì thiếu `onset_has_q=true`, giữ lịch sử.
+    **bị runtime mới từ chối** vì thiếu `vocab_hash`, giữ lịch sử.
   - `n0_onnx_fp32_SHA256SUMS` — checksum của gói N0 cũ, **không** áp dụng cho gói Q.
 - Nội dung package: acoustic 60k, config/stats, Vocos pretrained, 10 demo, inference/model card/license;
   ONNX FP32 acoustic + vocoder tách riêng.

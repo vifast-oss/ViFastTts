@@ -4,7 +4,7 @@
 
 - **Demo công khai:** https://vifasttts.hoctuthien.com/ — FastAPI + ONNX Runtime CPU,
   acoustic N0 **Q-init** + Vocos pretrained, alpha 1,5, model tự nghỉ.
-- `healthz` phải báo `arch=v2_slot5` + `onset_has_q=true`; ONNX cũ thiếu Q bị từ chối.
+- `healthz` phải báo `arch=v2_slot5` + `vocab_version`; ONNX cũ thiếu hash bị từ chối.
 - Chi tiết VPS/Docker/Traefik, release asset, feedback/admin: `docs/handoff/N0_DEPLOY.md`.
 - Các lệnh `base_24k` dưới đây là **ví dụ chung** cho pipeline; model mẫu N0 dùng
   `configs/small_ngochuyen.yaml` (hoặc `small_ngochuyen_q.yaml` khi export Q).

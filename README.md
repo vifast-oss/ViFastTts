@@ -111,7 +111,7 @@ Muốn train giọng khác, xem `docs/TRAINING.md` + `docs/TRAINING_N0.md`.
 Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
 
 > **Vocab Q:** từ commit `60b5cf9`, onset **Q** đứng cuối vocab (ID cũ không đổi) cho chữ `qu`.
-> Checkpoint/ONNX trước đó chưa có Q và không có `onset_has_q=true` sẽ bị từ chối rõ ràng;
+> Checkpoint/ONNX mới mang `vocab_version` + `vocab_hash`; artifact cũ không còn được hỗ trợ,
 > không dùng adapter Q→K. Bản **đang live** là Q-init (`Q = K`, bit-exact N0 Bắc cũ);
 > fine-tune Q 3k đã train/export nhưng **chưa chọn** — nghe A/B tại release tạm
 > [`q-preview-2026-10-27`](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27).

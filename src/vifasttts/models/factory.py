@@ -16,7 +16,6 @@ from vifasttts.models.vifasttts import ViFastTtsModel
 ARCH_V1 = "v1_syl"
 ARCH_V2 = "v2_slot5"
 ARCHES = (ARCH_V1, ARCH_V2)
-ONSET_HAS_Q_KEY = "onset_has_q"
 
 # Key được warm-start từ B0/v1 sang v2 (§11) — khớp theo tiền tố.
 WARM_START_PREFIXES = ("embedding.", "encoder.", "decoder.", "mel.", "postnet.",
@@ -42,21 +41,10 @@ def build_model(config: dict, vocab_sizes: list[int], arch: str | None = None) -
 OPTIONAL_STATE_KEYS = frozenset({"tone_prior_z", "gate_bias.weight"})  # gate_bias: khởi tạo 0 (v18.29 Fc)
 
 
-def require_onset_has_q(checkpoint: dict, source: str) -> None:
-    """Từ chối checkpoint/ONNX cũ chưa có token Q, tránh ghép frontend mới với model cũ."""
-    value = checkpoint.get(ONSET_HAS_Q_KEY)
-    if value is not True and str(value).strip().lower() not in {"1", "true", "yes"}:
-        raise ValueError(
-            f"{source}: checkpoint thiếu cờ onset_has_q=true (model cũ chưa có Q). "
-            "Hãy dùng checkpoint mới đã fine-tune với Q; không tự ghép frontend mới với model cũ."
-        )
-
-
 def expand_legacy_onset_state(state: dict, target_rows: int, k_row: int) -> dict:
-    """Mở rộng embedding onset cũ (24) thêm hàng Q = K cho fine-tune một lần.
+    """Mở rộng embedding onset cũ (24) thêm hàng Q = K khi warm-start.
 
-    Đây là thao tác migration có chủ đích khi train, KHÔNG phải adapter runtime:
-    checkpoint mới vẫn phải có ``onset_has_q`` và ONNX mới mới được deploy.
+    Đây là migration trọng số có chủ đích khi train; không phải adapter runtime.
     """
     result = dict(state)
     key = "embedding.tables.0.weight"

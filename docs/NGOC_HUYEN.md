@@ -44,7 +44,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 
 > **Vocab Q (27/10/2026):** onset `Q` cho chữ `qu` là cấu trúc chuẩn bị đa phương ngữ,
 > đứng cuối vocab. N0 giọng Bắc dùng Q-init với `Q` = `K` (giữ đúng giọng đã nghe); checkpoint/ONNX
-> mới mang `onset_has_q=true`. Model/ONNX cũ chưa có Q bị từ chối rõ ràng (không adapter).
+> mới mang `vocab_version` + `vocab_hash`. Artifact cũ không được hỗ trợ (không adapter).
 
 | Thành phần | Giá trị |
 |---|---|
@@ -52,7 +52,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 | Sample rate | 24 kHz, mel 100 bin |
 | Train | 17,9 h sạch, 60k bước, batch 8, MPS |
 | Vocoder | Vocos pretrained `charactr/vocos-mel-24khz` (MIT) |
-| ONNX | FP32, opset 18, acoustic + vocoder; `onset_has_q=true` (Q-init đang live) |
+| ONNX | FP32, opset 18, acoustic + vocoder; `vocab_hash` (Q-init đang live) |
 | Đo holdout | mel L1 **4,0 dB** (z 0,298); duration MAE 1,37 frame |
 | Free-run 80 câu | mel **16,57 dB**; length 0,999; pause F1 0,825 |
 | Thanh điệu | thật 0,9835 · copy 0,9784 · free **0,9743** |
@@ -60,7 +60,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 | RTF thực tế | **0,045** end-to-end trên VPS CPU (5 câu, 22,44 s audio / 1,01 s xử lý) |
 
 **Đang live:** **Q-init** (N0 cũ + hàng Q = K) — output bit-exact với N0 Bắc cũ; ONNX
-`n0_q/acoustic.onnx` sha256 `16e66b70…`, `healthz` báo `onset_has_q=true`.
+`n0_q/acoustic.onnx` sha256 `16e66b70…`, `healthz` báo `vocab_version` + `vocab_hash`.
 Fine-tune Q 3k (`val mel 0,26320` · `rough 0,76318`) đã export nhưng **chưa chọn**;
 nghe A/B tại release `q-preview-2026-10-27`. Chi tiết: `docs/Q_ONSET.md`,
 `docs/handoff/N0_DEPLOY.md`, `docs/handoff/TRANG_THAI.md`.

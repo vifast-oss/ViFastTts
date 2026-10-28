@@ -74,7 +74,7 @@ không dùng alignment placeholder. Q: `docs/Q_ONSET.md`.
 | 5 | boundary | 4 | `WORD` / `PHRASE` / `SENTENCE` |
 | 6 | punctuation | 6 | `NONE`/`COMMA`/`PERIOD`/`QUESTION`/`EXCLAMATION`/`OTHER` |
 
-Tổng cộng **69 ID** cho toàn bộ tiếng Việt chuẩn — không UNK, không BPE. Q ở cuối vocab; checkpoint/ONNX mới mang `onset_has_q=true`.
+Tổng cộng **69 ID** cho toàn bộ tiếng Việt chuẩn — không UNK, không BPE. Q ở cuối vocab; checkpoint/ONNX mới mang `vocab_version` + `vocab_hash`.
 Token ngoài tiếng Việt vẫn được mã hoá (xem §6.3): `FALLBACK_REQUIRED` dùng
 `(NONE, NONE, A, NONE, NGANG)` để pipeline không crash.
 
@@ -321,7 +321,7 @@ slot_durations [B,1+5N], pause_gate [B,N]
 ```
 
 - `v2_slot5` dùng input `features + speed [1] + gate_threshold [1]` và output thêm
-  `slot_durations` + `pause_gate`; metadata có `arch`, `onset_has_q`, `seg_method`.
+  `slot_durations` + `pause_gate`; metadata có `arch`, `vocab_version`, `vocab_hash`, `seg_method`.
   Xem `docs/ACOUSTIC_V2.md` §23–§29; N0 live dùng Q-init.
 - `--precision fp32|fp16|int8`: fp16 chuyển toàn graph (giữ io types); int8 quantize
   động weight (QUInt8). Bản chuyển ghi từ file trung gian rồi xoá — `output` luôn hoàn chỉnh.

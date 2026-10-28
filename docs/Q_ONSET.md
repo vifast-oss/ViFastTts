@@ -1,7 +1,7 @@
 # Q onset — triển khai 27/10/2026
 
-> Quyết định Agent 0: thêm **Q** trực tiếp vào vocab, không làm `vocab_version`; chỉ dùng cờ
-> metadata `onset_has_q` để phân biệt model cũ/mới. N0 hiện vẫn là giọng Bắc.
+> Quyết định Agent 0: thêm **Q** trực tiếp vào vocab. Từ 28/10/2026 bỏ cờ `onset_has_q`;
+> thay bằng `vocab_version=vi-q25-v1` + `vocab_hash`. N0 hiện vẫn là giọng Bắc.
 
 ## 1. Token và parser
 
@@ -19,8 +19,8 @@
 
 ## 2. Checkpoint / ONNX
 
-- Checkpoint/ONNX mới có `onset_has_q=true`.
-- Checkpoint/ONNX cũ thiếu cờ bị từ chối rõ ràng; **không có adapter Q→K**.
+- Checkpoint/ONNX mới có `vocab_version` + `vocab_hash`.
+- Artifact cũ không còn được hỗ trợ; **không có adapter Q→K**.
 - `--init-from` cho phép fine-tune một lần từ checkpoint v2 cũ: thêm hàng Q = embedding K.
 - ONNX Q dùng metadata và `runtime/onnx_engine` kiểm tra trước khi chạy.
 - Q-init checkpoint (`runs/acoustic_ngochuyen_q/init_q.pt`) cho output **bit-exact** model
@@ -56,12 +56,12 @@ an toàn cho N0 Bắc, giữ đúng giọng đã được nghe. Candidate fine-t
 - **Đang live:** Q-init, `Q = K`, output **bit-exact** với N0 Bắc cũ.
   - Checkpoint: `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…`.
   - ONNX: `artifacts/onnx/n0_q/acoustic.onnx` sha256 `16e66b70b9c49c…`;
-    vocoder `b3eb09cf5c3baa…`; `healthz` báo `"onset_has_q":true`.
-  - Release asset: `n0_onnx_fp32_q.zip` sha256 `ef35567c4433cf…`
+    vocoder `b3eb09cf5c3baa…`; `healthz` báo `vocab_version` + `vocab_hash`.
+  - Release asset: `n0_onnx_fp32_q.zip` sha256 `c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a`
     (trong `n0-ngochuyen-prod-v1`).
 - **Chưa live:** fine-tune 3k `runs/acoustic_ngochuyen_q/best.pt`
   (sha256 `30dc41642461…`), ONNX `artifacts/onnx/n0_q_ft/acoustic.onnx`
   (sha256 `394fa657fc6e52…`). Nghe A/B tại `q-preview-2026-10-27`
   (`init.wav` / `finetune.wav`); xoá preview sau khi chọn.
-- **Bản cũ bị từ chối:** ONNX N0 `6c8bde3d…` thiếu `onset_has_q`; không có adapter Q→K.
+- **Bản cũ bị từ chối:** ONNX N0 `6c8bde3d…` thiếu hash; không có adapter Q→K.
 - Quyết định chọn model + hash/release cập nhật ở `docs/handoff/TRANG_THAI.md`.

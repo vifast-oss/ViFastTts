@@ -23,13 +23,13 @@ P2 = ROOT / "artifacts/listen_small_filt/adv_progress_p2/_ckpt/step_02000.pt"
 ACOUSTIC = ROOT / "artifacts/onnx/v1837/p2ema_acoustic.onnx"
 VOCODER = ROOT / "artifacts/onnx/v1837/vocos_pretrained_vocoder.onnx"
 
-def _legacy_checkpoint_without_q() -> bool:
+def _legacy_checkpoint_without_vocab_hash() -> bool:
     if not P2.exists():
         return False
     try:
         import torch
         state = torch.load(P2, map_location="cpu", weights_only=False)
-        return not bool(state.get("onset_has_q"))
+        return not bool(state.get("vocab_hash"))
     except (OSError, RuntimeError, AttributeError, TypeError):
         return False
 
@@ -37,8 +37,8 @@ def _legacy_checkpoint_without_q() -> bool:
 pytestmark = pytest.mark.skipif(
     not (FAST_JSON.exists() and FAST_NPZ.exists() and P2.exists()
          and ACOUSTIC.exists() and VOCODER.exists())
-    or _legacy_checkpoint_without_q(),
-    reason="chưa có baseline golden, thiếu artifact, hoặc checkpoint cũ chưa có Q",
+    or _legacy_checkpoint_without_vocab_hash(),
+    reason="chưa có baseline golden, thiếu artifact, hoặc checkpoint cũ chưa có vocab_hash",
 )
 
 

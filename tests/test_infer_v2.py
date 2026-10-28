@@ -73,14 +73,14 @@ def _save_v2_checkpoint(config: dict, path: Path) -> None:
     model = build_model(config, _sizes(), arch=ARCH_V2)
     model.load_f0_stats(F0_STATS)
     torch.save({"model": model.state_dict(), "arch": ARCH_V2, "f0_stats": dict(F0_STATS),
-                "onset_has_q": True}, str(path))
+                }, str(path))
 
 
 def _save_v1_checkpoint(config: dict, path: Path) -> None:
     """Checkpoint v1 (thiếu `arch` → tương thích ngược), trọng số ngẫu nhiên."""
     torch.manual_seed(0)
     model = ViFastTtsModel(config, _sizes()).eval()
-    torch.save({"model": model.state_dict(), "onset_has_q": True}, str(path))
+    torch.save({"model": model.state_dict()}, str(path))
 
 
 def _save_vocoder_checkpoint(config: dict, path: Path) -> None:

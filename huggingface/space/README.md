@@ -19,7 +19,7 @@ Demo nghe thử model TTS tiếng Việt **small 6,1M acoustic**, 24 kHz, ONNX C
 - **Research / phi thương mại**. Dataset `pnnbao-ump/ngochuyen_voice` là CC BY-NC 4.0.
 - Không dùng để giả giọng, lừa đảo hoặc production thương mại.
 - Mặc định alpha 1.5, Vocos pretrained, model tự ngắt nghỉ; nghỉ cố định mặc định tắt.
-- ONNX đang dùng là **N0 Q-init** (`onset_has_q=true`); Q = K cho giọng Bắc.
+- ONNX đang dùng là **N0 Q-init** (`vocab_version` + `vocab_hash`); Q = K cho giọng Bắc.
 - Free CPU Space có thể sleep khi không dùng; lần đầu có thể chậm do tải model/khởi động.
 
 Code: https://github.com/dvchd/ViFastTts

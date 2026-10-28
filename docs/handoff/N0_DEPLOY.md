@@ -14,7 +14,7 @@
 | `artifacts/onnx/n0_q_ft/acoustic.onnx` | 31.626.447 B | fine-tune 3k; sha256 `394fa657…` — **chưa live** |
 | `artifacts/onnx/n0/acoustic.onnx` | 31.626.168 B* | N0 cũ chưa có Q; sha256 `6c8bde3d…` — **bị từ chối** |
 
-\* ONNX N0 cũ vẫn giữ để đối chiếu, nhưng runtime mới từ chối vì thiếu `onset_has_q=true`.
+\* ONNX N0 cũ vẫn giữ để đối chiếu, nhưng runtime mới từ chối vì thiếu `vocab_hash`.
 
 Lệnh export bản Q-init (đang live):
 
@@ -49,7 +49,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   WAV lấy từ release `n0-demo-samples-v1`, tải bằng `scripts/fetch_demo_samples.sh` (không commit).
 - **Q (27/10/2026, đang live):** onset Q (ID cuối) cho `qu`; ONNX đang phục vụ là
   `n0_q/acoustic.onnx` (Q-init, `Q = K`, bit-exact với N0 Bắc cũ) và mang metadata
-  `onset_has_q=true`. Model/ONNX cũ thiếu cờ này bị từ chối, không có adapter Q→K.
+  `vocab_version` + `vocab_hash`. Model/ONNX cũ thiếu hash bị từ chối, không có adapter Q→K.
   Fine-tune 3k (`n0_q_ft`) **chưa deploy**. D/GI/R/V vẫn 4 token (Bắc Trung Bộ có thổ ngữ
   phân biệt; Trung bộ chính/Nam gộp D/GI — không ghi “Nam phân biệt D/GI”).
 - **Nhận diện:** nguồn logo ở `resources/brand/` (`vifasttts-icon.svg`,

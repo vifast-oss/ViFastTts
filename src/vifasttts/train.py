@@ -16,6 +16,8 @@ from typing import Any
 
 import numpy as np
 
+from vifasttts.frontend.vocab import VOCAB_HASH, VOCAB_VERSION
+
 
 def set_seed(seed: int) -> None:
     """Cố định seed cho random/numpy/torch (kể cả CUDA) để tái lập thí nghiệm."""
@@ -249,9 +251,6 @@ def train_reference(
     if resume:
         # Tiếp tục từ checkpoint (model + optimizer + bước) — job dài không mất tiến độ.
         resume_state = torch.load(resume, map_location=device, weights_only=False)
-        from vifasttts.models.factory import require_onset_has_q
-
-        require_onset_has_q(resume_state, str(resume))
         model.load_state_dict(resume_state["model"])
         if "optimizer" in resume_state:
             optimizer.load_state_dict(resume_state["optimizer"])
@@ -333,7 +332,7 @@ def train_reference(
                     history.flush()
                     state = {"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                              "config": config, "step": step, "best_val": best_val,
-                             "mel_hash": _mel_hash(config), "onset_has_q": True}
+                             "mel_hash": _mel_hash(config), "vocab_version": VOCAB_VERSION, "vocab_hash": VOCAB_HASH}
                     torch.save(state, out / "last.pt")
                     if val_loss < best_val:
                         best_val = val_loss
@@ -353,7 +352,7 @@ def train_reference(
                 elif step % save_every == 0:
                     torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                                 "config": config, "step": step, "best_val": best_val,
-                                "mel_hash": _mel_hash(config), "onset_has_q": True},
+                                "mel_hash": _mel_hash(config), "vocab_version": VOCAB_VERSION, "vocab_hash": VOCAB_HASH},
                                out / "last.pt")
                 if early_stopped or step >= steps:
                     break
@@ -361,7 +360,7 @@ def train_reference(
                 break
     torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                 "config": config, "step": step, "best_val": best_val,
-                "mel_hash": _mel_hash(config), "onset_has_q": True}, out / "last.pt")
+                "mel_hash": _mel_hash(config), "vocab_version": VOCAB_VERSION, "vocab_hash": VOCAB_HASH}, out / "last.pt")
     print(f"Đã huấn luyện {step} bước, checkpoint tại {out}/last.pt")
 
 

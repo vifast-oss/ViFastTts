@@ -27,7 +27,7 @@ from vifasttts.frontend.chunking import (
 )
 from vifasttts.frontend.normalizer import NormalizerOptions
 from vifasttts.frontend.pipeline import parse_text
-from vifasttts.frontend.vocab import ComponentVocabs
+from vifasttts.frontend.vocab import VOCAB_HASH, ComponentVocabs
 from vifasttts.runtime.istft import istft
 from vifasttts.runtime.postprocess import postprocess
 
@@ -129,10 +129,11 @@ class OnnxAcousticModel:
         self.gate_input_name = self.input_names[2] if len(self.input_names) > 2 else None
         self.output_names = [output.name for output in self.session.get_outputs()]
         self.metadata = dict(self.session.get_modelmeta().custom_metadata_map or {})
-        if str(self.metadata.get("onset_has_q", "")).strip().lower() not in {"1", "true", "yes"}:
+        expected_vocab_hash = str(self.metadata.get("vocab_hash", "")).strip()
+        if expected_vocab_hash and expected_vocab_hash != VOCAB_HASH:
             raise ValueError(
-                f"{path}: ONNX cũ thiếu metadata onset_has_q=true; frontend hiện tại đã có Q. "
-                "Hãy export lại ONNX từ checkpoint mới; không dùng adapter Q→K."
+                f"{path}: vocab_hash không khớp (ONNX {expected_vocab_hash} vs frontend {VOCAB_HASH}). "
+                "Hãy export lại ONNX từ frontend hiện tại."
             )
         self.is_v2 = self.metadata.get("arch") == "v2_slot5" or self.speed_input_name is not None
 

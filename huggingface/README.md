@@ -28,8 +28,8 @@ Repo này chứa checkpoint, config, stats, ONNX FP32, Vocos pretrained và 10 c
 
 ## Vocab Q (27/10/2026)
 
-ONNX trong repo này đã có onset **Q** (`onset_has_q=true`) cho chữ `qu`; Q ở cuối vocab,
-khởi tạo bằng K cho N0 Bắc. Checkpoint/ONNX chưa có cờ này bị frontend mới từ chối; không có
+ONNX trong repo này đã có onset **Q** (`vocab_version` + `vocab_hash`) cho chữ `qu`; Q ở cuối vocab,
+khởi tạo bằng K cho N0 Bắc. Checkpoint/ONNX cũ không có hash bị từ chối; không có
 adapter Q→K. Checkpoint `.pt` cũ vẫn là model K (dùng `--init-from` nếu fine-tune Q).
 
 ## Hai luồng sử dụng

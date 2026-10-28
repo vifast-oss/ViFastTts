@@ -1,8 +1,8 @@
 # Hugging Face — đã upload
 
 - Repo: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
-- Commit ONNX Q: `0b08245ee96710a738d7b1e543151e026b4f6cde` (acoustic Q, `onset_has_q=true`;
-  file `onnx/acoustic.onnx` sha256 `16e66b70…`, khớp bản live).
+- Commit ONNX Q: `8148ae3c2108df87184015f7579675dfd088cb24` (acoustic Q, `vocab_version`
+  + `vocab_hash`; file `onnx/acoustic.onnx` sha256 `df61599a…`).
 - Commit model card/logo: `460afac94b40fe6ff1504a28e748f0aeb8233cba`
   (asset logo ở các commit trước đó).
 - License metadata: `cc-by-nc-4.0`; model chỉ dùng research/non-commercial.
@@ -38,7 +38,7 @@ ONNX trực tiếp.
 | `best.pt` | acoustic small 60k |
 | `config.yaml` | `configs/small_ngochuyen.yaml` |
 | `mel_stats.json`, `f0_stats_v2.json` | để load/verify |
-| `acoustic.onnx`, `vocoder.onnx` | runtime CPU không torch; acoustic Q có `onset_has_q=true` |
+| `acoustic.onnx`, `vocoder.onnx` | runtime CPU không torch; acoustic Q có `vocab_hash` |
 | `LICENSE.md` | CC-BY-NC + attribution dataset |
 | `assets/vifasttts-lockup-cream.png` | logo model card (nguồn `resources/brand/`) |
 | `sample.wav` (tuỳ chọn) | 1–3 câu demo, ghi rõ research |
