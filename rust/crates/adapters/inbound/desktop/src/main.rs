@@ -104,6 +104,7 @@ struct DesktopSettings {
     resolve_oov: bool,
     auto_play: bool,
     output_dir: String,
+    server_port: u16,
     history: Vec<EtaSample>,
 }
 
@@ -121,6 +122,7 @@ impl Default for DesktopSettings {
             resolve_oov: false,
             auto_play: true,
             output_dir: default_output_dir(),
+            server_port: 8000,
             history: Vec::new(),
         }
     }
@@ -457,6 +459,8 @@ struct DesktopApp {
     dictionary_source: String,
     settings_dirty: bool,
     show_dictionary: bool,
+    server_child: Option<std::process::Child>,
+    server_status: String,
 }
 
 impl DesktopApp {
@@ -494,6 +498,8 @@ impl DesktopApp {
             settings,
             settings_dirty: false,
             show_dictionary: false,
+            server_child: None,
+            server_status: "Server chưa chạy".to_string(),
         }
     }
 
@@ -757,6 +763,109 @@ impl DesktopApp {
         self.dictionary = parse_dictionary(&self.dictionary_source);
     }
 
+    fn server_binary() -> PathBuf {
+        let name = if cfg!(windows) {
+            "vifasttts-server.exe"
+        } else {
+            "vifasttts-server"
+        };
+        if let Ok(executable) = std::env::current_exe()
+            && let Some(directory) = executable.parent()
+        {
+            let candidate = directory.join(name);
+            if candidate.exists() {
+                return candidate;
+            }
+        }
+        PathBuf::from(name)
+    }
+
+    fn start_server(&mut self) {
+        if self.server_child.is_some() {
+            return;
+        }
+        let binary = Self::server_binary();
+        let mut command = std::process::Command::new(&binary);
+        command
+            .arg("--host")
+            .arg("127.0.0.1")
+            .arg("--port")
+            .arg(self.settings.server_port.to_string())
+            .arg("--acoustic")
+            .arg(resolve_model_path(&self.settings.acoustic_path))
+            .arg("--vocoder")
+            .arg(resolve_model_path(&self.settings.vocoder_path))
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        match command.spawn() {
+            Ok(child) => {
+                self.server_child = Some(child);
+                self.server_status = format!(
+                    "Server đang chạy tại http://127.0.0.1:{}",
+                    self.settings.server_port
+                );
+            }
+            Err(error) => {
+                self.server_status = format!("Không mở được server: {error}");
+            }
+        }
+    }
+
+    fn stop_server(&mut self) {
+        if let Some(mut child) = self.server_child.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+        self.server_status = "Server đã dừng".to_string();
+    }
+
+    fn poll_server(&mut self) {
+        let Some(child) = self.server_child.as_mut() else {
+            return;
+        };
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                self.server_status = format!("Server đã thoát ({status})");
+                self.server_child = None;
+            }
+            Ok(None) => {}
+            Err(error) => {
+                self.server_status = format!("Không kiểm tra được server: {error}");
+            }
+        }
+    }
+
+    fn server_panel(&mut self, ui: &mut egui::Ui) {
+        ui.label("Server nội bộ");
+        ui.horizontal(|ui| {
+            let running = self.server_child.is_some();
+            if running {
+                if ui.button("Dừng server").clicked() {
+                    self.stop_server();
+                }
+            } else if ui.button("Bật server").clicked() {
+                self.start_server();
+            }
+            if ui.button("Dùng server này").clicked() {
+                self.settings.app.mode = SynthesisMode::Remote;
+                self.settings.app.server_url =
+                    format!("http://127.0.0.1:{}", self.settings.server_port);
+                self.settings_dirty = true;
+            }
+        });
+        ui.horizontal(|ui| {
+            ui.label("Cổng");
+            if ui
+                .add(egui::DragValue::new(&mut self.settings.server_port).range(1024..=65535))
+                .changed()
+            {
+                self.settings_dirty = true;
+            }
+        });
+        ui.small(&self.server_status);
+        ui.small("Extension remote trỏ tới URL này; server dùng cùng model/ORT.");
+    }
+
     fn settings_panel(&mut self, ui: &mut egui::Ui) {
         ui.heading("Cấu hình");
         ui.add_space(4.0);
@@ -961,6 +1070,11 @@ impl DesktopApp {
         ui.add_space(8.0);
         ui.separator();
         ui.add_space(8.0);
+        self.server_panel(ui);
+
+        ui.add_space(8.0);
+        ui.separator();
+        ui.add_space(8.0);
         self.dictionary_panel(ui);
     }
 
@@ -1159,6 +1273,7 @@ impl DesktopApp {
 impl eframe::App for DesktopApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_events();
+        self.poll_server();
 
         if ctx.input(|input| input.modifiers.command && input.key_pressed(egui::Key::Enter))
             && !self.busy
@@ -1219,6 +1334,7 @@ impl eframe::App for DesktopApp {
 
 impl Drop for DesktopApp {
     fn drop(&mut self) {
+        self.stop_server();
         self.save_if_dirty();
     }
 }

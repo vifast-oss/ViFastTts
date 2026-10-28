@@ -58,9 +58,10 @@ rust/crates/adapters/inbound/desktop/package-windows.ps1
 # giải nén: .\vifasttts-desktop.exe --smoke
 ```
 
-Cả hai package chứa `models/acoustic.onnx`, `models/vocoder.onnx` và
-`libonnxruntime`/`onnxruntime.dll`; app tự tìm theo thư mục executable.
-CI build cả ba nền tảng; macOS đã test local, Linux/Windows do CI/SSH test.
+Cả hai package chứa `models/acoustic.onnx`, `models/vocoder.onnx`,
+`libonnxruntime`/`onnxruntime.dll`, kèm `vifasttts-server` và `vifasttts-tui`;
+app tự tìm theo thư mục executable. CI build cả ba nền tảng; macOS/Linux đã test
+smoke, Windows do CI test.
 
 ## Cấu hình
 
@@ -75,7 +76,10 @@ CI build cả ba nền tảng; macOS đã test local, Linux/Windows do CI/SSH te
 - Local synth chạy trên worker thread nhưng **chưa streaming PCM**; nút **Dừng phát**
   chỉ dừng audio, request local đang chạy vẫn hoàn tất (engine không có cancel cho
   `synthesize` thường).
+- Có **server nội bộ** trong Settings: bật/tắt `vifasttts-server` cùng port;
+  extension remote trỏ tới `http://127.0.0.1:<port>` (không gọi native trực tiếp).
+- Có **TUI** `vifasttts-tui` trong cùng package (terminal UI, local/remote).
 - Chưa có system tray, menu native, auto-update, ký notarize; Linux/Windows
-  package do CI tạo, chưa test tay trên máy thật.
+  package do CI tạo và smoke, chưa test tay trên máy thật.
 - UI chưa dùng chung asset/theme với extension; sẽ gom branding khi chốt Flutter
   vs native.

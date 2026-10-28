@@ -6,6 +6,12 @@
 
 [![ci](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml/badge.svg)](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml)
 
+> **Cài đặt nhanh:** Windows/macOS/Linux dùng release portable tại
+> [Releases](https://github.com/dvchd/ViFastTts/releases); hướng dẫn chi tiết
+> (desktop, server, TUI, extension, Android/iOS) ở **`docs/INSTALL.md`**.
+> Ưu tiên Windows → macOS → Linux.
+
+
 **TTS tiếng Việt mã nguồn mở: nhỏ, nhanh, tự train được.** Toolkit nghiên cứu + triển khai
 TTS **một giọng**, hiểu văn bản tiếng Việt, sinh giọng 24 kHz và xuất ONNX chạy CPU.
 Mỗi checkpoint là một người nói, một phương ngữ — không cần `speaker_id`, `dialect_id`

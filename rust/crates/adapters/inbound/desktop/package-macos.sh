@@ -34,11 +34,13 @@ fi
 [ -f "$ORT_LIB" ] || { echo "Thiếu ORT: $ORT_LIB" >&2; exit 2; }
 
 cd "$ROOT/rust"
-cargo build --release -p vifasttts-desktop
+cargo build --release -p vifasttts-desktop -p vifasttts-http-server -p vifasttts-tui
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-desktop"
+cp "$ROOT/rust/target/release/vifasttts-server" "$APP/Contents/MacOS/vifasttts-server"
+cp "$ROOT/rust/target/release/vifasttts-tui" "$APP/Contents/MacOS/vifasttts-tui"
 cp "$ORT_LIB" "$APP/Contents/MacOS/libonnxruntime.dylib"
 cp "$MODEL_DIR/acoustic.onnx" "$APP/Contents/Resources/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$APP/Contents/Resources/vocoder.onnx"
@@ -61,7 +63,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-chmod +x "$APP/Contents/MacOS/vifasttts-desktop"
+chmod +x "$APP/Contents/MacOS/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-server" "$APP/Contents/MacOS/vifasttts-tui"
 if command -v codesign >/dev/null; then
   codesign --force --deep --sign - "$APP" >/dev/null
 fi

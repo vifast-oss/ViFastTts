@@ -64,9 +64,10 @@ curl -sS -N -X POST http://127.0.0.1:8000/api/tts/stream \
   -H 'Content-Type: application/json' \
   -d '{"text":"Xin chào"}'
 
-# Desktop GUI (cần model local; có --smoke để test headless)
-cargo build --release -p vifasttts-desktop
+# Desktop GUI + TUI + server (cần model local)
+cargo build --release -p vifasttts-desktop -p vifasttts-tui -p vifasttts-http-server
 ./target/release/vifasttts-desktop --smoke
+./target/release/vifasttts-tui --help
 
 # C ABI (macOS; Linux/Windows build tương tự)
 cargo build --release -p vifasttts-ffi
@@ -117,7 +118,8 @@ Kết quả chốt 28/10/2026:
 - `vifasttts-native`: native adapter — async engine + ORT, API sync `load`/`from_bytes`/`load_verified`.
 - `vifasttts-mobile`: mobile composition root — model, status, synth, `AudioSink` (iOS/Android).
 - `vifasttts-browser`: browser adapter — async engine + `ort-web`, parse/karaoke/DSP helpers.
-- `vifasttts-desktop`: app desktop egui (local + remote, settings/dictionary/ETA, audio playback).
+- `vifasttts-desktop`: app desktop egui (local + remote + server nội bộ, settings/dictionary/ETA, audio playback).
+- `vifasttts-tui`: terminal UI ratatui/crossterm (local/remote, lưu WAV).
 - `vifasttts-http-client`: HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke).
 - `vifasttts-cli`: CLI production (synth/stream/bench/inspect).
 - `vifasttts-tools`: parity model (mel-ids, synth-ids).

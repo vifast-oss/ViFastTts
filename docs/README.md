@@ -21,6 +21,7 @@
 | Triển khai ONNX/demo | `docs/handoff/N0_DEPLOY.md` |
 | Xem quyết định Q | `docs/Q_ONSET.md` |
 | Xem kế hoạch + trạng thái port Rust | `docs/RUST_PORT.md` |
+| Cài đặt desktop/server/TUI/extension | `docs/INSTALL.md` |
 | Xem lịch sử cũ | `docs/archive/README.md` |
 
 ## 1. Trạng thái hiện tại (tóm tắt)
@@ -99,7 +100,8 @@
 | `web/README.md` | Demo browser local: wasm frontend + ONNX Runtime Web, karaoke/SRT |
 | `desktop/README.md` | App desktop egui: local ONNX/remote, settings/từ điển/ETA, phát audio, lưu WAV/SRT/VTT |
 | `mobile/android/README.md` | APK local-first đã build/chạy emulator; JNA + C ABI + ORT Android |
-| `mobile/ios/README.md` | Scaffold SwiftUI + script; chưa build vì thiếu Xcode/iOS SDK |
+| `mobile/ios/README.md` | Scaffold SwiftUI + script; CI simulator build; runtime/thiết bị chưa test |
+| `server/README.md` | Server axum macOS/Windows/Linux, desktop → server → extension |
 
 ## 3. Kho lịch sử
 

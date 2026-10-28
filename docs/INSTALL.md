@@ -1,0 +1,125 @@
+# Cài đặt ViFastTts
+
+Ưu tiên **Windows** và **macOS**; Linux, Android, iOS, server, extension và TUI ở
+các mục sau.
+
+> Release portable nằm ở <https://github.com/dvchd/ViFastTts/releases>. Bản
+> `-rc*` là **pre-release**, chưa ký số, model FP32 ~86 MB.
+
+## Windows 10/11 (x64) — ưu tiên
+
+1. Tải `vifasttts-desktop-windows-x64.zip` (hoặc `vifasttts-server-windows-x64.zip`
+   nếu chỉ chạy server).
+2. Chuột phải → **Extract All** (đừng chạy trực tiếp trong file ZIP).
+3. Mở thư mục, chạy `vifasttts-desktop.exe`.
+4. Nếu SmartScreen/Defender cảnh báo: **More info → Run anyway** (bản chưa ký).
+5. Bấm **Đọc**; model + ORT đã nằm trong thư mục `models/` và cạnh `.exe`.
+
+Trong desktop:
+
+- **Bật server** → server nội bộ tại `http://127.0.0.1:8000`.
+- **Dùng server này** → chuyển chế độ remote sang server vừa bật.
+- TUI: mở PowerShell/CMD tại thư mục giải nén:
+  ```powershell
+  .\vifasttts-tui.exe --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx
+  ```
+
+Không cần cài Python/Node/Visual C++ redistributable (bản release đã gom runtime
+Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
+
+## macOS 13+ (Apple Silicon) — ưu tiên
+
+1. Tải `ViFastTts-macos-arm64.zip`.
+2. Giải nén, kéo `ViFastTts.app` vào `Applications`.
+3. Lần đầu mở: chuột phải → **Open** → **Open** (Gatekeeper).
+   Nếu vẫn chặn:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/ViFastTts.app
+   open /Applications/ViFastTts.app
+   ```
+4. Vào **Cài đặt → Server nội bộ** để bật server cho extension.
+
+TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
+```bash
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts-tui \
+  --acoustic /Applications/ViFastTts.app/Contents/Resources/acoustic.onnx \
+  --vocoder /Applications/ViFastTts.app/Contents/Resources/vocoder.onnx
+```
+
+## Linux x64
+
+```bash
+tar -xzf vifasttts-desktop-linux-x64.tar.gz
+cd vifasttts-desktop-linux-x64
+./run.sh
+./vifasttts-tui --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx
+```
+
+Cần `libasound2`, `libxkbcommon`, X11/Wayland, OpenGL. Ubuntu/Debian:
+```bash
+sudo apt-get install -y libasound2 libxkbcommon0 libx11-6 libgl1
+```
+Nếu chạy headless: `./vifasttts-desktop --smoke`.
+
+## Server (Windows/macOS/Linux)
+
+- Windows: `vifasttts-server-windows-x64.zip` → `vifasttts-server.exe`.
+- macOS: `vifasttts-server-macos-arm64.tar.gz` → `./run.sh`.
+- Linux: `vifasttts-server-linux-x64.tar.gz` → `./run.sh`.
+
+```bash
+./run.sh --host 127.0.0.1 --port 8000
+curl -s http://127.0.0.1:8000/healthz
+```
+
+Server nhận `dictionary` text hoặc `overrides` JSON. Extension remote trỏ tới
+`http://127.0.0.1:8000`; desktop có nút bật/tắt server cùng port.
+
+## Extension + Web
+
+- Extension: tải `extension.zip` → `chrome://extensions` → Developer mode →
+  **Load unpacked** → chọn thư mục đã giải nén. Không dùng `ttsEngine`.
+- Web local: `web-dist.tar.gz` giải nén, phục vụ static bằng `python -m http.server`;
+  cần model trong `models/` cạnh `index.html` (release web chỉ là frontend).
+
+## Android
+
+Tải `app-debug.apk` (debug, chưa ký store), bật **Install unknown apps**, cài và
+mở. Đây là smoke client local ONNX; chưa phải bản store.
+
+## iOS
+
+`ViFastTtsMobile-ios-simulator.zip` chỉ chạy trên **iOS Simulator** (chưa ký
+Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
+`mobile/ios/build-ios.sh`. Thiết bị thật cần ký + ORT device framework.
+
+## Từ source
+
+```bash
+# Rust CLI + TUI + server
+cargo build --release --manifest-path rust/Cargo.toml \
+  -p vifasttts-cli -p vifasttts-tui -p vifasttts-http-server
+# binary: rust/target/release/{vifasttts-rs,vifasttts-tui,vifasttts-server}
+```
+
+Cần model ONNX + ORT 1.31.1 (`rust/lib/`) như `rust/README.md`.
+
+## Kênh phân phối
+
+| Kênh | Phù hợp | Khuyến nghị |
+|---|---|---|
+| GitHub Release portable | Desktop Windows/macOS/Linux | **Chính**, đã có CI |
+| Winget/Scoop | Windows | Nên thêm sau khi có installer/ký |
+| Homebrew cask | macOS | Nên thêm khi có `.dmg`/notarize |
+| cargo-binstall | CLI/TUI/server | Nên thêm metadata, tải kèm model/ORT |
+| npm/bun | Web/wasm SDK, extension | Chỉ nên đóng gói web/wasm, **không** nhồi model 86 MB |
+| PyPI | Server/CLI Python, demo | Đã có Python package; không thay desktop |
+| Nix flake | Linux reproducible | Optional/community; cần license ORT/model rõ |
+| Flatpak/AppImage | Linux desktop | Sau khi Linux package ổn định |
+
+Model và ORT nên là **asset riêng** (hoặc `.vfts` bundle) thay vì nhét vào npm.
+
+## License
+
+Model/dataset research **CC-BY-NC-4.0 / non-commercial**; ORT MIT. Không phát
+hành App Store/Store trước khi xử lý pháp lý.

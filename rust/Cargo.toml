@@ -16,6 +16,7 @@ members = [
     "crates/adapters/inbound/native",
     "crates/adapters/inbound/mobile",
     "crates/adapters/inbound/desktop",
+    "crates/adapters/inbound/tui",
     "crates/adapters/inbound/browser",
     "crates/adapters/inbound/ffi",
     "crates/adapters/inbound/http-server",

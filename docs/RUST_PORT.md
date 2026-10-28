@@ -1,7 +1,7 @@
 # Port Rust — kế hoạch + trạng thái triển khai
 
 > **Trạng thái:** KẾ HOẠCH + TRIỂN KHAI WIP — **đã có mã Rust** (workspace
-> `rust/`, 21 crate, ~9.4k dòng Rust, chưa đổi production).
+> `rust/`, 22 crate, ~10.1k dòng Rust, chưa đổi production).
 > Xem **§15** cho trạng thái thực tế và lộ trình đa nền tảng.
 > **Ngày:** 29/10/2026 (cập nhật trạng thái triển khai).
 > **Phạm vi:** đường **inference production** của ViFastTts.
@@ -172,7 +172,7 @@ khớp hành vi production hiện tại. Rust nên có profile:
 ### 2.5 Toolchain Rust
 
 Đã cài và ghim `rust-toolchain.toml` (**1.99.1**, rustfmt + clippy); workspace
-`rust/` có **21 crate** (`text`, `audio`, `engine`, `app`, `ports`, `audio-sink`,
+`rust/` có **22 crate** (`text`, `audio`, `engine`, `app`, `ports`, `audio-sink`,
 `transport`, `settings`, `model-source`, `ort`, `ort-web`, `http-client`,
 `native`, `mobile`, `desktop`, `browser`, `ffi`, `http-server`, `cli`, `parse`, `tools`).
 Đã có workflow CI desktop + wasm text/audio/ports/engine/ort-web/browser, build
@@ -235,7 +235,8 @@ rust/
       inbound/
         native/              # native composition root
         mobile/              # iOS/Android composition root
-        desktop/             # GUI desktop egui (local + remote)
+        desktop/             # GUI desktop egui (local + remote + server)
+        tui/                 # terminal UI dùng native/http-client
         browser/             # browser composition root
         ffi/                 # C ABI mobile/desktop
         http-server/         # axum HTTP inbound adapter
@@ -899,7 +900,7 @@ phải làm để chạy web + desktop + iOS + Android. Mã Rust **chưa đổi 
 
 ### 15.1 Mã đang có
 
-Workspace `rust/` gồm 21 crate, khoảng **9.4k dòng** Rust + resources:
+Workspace `rust/` gồm 22 crate, khoảng **10.1k dòng** Rust + resources:
 
 | Crate | Nội dung | Ghi chú |
 |---|---|---|
@@ -916,7 +917,8 @@ Workspace `rust/` gồm 21 crate, khoảng **9.4k dòng** Rust + resources:
 | `vifasttts-ort-web` | JS callback → async backend; kiểm shape/contract | Chỉ wasm32; ORT Web chạy model, crate này là adapter |
 | `vifasttts-native` | native adapter: async engine + ORT, API sync `load`/`from_bytes`/`load_verified` | `block_on` tại biên; CLI/desktop/server/FFI dùng sync |
 | `vifasttts-mobile` | mobile composition root: model, status, synth, `AudioSink` | iOS/Android; chưa có audio adapter/UI |
-| `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS `.app` + package Linux/Windows; CI build cả ba; Linux/Windows chưa test tay |
+| `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP + server nội bộ, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS/Linux/Windows package; CI smoke cả ba |
+| `vifasttts-tui` | terminal UI ratatui/crossterm: nhập text, synth local/remote, lưu WAV | có trong package desktop; model/ORT dùng chung |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
 | `vifasttts-cli` | `inspect`, `synth` (+`--server`, `--srt/--vtt/--vtt-karaoke/--karaoke`), `stream` (+timing), `bench` | CLI production; local hoặc HTTP server |
@@ -1009,7 +1011,7 @@ dưới đây; **phải spike build/link thật**, không coi là đã chạy.
 | Desktop macOS arm64 | Có | CLI + app egui `.app` đã build/chạy smoke | ký/notarize, Windows/Linux bundle |
 | Desktop Windows x64/arm64 | Có | Chưa test | CI + bundle DLL |
 | Desktop Linux x64/arm64 | Có | Chưa test | CI + AppImage/deb |
-| iOS arm64/sim | Có | **scaffold SwiftUI + script; chưa build** — máy chỉ có Command Line Tools, không có Xcode/iOS SDK | cài Xcode, ORT iOS, XCFramework, test thiết bị |
+| iOS arm64/sim | Có | **CI macOS build simulator OK** (ORT pod 1.30.0, model bundle); máy dev không có Xcode | test runtime/thiết bị thật, ký |
 | Android arm64/x86_64 | Có | **đã build APK + chạy emulator Android 16**; jniLibs/NDK + ORT 1.31.1 | test thiết bị thật, audio, UI production |
 | Web browser wasm32 | **ORT Web (JS)** | `browser` frontend + ORT Web demo | Đo tốc độ/RAM; model 86 MB; chưa production |
 | Intel Mac, armv7 Android, Linux musl | **Không** | — | Build source/`load-dynamic` nếu cần |
@@ -1122,6 +1124,8 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
 - `.app` ~127 MB (model 86 MB + ORT 32 MB + binary 13 MB); app tự tìm model trong
   `Contents/Resources` và ORT cạnh executable (đã test smoke từ bundle).
 - Chưa streaming PCM trong UI; nút Dừng phát chỉ dừng audio, job local vẫn hoàn tất.
+- Package desktop kèm `vifasttts-server` + `vifasttts-tui`; desktop có nút bật
+  server nội bộ để extension remote kết nối `http://127.0.0.1:<port>`.
 
 **Android (đã chạy):**
 
@@ -1147,10 +1151,10 @@ Workflow `.github/workflows/ci.yml` (push main/PR/tag, dispatch):
 | `rust` | fmt + clippy + test trên macOS/Ubuntu/Windows; wasm check |
 | `python` | Python 3.12, ruff + 2.936 test (cần torch/onnx) |
 | `web-extension` | build wasm-bindgen + ORT Web; zip extension; Vite web dist |
-| `desktop` | macOS `.app` zip, Linux tar.gz, Windows zip; `--smoke` từng gói |
-| `server` | binary Linux + ORT + model + run.sh, tar.gz |
+| `desktop` | macOS `.app` zip, Linux tar.gz, Windows zip (kèm server/TUI); `--smoke` từng gói |
+| `server` | binary macOS/Linux/Windows + ORT + model + launcher; artifact riêng |
 | `android` | SDK 36/NDK 28.2, cargo-ndk, APK, upload |
-| `ios` | best-effort macOS runner: Rust staticlib + ORT pod `1.30.0` + xcodebuild simulator |
+| `ios` | macOS runner: Rust staticlib + ORT pod `1.30.0` + xcodebuild simulator; artifact có model |
 | `release` | tag `v*`: tải artifact và tạo/cập nhật GitHub Release |
 
 - Model CI lấy từ release `n0-ngochuyen-prod-v1/n0_onnx_fp32.zip` (pin), ORT
@@ -1457,6 +1461,7 @@ Web/Extension/CLI remote
 | `native` | ✅ | ❌ | ✅ | adapter native, sync `block_on` |
 | `mobile` | ✅ (desktop build) | ❌ | ✅ | composition root iOS/Android |
 | `desktop` | ✅ | ❌ | ❌ | GUI egui + rodio; dùng native/http-client |
+| `tui` | ✅ | ❌ | ✅ | terminal UI ratatui/crossterm |
 | `browser` | ❌ (chỉ wasm) | ✅ | ❌ | adapter browser, async |
 | `http-client` | ✅ | ✅ (HTTP) | ✅ | ureq; không ORT |
 | `cli` | ✅ | ❌ | ❌ | production |

@@ -36,7 +36,7 @@ if (-not (Test-Path $OrtLib)) { throw "Thiếu ORT: $OrtLib" }
 
 Push-Location (Join-Path $Root "rust")
 try {
-    cargo build --release -p vifasttts-desktop
+    cargo build --release -p vifasttts-desktop -p vifasttts-http-server -p vifasttts-tui
     if ($LASTEXITCODE -ne 0) { throw "cargo build failed" }
 } finally {
     Pop-Location
@@ -45,12 +45,16 @@ try {
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path (Join-Path $Out "models") | Out-Null
 Copy-Item (Join-Path $Root "rust/target/release/vifasttts-desktop.exe") (Join-Path $Out "vifasttts-desktop.exe")
+Copy-Item (Join-Path $Root "rust/target/release/vifasttts-server.exe") (Join-Path $Out "vifasttts-server.exe")
+Copy-Item (Join-Path $Root "rust/target/release/vifasttts-tui.exe") (Join-Path $Out "vifasttts-tui.exe")
 Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
 @"
-ViFastTts Desktop (Windows x64)
-Chạy: vifasttts-desktop.exe
+ViFastTts Desktop + server + TUI (Windows x64)
+Chạy GUI: vifasttts-desktop.exe
+TUI: vifasttts-tui.exe --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx
+Server: vifasttts-server.exe --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
 Kiểm tra headless: vifasttts-desktop.exe --smoke
 Model: models\acoustic.onnx + models\vocoder.onnx
 ORT: onnxruntime.dll (1.31.1, load-dynamic)

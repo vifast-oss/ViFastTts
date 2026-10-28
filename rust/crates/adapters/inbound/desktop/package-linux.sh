@@ -26,11 +26,13 @@ if [ -z "$ORT_LIB" ] || [ ! -f "$ORT_LIB" ]; then
   ORT_LIB="$CACHE/onnxruntime-linux-x64-$ORT_VERSION/lib/libonnxruntime.so"
 fi
 
-(cd "$ROOT/rust" && cargo build --release -p vifasttts-desktop)
+(cd "$ROOT/rust" && cargo build --release -p vifasttts-desktop -p vifasttts-http-server -p vifasttts-tui)
 
 rm -rf "$OUT"
 mkdir -p "$OUT/models"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$OUT/vifasttts-desktop"
+cp "$ROOT/rust/target/release/vifasttts-server" "$OUT/vifasttts-server"
+cp "$ROOT/rust/target/release/vifasttts-tui" "$OUT/vifasttts-tui"
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"
@@ -40,10 +42,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 exec ./vifasttts-desktop "$@"
 SH
-chmod +x "$OUT/vifasttts-desktop" "$OUT/run.sh"
+chmod +x "$OUT/vifasttts-desktop" "$OUT/vifasttts-server" "$OUT/vifasttts-tui" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'
-ViFastTts Desktop (Linux x64)
-Chạy: ./run.sh
+ViFastTts Desktop + server + TUI (Linux x64)
+Chạy GUI: ./run.sh
+TUI: ./vifasttts-tui --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx
+Server: ./vifasttts-server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx --port 8000
 Kiểm tra headless: ./vifasttts-desktop --smoke
 Model: models/acoustic.onnx + models/vocoder.onnx
 ORT: libonnxruntime.so (1.31.1, load-dynamic)

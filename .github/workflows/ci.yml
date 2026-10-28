@@ -155,36 +155,47 @@ jobs:
           if-no-files-found: error
 
   server:
-    name: server (linux)
-    runs-on: ubuntu-latest
+    name: server (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact: desktop/dist/vifasttts-server-linux-x64.tar.gz
+          - os: macos-15
+            platform: macos
+            artifact: desktop/dist/vifasttts-server-macos-*.tar.gz
+          - os: windows-latest
+            platform: windows
+            artifact: desktop/dist/vifasttts-server-windows-x64.zip
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
-      - uses: ./.github/actions/fetch-model
-      - name: build + package
+      - name: Linux desktop deps
+        if: runner.os == 'Linux'
         run: |
-          cargo build --manifest-path rust/Cargo.toml --release -p vifasttts-http-server
-          mkdir -p desktop/dist/vifasttts-server-linux-x64/models desktop/dist/cache
-          curl -L --fail -o /tmp/ort.tgz \
-            https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-linux-x64-1.31.1.tgz
-          tar -xzf /tmp/ort.tgz -C desktop/dist/cache
-          cp -L desktop/dist/cache/onnxruntime-linux-x64-1.31.1/lib/libonnxruntime.so \
-            desktop/dist/vifasttts-server-linux-x64/
-          cp rust/target/release/vifasttts-server desktop/dist/vifasttts-server-linux-x64/
-          cp artifacts/onnx/n0_q/*.onnx desktop/dist/vifasttts-server-linux-x64/models/
-          cat > desktop/dist/vifasttts-server-linux-x64/run.sh <<'SH'
-          #!/usr/bin/env bash
-          cd "$(dirname "$0")"
-          exec ./vifasttts-server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx "$@"
-          SH
-          chmod +x desktop/dist/vifasttts-server-linux-x64/run.sh
-          desktop/dist/vifasttts-server-linux-x64/vifasttts-server --help >/dev/null
-          tar -czf desktop/dist/vifasttts-server-linux-x64.tar.gz \
-            -C desktop/dist/vifasttts-server-linux-x64 .
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libasound2-dev libudev-dev
+      - uses: ./.github/actions/fetch-model
+      - name: package unix
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x server/package-unix.sh
+          server/package-unix.sh
+          server_bin="$(find desktop/dist -path '*vifasttts-server-*' -type d -name 'vifasttts-server-*' | head -1)/vifasttts-server"
+          "$server_bin" --help >/dev/null
+      - name: package windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          server/package-windows.ps1
+          & desktop/dist/vifasttts-server-windows-x64/vifasttts-server.exe --help | Out-Null
       - uses: actions/upload-artifact@v4
         with:
-          name: server-linux
-          path: desktop/dist/vifasttts-server-linux-x64.tar.gz
+          name: server-${{ matrix.platform }}
+          path: ${{ matrix.artifact }}
           if-no-files-found: error
 
   android:
@@ -258,6 +269,7 @@ jobs:
     needs: [desktop, android, web-extension, server, ios]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
