@@ -185,6 +185,7 @@ jobs:
           name: web-extension
           path: web-artifact
       - name: prepare web
+        shell: bash
         run: |
           mkdir -p web-dist
           tar -xzf web-artifact/web-dist.tar.gz -C web-dist
