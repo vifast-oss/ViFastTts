@@ -6,9 +6,11 @@ from vifasttts.frontend.stem import normalize_stem
 
 @pytest.mark.parametrize("source,expected", [
     ("a^2", "a bình phương"),
+    ("a^2.", "a bình phương."),
     ("a^3", "a lập phương"),
     ("b^2", "bê bình phương"),
     ("x^2", "ích bình phương"),
+    ("x^2,", "ích bình phương,"),
     ("x^3", "ích lập phương"),
     ("x^4", "ích mũ bốn"),
     ("2^3", "hai mũ ba"),
@@ -41,4 +43,5 @@ def test_bare_power_does_not_touch_other_carets():
     assert "bình phương" not in normalize_text("Ca^2+")
     assert "bình phương" not in normalize_text("cm^2")
     assert "bình phương" not in normalize_text("x^2.5")
+    assert "bình phương" not in normalize_text("1.2^3")
     assert normalize_text("x^2y") == "x^2y"

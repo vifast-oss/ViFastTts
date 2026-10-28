@@ -9,7 +9,7 @@ NumberReader = Callable[[int], str]
 
 # Lũy thừa dạng trần: a^2, x^3, 2^3, a^{n+1}. Chỉ nhận base 1 chữ cái/số,
 # exponent số đơn/chữ đơn/gói {...}; bỏ qua số thập phân và chữ dính sau.
-_BARE_POWER_RE = re.compile(r"(?<![\w\\])([A-Za-z]|\d+)\s*\^\s*(\{[^{}]+\}|-?\d+|[A-Za-z])(?![\w.])")
+_BARE_POWER_RE = re.compile(r"(?<![\w.\\])([A-Za-z]|\d+)\s*\^\s*(\{[^{}]+\}|-?\d+|[A-Za-z])(?!\w|[.,]\d)")
 
 GREEK = {
     "alpha":"an pha", "beta":"bê ta", "gamma":"gam ma", "delta":"đen ta",
