@@ -88,6 +88,13 @@ def test_khong_con_alias_asr_va_key_nguy_hiem():
     ("bug", "bắc"),
     ("download", "đao lốt"),
     ("windows", "uyn đâu"),
+    ("Qualcomm", "quan com"),
+    ("H2SO4", "hát hai ét ô bốn"),
+    ("x^2", "ích bình phương"),
+    ("CO2", "xê ô hai"),
+    ("google.com", "gu gồ chấm com"),
+    ("khongdich.com", "không dịch chấm com"),
+    ("hiđro", "hi đờ rô"),
 ])
 def test_viet_tat_va_tu_thong_dung(text, expected):
     assert normalize_text(text, options=_options()) == expected

@@ -31,7 +31,7 @@
 - **Bản fine-tune Q 3k** (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export nhưng **chưa live**;
   chỉ dùng để so tai qua release tạm `q-preview-2026-10-27` (2 WAV).
 - **Model/ONNX cũ** không có `onset_has_q=true` bị từ chối rõ ràng; **không có adapter Q→K**.
-- **Test:** 2.909 pass / 24 skip; `ruff` sạch (28/10/2026).
+- **Test:** 2.916 pass / 24 skip; `ruff` sạch (28/10/2026).
 - **Demo:** custom reading local-first, gửi duyệt khi bật checkbox, STEM examples,
   feedback/báo lỗi, admin thống kê; nội dung feedback chờ `ADMIN_PASSWORD`.
 

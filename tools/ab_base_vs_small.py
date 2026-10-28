@@ -63,7 +63,8 @@ def _generate(label: str, config_path: Path, checkpoint: Path, texts: list[dict]
         if path.exists() and not force:
             print(f"[{label}] bỏ qua {rid} (đã có)")
             continue
-        engine.synthesize(str(row["text"]), path, sharpen_alpha=alpha, gate_threshold=0.5)
+        spoken = str(row.get("spoken_text") or row["text"])
+        engine.synthesize(spoken, path, sharpen_alpha=alpha, gate_threshold=0.5)
         print(f"[{label}] {rid} → {path.name}")
 
 
