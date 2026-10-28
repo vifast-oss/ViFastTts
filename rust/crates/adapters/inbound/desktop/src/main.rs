@@ -847,6 +847,14 @@ impl DesktopApp {
                 .arg("--token")
                 .arg(self.settings.server_token.trim());
         }
+        if let Ok(executable) = std::env::current_exe()
+            && let Some(directory) = executable.parent()
+        {
+            let web = directory.join("web");
+            if web.is_dir() {
+                command.arg("--web-dir").arg(web);
+            }
+        }
         match command.spawn() {
             Ok(child) => {
                 self.server_child = Some(child);

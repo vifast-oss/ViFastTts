@@ -76,7 +76,9 @@ smoke, Windows do CI test.
   chỉ dừng audio, request local đang chạy vẫn hoàn tất (engine không có cancel cho
   `synthesize` thường).
 - Có **server nội bộ** trong Settings: bật/tắt `vifasttts-server` cùng port;
-  extension remote trỏ tới `http://127.0.0.1:<port>` (không gọi native trực tiếp).
+  extension/điện thoại/IoT remote trỏ tới `http://127.0.0.1:<port>` (không gọi
+  native trực tiếp). Đặt thư mục `web/` cạnh binary (giải nén `web-dist.tar.gz`)
+  để server nội bộ tự phục vụ web UI.
 - Có **TUI** `vifasttts-tui` trong cùng package (terminal UI, local/remote).
 - Chưa có system tray, menu native, auto-update, ký notarize; Linux/Windows
   package do CI tạo và smoke, chưa test tay trên máy thật.
