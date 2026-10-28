@@ -1,7 +1,8 @@
 # ViFastTts Mobile — Android
 
-Client Android **local-first**: text → Rust C ABI (`vifasttts-ffi`) → ONNX
-Runtime Android → WAV → `MediaPlayer`. Không cần Python/server khi đã có APK.
+Client Android **local-first + remote**: text → Rust C ABI (`vifasttts-ffi`) → ONNX
+Runtime Android → WAV → `MediaPlayer`, hoặc gọi server `/api/tts` (URL + Bearer
+token). Không cần Python/server khi đã có APK local.
 
 Đây là **smoke client** để chứng minh đường mobile chạy thật, không phải bản UI
 production. UI SwiftUI/Compose/Flutter cuối cùng vẫn chưa chốt.
@@ -10,8 +11,12 @@ production. UI SwiftUI/Compose/Flutter cuối cùng vẫn chưa chốt.
 
 - Máy: Mac mini M6, Android Emulator **16 (API 36, arm64-v8a)**, không audio.
 - APK: `app-debug.apk` ~110 MB (model FP32 86 MB + ORT 33 MB + Rust 5 MB).
-- Bấm **Đọc** với câu mặc định → status `Xong: 4.41 s`; WAV thật trong
+- Bấm **Đọc** local với câu mặc định → status `Xong: 4.41 s`; WAV thật trong
   `cache/vifasttts.wav` dài **4,412 s / 24 kHz / mono / PCM16**.
+- Remote mode (checkbox **Dùng server remote**, URL mặc định
+  `http://10.0.2.2:8000` cho emulator) đã test: server desktop trả WAV,
+  `cache/vifasttts-remote.wav` ~2,38 s. Trên điện thoại đổi URL thành IP desktop
+  hoặc server online; token nếu server đặt `--token`.
 - Không nghe được trong lần chạy này vì emulator bật `-no-audio`; `MediaPlayer`
   đã `prepare()` + `start()` không lỗi. Cần chạy emulator có audio để kiểm tai.
 
@@ -57,12 +62,23 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.vifasttts.mobile/.MainActivity
 ```
 
+## Quyền mạng
+
+- `INTERNET`, `ACCESS_NETWORK_STATE`.
+- Android 16+ LAN: `ACCESS_LOCAL_NETWORK` (runtime request); Android 17 target
+  37 sẽ bắt buộc.
+- `usesCleartextTraffic="true"` để gọi local HTTP; production nên dùng HTTPS.
+- Không có foreground service vì APK **không chạy server**; server nằm ở desktop.
+
 ## Ghi chú kỹ thuật
 
 - Dùng **JNA** gọi C ABI (không cần viết JNI C++); APK phải bật
   `android:extractNativeLibs="true"` + `useLegacyPackaging = true` để ORT có
   đường dẫn thật trong `nativeLibraryDir`.
-- Model copy từ `assets/` sang `filesDir` lần đầu; 86 MB, nên giữ màn hình chờ.
+- Local vẫn đóng model FP32 ~86 MB trong APK (`assets/`) và copy sang `filesDir`;
+  chưa tải từ HuggingFace. Remote mode không cần model local.
+- Tải nhiều model/catalog/download manager chưa có; xem `docs/INSTALL.md` và
+  `docs/DISTRIBUTION.md` để chốt trước khi đổi APK sang thin-client.
 - Chưa có: Compose UI, audio focus/foreground service, streaming PCM xuống
   AAudio, chọn giọng, history/settings, UniFFI/Kotlin binding.
 - License dataset CC-BY-NC: không phát hành store trước khi xử lý pháp lý.

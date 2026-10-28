@@ -100,7 +100,14 @@ cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép L
 ## Android
 
 Tải `app-debug.apk` (debug, chưa ký store), bật **Install unknown apps**, cài và
-mở. Đây là smoke client local ONNX; chưa phải bản store.
+mở. Đây là client local ONNX + remote HTTP:
+
+- mặc định **local**, model FP32 ~86 MB đóng trong APK;
+- tick **Dùng server remote**, nhập URL desktop (`http://IP:8000`) hoặc server
+  online, token nếu có;
+- chưa có server mode trên Android và chưa có catalog/tải nhiều model;
+- quyền: `INTERNET`, `ACCESS_NETWORK_STATE`, Android 16+ `ACCESS_LOCAL_NETWORK`.
+  Local HTTP dùng cleartext; production nên HTTPS.
 
 ## iOS
 

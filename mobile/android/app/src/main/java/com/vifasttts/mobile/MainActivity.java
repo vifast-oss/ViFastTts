@@ -2,13 +2,17 @@ package com.vifasttts.mobile;
 
 import android.app.Activity;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import org.json.JSONObject;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -57,6 +61,9 @@ public class MainActivity extends Activity {
     private Pointer engine;
     private TextView status;
     private EditText text;
+    private EditText serverUrl;
+    private EditText token;
+    private CheckBox remote;
     private MediaPlayer player;
 
     private String lastError() {
@@ -108,7 +115,11 @@ public class MainActivity extends Activity {
             status.setText("Nhập text");
             return;
         }
-        status.setText("Đang tổng hợp…");
+        if (remote.isChecked()) {
+            synthesizeRemote(input);
+            return;
+        }
+        status.setText("Đang tổng hợp local…");
         new Thread(() -> {
             try {
                 ensureEngine();
@@ -144,6 +155,74 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    private void synthesizeRemote(String input) {
+        final String base = serverUrl.getText().toString().trim();
+        final String bearer = token.getText().toString().trim();
+        if (base.isEmpty()) {
+            status.setText("Nhập server URL");
+            return;
+        }
+        status.setText("Đang gọi server…");
+        new Thread(() -> {
+            java.net.HttpURLConnection connection = null;
+            try {
+                String url = base.replaceAll("/+$", "");
+                if (!url.endsWith("/api/tts")) url += "/api/tts";
+                connection = (java.net.HttpURLConnection) java.net.URI.create(url).toURL().openConnection();
+                connection.setRequestMethod("POST");
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(120000);
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                if (!bearer.isEmpty()) connection.setRequestProperty("Authorization", "Bearer " + bearer);
+                JSONObject body = new JSONObject();
+                body.put("text", input);
+                body.put("speed", 1.0);
+                body.put("fixed_pauses", false);
+                byte[] payload = body.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                connection.setFixedLengthStreamingMode(payload.length);
+                try (java.io.OutputStream out = connection.getOutputStream()) {
+                    out.write(payload);
+                }
+                int code = connection.getResponseCode();
+                if (code < 200 || code >= 300) {
+                    String error = new String(connection.getErrorStream() == null
+                            ? new byte[0]
+                            : connection.getErrorStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    throw new IllegalStateException("HTTP " + code + ": " + error);
+                }
+                byte[] wav;
+                try (java.io.InputStream in = connection.getInputStream()) {
+                    wav = in.readAllBytes();
+                }
+                File out = new File(getCacheDir(), "vifasttts-remote.wav");
+                Files.write(out.toPath(), wav);
+                runOnUiThread(() -> {
+                    status.setText(String.format("Xong remote: %.2f s", wav.length / 2.0 / 24000.0));
+                    try {
+                        if (player != null) player.release();
+                        player = new MediaPlayer();
+                        player.setDataSource(out.getAbsolutePath());
+                        player.prepare();
+                        player.start();
+                    } catch (Exception error) {
+                        status.setText("Đã tạo WAV, lỗi phát: " + error.getMessage());
+                    }
+                });
+            } catch (Throwable error) {
+                setStatus("Lỗi remote: " + error.getMessage());
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }).start();
+    }
+
+    private void requestLocalNetworkPermission() {
+        if (Build.VERSION.SDK_INT >= 36) {
+            requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"}, 1001);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,6 +243,19 @@ public class MainActivity extends Activity {
         root.addView(text, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        remote = new CheckBox(this);
+        remote.setText("Dùng server remote");
+        root.addView(remote);
+
+        serverUrl = new EditText(this);
+        serverUrl.setText("http://10.0.2.2:8000");
+        serverUrl.setHint("Server URL");
+        root.addView(serverUrl);
+
+        token = new EditText(this);
+        token.setHint("Bearer token (tuỳ chọn)");
+        root.addView(token);
+
         Button run = new Button(this);
         run.setText("Đọc");
         run.setOnClickListener(view -> synthesize());
@@ -175,6 +267,7 @@ public class MainActivity extends Activity {
         root.addView(status);
 
         setContentView(root);
+        requestLocalNetworkPermission();
     }
 
     @Override
