@@ -98,6 +98,10 @@ cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép L
   **Load unpacked** → chọn thư mục đã giải nén. Không dùng `ttsEngine`.
 - Web local: `web-dist.tar.gz` giải nén (đã kèm `models/` + ORT wasm), phục vụ
   static bằng `python -m http.server` rồi mở `http://127.0.0.1:8000`.
+- Khi web được server phục vụ, nó tự kiểm tra `/healthz` và mặc định gọi
+  remote same-origin; mở static/file thì mặc định local WASM.
+- Web có input nạp `.vfa`/`.vfts`: `.vfa` dùng `/models/vocoder.onnx`, `.vfts`
+  tự chứa vocoder; kiểm SHA256 trước khi tạo session.
 
 ## Android
 

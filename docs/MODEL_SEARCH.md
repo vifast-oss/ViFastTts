@@ -62,5 +62,6 @@ https://huggingface.co/<repo>/resolve/main/<path>
 - `.vfa` chỉ chạy nếu vocoder hash khớp; app/package N0 có Vocos pretrained.
 - `.vfts` là lựa chọn an toàn khi chia sẻ cho người khác.
 - License CC-BY-NC; kiểm tra trước khi tải.
-- Web/extension/mobile chưa có model browser riêng; dùng desktop/CLI hoặc remote
-  server. API client dùng chung nằm ở crate `vifasttts-huggingface`.
+- Web có **input nạp `.vfa`/`.vfts` trực tiếp** trên browser; chưa có giao diện
+  tìm kiếm HF riêng. Extension/mobile chưa có model browser; dùng desktop/CLI
+  hoặc remote server. API client dùng chung nằm ở crate `vifasttts-huggingface`.
