@@ -1149,10 +1149,10 @@ Workflow `.github/workflows/ci.yml` (push main/PR/tag, dispatch):
 | Job | Nội dung |
 |---|---|
 | `rust` | fmt + clippy + test trên macOS/Ubuntu/Windows; wasm check |
-| `python` | Python 3.12, ruff + 2.936 test (cần torch/onnx) |
+| `python-lint` | Python 3.12 + `ruff check .` (full pytest local do suite torch/onnx nặng) |
 | `web-extension` | build wasm-bindgen + ORT Web; zip extension; Vite web dist |
 | `desktop` | macOS `.app` zip, Linux tar.gz, Windows zip (kèm server/TUI); `--smoke` từng gói |
-| `server` | binary macOS/Linux/Windows + ORT + model + launcher; artifact riêng |
+| `server` | macOS/Linux/Windows: binary + ORT + model + launcher; artifact riêng |
 | `android` | SDK 36/NDK 28.2, cargo-ndk, APK, upload |
 | `ios` | macOS runner: Rust staticlib + ORT pod `1.30.0` + xcodebuild simulator; artifact có model |
 | `release` | tag `v*`: tải artifact và tạo/cập nhật GitHub Release |
