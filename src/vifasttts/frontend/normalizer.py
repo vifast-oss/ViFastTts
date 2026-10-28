@@ -224,7 +224,10 @@ def canonicalize_vietnamese_tokens(text: str) -> str:
 _HOUR_RE = re.compile(r"(?<!\w)(\d{1,2})h(\d{2})?(?!\w)")
 _DATE_RE = re.compile(r"(?<![\d/.,-])(?:[Nn]gày\s+)?(\d{1,2})([/.-])(\d{1,2})\2(\d{4})(?!\d)")
 _TIME_RE = re.compile(r"(?<!\d)(\d{1,2}):(\d{2})(?!\d)")
-_FRACTION_RE = re.compile(r"(?<![\d/.,])(\d+)/(\d+)(?![\d/.,])")
+# Cho phép khoảng trắng quanh "/" và dấu câu ngay sau mẫu số ("1/2.", "1/2,"),
+# nhưng không khớp khi phía sau là số thập phân ("1/2.5") hay ngày ("1/2/2024").
+_FRACTION_RE = re.compile(r"(?<![\d/.,])(\d+)\s*/\s*(\d+)(?![\d/]|[.,]\d)")
+_FRACTION_PERCENT_RE = re.compile(r"(?<![\d/.,])(\d+)\s*/\s*(\d+)\s*%")
 _RANGE_RE = re.compile(r"(?<![\d.,-])(\d+(?:[.,]\d+)?)\s*[-–—]\s*(\d+(?:[.,]\d+)?)(?:\s*(%))?(?![\d.,])")
 
 
@@ -383,6 +386,10 @@ def normalize_text(text: str, dialect: str | Dialect = Dialect.NORTH, *, options
     text = re.sub(r"(?<!\w)(\d{4,}(?:[,.]\d+)?)\s*d(?![A-Za-zÀ-ỹĐđ])", lambda m: _currency_number_to_words(m.group(1), options.dialect) + " đồng", text)
     text = re.sub(r"\$\s*(\d+(?:[,.]\d+)?)", lambda m: _currency_number_to_words(m.group(1), options.dialect) + " đô la", text)
     text = re.sub(r"(?<!\w)(\d+(?:[,.]\d+)?)\s*\$(?![A-Za-zÀ-ỹĐđ])", lambda m: _currency_number_to_words(m.group(1), options.dialect) + " đô la", text)
+    # Phân số kèm "%" phải đọc cả "phần trăm": "1/2%".
+    text = _FRACTION_PERCENT_RE.sub(
+        lambda m: _fraction_to_words(m, options.dialect) + " phần trăm", text
+    )
     # Phân số "2/3" trước phần trăm để "1/2%" không bị cắt nửa chừng.
     text = _FRACTION_RE.sub(lambda m: _fraction_to_words(m, options.dialect), text)
     # Khoảng giá trị "3-5", "10-20%", "1873-1907".
@@ -391,6 +398,9 @@ def normalize_text(text: str, dialect: str | Dialect = Dialect.NORTH, *, options
     text = re.sub(r"(?<!\w)(\d+)\s*%", lambda m: integer_to_words(int(m.group(1)), options.dialect) + " phần trăm", text)
     text = re.sub(r"(?<![\w.])(\d+[,.]\d+)(?![\w.])", lambda m: decimal_to_words(m.group(1), options.dialect), text)
     text = re.sub(r"(?<![\w.])(-?\d+)(?![\w/.:])", lambda m: _integer_token_to_words(m, options.dialect), text)
+    # Chữ số còn sót cạnh "/" nhưng không phải phân số (vd "1/hai") phải đọc thành số;
+    # để nguyên sẽ rơi vào fallback, mà fallback được mã hoá thành âm "a".
+    text = re.sub(r"(?<![\w.])(\d+)(?=\s*/(?!\d))", lambda m: integer_to_words(int(m.group(1)), options.dialect), text)
     # Số đứng trước dấu kết câu vẫn phải đọc: "Chương 2." / "mục 1:" (không áp dụng
     # cho đuôi chuỗi phiên bản như "0.1.0." — chữ số đứng ngay sau dấu chấm).
     text = re.sub(r"(?<![\w.])(-?\d+)(?=[.:](?:\s|$))", lambda m: _integer_token_to_words(m, options.dialect), text)

@@ -183,6 +183,27 @@ def test_fraction_ideal():
     assert normalize_text("2/3") == "hai phần ba"
 
 
+def test_fraction_before_punctuation():
+    # Lỗi góp ý #7 (28/10): "1/2." / "1/2," rơi khỏi luật phân số, chữ số "1"
+    # thành fallback "a". Dấu câu ngay sau mẫu số vẫn phải đọc đúng phân số.
+    assert normalize_text("1/2.") == "một phần hai."
+    assert normalize_text("1/2,") == "một phần hai,"
+    assert (
+        normalize_text("Số 1/2, số 1/4, đọc thế nào?")
+        == "Số một phần hai, số một phần bốn, đọc thế nào?"
+    )
+
+
+def test_fraction_with_spaces():
+    assert normalize_text("1 / 2") == "một phần hai"
+    assert normalize_text("1/ 2") == "một phần hai"
+    assert normalize_text("1 /2") == "một phần hai"
+
+
+def test_fraction_percent():
+    assert normalize_text("1/2%") == "một phần hai phần trăm"
+
+
 def test_range_ideal():
     assert normalize_text("3-5") == "ba đến năm"
     assert normalize_text("10-20%") == "mười đến hai mươi phần trăm"
