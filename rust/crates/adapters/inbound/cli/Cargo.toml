@@ -23,4 +23,5 @@ vifasttts-tui = { path = "../tui" }
 vifasttts-http-server = { path = "../http-server" }
 tokio = { version = "1", features = ["rt-multi-thread"] }
 vifasttts-http-client = { path = "../../outbound/http-client" }
+vifasttts-huggingface = { path = "../../outbound/huggingface" }
 vifasttts-native = { path = "../native" }

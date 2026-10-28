@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
+use vifasttts_huggingface::{bundle_files, bundles_from_siblings, download, search};
 use vifasttts_native::{
     KaraokeDocument, PackOptions, StreamControl, SynthesisOptions, TimedUnit, VfaBundle,
     VfaOptions, VftsBundle, from_bytes, load, load_verified, load_vfa, load_vfa_auto, load_vfts,
@@ -13,6 +14,26 @@ use vifasttts_native::{
 };
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::{ParseOptions, live_parse_options};
+
+#[derive(Subcommand, Debug)]
+enum ModelsAction {
+    /// Tìm model theo từ khóa (mặc định `vifasttts`).
+    Search {
+        #[arg(long, default_value = "vifasttts")]
+        query: String,
+        #[arg(long, default_value_t = 10)]
+        limit: usize,
+    },
+    /// Liệt kê .vfa/.vfts của một repo.
+    Files { repo: String },
+    /// Tải một file .vfa/.vfts.
+    Download {
+        repo: String,
+        path: String,
+        #[arg(long, default_value = "models")]
+        output: PathBuf,
+    },
+}
 
 #[derive(Subcommand, Debug)]
 enum VfaAction {
@@ -172,6 +193,11 @@ enum Command {
         vtt_karaoke: Option<PathBuf>,
         #[arg(long)]
         karaoke: Option<PathBuf>,
+    },
+    /// Tìm/tải bundle model public trên HuggingFace.
+    Models {
+        #[command(subcommand)]
+        action: ModelsAction,
     },
     /// Đóng gói acoustic-only `.vfa` (dùng chung vocoder).
     Vfa {
@@ -576,6 +602,35 @@ fn main() -> Result<()> {
                 .block_on(vifasttts_http_server::serve(config))
                 .map_err(anyhow::Error::msg)?;
         }
+        Command::Models { action } => match action {
+            ModelsAction::Search { query, limit } => {
+                let models = search(&query, limit).map_err(anyhow::Error::msg)?;
+                for model in models {
+                    let bundles = bundles_from_siblings(&model);
+                    println!(
+                        "{}  downloads={} likes={} bundles={}",
+                        model.id,
+                        model.downloads,
+                        model.likes,
+                        if bundles.is_empty() {
+                            "none".to_string()
+                        } else {
+                            bundles.join(",")
+                        }
+                    );
+                }
+            }
+            ModelsAction::Files { repo } => {
+                let files = bundle_files(&repo).map_err(anyhow::Error::msg)?;
+                for file in files {
+                    println!("{}	{} B", file.path, file.size);
+                }
+            }
+            ModelsAction::Download { repo, path, output } => {
+                let file = download(&repo, &path, &output).map_err(anyhow::Error::msg)?;
+                println!("wrote {}", file.display());
+            }
+        },
         Command::Vfa { action } => match action {
             VfaAction::Pack {
                 acoustic,

@@ -28,6 +28,9 @@ use vifasttts_native::{
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
 
+mod model_browser;
+use model_browser::ModelBrowser;
+
 const HISTORY_LIMIT: usize = 24;
 const DEFAULT_ACOUSTIC: &str = "artifacts/onnx/n0_q/acoustic.onnx";
 const DEFAULT_VOCODER: &str = "artifacts/onnx/n0_q/vocoder.onnx";
@@ -183,6 +186,12 @@ fn default_output_dir() -> String {
         .unwrap_or_else(|| PathBuf::from("."))
         .display()
         .to_string()
+}
+
+fn model_download_dir() -> PathBuf {
+    ProjectDirs::from("com", "vifasttts", "ViFastTts")
+        .map(|dirs| dirs.data_dir().join("models"))
+        .unwrap_or_else(|| PathBuf::from("models"))
 }
 
 fn settings_path() -> PathBuf {
@@ -492,6 +501,8 @@ struct DesktopApp {
     show_dictionary: bool,
     server_child: Option<std::process::Child>,
     server_status: String,
+    browser: ModelBrowser,
+    show_browser: bool,
 }
 
 impl DesktopApp {
@@ -535,6 +546,8 @@ impl DesktopApp {
             show_dictionary: false,
             server_child: None,
             server_status: "Server chưa chạy".to_string(),
+            browser: ModelBrowser::new(model_download_dir()),
+            show_browser: false,
         }
     }
 
@@ -967,6 +980,33 @@ impl DesktopApp {
         }
         ui.small(&self.server_status);
         ui.small("Extension/điện thoại/IoT remote trỏ tới URL này; server dùng cùng model/ORT.");
+    }
+
+    fn apply_downloaded_model(&mut self, path: PathBuf) {
+        let extension = path
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+        match extension.as_str() {
+            "vfa" => {
+                self.settings.vfa_path = path.display().to_string();
+                self.settings.vfts_path.clear();
+                self.reload_local();
+            }
+            "vfts" => {
+                self.settings.vfts_path = path.display().to_string();
+                self.settings.vfa_path.clear();
+                self.reload_local();
+            }
+            _ => {
+                self.error = Some(format!("File không phải .vfa/.vfts: {}", path.display()));
+                return;
+            }
+        }
+        self.settings_dirty = true;
+        self.show_browser = false;
+        self.status = format!("Đã nạp model {}", path.display());
     }
 
     fn settings_panel(&mut self, ui: &mut egui::Ui) {
@@ -1412,6 +1452,9 @@ impl eframe::App for DesktopApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_events();
         self.poll_server();
+        if let Some(path) = self.browser.poll() {
+            self.apply_downloaded_model(path);
+        }
 
         if ctx.input(|input| input.modifiers.command && input.key_pressed(egui::Key::Enter))
             && !self.busy
@@ -1433,6 +1476,9 @@ impl eframe::App for DesktopApp {
                     SynthesisMode::Remote => "Remote server",
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("Thêm giọng từ HuggingFace").clicked() {
+                        self.show_browser = true;
+                    }
                     if self.model_ready {
                         ui.colored_label(egui::Color32::LIGHT_GREEN, "● model ready");
                     } else if self.settings.app.mode == SynthesisMode::Remote {
@@ -1446,6 +1492,17 @@ impl eframe::App for DesktopApp {
                 });
             });
         });
+
+        let mut show_browser = self.show_browser;
+        if show_browser {
+            let browser = &mut self.browser;
+            egui::Window::new("HuggingFace · .vfa / .vfts")
+                .open(&mut show_browser)
+                .default_width(680.0)
+                .min_width(480.0)
+                .show(ctx, |ui| browser.ui(ui));
+        }
+        self.show_browser = show_browser;
 
         egui::SidePanel::right("settings")
             .resizable(true)

@@ -94,6 +94,18 @@ gh release upload v0.1.0 \
 - `.vfts` full vẫn là fallback an toàn, nhất là khi vocoder/acoustic khác contract
   mel hoặc chưa test tai.
 
+## Tìm model trong app
+
+Desktop có **Thêm giọng từ HuggingFace**; CLI có:
+
+```bash
+vifasttts models search
+vifasttts models files <repo>
+vifasttts models download <repo> <path> --output models
+```
+
+Chi tiết: `docs/MODEL_SEARCH.md`.
+
 ## CI hiện tại
 
 - `model-vfts` job tạo:

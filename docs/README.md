@@ -26,6 +26,7 @@
 | Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
 | Mobile: model bundle/tải nhiều giọng | `docs/MOBILE_MODELS.md` |
 | Phân phối `.vfts`/`.vfa` lên HF/GitHub | `docs/MODEL_DISTRIBUTION.md` |
+| Tìm/tải model từ HuggingFace | `docs/MODEL_SEARCH.md` |
 | Xem lịch sử cũ | `docs/archive/README.md` |
 
 ## 1. Trạng thái hiện tại (tóm tắt)
