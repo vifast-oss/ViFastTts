@@ -16,6 +16,7 @@
 | Hiểu chuẩn hoá số/STEM | `docs/NORMALIZER.md` · `docs/STEM_NORMALIZER.md` |
 | Xem thiết kế/đo acoustic v2 | `docs/ACOUSTIC_V2.md` |
 | Chấm một checkpoint | `docs/EVAL_TOOLS.md` |
+| Benchmark N0 + model ngoài | `docs/BENCHMARK_N0.md` |
 | Train lại N0 | `docs/TRAINING_N0.md` |
 | Triển khai ONNX/demo | `docs/handoff/N0_DEPLOY.md` |
 | Xem quyết định Q | `docs/Q_ONSET.md` |
@@ -30,7 +31,7 @@
 - **Bản fine-tune Q 3k** (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export nhưng **chưa live**;
   chỉ dùng để so tai qua release tạm `q-preview-2026-10-27` (2 WAV).
 - **Model/ONNX cũ** không có `onset_has_q=true` bị từ chối rõ ràng; **không có adapter Q→K**.
-- **Test:** 2.575 pass / 24 skip; `ruff` sạch (27/10/2026).
+- **Test:** 2.909 pass / 24 skip; `ruff` sạch (28/10/2026).
 - **Demo:** custom reading local-first, gửi duyệt khi bật checkbox, STEM examples,
   feedback/báo lỗi, admin thống kê; nội dung feedback chờ `ADMIN_PASSWORD`.
 
