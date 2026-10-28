@@ -45,9 +45,8 @@ try {
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path (Join-Path $Out "models") | Out-Null
 Copy-Item (Join-Path $Root "rust/target/release/vifasttts-desktop.exe") (Join-Path $Out "vifasttts-desktop.exe")
-Copy-Item (Join-Path $Root "rust/target/release/vifasttts-rs.exe") (Join-Path $Out "vifasttts-rs.exe")
-Copy-Item (Join-Path $Out "vifasttts-rs.exe") (Join-Path $Out "vifasttts.exe")
-Copy-Item (Join-Path $Out "vifasttts-rs.exe") (Join-Path $Out "vtfs.exe")
+Copy-Item (Join-Path $Root "rust/target/release/vifasttts.exe") (Join-Path $Out "vifasttts.exe")
+Copy-Item (Join-Path $Out "vifasttts.exe") (Join-Path $Out "vtfs.exe")
 if ($WebDir -and (Test-Path $WebDir)) { Copy-Item -Recurse -Force $WebDir (Join-Path $Out "web") }
 Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
@@ -55,9 +54,9 @@ Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
 @"
 ViFastTts Desktop + server + TUI (Windows x64)
 Chạy GUI: vifasttts-desktop.exe
-TUI: vifasttts-rs.exe
-Server + web: vifasttts-rs.exe server --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
-CLI: vifasttts-rs.exe synth --text "..." --output out.wav
+TUI: vifasttts.exe
+Server + web: vifasttts.exe server --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
+CLI: vifasttts.exe synth --text "..." --output out.wav
 Kiểm tra headless: vifasttts-desktop.exe --smoke
 Model: models\acoustic.onnx + models\vocoder.onnx
 ORT: onnxruntime.dll (1.31.1, load-dynamic)

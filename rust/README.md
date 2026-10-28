@@ -22,36 +22,36 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-Binary: `rust/target/release/vifasttts-rs` (~7,5 MB, gồm HTTP client) + thư viện ORT trong `rust/lib/`.
+Binary: `rust/target/release/vifasttts` (~7,5 MB, gồm HTTP client) + thư viện ORT trong `rust/lib/`.
 
 ## Lệnh
 
 ```bash
 # Xem metadata/hash model + ORT thực tế
-rust/target/release/vifasttts-rs inspect
-rust/target/release/vifasttts-rs inspect --from-bytes
-rust/target/release/vifasttts-rs inspect --manifest rust/models/n0-q.manifest.json
+rust/target/release/vifasttts inspect
+rust/target/release/vifasttts inspect --from-bytes
+rust/target/release/vifasttts inspect --manifest rust/models/n0-q.manifest.json
 
 # Tổng hợp local
-rust/target/release/vifasttts-rs synth --text "Chào bạn" --output out.wav
+rust/target/release/vifasttts synth --text "Chào bạn" --output out.wav
 
 # Gọi server remote
-rust/target/release/vifasttts-rs synth --server http://127.0.0.1:8000 \
+rust/target/release/vifasttts synth --server http://127.0.0.1:8000 \
   --text "Chào bạn" --output out.wav
 
 # Karaoke: JSON + SRT + WebVTT (karaoke inline timestamp)
-rust/target/release/vifasttts-rs synth --text "Xin chào các bạn" \
+rust/target/release/vifasttts synth --text "Xin chào các bạn" \
   --output out.wav --karaoke out.json --srt out.srt --vtt-karaoke out.vtt
 
 # Fixed pause + speed
-rust/target/release/vifasttts-rs synth --text "Một. Hai!" \
+rust/target/release/vifasttts synth --text "Một. Hai!" \
   --output out.wav --fixed-pauses --speed 0.9
 
 # Mel từ 7 ID (debug/parity)
-rust/target/release/vifasttts-rs mel-ids --features features.json --output mel.f32
+rust/target/release/vifasttts mel-ids --features features.json --output mel.f32
 
 # Streaming PCM (CLI gom để kiểm tra WAV; có thể xuất karaoke)
-rust/target/release/vifasttts-rs stream --text "..." --output out-stream.wav \
+rust/target/release/vifasttts stream --text "..." --output out-stream.wav \
   --karaoke out-stream.json
 
 # Server tối thiểu
@@ -67,21 +67,21 @@ curl -sS -N -X POST http://127.0.0.1:8000/api/tts/stream \
 # Desktop GUI + TUI + server + CLI (cần model local)
 cargo build --release -p vifasttts-desktop -p vifasttts-cli
 ./target/release/vifasttts-desktop --smoke
-./target/release/vifasttts-rs              # mặc định mở TUI
+./target/release/vifasttts              # mặc định mở TUI
 # package release có alias: vifasttts, vtfs
-./target/release/vifasttts-rs server       # server + web (nếu có web/)
-./target/release/vifasttts-rs server --api-only  # chỉ API
-./target/release/vifasttts-rs --help
+./target/release/vifasttts server       # server + web (nếu có web/)
+./target/release/vifasttts server --api-only  # chỉ API
+./target/release/vifasttts --help
 
 # Model bundle full .vfts (manifest + ONNX + snapshot resources)
-rust/target/release/vifasttts-rs vfts pack --output n0.vfts
-rust/target/release/vifasttts-rs vfts inspect n0.vfts
-rust/target/release/vifasttts-rs synth --vfts n0.vfts --text "Xin chào" --output out.wav
+rust/target/release/vifasttts vfts pack --output n0.vfts
+rust/target/release/vifasttts vfts inspect n0.vfts
+rust/target/release/vifasttts synth --vfts n0.vfts --text "Xin chào" --output out.wav
 
 # Acoustic-only .vfa (~28 MB) dùng chung Vocos pretrained
-rust/target/release/vifasttts-rs vfa pack --output n0.vfa \
+rust/target/release/vifasttts vfa pack --output n0.vfa \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx
-rust/target/release/vifasttts-rs synth --vfa n0.vfa \
+rust/target/release/vifasttts synth --vfa n0.vfa \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx --text "Xin chào" --output out.wav
 
 # C ABI (macOS; Linux/Windows build tương tự)
@@ -91,7 +91,7 @@ cargo build --release -p vifasttts-ffi
 # karaoke: vifasttts_synthesize_karaoke -> WAV + JSON timing
 
 # Benchmark trong process (load một lần)
-rust/target/release/vifasttts-rs bench --text "..." --runs 20 --warmup 3
+rust/target/release/vifasttts bench --text "..." --runs 20 --warmup 3
 ```
 
 `synth` mặc định dùng **profile live**: built-in `overrides_vi.json` + custom

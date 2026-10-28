@@ -27,7 +27,7 @@ Push-Location (Join-Path $Root "rust")
 try { cargo build --release -p vifasttts-cli; if ($LASTEXITCODE -ne 0) { throw "cargo build failed" } } finally { Pop-Location }
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path (Join-Path $Out "models") | Out-Null
-Copy-Item (Join-Path $Root "rust/target/release/vifasttts-rs.exe") (Join-Path $Out "vifasttts-rs.exe")
+Copy-Item (Join-Path $Root "rust/target/release/vifasttts.exe") (Join-Path $Out "vifasttts.exe")
 Copy-Item (Join-Path $Extract "lib/onnxruntime.dll") (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
@@ -36,8 +36,8 @@ if ($WebDir -and (Test-Path $WebDir)) {
 }
 @"
 ViFastTts CLI/TUI/server (Windows x64)
-Chạy server: .\vifasttts-rs.exe server --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
-TUI/CLI: .\vifasttts-rs.exe
+Chạy server: .\vifasttts.exe server --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
+TUI/CLI: .\vifasttts.exe
 Web UI: thêm --web-dir web nếu có thư mục web.
 Model: models\acoustic.onnx + models\vocoder.onnx
 ORT: onnxruntime.dll 1.31.1

@@ -204,14 +204,14 @@ jobs:
         run: |
           chmod +x server/package-unix.sh
           WEB_DIR=web-dist server/package-unix.sh
-          cli_bin="$(find desktop/dist -path '*vifasttts-cli-*' -type d -name 'vifasttts-cli-*' | head -1)/vifasttts-rs"
+          cli_bin="$(find desktop/dist -path '*vifasttts-cli-*' -type d -name 'vifasttts-cli-*' | head -1)/vifasttts"
           "$cli_bin" --help >/dev/null
       - name: package windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           server/package-windows.ps1 -WebDir web-dist
-          & desktop/dist/vifasttts-cli-windows-x64/vifasttts-rs.exe --help | Out-Null
+          & desktop/dist/vifasttts-cli-windows-x64/vifasttts.exe --help | Out-Null
       - uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.platform }}
@@ -229,14 +229,14 @@ jobs:
         run: |
           cargo build --release -p vifasttts-cli --manifest-path rust/Cargo.toml
           mkdir -p desktop/dist
-          rust/target/release/vifasttts-rs vfts pack \
+          rust/target/release/vifasttts vfts pack \
             --output desktop/dist/n0-ngochuyen.vfts
-          rust/target/release/vifasttts-rs vfts inspect \
+          rust/target/release/vifasttts vfts inspect \
             desktop/dist/n0-ngochuyen.vfts >/dev/null
-          rust/target/release/vifasttts-rs vfa pack \
+          rust/target/release/vifasttts vfa pack \
             --output desktop/dist/n0-ngochuyen.vfa \
             --vocoder artifacts/onnx/n0_q/vocoder.onnx
-          rust/target/release/vifasttts-rs vfa inspect \
+          rust/target/release/vifasttts vfa inspect \
             desktop/dist/n0-ngochuyen.vfa >/dev/null
       - uses: actions/upload-artifact@v4
         with:

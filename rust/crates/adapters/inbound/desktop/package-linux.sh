@@ -31,9 +31,8 @@ fi
 rm -rf "$OUT"
 mkdir -p "$OUT/models"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$OUT/vifasttts-desktop"
-cp "$ROOT/rust/target/release/vifasttts-rs" "$OUT/vifasttts-rs"
-ln -sf vifasttts-rs "$OUT/vifasttts"
-ln -sf vifasttts-rs "$OUT/vtfs"
+cp "$ROOT/rust/target/release/vifasttts" "$OUT/vifasttts"
+ln -sf vifasttts "$OUT/vtfs"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then cp -R "$WEB_DIR" "$OUT/web"; fi
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
@@ -44,13 +43,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 exec ./vifasttts-desktop "$@"
 SH
-chmod +x "$OUT/vifasttts-desktop" "$OUT/vifasttts-rs" "$OUT/run.sh"
+chmod +x "$OUT/vifasttts-desktop" "$OUT/vifasttts" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'
 ViFastTts Desktop + server + TUI (Linux x64)
 Chạy GUI: ./run.sh
-TUI: ./vifasttts-rs
-Server + web: ./vifasttts-rs server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx --port 8000
-CLI: ./vifasttts-rs synth --text "..." --output out.wav
+TUI: ./vifasttts
+Server + web: ./vifasttts server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx --port 8000
+CLI: ./vifasttts synth --text "..." --output out.wav
 Kiểm tra headless: ./vifasttts-desktop --smoke
 Model: models/acoustic.onnx + models/vocoder.onnx
 ORT: libonnxruntime.so (1.31.1, load-dynamic)

@@ -65,7 +65,7 @@ enum VftsAction {
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "vifasttts-rs",
+    name = "vifasttts",
     version,
     about = "ViFastTts Rust: TUI mặc định, CLI hoặc server"
 )]

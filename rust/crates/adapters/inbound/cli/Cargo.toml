@@ -7,7 +7,7 @@ rust-version.workspace = true
 description = "CLI for the Rust ViFastTts inference port"
 
 [[bin]]
-name = "vifasttts-rs"
+name = "vifasttts"
 path = "src/main.rs"
 
 [dependencies]

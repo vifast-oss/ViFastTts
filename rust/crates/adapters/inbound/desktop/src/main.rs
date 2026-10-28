@@ -810,9 +810,9 @@ impl DesktopApp {
 
     fn server_binary() -> PathBuf {
         let name = if cfg!(windows) {
-            "vifasttts-rs.exe"
+            "vifasttts.exe"
         } else {
-            "vifasttts-rs"
+            "vifasttts"
         };
         if let Ok(executable) = std::env::current_exe()
             && let Some(directory) = executable.parent()

@@ -30,7 +30,7 @@ ortlib="$CACHE/onnxruntime-$ort-$ORT_VERSION/lib/libonnxruntime.dylib"
 [ -f "$ortlib" ] || ortlib="$CACHE/onnxruntime-$ort-$ORT_VERSION/lib/libonnxruntime.so"
 [ -f "$ortlib" ] || { echo "Không thấy ORT trong $CACHE" >&2; exit 2; }
 rm -rf "$OUT"; mkdir -p "$OUT/models"
-cp "$ROOT/rust/target/release/vifasttts-rs" "$OUT/vifasttts-rs"
+cp "$ROOT/rust/target/release/vifasttts" "$OUT/vifasttts"
 cp -L "$ortlib" "$OUT/$(basename "$ortlib")"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"
@@ -43,13 +43,13 @@ cat > "$OUT/run.sh" <<'SH'
 cd "$(dirname "$0")"
 args=(--acoustic models/acoustic.onnx --vocoder models/vocoder.onnx)
 [ -d web ] && args+=(--web-dir web)
-exec ./vifasttts-rs server "${args[@]}" "$@"
+exec ./vifasttts server "${args[@]}" "$@"
 SH
-chmod +x "$OUT/vifasttts-rs" "$OUT/run.sh"
+chmod +x "$OUT/vifasttts" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'
 ViFastTts CLI/TUI/server
 Chạy server: ./run.sh --host 127.0.0.1 --port 8000
-TUI/CLI: ./vifasttts-rs
+TUI/CLI: ./vifasttts
 Model: models/acoustic.onnx + models/vocoder.onnx
 ORT: 1.31.1 (load-dynamic, cùng thư mục)
 Endpoints: /healthz, /api/config, /api/tts, /api/tts/stream

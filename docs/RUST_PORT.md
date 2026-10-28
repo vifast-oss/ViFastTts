@@ -486,7 +486,7 @@ Việc làm:
    - `fade`, `peak_normalize`;
    - model loader + metadata/hash validation;
    - session options (2 threads, CPU).
-4. CLI `vifasttts-rs synth-ids`:
+4. CLI `vifasttts synth-ids`:
    - nhận JSON 7 ID hoặc file `.npy`/raw;
    - xuất WAV;
    - in timing/shape/hash.
@@ -933,7 +933,7 @@ Workspace `rust/` gồm 23 crate, khoảng **11.0k dòng** Rust + resources:
   frontend_meta), sinh từ Python bằng `tools/export_rust_resources.py`.
 - Tool parity: `tools/rust_parity.py` (live/full, matrix, fuzz), ghi
   `artifacts/rust_parity*` — local, không commit.
-- Build release: `rust/target/release/vifasttts-rs` (~7,5 MB, gồm HTTP client) + `rust/lib/libonnxruntime`
+- Build release: `rust/target/release/vifasttts` (~7,5 MB, gồm HTTP client) + `rust/lib/libonnxruntime`
   (1.31.1, ~32 MB); `inspect` in `ort: ORT Build Info ...`.
 - Đã có: tách `engine`/`ort`, `from_bytes`, manifest + verify, streaming PCM,
   C ABI và server axum tối thiểu; **karaoke timing từ `slot_durations`** + export
@@ -1125,7 +1125,7 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
 - `.app` ~127 MB (model 86 MB + ORT 32 MB + binary 13 MB); app tự tìm model trong
   `Contents/Resources` và ORT cạnh executable (đã test smoke từ bundle).
 - Chưa streaming PCM trong UI; nút Dừng phát chỉ dừng audio, job local vẫn hoàn tất.
-- Package desktop kèm `vifasttts-rs` (CLI/TUI/server); desktop có nút bật
+- Package desktop kèm `vifasttts` (CLI/TUI/server); desktop có nút bật
   server nội bộ để extension remote kết nối `http://127.0.0.1:<port>`.
 
 **Android (đã chạy):**
@@ -1195,7 +1195,7 @@ cargo run --release -p vifasttts-cli -- server --port 8000
 cargo build --release -p vifasttts-ffi
 
 # Benchmark trong một process
-rust/target/release/vifasttts-rs bench --text "..." --runs 20 --warmup 3
+rust/target/release/vifasttts bench --text "..." --runs 20 --warmup 3
 ```
 
 `--reuse` chỉ dùng lại input/expected đã sinh; bỏ nó để sinh lại. Không commit
@@ -1267,7 +1267,7 @@ ms     = sample * 1000 / sample_rate
 ### 16.5 Ví dụ
 
 ```bash
-rust/target/release/vifasttts-rs synth \
+rust/target/release/vifasttts synth \
   --text "Xin chào các bạn, hôm nay trời đẹp." \
   --output out.wav --srt out.srt --vtt-karaoke out.karaoke.vtt \
   --karaoke out.json

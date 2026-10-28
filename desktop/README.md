@@ -59,7 +59,7 @@ rust/crates/adapters/inbound/desktop/package-windows.ps1
 ```
 
 Cả hai package chứa `models/acoustic.onnx`, `models/vocoder.onnx`,
-`libonnxruntime`/`onnxruntime.dll`, kèm `vifasttts-rs` (CLI/TUI/server) và `web/` nếu build có web; app tự tìm theo
+`libonnxruntime`/`onnxruntime.dll`, kèm `vifasttts` (CLI/TUI/server) và `web/` nếu build có web; app tự tìm theo
 thư mục executable. CI build cả ba nền tảng; macOS/Linux đã test
 smoke, Windows do CI test.
 
@@ -75,11 +75,11 @@ smoke, Windows do CI test.
 - Local synth chạy trên worker thread nhưng **chưa streaming PCM**; nút **Dừng phát**
   chỉ dừng audio, request local đang chạy vẫn hoàn tất (engine không có cancel cho
   `synthesize` thường).
-- Có **server nội bộ** trong Settings: bật/tắt `vifasttts-rs server` cùng port;
+- Có **server nội bộ** trong Settings: bật/tắt `vifasttts server` cùng port;
   extension/điện thoại/IoT remote trỏ tới `http://127.0.0.1:<port>` (không gọi
   native trực tiếp). Đặt thư mục `web/` cạnh binary (giải nén `web-dist.tar.gz`)
   để server nội bộ tự phục vụ web UI.
-- Có **TUI/CLI/server** trong `vifasttts-rs` (không tham số = TUI;
+- Có **TUI/CLI/server** trong `vifasttts` (không tham số = TUI;
   `server` = HTTP server + web nếu có `web/`).
 - Chưa có system tray, menu native, auto-update, ký notarize; Linux/Windows
   package do CI tạo và smoke, chưa test tay trên máy thật.

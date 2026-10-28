@@ -1,6 +1,6 @@
 # Định dạng model `.vfts` (đề xuất, chưa triển khai)
 
-> Trạng thái: **đã triển khai core** (crate `vifasttts-vfts`, CLI `vifasttts-rs vfts`);
+> Trạng thái: **đã triển khai core** (crate `vifasttts-vfts`, CLI `vifasttts vfts`);
 > bundle là optional, loader ONNX hiện tại vẫn là canonical. Trước đây repo chỉ có
 > manifest JSON + 2 file ONNX; không có spec `.vfts` cũ để tương thích.
 
@@ -58,12 +58,12 @@ cho các acoustic model cùng contract mel.
 
 ```bash
 # đóng gói acoustic-only (~28 MB thay vì ~76 MB full)
-rust/target/release/vifasttts-rs vfa pack \
+rust/target/release/vifasttts vfa pack \
   --output n0.vfa \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx
 
 # synth
-rust/target/release/vifasttts-rs synth --vfa n0.vfa \
+rust/target/release/vifasttts synth --vfa n0.vfa \
   --vocoder artifacts/onnx/n0_q/vocoder.onnx --text "Xin chào"
 ```
 
@@ -74,14 +74,14 @@ lỗi nếu vocoder không khớp hoặc frontend/vocab khác runtime.
 
 ```bash
 # đóng gói ONNX + snapshot frontend resources
-rust/target/release/vifasttts-rs vfts pack \
+rust/target/release/vifasttts vfts pack \
   --output n0.vfts
 
 # xem manifest/hash/frontend
-rust/target/release/vifasttts-rs vfts inspect n0.vfts
+rust/target/release/vifasttts vfts inspect n0.vfts
 
 # giải nén
-rust/target/release/vifasttts-rs vfts unpack n0.vfts --output /tmp/n0
+rust/target/release/vifasttts vfts unpack n0.vfts --output /tmp/n0
 ```
 
 - `vifasttts-vfts`: `VftsBundle` + `ModelSource`; kiểm ZIP traversal/zip-bomb,
@@ -97,7 +97,7 @@ rust/target/release/vifasttts-rs vfts unpack n0.vfts --output /tmp/n0
 ## Phase triển khai tiếp
 
 1. ✅ `vifasttts-vfts` crate: `pack/read/inspect/unpack`; test traversal/zip-bomb/hash.
-2. ✅ CLI `vifasttts-rs vfts pack|inspect|unpack`; `--vfts` cho synth/inspect.
+2. ✅ CLI `vifasttts vfts pack|inspect|unpack`; `--vfts` cho synth/inspect.
 3. ✅ Desktop/TUI/server/FFI/mobile có loader `.vfts`; web extension chưa cần.
 4. ✅ CI job `model-vfts` tạo bundle từ release ONNX.
 5. ⬜ Runtime override toàn bộ dictionary/frontend resource từ bundle (hiện dùng

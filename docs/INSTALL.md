@@ -21,7 +21,7 @@ Trong desktop:
 - **Dùng server này** → chuyển chế độ remote sang server vừa bật.
 - TUI: mở PowerShell/CMD tại thư mục giải nén:
   ```powershell
-  .\vifasttts-rs.exe
+  .\vifasttts.exe
   ```
 
 Không cần cài Python/Node/Visual C++ redistributable (bản release đã gom runtime
@@ -42,12 +42,12 @@ Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
 TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
 ```bash
 # mặc định mở TUI (alias: vifasttts / vtfs)
-/Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts
 # TUI độc lập
-# TUI/CLI/server nằm trong vifasttts-rs
-/Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs
+# TUI/CLI/server nằm trong vifasttts
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts
 # server + web (nếu có web/ cạnh binary)
-/Applications/ViFastTts.app/Contents/MacOS/vifasttts-rs server
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts server
 ```
 
 ## Linux x64
@@ -56,7 +56,7 @@ TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
 tar -xzf vifasttts-desktop-linux-x64.tar.gz
 cd vifasttts-desktop-linux-x64
 ./run.sh
-./vifasttts-rs
+./vifasttts
 ```
 
 Cần `libasound2`, `libxkbcommon`, X11/Wayland, OpenGL. Ubuntu/Debian:
@@ -67,10 +67,10 @@ Nếu chạy headless: `./vifasttts-desktop --smoke`.
 
 ## Server (Windows/macOS/Linux)
 
-- Windows: `vifasttts-cli-windows-x64.zip` → `vifasttts-rs.exe`.
+- Windows: `vifasttts-cli-windows-x64.zip` → `vifasttts.exe`.
 - macOS: `vifasttts-cli-macos-arm64.tar.gz` → `./run.sh`.
 - Linux: `vifasttts-cli-linux-x64.tar.gz` → `./run.sh`.
-- Chạy server: `vifasttts-rs server`; API-only: `--api-only`.
+- Chạy server: `vifasttts server`; API-only: `--api-only`.
 
 ```bash
 ./run.sh --host 127.0.0.1 --port 8000
@@ -82,9 +82,9 @@ Server nhận `dictionary` text hoặc `overrides` JSON; có thể phục vụ w
 ```bash
 ./run.sh --web-dir web --token 'đổi-token' --host 127.0.0.1 --port 8000
 # CLI hợp nhất: server + web + auth
-vifasttts-rs server --web-dir web --token 'đổi-token' --port 8000
+vifasttts server --web-dir web --token 'đổi-token' --port 8000
 # chỉ API, không phục vụ web
-vifasttts-rs server --api-only --port 8000
+vifasttts server --api-only --port 8000
 # web ở origin khác cần thêm --cors
 ```
 
@@ -123,19 +123,19 @@ Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 # Rust CLI + TUI + server (CLI chứa TUI mặc định)
 cargo build --release --manifest-path rust/Cargo.toml \
   -p vifasttts-cli
-# binary: rust/target/release/vifasttts-rs (TUI/CLI/server)
-# ./vifasttts-rs              -> TUI
+# binary: rust/target/release/vifasttts (TUI/CLI/server)
+# ./vifasttts              -> TUI
 # ./vifasttts  / ./vtfs       -> alias ngắn (package release)
-# ./vifasttts-rs server       -> server + web
-# ./vifasttts-rs synth ...    -> CLI
+# ./vifasttts server       -> server + web
+# ./vifasttts synth ...    -> CLI
 ```
 
 Cần model ONNX + ORT 1.31.1 (`rust/lib/`) như `rust/README.md`. Có thể dùng
 bundle `.vfts`:
 
 ```bash
-rust/target/release/vifasttts-rs vfts pack --output n0.vfts
-rust/target/release/vifasttts-rs synth --vfts n0.vfts --text "Xin chào"
+rust/target/release/vifasttts vfts pack --output n0.vfts
+rust/target/release/vifasttts synth --vfts n0.vfts --text "Xin chào"
 ```
 
 ## Kênh phân phối
