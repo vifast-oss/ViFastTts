@@ -147,6 +147,7 @@ Large ≈ 32M.
   trong benchmark local vì chưa nạp đủ built-in/approved; đã merge các quy tắc lõi vào
   `configs/overrides_tech_vi.json` (229 quy tắc) + test; A/B mới chuẩn hoá bằng từ điển production.
 - Quyết định: **giữ small production**; không promote base60.
+- Không release công khai base60: không thắng đủ rõ, chậm/nặng hơn small; giữ checkpoint local để tái lập nghiên cứu.
 
 ## 4. Mặc định suy luận N0
 
