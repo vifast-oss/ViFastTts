@@ -1,6 +1,6 @@
 # Tài liệu ViFastTts — bản đồ & trạng thái
 
-> **Cập nhật:** 28/10/2026 · **Trạng thái hiện hành:** xem `docs/handoff/TRANG_THAI.md`.
+> **Cập nhật:** 29/10/2026 · **Trạng thái hiện hành:** xem `docs/handoff/TRANG_THAI.md`.
 > Đây là **trang mục lục duy nhất** cho toàn bộ `docs/`. Khi có mâu thuẫn, thứ tự ưu tiên:
 > `TRANG_THAI.md` (trạng thái) → `docs/README.md` (mục lục) → tài liệu chuyên đề đang hiệu lực
 > → tài liệu tham chiếu → `docs/archive/` (lịch sử, không dùng để quyết định).

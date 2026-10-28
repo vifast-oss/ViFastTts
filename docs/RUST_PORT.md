@@ -235,6 +235,7 @@ rust/
       inbound/
         native/              # native composition root
         mobile/              # iOS/Android composition root
+        desktop/             # GUI desktop egui (local + remote)
         browser/             # browser composition root
         ffi/                 # C ABI mobile/desktop
         http-server/         # axum HTTP inbound adapter
@@ -898,7 +899,7 @@ phải làm để chạy web + desktop + iOS + Android. Mã Rust **chưa đổi 
 
 ### 15.1 Mã đang có
 
-Workspace `rust/` gồm 21 crate, khoảng **8,6k dòng** Rust + resources:
+Workspace `rust/` gồm 21 crate, khoảng **9.4k dòng** Rust + resources:
 
 | Crate | Nội dung | Ghi chú |
 |---|---|---|
