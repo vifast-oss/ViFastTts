@@ -10,10 +10,6 @@ description = "Terminal UI for ViFastTts (local ONNX or remote HTTP)"
 name = "vifasttts_tui"
 path = "src/lib.rs"
 
-[[bin]]
-name = "vifasttts-tui"
-path = "src/main.rs"
-
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true

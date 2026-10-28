@@ -10,10 +10,6 @@ description = "Minimal axum HTTP server for ViFastTts Rust inference"
 name = "vifasttts_http_server"
 path = "src/lib.rs"
 
-[[bin]]
-name = "vifasttts-server"
-path = "src/main.rs"
-
 [dependencies]
 axum = "0.8"
 base64.workspace = true

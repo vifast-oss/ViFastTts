@@ -918,7 +918,7 @@ Workspace `rust/` gồm 23 crate, khoảng **11.0k dòng** Rust + resources:
 | `vifasttts-native` | native adapter: async engine + ORT, API sync `load`/`from_bytes`/`load_verified` | `block_on` tại biên; CLI/desktop/server/FFI dùng sync |
 | `vifasttts-mobile` | mobile composition root: model, status, synth, `AudioSink` | iOS/Android; chưa có audio adapter/UI |
 | `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP + server nội bộ, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS/Linux/Windows package; CI smoke cả ba |
-| `vifasttts-tui` | terminal UI ratatui/crossterm: nhập text, synth local/remote, lưu WAV | có trong package desktop; model/ORT dùng chung |
+| `vifasttts-tui` | library TUI ratatui/crossterm | CLI không args mở TUI |
 | `vifasttts-vfts` | `.vfts` full + `.vfa` acoustic-only (vocoder hash); hash/traversal/zip-bomb | loader native/CLI/server/TUI/FFI/mobile |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
@@ -1125,7 +1125,7 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
 - `.app` ~127 MB (model 86 MB + ORT 32 MB + binary 13 MB); app tự tìm model trong
   `Contents/Resources` và ORT cạnh executable (đã test smoke từ bundle).
 - Chưa streaming PCM trong UI; nút Dừng phát chỉ dừng audio, job local vẫn hoàn tất.
-- Package desktop kèm `vifasttts-server` + `vifasttts-tui`; desktop có nút bật
+- Package desktop kèm `vifasttts-rs` (CLI/TUI/server); desktop có nút bật
   server nội bộ để extension remote kết nối `http://127.0.0.1:<port>`.
 
 **Android (đã chạy):**
@@ -1189,7 +1189,7 @@ cd rust && cargo build --release -p vifasttts-cli -p vifasttts-tools -p vifasttt
   --fuzz-combining --reuse --output artifacts/rust_parity_fuzz
 
 # Server tối thiểu
-cargo run --release -p vifasttts-http-server -- --port 8000
+cargo run --release -p vifasttts-cli -- server --port 8000
 
 # C ABI
 cargo build --release -p vifasttts-ffi
