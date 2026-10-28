@@ -57,6 +57,8 @@ fn run_smoke() -> eframe::Result {
         std::env::var("VIFASTT_ACOUSTIC").unwrap_or_else(|_| settings.acoustic_path.clone());
     let vocoder =
         std::env::var("VIFASTT_VOCODER").unwrap_or_else(|_| settings.vocoder_path.clone());
+    let acoustic = resolve_model_path(&acoustic);
+    let vocoder = resolve_model_path(&vocoder);
     let mut engine = match load(&acoustic, &vocoder) {
         Ok(engine) => engine,
         Err(error) => {
