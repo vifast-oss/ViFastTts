@@ -173,10 +173,10 @@ pub fn load_vfts(path: impl AsRef<std::path::Path>) -> Result<NativeEngine, Stri
 fn vocoder_candidates() -> Vec<std::path::PathBuf> {
     let mut candidates = Vec::new();
     for key in ["VIFASTT_VOCODER", "VIFASTT_VOCODER_PATH"] {
-        if let Ok(value) = std::env::var(key) {
-            if !value.trim().is_empty() {
-                candidates.push(std::path::PathBuf::from(value));
-            }
+        if let Ok(value) = std::env::var(key)
+            && !value.trim().is_empty()
+        {
+            candidates.push(std::path::PathBuf::from(value));
         }
     }
     if let Ok(cwd) = std::env::current_dir() {
