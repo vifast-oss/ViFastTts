@@ -174,6 +174,31 @@ pub fn wav_bytes(wav: &[f32], sample_rate: u32) -> Vec<u8> {
     output
 }
 
+/// WAV PCM16 từ bytes PCM đã có (mono/multi-channel), không đổi sample.
+///
+/// Dùng cho stream mobile: client gom PCM16 ở native, Rust chỉ dựng header
+/// chuẩn để Android/iOS không tự viết RIFF khác nhau.
+pub fn wav_bytes_pcm16(pcm: &[u8], sample_rate: u32, channels: u16) -> Vec<u8> {
+    let channels = channels.max(1);
+    let block_align = channels * 2;
+    let data_len = pcm.len() as u32;
+    let mut output = Vec::with_capacity(44 + pcm.len());
+    output.extend_from_slice(b"RIFF");
+    output.extend_from_slice(&(36u32 + data_len).to_le_bytes());
+    output.extend_from_slice(b"WAVEfmt ");
+    output.extend_from_slice(&16u32.to_le_bytes());
+    output.extend_from_slice(&1u16.to_le_bytes());
+    output.extend_from_slice(&channels.to_le_bytes());
+    output.extend_from_slice(&sample_rate.to_le_bytes());
+    output.extend_from_slice(&(sample_rate * block_align as u32).to_le_bytes());
+    output.extend_from_slice(&block_align.to_le_bytes());
+    output.extend_from_slice(&16u16.to_le_bytes());
+    output.extend_from_slice(b"data");
+    output.extend_from_slice(&data_len.to_le_bytes());
+    output.extend_from_slice(pcm);
+    output
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,6 +213,10 @@ mod tests {
     fn wav_header_is_riff() {
         let wav = wav_bytes(&[0.0, 0.5, -0.5], 24000);
         assert_eq!(&wav[..4], b"RIFF");
+        let pcm = wav_bytes_pcm16(&[0, 1, 2, 3], 24000, 1);
+        assert_eq!(&pcm[..4], b"RIFF");
+        assert_eq!(u32::from_le_bytes(pcm[24..28].try_into().unwrap()), 24000);
+        assert_eq!(u32::from_le_bytes(pcm[40..44].try_into().unwrap()), 4);
         assert_eq!(&wav[8..12], b"WAVE");
         assert_eq!(wav.len(), 44 + 6);
     }

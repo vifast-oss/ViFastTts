@@ -1,23 +1,11 @@
 import Foundation
 
 /// Client catalog dùng chung với web/extension/Android: server `/api/models/*`.
+/// Repo đã chuẩn hoá bởi Rust: id + số bundle (không cần tự lọc siblings).
 struct CatalogModel: Decodable, Identifiable {
     let id: String
-    let siblings: [Sibling]?
-
-    struct Sibling: Decodable {
-        let rfilename: String
-    }
-
-    var bundleCount: Int {
-        var seen = Set<String>()
-        return (siblings ?? []).filter {
-            guard $0.rfilename.hasSuffix(".vfa") || $0.rfilename.hasSuffix(".vfts") else {
-                return false
-            }
-            return seen.insert(($0.rfilename as NSString).lastPathComponent).inserted
-        }.count
-    }
+    let bundle_count: Int
+    var bundleCount: Int { bundle_count }
 }
 
 struct CatalogFile: Decodable, Identifiable {
@@ -25,6 +13,118 @@ struct CatalogFile: Decodable, Identifiable {
     let size: Int64
 
     var id: String { path }
+}
+
+/// Cầu nối catalog Rust: URL + lọc/dedupe response dùng chung Android/iOS.
+enum SharedModelCatalog {
+    static func take(_ pointer: UnsafeMutablePointer<CChar>?) -> String? {
+        guard let pointer else { return nil }
+        defer { vifasttts_string_free(pointer) }
+        return String(cString: pointer)
+    }
+
+    static func urls(
+        base: String,
+        query: String,
+        repo: String,
+        path: String,
+        direct: Bool
+    ) -> [String: String]? {
+        let raw = base.withCString { cBase in
+            query.withCString { cQuery in
+                repo.withCString { cRepo in
+                    path.withCString { cPath in
+                        take(vifasttts_model_urls_json(
+                            cBase, cQuery, cRepo, cPath, 20, direct ? 1 : 0
+                        ))
+                    }
+                }
+            }
+        }
+        guard let raw, let data = raw.data(using: .utf8),
+              let value = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+            return nil
+        }
+        return value
+    }
+
+    static func search(_ data: Data) -> [CatalogModel]? {
+        guard let raw = String(data: data, encoding: .utf8) else { return nil }
+        let normalized = raw.withCString { take(vifasttts_model_search_json($0)) }
+        guard let normalized, let payload = normalized.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode([CatalogModel].self, from: payload)
+    }
+
+    static func files(_ data: Data, direct: Bool) -> [CatalogFile]? {
+        guard let raw = String(data: data, encoding: .utf8) else { return nil }
+        let normalized = raw.withCString {
+            take(vifasttts_model_files_json($0, direct ? 1 : 0))
+        }
+        guard let normalized, let payload = normalized.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode([CatalogFile].self, from: payload)
+    }
+}
+
+/// Tải model có progress; URLSessionDownloadDelegate chạy nền, UI nhận %.
+private final class ModelDownloadDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    private let progress: (@Sendable (Double) -> Void)?
+    private let continuation: CheckedContinuation<Data, Error>
+    private let lock = NSLock()
+    private var finished = false
+    var session: URLSession?
+
+    init(progress: (@Sendable (Double) -> Void)?, continuation: CheckedContinuation<Data, Error>) {
+        self.progress = progress
+        self.continuation = continuation
+    }
+
+    private func finish(_ result: Result<Data, Error>) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        finished = true
+        lock.unlock()
+        session?.invalidateAndCancel()
+        continuation.resume(with: result)
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+        guard totalBytesExpectedToWrite > 0 else { return }
+        progress?(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didFinishDownloadingTo location: URL
+    ) {
+        let status = (downloadTask.response as? HTTPURLResponse)?.statusCode ?? 0
+        let data = (try? Data(contentsOf: location)) ?? Data()
+        if !(200..<300).contains(status) {
+            let detail = String(data: data, encoding: .utf8) ?? ""
+            finish(.failure(CatalogError.message("HTTP \(status): \(detail)")))
+            return
+        }
+        finish(.success(data))
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didCompleteWithError error: Error?
+    ) {
+        if let error {
+            finish(.failure(error))
+        }
+    }
 }
 
 struct ModelCatalogClient {
@@ -74,45 +174,110 @@ struct ModelCatalogClient {
         return data
     }
 
-    func search(query: String) async throws -> [CatalogModel] {
-        let url: URL
-        if direct {
-            url = try endpoint("/api/models", query: [
-                URLQueryItem(name: "search", value: query),
-                URLQueryItem(name: "limit", value: "20"),
-                URLQueryItem(name: "full", value: "true"),
-            ])
-        } else {
-            url = try endpoint("/api/models/search", query: [
-                URLQueryItem(name: "q", value: query),
-                URLQueryItem(name: "limit", value: "20"),
-            ])
+    private func catalogURLs(
+        query: String = "",
+        repo: String = "",
+        path: String = ""
+    ) throws -> [String: String] {
+        guard let urls = SharedModelCatalog.urls(
+            base: direct ? "" : baseURL,
+            query: query,
+            repo: repo,
+            path: path,
+            direct: direct
+        ) else {
+            throw CatalogError.message("Không dựng được URL catalog")
         }
-        return try JSONDecoder().decode([CatalogModel].self, from: try await get(url))
+        return urls
+    }
+
+    private func legacyURL(_ path: String, query: [URLQueryItem]) throws -> URL {
+        try endpoint(path, query: query)
+    }
+
+    func search(query: String) async throws -> [CatalogModel] {
+        let urls = try catalogURLs(query: query.isEmpty ? "vifasttts" : query)
+        guard let raw = urls["search"], let url = URL(string: raw) else {
+            throw CatalogError.message("URL search không hợp lệ")
+        }
+        let data = try await get(url)
+        if let models = SharedModelCatalog.search(data) {
+            return models
+        }
+        // Fallback cho server cũ chưa có endpoint chuẩn hoá.
+        let legacy = try legacyURL(direct ? "/api/models" : "/api/models/search", query: direct ? [
+            URLQueryItem(name: "search", value: query),
+            URLQueryItem(name: "limit", value: "20"),
+            URLQueryItem(name: "full", value: "true"),
+        ] : [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "limit", value: "20"),
+        ])
+        let payload = try await get(legacy)
+        struct LegacyModel: Decodable {
+            let id: String
+            let siblings: [LegacySibling]?
+        }
+        struct LegacySibling: Decodable { let rfilename: String }
+        let models = try JSONDecoder().decode([LegacyModel].self, from: payload)
+        return models.map { model in
+            var seen = Set<String>()
+            let count = (model.siblings ?? []).filter {
+                guard $0.rfilename.hasSuffix(".vfa") || $0.rfilename.hasSuffix(".vfts") else {
+                    return false
+                }
+                let name = ($0.rfilename as NSString).lastPathComponent
+                return seen.insert(name).inserted
+            }.count
+            return CatalogModel(id: model.id, bundle_count: count)
+        }
     }
 
     func files(repo: String) async throws -> [CatalogFile] {
-        let url = try endpoint(
+        let urls = try catalogURLs(repo: repo)
+        guard let raw = urls["files"], let url = URL(string: raw) else {
+            throw CatalogError.message("URL files không hợp lệ")
+        }
+        let data = try await get(url)
+        if let files = SharedModelCatalog.files(data, direct: direct) {
+            return files
+        }
+        let legacy = try legacyURL(
             direct ? "/api/models/\(repo)/tree/main" : "/api/models/files",
             query: direct ? [URLQueryItem(name: "recursive", value: "true")]
                 : [URLQueryItem(name: "repo", value: repo)]
         )
-        let files = try JSONDecoder().decode([CatalogFile].self, from: try await get(url))
-        guard direct else { return files }
-        return files.filter {
-            $0.path.hasSuffix(".vfa") || $0.path.hasSuffix(".vfts")
-        }
+        return try JSONDecoder().decode([CatalogFile].self, from: try await get(legacy))
     }
 
-    func download(repo: String, path: String) async throws -> (Data, String) {
-        let url = try endpoint(
-            direct ? "/\(repo)/resolve/main/\(path)" : "/api/models/download",
-            query: direct ? [] : [
-                URLQueryItem(name: "repo", value: repo),
-                URLQueryItem(name: "path", value: path),
-            ]
-        )
-        let data = try await get(url)
+    func download(
+        repo: String,
+        path: String,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws -> (Data, String) {
+        let urls = try catalogURLs(repo: repo, path: path)
+        guard let raw = urls["download"], let url = URL(string: raw) else {
+            throw CatalogError.message("URL download không hợp lệ")
+        }
+        let data: Data
+        if let progress {
+            let request = self.request(url)
+            data = try await withCheckedThrowingContinuation { continuation in
+                let delegate = ModelDownloadDelegate(
+                    progress: progress,
+                    continuation: continuation
+                )
+                let session = URLSession(
+                    configuration: .default,
+                    delegate: delegate,
+                    delegateQueue: nil
+                )
+                delegate.session = session
+                session.downloadTask(with: request).resume()
+            }
+        } else {
+            data = try await get(url)
+        }
         let name = path.split(separator: "/").last.map(String.init) ?? "model.vfa"
         guard name.hasSuffix(".vfa") || name.hasSuffix(".vfts") else {
             throw CatalogError.message("Server trả file không phải .vfa/.vfts")

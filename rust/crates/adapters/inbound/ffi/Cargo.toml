@@ -13,5 +13,6 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 [dependencies]
 serde_json.workspace = true
 vifasttts-app = { path = "../../../core/application/app" }
+vifasttts-audio = { path = "../../../core/domain/audio" }
 vifasttts-native = { path = "../native" }
 vifasttts-text = { path = "../../../core/domain/text" }

@@ -2,4 +2,6 @@
 
 pub mod audio;
 
-pub use audio::{fade, hann_window, istft, peak_normalize, postprocess, sharpen_mel, wav_bytes};
+pub use audio::{
+    fade, hann_window, istft, peak_normalize, postprocess, sharpen_mel, wav_bytes, wav_bytes_pcm16,
+};

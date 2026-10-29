@@ -1,7 +1,8 @@
 //! Model browser desktop: tìm repo trên HuggingFace, lọc `.vfa`/`.vfts`, tải.
 //!
 //! Networking chạy background thread; UI không block. Download chỉ tải bundle,
-//! không tải raw ONNX.
+//! không tải raw ONNX. State chuyển/search/files tách sang
+//! `vifasttts_model_manager::ModelBrowserState` để TUI/CLI dùng lại.
 
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -9,7 +10,7 @@ use std::thread;
 
 use eframe::egui;
 use vifasttts_huggingface::{HfFile, HfModel};
-use vifasttts_model_manager::ModelManager;
+use vifasttts_model_manager::{ModelBrowserState, ModelManager};
 
 enum Event {
     Models(Vec<HfModel>),
@@ -19,12 +20,7 @@ enum Event {
 }
 
 pub struct ModelBrowser {
-    query: String,
-    results: Vec<HfModel>,
-    files: Vec<HfFile>,
-    selected: Option<String>,
-    status: String,
-    busy: bool,
+    state: ModelBrowserState,
     tx: Sender<Event>,
     rx: Receiver<Event>,
     download_dir: PathBuf,
@@ -36,12 +32,7 @@ impl ModelBrowser {
         let (tx, rx) = mpsc::channel();
         let manager = ModelManager::new(download_dir.clone());
         Self {
-            query: "vifasttts".to_string(),
-            results: Vec::new(),
-            files: Vec::new(),
-            selected: None,
-            status: "Tìm model public trên HuggingFace (chỉ tải .vfa/.vfts).".to_string(),
-            busy: false,
+            state: ModelBrowserState::new(),
             tx,
             rx,
             download_dir,
@@ -50,18 +41,10 @@ impl ModelBrowser {
     }
 
     fn search(&mut self) {
-        if self.busy {
+        if !self.state.start_search(&self.state.query.clone()) {
             return;
         }
-        let query = self.query.trim().to_string();
-        if query.is_empty() {
-            self.status = "Nhập từ khóa".to_string();
-            return;
-        }
-        self.busy = true;
-        self.files.clear();
-        self.selected = None;
-        self.status = format!("Đang tìm `{query}`…");
+        let query = self.state.query.clone();
         let tx = self.tx.clone();
         let manager = self.manager.clone();
         thread::spawn(move || match manager.search(&query, 20) {
@@ -75,13 +58,9 @@ impl ModelBrowser {
     }
 
     fn select(&mut self, repo: String) {
-        if self.busy {
+        if !self.state.start_files(&repo) {
             return;
         }
-        self.selected = Some(repo.clone());
-        self.files.clear();
-        self.busy = true;
-        self.status = format!("Đang xem file của {repo}…");
         let tx = self.tx.clone();
         let manager = self.manager.clone();
         thread::spawn(move || match manager.files(&repo) {
@@ -95,14 +74,12 @@ impl ModelBrowser {
     }
 
     fn download(&mut self, path: String) {
-        let Some(repo) = self.selected.clone() else {
+        let Some(repo) = self.state.selected.clone() else {
             return;
         };
-        if self.busy {
+        if !self.state.start_download(&path) {
             return;
         }
-        self.busy = true;
-        self.status = format!("Đang tải {path}…");
         let tx = self.tx.clone();
         let manager = self.manager.clone();
         thread::spawn(move || match manager.install(&repo, &path) {
@@ -120,30 +97,13 @@ impl ModelBrowser {
         let mut downloaded = None;
         while let Ok(event) = self.rx.try_recv() {
             match event {
-                Event::Models(models) => {
-                    self.busy = false;
-                    self.results = models;
-                    self.status = format!("{} repo; chọn repo để xem bundle.", self.results.len());
-                }
-                Event::Files(repo, files) => {
-                    self.busy = false;
-                    self.selected = Some(repo);
-                    self.files = files;
-                    self.status = if self.files.is_empty() {
-                        "Repo này chưa có .vfa/.vfts (raw ONNX không dùng để tải).".to_string()
-                    } else {
-                        format!("{} bundle.", self.files.len())
-                    };
-                }
+                Event::Models(models) => self.state.finish_search(models),
+                Event::Files(repo, files) => self.state.finish_files(&repo, files),
                 Event::Downloaded(path) => {
-                    self.busy = false;
-                    self.status = format!("Đã tải {}", path.display());
+                    self.state.finish_download(&path);
                     downloaded = Some(path);
                 }
-                Event::Error(error) => {
-                    self.busy = false;
-                    self.status = format!("Lỗi: {error}");
-                }
+                Event::Error(error) => self.state.fail(error),
             }
         }
         downloaded
@@ -152,19 +112,22 @@ impl ModelBrowser {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.label("Tìm trên HuggingFace");
-            ui.add(egui::TextEdit::singleline(&mut self.query).desired_width(260.0));
+            ui.add(egui::TextEdit::singleline(&mut self.state.query).desired_width(260.0));
             if ui
-                .add_enabled(!self.busy, egui::Button::new("Tìm"))
+                .add_enabled(!self.state.busy, egui::Button::new("Tìm"))
                 .clicked()
             {
                 self.search();
             }
-            if self.busy {
+            if self.state.busy {
                 ui.spinner();
             }
         });
         ui.small("Chỉ hiển thị file `.vfa`/`.vfts`; raw `acoustic.onnx` bị bỏ qua.");
-        ui.label(&self.status);
+        ui.label(&self.state.status);
+        if let Some(error) = &self.state.error {
+            ui.colored_label(egui::Color32::from_rgb(0xB9, 0x1C, 0x1C), error);
+        }
         ui.separator();
 
         egui::ScrollArea::vertical()
@@ -172,8 +135,8 @@ impl ModelBrowser {
             .max_height(170.0)
             .show(ui, |ui| {
                 let mut choose = None;
-                for model in &self.results {
-                    let selected = self.selected.as_deref() == Some(model.id.as_str());
+                for model in &self.state.models {
+                    let selected = self.state.selected.as_deref() == Some(model.id.as_str());
                     let text = format!(
                         "{}  · {} downloads · {} likes",
                         model.id, model.downloads, model.likes
@@ -187,17 +150,17 @@ impl ModelBrowser {
                 }
             });
 
-        if let Some(repo) = &self.selected {
+        if let Some(repo) = &self.state.selected {
             ui.label(format!("Bundle trong {repo}"));
             egui::ScrollArea::vertical()
                 .id_salt("hf_files")
                 .max_height(140.0)
                 .show(ui, |ui| {
                     let mut choose = None;
-                    for file in &self.files {
+                    for file in &self.state.files {
                         let text = format!("{}  · {:.1} MB", file.path, file.size as f64 / 1e6);
                         if ui
-                            .add_enabled(!self.busy, egui::Button::new(text))
+                            .add_enabled(!self.state.busy, egui::Button::new(text))
                             .clicked()
                         {
                             choose = Some(file.path.clone());

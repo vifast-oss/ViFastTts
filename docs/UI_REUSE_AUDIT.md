@@ -1,13 +1,14 @@
-# Rà soát tái sử dụng UI & logic — 29/10/2026
+# Rà soát tái sử dụng UI & logic — 30/10/2026
 
 > Mục đích: tìm phần **có thể dùng chung** giữa desktop, TUI, CLI, server, web,
 > extension, Android, iOS và Python demo; tách khỏi UI để lần sau thêm tính năng
 > không phải sửa 6–8 nơi.
 >
-> Trạng thái: **audit + phase 1 + phase 2**. Phase 1 tách hợp đồng settings/ETA/
-> từ điển/sample vào `vifasttts-app`, expose qua FFI/WASM. Phase 2 nối các UI
-> web/extension/iOS/desktop/Android/TUI vào cùng defaults/sample/ETA; phase 5
-> tách helper DOM/karaoke dùng chung.
+> Trạng thái: **audit + phase 1–5 (phần lớn) + phase 6**. Phase 1 tách hợp đồng
+> settings/ETA/từ điển/sample vào `vifasttts-app`, expose qua FFI/WASM. Phase 2 nối
+> các UI web/extension/iOS/desktop/Android/TUI vào cùng defaults/sample/ETA; phase 3
+> tách URL/lọc/dedupe catalog qua FFI; phase 4 thêm stream iOS + WAV PCM16 dùng
+> chung; phase 5 tách helper DOM/karaoke; phase 6 thêm OpenAPI + model browser state.
 
 ## 0. Kết luận ngắn
 
@@ -61,11 +62,11 @@ phần WASM dùng**. Android/iOS/web/extension vẫn tự viết lại các lu�
 | 1 | Settings/defaults | `AppSettings`; `DesktopSettings`; TUI args; `DEFAULTS` extension; Android keys; iOS `@AppStorage`; web HTML | `max_chars` 0 vs 300; `resolve_oov` false/true; server URL localhost/empty; default mỗi nơi một kiểu | `vifasttts-app::contracts::SynthesisSettings` + JSON defaults/validate | **P0** |
 | 2 | History/ETA | Rust `EtaSample`/`EtaEstimator`; desktop; extension; Android; iOS không có; web không có | Android từng tự median; schema history khác nhau; iOS thiếu tính năng | `EtaSample` + `EtaEstimator` (đã có), FFI/WASM JSON | **P0** |
 | 3 | Sample/default text | Android hard-code; iOS hard-code; desktop hard-code; TUI; web textarea; CLI | Android/iOS default dễ lệch; thêm sample phải sửa từng UI | `contracts::SampleText` + `sample_texts_json(platform)` | **P1** |
-| 4 | Model catalog | `model-manager`; desktop `model_browser.rs`; TUI `ModelPane`; CLI actions; server routes; JS `ModelApi`; iOS `ModelCatalogClient`; Android URL builders | 3–4 cách build URL HF; dedupe bundle khác; lỗi/progress khác; iOS/Android tự viết HTTP | Rust model API qua FFI/WASM, hoặc server contract + generated client | **P0** |
+| 4 | Model catalog | `model-manager`; desktop `model_browser.rs`; TUI `ModelPane`; CLI actions; server routes; JS `ModelApi`; iOS `ModelCatalogClient`; Android URL builders | Android/iOS từng tự build URL + filter; nay dùng FFI `model_urls/search/files`; HTTP vẫn native | **Đã tách phần luật** (phase 3) | **P0** |
 | 5 | DTO `/api/tts` | Rust `HttpTtsRequest`; iOS `RemoteTts`; Android `JSONObject`; web fetch; extension offscreen | field name/default lệch; response JSON/WAV fallback mỗi nơi | JSON schema/OpenAPI + generated DTO; `api_contract_json` làm mốc | **P1** |
 | 6 | Karaoke render | web/extension span + timeupdate; Android Handler; iOS TimelineView; desktop lines | 4 thuật toán active unit; timing lệch | `KaraokeDocument` + helper `unit_at(ms)`/format (Rust), UI chỉ bind | **P2** |
-| 7 | Stream → WAV | Android tự gom PCM + tự viết header; extension WebAudio; CLI/TUI gom; web chưa stream | chỉ Android có WAV stream; header/format tự viết; tail/drain khác | `StreamSession`/`WavWriter` trong Rust, FFI `stream_*`; audio sink native | **P1** |
-| 8 | Model browser state | desktop `ModelBrowser`; TUI `ModelPane`; CLI subcommand | cùng query/results/files/status, 3 state machine | `ModelBrowserState` trong `model-manager` (không UI) | **P2** |
+| 7 | Stream → WAV | Android/iOS gom PCM; extension WebAudio; CLI/TUI gom; web chưa stream | iOS đã stream local/remote; WAV dựng bằng FFI `wav_from_pcm16` | Audio sink native; header dùng chung | **P1 (đã làm)** |
+| 8 | Model browser state | desktop `ModelBrowser`; TUI `ModelPane`; CLI subcommand | desktop đã dùng `ModelBrowserState`; TUI còn state riêng | `ModelBrowserState` trong `model-manager` | **P2 (một phần)** |
 | 9 | Settings storage | desktop JSON; TUI args; web localStorage; extension chrome.storage; Android SharedPreferences; iOS UserDefaults | key/version/format khác; migrate khó | Giữ storage native, share **schema + key/version + normalize** | **P1** |
 | 10 | Output naming/export | Android MediaStore; iOS temp URL; desktop rfd; web Blob; extension download | tên/định dạng lệch; khó test | Shared `export_name(mode, ext, timestamp)` + `PcmWav`; file I/O native | **P3** |
 | 11 | WAV header PCM16 | Android `writeWavFile`; Rust `wav_bytes`; các nơi khác dùng Rust | nguy cơ header sai khi thêm channel/rate | `vifasttts-audio::wav_bytes_pcm16`, FFI | **P3** |
@@ -207,6 +208,9 @@ vifasttts_karaoke_unit_at(json, ms)
 vifasttts_wav_from_pcm16(pcm, rate, channels)
 
 # phase 4
+vifasttts_model_urls_json / search_json / files_json
+vifasttts_wav_from_pcm16(pcm, rate, channels)
+vifasttts_openapi_json()
 vifasttts_synthesize_karaoke_ex2(..., custom_reading_json, ...)
 ```
 
@@ -238,8 +242,9 @@ Hợp đồng HTTP nên có JSON schema/OpenAPI:
 | **2 (xong)** | iOS/web/extension đọc defaults/sample; Android đọc defaults; desktop dùng `AppSettings`; TUI/CLI sample/default | `cargo test`; web/extension build; iOS build; Android build |
 | **3** | Model catalog qua Rust/FFI; bỏ URL builder Java/Swift; JS dùng chung `ModelApi` | search/files/download trên HF thật; lỗi mạng; hash bundle |
 | **4** | `StreamSession` + WAV writer; Android/iOS/CLI/TUI dùng; stream SRT nếu có timing | test file WAV header/duration; tail drain; so full vs stream |
-| **5 (một phần)** | JS `settings.js` + `ui-core.js` (karaoke/export/base64) dùng chung web/extension; model browser state để sau | web/extension build; Node parse; UI smoke |
-| **6 (một phần)** | FFI `custom_reading` đã có; `docs/API_CONTRACT.md`; string/theme tokens để sau | Android/iOS custom reading; contract doc |
+| **5 (xong)** | JS `settings.js` + `ui-core.js` dùng chung web/extension; model browser state desktop | web/extension build; Node parse; UI smoke |
+| **6 (xong một phần)** | FFI `custom_reading`, OpenAPI `/api/openapi.json`, model browser state; string/theme tokens để sau | Android/iOS custom reading; contract doc; OpenAPI parse |
+| **3–4 (xong)** | FFI catalog URL/normalize + WAV PCM16; iOS stream local/remote; Android cancel download | HF thật; stream save on/off; WAV header; build Android/iOS |
 
 ### Điều kiện dừng/ba nhánh cho mỗi phase
 

@@ -190,9 +190,178 @@ pub fn api_contract_json() -> Result<String, String> {
         "models_search": "/api/models/search",
         "models_files": "/api/models/files",
         "models_download": "/api/models/download",
+        "openapi": "/api/openapi.json",
         "history_limit": HISTORY_LIMIT,
     }))
     .map_err(|error| format!("api contract JSON: {error}"))
+}
+
+/// OpenAPI 3.1 tối thiểu cho client/generated DTO.
+///
+/// Chỉ mô tả phần ổn định của HTTP API; UI/audio/storage vẫn native. Dùng
+/// `openapi_json` thay vì tự chép field schema sang từng ngôn ngữ.
+pub fn openapi_json() -> Result<String, String> {
+    let payload = serde_json::json!({
+        "openapi": "3.1.0",
+        "info": {
+            "title": "ViFastTts HTTP API",
+            "version": env!("CARGO_PKG_VERSION"),
+            "description": "TTS local/remote; PCM stream NDJSON; catalog .vfa/.vfts."
+        },
+        "servers": [{"url": "http://127.0.0.1:8000", "description": "local"}],
+        "paths": {
+            "/healthz": {
+                "get": {
+                    "summary": "Health + model metadata",
+                    "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Health"}}}}}
+                }
+            },
+            "/api/config": {
+                "get": {
+                    "summary": "Public limits",
+                    "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"type": "object", "properties": {"max_chars": {"type": "integer"}, "rate_limit": {"type": "integer"}, "rate_window": {"type": "number"}}}}}}}
+                }
+            },
+            "/api/tts": {
+                "post": {
+                    "summary": "Synthesize WAV or JSON+karaoke",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/TtsRequest"}}}},
+                    "responses": {
+                        "200": {
+                            "description": "WAV bytes or JSON when karaoke=true",
+                            "content": {
+                                "audio/wav": {"schema": {"type": "string", "format": "binary"}},
+                                "application/json": {"schema": {"$ref": "#/components/schemas/TtsResponse"}}
+                            }
+                        },
+                        "422": {"description": "Invalid text/options"},
+                        "429": {"description": "Rate limited"},
+                        "503": {"description": "Busy"}
+                    }
+                }
+            },
+            "/api/tts/stream": {
+                "post": {
+                    "summary": "Stream PCM16 NDJSON",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/TtsRequest"}}}},
+                    "responses": {"200": {"description": "NDJSON events", "content": {"application/x-ndjson": {"schema": {"$ref": "#/components/schemas/StreamEvent"}}}}}
+                }
+            },
+            "/api/models/search": {
+                "get": {
+                    "summary": "Search HuggingFace models",
+                    "parameters": [
+                        {"name": "q", "in": "query", "schema": {"type": "string", "default": "vifasttts"}},
+                        {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 20, "maximum": 50}}
+                    ],
+                    "responses": {"200": {"description": "Normalized models", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/ModelSummary"}}}}}}
+                }
+            },
+            "/api/models/files": {
+                "get": {
+                    "summary": "List .vfa/.vfts bundles",
+                    "parameters": [{"name": "repo", "in": "query", "required": true, "schema": {"type": "string"}}],
+                    "responses": {"200": {"description": "Bundles", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/ModelFile"}}}}}}
+                }
+            },
+            "/api/models/download": {
+                "get": {
+                    "summary": "Download a bundle",
+                    "parameters": [
+                        {"name": "repo", "in": "query", "required": true, "schema": {"type": "string"}},
+                        {"name": "path", "in": "query", "required": true, "schema": {"type": "string"}}
+                    ],
+                    "responses": {"200": {"description": "Bundle bytes", "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}}}
+                }
+            },
+            "/api/openapi.json": {
+                "get": {"summary": "This document", "responses": {"200": {"description": "OpenAPI JSON"}}}
+            }
+        },
+        "components": {
+            "schemas": {
+                "TtsRequest": {
+                    "type": "object",
+                    "required": ["text"],
+                    "properties": {
+                        "text": {"type": "string"},
+                        "speed": {"type": "number", "minimum": 0.5, "maximum": 2.0, "default": 1.0},
+                        "alpha": {"type": "number", "minimum": 0.5, "maximum": 3.0, "default": 1.5},
+                        "max_chars": {"type": "integer", "minimum": 50, "maximum": 5000, "default": 300},
+                        "fixed_pauses": {"type": "boolean", "default": false},
+                        "peak_normalize": {"type": "boolean", "default": false},
+                        "dialect": {"type": "string", "enum": ["north", "central", "south"], "default": "north"},
+                        "resolve_oov": {"type": "boolean", "default": true},
+                        "dictionary": {"type": "string", "description": "key = cách đọc"},
+                        "custom_reading": {"type": "object", "additionalProperties": {"type": "string"}},
+                        "overrides": {"type": "object", "additionalProperties": {"type": "string"}},
+                        "karaoke": {"type": "boolean", "default": false},
+                        "visitor_id": {"type": "string"},
+                        "source": {"type": "string", "enum": ["web", "space", "api"], "default": "api"}
+                    }
+                },
+                "TtsResponse": {
+                    "type": "object",
+                    "required": ["sample_rate", "duration_ms", "audio_base64"],
+                    "properties": {
+                        "sample_rate": {"type": "integer"},
+                        "duration_ms": {"type": "integer"},
+                        "audio_base64": {"type": "string", "format": "byte"},
+                        "karaoke": {"$ref": "#/components/schemas/Karaoke"},
+                        "srt": {"type": "string"},
+                        "vtt": {"type": "string"},
+                        "vtt_karaoke": {"type": "string"}
+                    }
+                },
+                "Karaoke": {
+                    "type": "object",
+                    "properties": {
+                        "duration_ms": {"type": "integer"},
+                        "sample_rate": {"type": "integer"},
+                        "units": {"type": "array", "items": {"type": "object"}},
+                        "lines": {"type": "array", "items": {"type": "object"}}
+                    }
+                },
+                "ModelSummary": {
+                    "type": "object",
+                    "required": ["id", "bundle_count"],
+                    "properties": {"id": {"type": "string"}, "bundle_count": {"type": "integer"}}
+                },
+                "ModelFile": {
+                    "type": "object",
+                    "required": ["path", "size"],
+                    "properties": {"path": {"type": "string"}, "size": {"type": "integer"}}
+                },
+                "StreamEvent": {
+                    "type": "object",
+                    "required": ["type"],
+                    "properties": {
+                        "type": {"type": "string", "enum": ["units", "audio", "done", "error"]},
+                        "units": {"type": "array", "items": {"type": "object"}},
+                        "sample_rate": {"type": "integer"},
+                        "pcm_base64": {"type": "string", "format": "byte"},
+                        "samples": {"type": "integer"},
+                        "chunks": {"type": "integer"},
+                        "cancelled": {"type": "boolean"},
+                        "message": {"type": "string"}
+                    }
+                },
+                "Health": {
+                    "type": "object",
+                    "properties": {
+                        "ok": {"type": "boolean"},
+                        "sample_rate": {"type": "integer"},
+                        "arch": {"type": "string"},
+                        "vocab_version": {"type": "string"},
+                        "vocab_hash": {"type": "string"},
+                        "alpha": {"type": "number"},
+                        "pause": {"type": "string"}
+                    }
+                }
+            }
+        }
+    });
+    serde_json::to_string_pretty(&payload).map_err(|error| format!("openapi JSON: {error}"))
 }
 
 #[cfg(test)]

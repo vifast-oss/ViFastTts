@@ -32,6 +32,12 @@ char *vifasttts_eta_estimate_json(const char *history_json, const char *mode,
                                   uint32_t chars, uint32_t max_samples);
 char *vifasttts_dictionary_json(const char *dictionary);
 char *vifasttts_api_contract_json(void);
+char *vifasttts_openapi_json(void);
+char *vifasttts_model_urls_json(const char *base, const char *query,
+                               const char *repo, const char *path,
+                               uint32_t limit, uint8_t direct);
+char *vifasttts_model_search_json(const char *raw);
+char *vifasttts_model_files_json(const char *raw, uint8_t direct);
 
 VifasttEngine vifasttts_engine_new(const char *acoustic, const char *vocoder);
 VifasttEngine vifasttts_engine_new_vfts(const char *vfts);
@@ -97,6 +103,9 @@ int vifasttts_synthesize_stream_karaoke_ex2(VifasttEngine engine, const char *te
                                             char **out_karaoke_json);
 char *vifasttts_karaoke_from_units_json(const char *units_json, uint32_t sample_rate,
                                         uint64_t duration_ms, uint32_t max_line_chars);
+int vifasttts_wav_from_pcm16(const uint8_t *pcm, size_t len, uint32_t sample_rate,
+                             uint16_t channels, uint8_t **out_wav,
+                             size_t *out_len);
 void vifasttts_buffer_free(uint8_t *ptr, size_t len);
 void vifasttts_string_free(char *value);
 

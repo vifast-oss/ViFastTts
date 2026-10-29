@@ -16,6 +16,111 @@ pub struct InstalledModel {
     pub size: u64,
 }
 
+/// State machine dùng chung cho model browser (desktop/TUI/CLI).
+///
+/// Không chứa networking/UI; adapter chỉ gọi `start_*` rồi `finish_*`/`fail`.
+#[derive(Clone, Debug)]
+pub struct ModelBrowserState {
+    pub query: String,
+    pub models: Vec<HfModel>,
+    pub files: Vec<HfFile>,
+    pub selected: Option<String>,
+    pub status: String,
+    pub busy: bool,
+    pub error: Option<String>,
+}
+
+impl Default for ModelBrowserState {
+    fn default() -> Self {
+        Self {
+            query: "vifasttts".to_string(),
+            models: Vec::new(),
+            files: Vec::new(),
+            selected: None,
+            status: "Tìm model public trên HuggingFace (chỉ tải .vfa/.vfts).".to_string(),
+            busy: false,
+            error: None,
+        }
+    }
+}
+
+impl ModelBrowserState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Trả false nếu đang bận; UI không được phát request thứ hai.
+    pub fn start_search(&mut self, query: &str) -> bool {
+        if self.busy {
+            return false;
+        }
+        let query = query.trim();
+        if query.is_empty() {
+            self.status = "Nhập từ khóa".to_string();
+            self.error = Some(self.status.clone());
+            return false;
+        }
+        self.busy = true;
+        self.error = None;
+        self.files.clear();
+        self.selected = None;
+        self.query = query.to_string();
+        self.status = format!("Đang tìm `{query}`…");
+        true
+    }
+
+    pub fn finish_search(&mut self, models: Vec<HfModel>) {
+        self.busy = false;
+        self.models = models;
+        self.status = format!("{} repo; chọn repo để xem bundle.", self.models.len());
+    }
+
+    pub fn start_files(&mut self, repo: &str) -> bool {
+        if self.busy {
+            return false;
+        }
+        self.busy = true;
+        self.error = None;
+        self.selected = Some(repo.to_string());
+        self.files.clear();
+        self.status = format!("Đang xem file của {repo}…");
+        true
+    }
+
+    pub fn finish_files(&mut self, repo: &str, files: Vec<HfFile>) {
+        self.busy = false;
+        self.selected = Some(repo.to_string());
+        self.files = files;
+        self.status = if self.files.is_empty() {
+            "Repo này chưa có .vfa/.vfts (raw ONNX không dùng để tải).".to_string()
+        } else {
+            format!("{} bundle.", self.files.len())
+        };
+    }
+
+    pub fn start_download(&mut self, path: &str) -> bool {
+        if self.busy || self.selected.is_none() {
+            return false;
+        }
+        self.busy = true;
+        self.error = None;
+        self.status = format!("Đang tải {path}…");
+        true
+    }
+
+    pub fn finish_download(&mut self, path: &std::path::Path) {
+        self.busy = false;
+        self.status = format!("Đã tải {}", path.display());
+    }
+
+    pub fn fail(&mut self, error: impl Into<String>) {
+        let error = error.into();
+        self.busy = false;
+        self.status = format!("Lỗi: {error}");
+        self.error = Some(error);
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ModelManager {
     directory: PathBuf,
@@ -105,6 +210,38 @@ impl ModelManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn browser_state_transitions_va_chan_request_khi_busy() {
+        let mut state = ModelBrowserState::new();
+        assert!(state.start_search("vifasttts"));
+        assert!(!state.start_search("khac"));
+        state.finish_search(vec![HfModel {
+            id: "dvchd/demo".to_string(),
+            downloads: 1,
+            likes: 2,
+            tags: vec![],
+            siblings: vec![],
+            pipeline_tag: None,
+        }]);
+        assert!(!state.busy);
+        assert_eq!(state.models.len(), 1);
+        assert!(state.start_files("dvchd/demo"));
+        state.finish_files(
+            "dvchd/demo",
+            vec![HfFile {
+                path: "bundles/a.vfts".to_string(),
+                size: 10,
+                kind: Some("file".to_string()),
+            }],
+        );
+        assert_eq!(state.files.len(), 1);
+        assert!(state.start_download("bundles/a.vfts"));
+        state.finish_download(std::path::Path::new("/tmp/a.vfts"));
+        assert!(state.status.contains("Đã tải"));
+        state.fail("mất mạng");
+        assert_eq!(state.error.as_deref(), Some("mất mạng"));
+    }
 
     #[test]
     fn installed_chi_lay_bundle() {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0CEB23BE332780B8DACD7882 /* StreamingAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A61EAB92A9FEC7C60D85D30 /* StreamingAudio.swift */; };
 		0F060A7455876E9320A97CF9 /* ModelBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84444AA436CA56193774EDC5 /* ModelBrowserView.swift */; };
 		1FA506E67C9DFDF6F42D6C2A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72172E92AB370DE14DC3C667 /* App.swift */; };
 		459DB27C037FD291CF6FA50C /* .gitkeep in Resources */ = {isa = PBXBuildFile; fileRef = EAF71428C78B2A34BAE87B98 /* .gitkeep */; };
@@ -27,6 +28,7 @@
 		0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ViFastTtsMobile-Bridging-Header.h"; sourceTree = "<group>"; };
 		134D786267A4EEF22C1F81CD /* BeVietnamPro-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "BeVietnamPro-OFL.txt"; sourceTree = "<group>"; };
 		1C1B046763A40988F96E4876 /* ModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalog.swift; sourceTree = "<group>"; };
+		4A61EAB92A9FEC7C60D85D30 /* StreamingAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingAudio.swift; sourceTree = "<group>"; };
 		4DBCE9BC962348C0D8E9BA97 /* SharedContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedContract.swift; sourceTree = "<group>"; };
 		70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */ = {isa = PBXFileReference; path = vocoder.onnx; sourceTree = "<group>"; };
 		72172E92AB370DE14DC3C667 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 				1C1B046763A40988F96E4876 /* ModelCatalog.swift */,
 				C98C311ED8675C1F3CCB39F3 /* RemoteTts.swift */,
 				4DBCE9BC962348C0D8E9BA97 /* SharedContract.swift */,
+				4A61EAB92A9FEC7C60D85D30 /* StreamingAudio.swift */,
 				EB54F86F96D14E02C1ECE066 /* Theme.swift */,
 				B5430608CBB478CB7841A3CD /* TtsEngine.swift */,
 				0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */,
@@ -169,6 +172,7 @@
 				597479704D42FC34E20B9DDD /* ModelCatalog.swift in Sources */,
 				54533A854341B273073DF57F /* RemoteTts.swift in Sources */,
 				7CB64DB548D46C2CF39F6122 /* SharedContract.swift in Sources */,
+				0CEB23BE332780B8DACD7882 /* StreamingAudio.swift in Sources */,
 				6ED99C445267E60E6E7027CA /* Theme.swift in Sources */,
 				58BEFC72D97646F04C0A2DE3 /* TtsEngine.swift in Sources */,
 			);

@@ -9,13 +9,15 @@
 |---|---|---|
 | GET | `/healthz` | model/sample rate/arch/vocab/hash |
 | GET | `/api/config` | max chars/rate limit |
+| GET | `/api/openapi.json` | OpenAPI 3.1 + DTO schema |
 | POST | `/api/tts` | tổng hợp WAV hoặc JSON+karaoke |
 | POST | `/api/tts/stream` | NDJSON: `units`, `audio`, `done`, `error` |
 | GET | `/api/models/search?q=&limit=` | tìm repo HuggingFace qua server |
 | GET | `/api/models/files?repo=` | file `.vfa/.vfts` |
 | GET | `/api/models/download?repo=&path=` | bytes bundle |
 
-Contract version hiện tại: **1** (`vifasttts_api_contract_json`).
+Contract version hiện tại: **1** (`vifasttts_api_contract_json`); schema đầy đủ ở
+`/api/openapi.json` (`vifasttts_openapi_json`).
 
 ## 2. Request `/api/tts`
 
@@ -91,6 +93,25 @@ Client trực tiếp HuggingFace dùng cùng shape:
 - download: `/{repo}/resolve/main/{path}`
 
 Không dùng raw `acoustic.onnx`/`vocoder.onnx` qua model endpoint; chỉ bundle.
+
+### 5.1. Native catalog qua FFI
+
+Android/iOS vẫn dùng HTTP stack native (TLS/redirect khác nhau), nhưng **không
+tự ghép URL/lọc/dedupe**. C ABI dùng chung:
+
+```c
+char *vifasttts_model_urls_json(base, query, repo, path, limit, direct);
+char *vifasttts_model_search_json(raw_search_json);
+char *vifasttts_model_files_json(raw_files_json, direct);
+```
+
+- `model_urls_json` trả `{search,files,download}`; `direct=1` gọi HuggingFace,
+  `direct=0` gọi server `/api/models/*`.
+- search chuẩn hoá thành `[{id,bundle_count}]`.
+- files chuẩn hoá thành `[{path,size}]`, bỏ raw ONNX và dedupe theo `(tên,size)`.
+
+Nhờ vậy Android/iOS/java/Swift chỉ còn phần HTTP + UI; luật catalog nằm trong
+`vifasttts-app::model_catalog`.
 
 ## 6. Quy tắc tương thích
 

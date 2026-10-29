@@ -1,6 +1,6 @@
 # UI parity — trạng thái tính năng
 
-Cập nhật: 29/10/2026. Mục tiêu: mọi UI đều có cùng bộ tính năng TTS cơ bản và
+Cập nhật: 30/10/2026. Mục tiêu: mọi UI đều có cùng bộ tính năng TTS cơ bản và
 không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 
 ## Bộ tính năng chuẩn
@@ -24,8 +24,8 @@ không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 | Web Python (server) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect | WAV/SRT/VTT | Demo server, không có local WASM |
 | Web Vite | Có | HF trực tiếp hoặc server, file `.vfa/.vfts` | Đầy đủ | Có, WAV/SRT/VTT | Chạy được trong trình duyệt |
 | Chrome extension | Có | HF trực tiếp hoặc server, bundled | Đầy đủ | Có, WAV/SRT/VTT | Thêm stream/history/ETA |
-| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + custom reading + auto-play + output folder + stream local/remote + history/ETA + share + health | Karaoke; WAV/SRT/VTT/JSON; stream có WAV + phụ đề (tùy chọn lưu) | Câu mặc định có chữ “Android”; sample/ETA/từ điển dùng contract Rust |
-| iOS | Có | HF trực tiếp/server, bundle | Đầy đủ + history/ETA | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS”; sample/ETA qua contract Rust |
+| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + custom reading + auto-play + output folder + stream local/remote + history/ETA + share + health + huỷ tải model | Karaoke; WAV/SRT/VTT/JSON; stream có WAV + phụ đề (tùy chọn lưu) | Câu mặc định có chữ “Android”; sample/ETA/từ điển/catalog dùng contract Rust |
+| iOS | Có | HF trực tiếp/server, bundle; progress tải model | Đầy đủ + history/ETA | Karaoke; ShareLink WAV/SRT/VTT/JSON; stream local/remote có toggle lưu | Câu mặc định có chữ “iOS”; sample/ETA/catalog qua contract Rust |
 
 ## Android — kiểm tra parity (29/10)
 
@@ -38,14 +38,13 @@ WAV/SRT/VTT/JSON; stream có thể lưu WAV + phụ đề nếu bật; audio foc
 
 **Chưa có / còn kiểm:**
 
-1. Huỷ tải model giữa chừng (đã có tiến trình, chưa có nút huỷ).
-2. Metadata/hash model trên UI (hiện tên + size).
-3. Auto-play chỉ áp dụng cho full; stream luôn phát ngay, và có toggle riêng
+1. Metadata/hash model trên UI (hiện tên + size).
+2. Auto-play chỉ áp dụng cho full; stream luôn phát ngay, và có toggle riêng
    “Lưu WAV + phụ đề khi stream” (mặc định bật).
-4. Chọn thư mục xuất phụ thuộc Storage Access Framework; Android 11 không cho
+3. Chọn thư mục xuất phụ thuộc Storage Access Framework; Android 11 không cho
    chọn thẳng root `Download`, cần chọn/tạo thư mục con.
-5. Test thiết bị thật: emulator vẫn log lỗi HAL audio; chưa kết luận chất lượng.
-6. iOS đã có history/ETA; chưa có tiến trình tải model/stream.
+4. Test thiết bị thật: emulator vẫn log lỗi HAL audio; chưa kết luận chất lượng.
+5. iOS đã có stream local/remote + progress tải model; vẫn cần test máy thật.
 
 Phần dùng chung đã tách (settings/sample/ETA/từ điển) nằm ở
 `docs/UI_REUSE_AUDIT.md`.

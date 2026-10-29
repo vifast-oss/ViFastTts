@@ -128,6 +128,14 @@ public class MainActivity extends Activity {
         Pointer vifasttts_dictionary_json(String dictionary);
         Pointer vifasttts_sample_texts_json(String platform);
         Pointer vifasttts_settings_defaults_json();
+        Pointer vifasttts_openapi_json();
+        Pointer vifasttts_model_urls_json(String base, String query, String repo,
+                                          String path, int limit, byte direct);
+        Pointer vifasttts_model_search_json(String raw);
+        Pointer vifasttts_model_files_json(String raw, byte direct);
+        int vifasttts_wav_from_pcm16(byte[] pcm, NativeLong len, int sampleRate,
+                                     short channels, PointerByReference outWav,
+                                     NativeLongByReference outLen);
         void vifasttts_string_free(Pointer value);
         void vifasttts_buffer_free(Pointer ptr, NativeLong len);
         String vifasttts_last_error();
@@ -208,6 +216,9 @@ public class MainActivity extends Activity {
     private Thread audioThread;
     private volatile boolean audioStopped = false;
     private HttpURLConnection streamConnection;
+    private volatile boolean modelDownloading = false;
+    private volatile boolean modelDownloadCancelled = false;
+    private AlertDialog modelDownloadDialog;
     private org.json.JSONArray history = new org.json.JSONArray();
     private org.json.JSONArray sharedSamples;
     private String sharedDefaultText = "Xin chào các bạn, đây là bản Android của ViFastTts.";
@@ -637,29 +648,97 @@ public class MainActivity extends Activity {
         return out.toString();
     }
 
-    private String modelSearchUrl(String query) {
-        if (directModelMode()) {
-            return "https://huggingface.co/api/models?search=" + encode(query)
-                    + "&limit=20&full=true";
+    /** URL catalog lấy từ Rust để Android/iOS/web không tự ghép khác nhau. */
+    private JSONObject modelUrls(String query, String repo, String path) {
+        try {
+            ensureFfi();
+            Pointer value = ffi.vifasttts_model_urls_json(
+                    directModelMode() ? "" : baseUrl(),
+                    query == null ? "" : query,
+                    repo == null ? "" : repo,
+                    path == null ? "" : path,
+                    20,
+                    directModelMode() ? (byte) 1 : (byte) 0);
+            if (value == null) return null;
+            try {
+                return new JSONObject(value.getString(0, "UTF-8"));
+            } finally {
+                ffi.vifasttts_string_free(value);
+            }
+        } catch (Throwable ignored) {
+            return null;
         }
-        return baseUrl() + "/api/models/search?q=" + encode(query) + "&limit=20";
+    }
+
+    private String modelSearchUrl(String query) {
+        JSONObject urls = modelUrls(query, "", "");
+        if (urls != null) return urls.optString("search", "");
+        return directModelMode()
+                ? "https://huggingface.co/api/models?search=" + encode(query) + "&limit=20&full=true"
+                : baseUrl() + "/api/models/search?q=" + encode(query) + "&limit=20";
     }
 
     private String modelFilesUrl(String repo) {
-        if (directModelMode()) {
-            return "https://huggingface.co/api/models/" + encodePath(repo)
-                    + "/tree/main?recursive=true";
-        }
-        return baseUrl() + "/api/models/files?repo=" + encode(repo);
+        JSONObject urls = modelUrls("", repo, "");
+        if (urls != null) return urls.optString("files", "");
+        return directModelMode()
+                ? "https://huggingface.co/api/models/" + encodePath(repo) + "/tree/main?recursive=true"
+                : baseUrl() + "/api/models/files?repo=" + encode(repo);
     }
 
     private String modelDownloadUrl(String repo, String path) {
-        if (directModelMode()) {
-            return "https://huggingface.co/" + encodePath(repo)
-                    + "/resolve/main/" + encodePath(path);
+        JSONObject urls = modelUrls("", repo, path);
+        if (urls != null) return urls.optString("download", "");
+        return directModelMode()
+                ? "https://huggingface.co/" + encodePath(repo) + "/resolve/main/" + encodePath(path)
+                : baseUrl() + "/api/models/download?repo=" + encode(repo) + "&path=" + encode(path);
+    }
+
+    /** Chuẩn hoá search response qua Rust; fallback JSON thô nếu FFI lỗi. */
+    private JSONArray normalizeModelSearch(byte[] body) {
+        String raw = new String(body, StandardCharsets.UTF_8);
+        try {
+            ensureFfi();
+            Pointer value = ffi.vifasttts_model_search_json(raw);
+            if (value != null) {
+                try {
+                    return new JSONArray(value.getString(0, "UTF-8"));
+                } finally {
+                    ffi.vifasttts_string_free(value);
+                }
+            }
+        } catch (Throwable ignored) {
+            // Fallback bên dưới.
         }
-        return baseUrl() + "/api/models/download?repo=" + encode(repo)
-                + "&path=" + encode(path);
+        try {
+            return new JSONArray(raw);
+        } catch (Throwable ignored) {
+            return new JSONArray();
+        }
+    }
+
+    /** Chuẩn hoá file/tree response qua Rust; fallback JSON thô nếu FFI lỗi. */
+    private JSONArray normalizeModelFiles(byte[] body) {
+        String raw = new String(body, StandardCharsets.UTF_8);
+        try {
+            ensureFfi();
+            Pointer value = ffi.vifasttts_model_files_json(
+                    raw, directModelMode() ? (byte) 1 : (byte) 0);
+            if (value != null) {
+                try {
+                    return new JSONArray(value.getString(0, "UTF-8"));
+                } finally {
+                    ffi.vifasttts_string_free(value);
+                }
+            }
+        } catch (Throwable ignored) {
+            // Fallback bên dưới.
+        }
+        try {
+            return new JSONArray(raw);
+        } catch (Throwable ignored) {
+            return new JSONArray();
+        }
     }
 
     private void hideKeyboard() {
@@ -760,14 +839,21 @@ public class MainActivity extends Activity {
                 int written = 0;
                 int lastPercent = -1;
                 while ((read = input.read(buffer)) > 0) {
+                    if (modelDownloadCancelled) throw new IllegalStateException("Đã huỷ tải");
                     output.write(buffer, 0, read);
                     written += read;
                     if (total > 0) {
                         int percent = written * 100 / total;
                         if (percent != lastPercent) {
                             lastPercent = percent;
-                            setStatus(String.format(Locale.US, "%s · %d%% (%.1f MB)",
-                                    label, percent, written / 1e6));
+                            final String message = String.format(Locale.US,
+                                    "%s · %d%% (%.1f MB)", label, percent, written / 1e6);
+                            setStatus(message);
+                            runOnUiThread(() -> {
+                                if (modelDownloadDialog != null && modelDownloadDialog.isShowing()) {
+                                    modelDownloadDialog.setMessage(message);
+                                }
+                            });
                         }
                     }
                 }
@@ -1525,7 +1611,32 @@ public class MainActivity extends Activity {
         return new PcmClip(samples, sampleRate, channels);
     }
 
-    private static void writeWavFile(File file, byte[] pcm, int sampleRate, int channels)
+    private void writeWavFile(File file, byte[] pcm, int sampleRate, int channels)
+            throws Exception {
+        try {
+            ensureFfi();
+            PointerByReference out = new PointerByReference();
+            NativeLongByReference outLen = new NativeLongByReference();
+            int code = ffi.vifasttts_wav_from_pcm16(pcm, new NativeLong(pcm.length),
+                    sampleRate, (short) channels, out, outLen);
+            if (code != 0) throw new IllegalStateException(lastError());
+            Pointer pointer = out.getValue();
+            long length = outLen.getValue().longValue();
+            if (pointer == null || length <= 0) throw new IllegalStateException("WAV rỗng");
+            try {
+                byte[] wav = new byte[(int) length];
+                pointer.read(0, wav, 0, wav.length);
+                Files.write(file.toPath(), wav);
+            } finally {
+                ffi.vifasttts_buffer_free(pointer, new NativeLong(length));
+            }
+        } catch (Throwable error) {
+            // Fallback giữ đường phát WAV cũ nếu FFI cũ chưa có hàm mới.
+            writeWavFileFallback(file, pcm, sampleRate, channels);
+        }
+    }
+
+    private static void writeWavFileFallback(File file, byte[] pcm, int sampleRate, int channels)
             throws Exception {
         int dataSize = pcm.length;
         ByteBuffer buffer = ByteBuffer.allocate(44 + dataSize).order(ByteOrder.LITTLE_ENDIAN);
@@ -2110,18 +2221,24 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             try {
                 byte[] body = getBytes(modelSearchUrl(query));
-                JSONArray models = new JSONArray(new String(body, StandardCharsets.UTF_8));
+                JSONArray models = normalizeModelSearch(body);
                 if (models.length() == 0) {
                     setStatus("Không thấy repo model.");
                     return;
                 }
                 List<String> ids = new ArrayList<>();
+                List<String> labels = new ArrayList<>();
                 for (int index = 0; index < models.length(); index += 1) {
-                    ids.add(models.getJSONObject(index).getString("id"));
+                    JSONObject model = models.getJSONObject(index);
+                    String id = model.optString("id", "");
+                    if (id.isEmpty()) continue;
+                    ids.add(id);
+                    labels.add(id + " · " + model.optInt("bundle_count", 0) + " bundle");
                 }
                 runOnUiThread(() -> new AlertDialog.Builder(this)
                         .setTitle("Chọn repo")
-                        .setItems(ids.toArray(new String[0]), (dialog, which) -> loadFiles(ids.get(which)))
+                        .setItems(labels.toArray(new String[0]),
+                                (dialog, which) -> loadFiles(ids.get(which)))
                         .setNegativeButton("Đóng", null)
                         .show());
                 setStatus("Thấy " + ids.size() + " repo.");
@@ -2136,7 +2253,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             try {
                 byte[] body = getBytes(modelFilesUrl(repo));
-                JSONArray files = new JSONArray(new String(body, StandardCharsets.UTF_8));
+                JSONArray files = normalizeModelFiles(body);
                 if (files.length() == 0) {
                     setStatus("Repo chưa có .vfa/.vfts.");
                     return;
@@ -2145,9 +2262,8 @@ public class MainActivity extends Activity {
                 List<String> paths = new ArrayList<>();
                 for (int index = 0; index < files.length(); index += 1) {
                     JSONObject file = files.getJSONObject(index);
-                    if (!"file".equals(file.optString("type", "file"))) continue;
                     String path = file.optString("path", "");
-                    if (!path.endsWith(".vfa") && !path.endsWith(".vfts")) continue;
+                    if (path.isEmpty()) continue;
                     paths.add(path);
                     labels.add(path + " — " + (file.optLong("size", 0) / 1_000_000) + " MB");
                 }
@@ -2165,10 +2281,30 @@ public class MainActivity extends Activity {
     }
 
     private void downloadModel(String repo, String path) {
+        if (modelDownloading) return;
+        modelDownloading = true;
+        modelDownloadCancelled = false;
         status.setText("Đang tải " + path + "…");
+        runOnUiThread(() -> {
+            if (modelDownloadDialog != null && modelDownloadDialog.isShowing()) {
+                modelDownloadDialog.dismiss();
+            }
+            modelDownloadDialog = new AlertDialog.Builder(this)
+                    .setTitle("Tải model")
+                    .setMessage("Đang tải " + path + "…")
+                    .setCancelable(false)
+                    .setNegativeButton("Huỷ", (dialog, which) -> {
+                        modelDownloadCancelled = true;
+                        if (modelDownloadDialog != null) {
+                            modelDownloadDialog.setMessage("Đang huỷ…");
+                        }
+                    })
+                    .show();
+        });
         new Thread(() -> {
             try {
                 byte[] bytes = getBytesProgress(modelDownloadUrl(repo, path), "Đang tải " + path);
+                if (modelDownloadCancelled) throw new IllegalStateException("Đã huỷ tải");
                 String name = path.substring(path.lastIndexOf('/') + 1).replaceAll("[^A-Za-z0-9._-]", "_");
                 if (!name.endsWith(".vfa") && !name.endsWith(".vfts")) {
                     throw new IllegalStateException("Nguồn trả file không phải .vfa/.vfts");
@@ -2180,6 +2316,12 @@ public class MainActivity extends Activity {
                 File destination = new File(directory, name);
                 File temporary = new File(directory, name + ".part");
                 Files.write(temporary.toPath(), bytes);
+                if (modelDownloadCancelled) {
+                    // Xoá file tạm nếu người dùng huỷ đúng lúc ghi.
+                    //noinspection ResultOfMethodCallIgnored
+                    temporary.delete();
+                    throw new IllegalStateException("Đã huỷ tải");
+                }
                 if (destination.exists() && !destination.delete()) {
                     throw new IllegalStateException("Không xoá được model cũ");
                 }
@@ -2201,9 +2343,19 @@ public class MainActivity extends Activity {
                     Toast.makeText(this, "Đã tải model: " + name, Toast.LENGTH_LONG).show();
                 });
             } catch (Throwable error) {
-                setStatus("Lỗi tải model: " + error.getMessage());
+                setStatus(modelDownloadCancelled
+                        ? "Đã huỷ tải model."
+                        : "Lỗi tải model: " + error.getMessage());
+            } finally {
+                modelDownloading = false;
+                runOnUiThread(() -> {
+                    if (modelDownloadDialog != null) {
+                        modelDownloadDialog.dismiss();
+                        modelDownloadDialog = null;
+                    }
+                });
             }
-        }).start();
+        }, "vifasttts-model-download").start();
     }
 
     private String karaokeText(String json, boolean srt) {

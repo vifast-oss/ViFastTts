@@ -11,9 +11,11 @@ use std::ptr;
 use std::slice;
 
 use vifasttts_app::{
-    api_contract_json, default_text, dictionary_json, eta_estimate_json, parse_dictionary,
-    sample_texts, settings_defaults_json, settings_normalize_json,
+    api_contract_json, default_text, dictionary_json, eta_estimate_json, model_urls_json,
+    normalize_files_json, normalize_search_json, openapi_json, parse_dictionary, sample_texts,
+    settings_defaults_json, settings_normalize_json,
 };
+use vifasttts_audio::wav_bytes_pcm16;
 use vifasttts_native::{
     NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfa, load_vfa_auto,
     load_vfts, ort_info,
@@ -248,6 +250,80 @@ pub extern "C" fn vifasttts_dictionary_json(dictionary: *const c_char) -> *mut c
 #[unsafe(no_mangle)]
 pub extern "C" fn vifasttts_api_contract_json() -> *mut c_char {
     json_c_string(api_contract_json())
+}
+
+/// OpenAPI 3.1 JSON cho generated client/DTO.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_openapi_json() -> *mut c_char {
+    json_c_string(openapi_json())
+}
+
+/// URL search/files/download dùng chung cho Android/iOS.
+///
+/// `base` rỗng + `direct=0` fallback server local; `direct=1` gọi HuggingFace.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_model_urls_json(
+    base: *const c_char,
+    query: *const c_char,
+    repo: *const c_char,
+    path: *const c_char,
+    limit: u32,
+    direct: u8,
+) -> *mut c_char {
+    json_c_string((|| {
+        let base = c_text_optional(base)?.unwrap_or_default();
+        let query = c_text_optional(query)?.unwrap_or_default();
+        let repo = c_text_optional(repo)?.unwrap_or_default();
+        let path = c_text_optional(path)?.unwrap_or_default();
+        model_urls_json(&base, &query, &repo, &path, limit, direct != 0)
+    })())
+}
+
+/// Chuẩn hoá response search thành `[{id,bundle_count}]`.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_model_search_json(raw: *const c_char) -> *mut c_char {
+    json_c_string((|| {
+        let raw = c_text(raw)?;
+        normalize_search_json(&raw)
+    })())
+}
+
+/// Chuẩn hoá tree/server files thành `[{path,size}]`, lọc + dedupe bundle.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_model_files_json(raw: *const c_char, direct: u8) -> *mut c_char {
+    json_c_string((|| {
+        let raw = c_text(raw)?;
+        normalize_files_json(&raw, direct != 0)
+    })())
+}
+
+/// Dựng WAV PCM16 từ bytes do native gom khi stream; trả 0 và buffer.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_wav_from_pcm16(
+    pcm: *const u8,
+    len: usize,
+    sample_rate: u32,
+    channels: u16,
+    out_wav: *mut *mut u8,
+    out_len: *mut usize,
+) -> i32 {
+    guard(-1, || {
+        if pcm.is_null() || out_wav.is_null() || out_len.is_null() {
+            return Err("pcm/out null".to_string());
+        }
+        if len == 0 || sample_rate == 0 {
+            return Err("pcm rỗng hoặc sample_rate=0".to_string());
+        }
+        let pcm = unsafe { slice::from_raw_parts(pcm, len) };
+        let wav = wav_bytes_pcm16(pcm, sample_rate, channels);
+        let length = wav.len();
+        let bytes: Box<[u8]> = wav.into_boxed_slice();
+        unsafe {
+            *out_wav = Box::into_raw(bytes) as *mut u8;
+            *out_len = length;
+        }
+        Ok(0)
+    })
 }
 
 /// Nạp model từ path. Trả NULL nếu lỗi.
@@ -837,6 +913,53 @@ mod tests {
         let parsed = take(vifasttts_dictionary_json(dictionary.as_ptr()));
         assert!(parsed.contains("\"rules\""));
         assert!(!take(vifasttts_api_contract_json()).is_empty());
+        assert!(take(vifasttts_openapi_json()).contains("\"openapi\""));
+    }
+
+    #[test]
+    fn model_catalog_ffi_normalizes_and_builds_urls() {
+        let base = CString::new("http://127.0.0.1:8000").unwrap();
+        let query = CString::new("vifasttts").unwrap();
+        let repo = CString::new("dvchd/demo").unwrap();
+        let path = CString::new("bundles/a.vfts").unwrap();
+        let urls = take(vifasttts_model_urls_json(
+            base.as_ptr(),
+            query.as_ptr(),
+            repo.as_ptr(),
+            path.as_ptr(),
+            20,
+            0,
+        ));
+        assert!(urls.contains("/api/models/search"));
+        assert!(urls.contains("path=bundles/a.vfts"));
+
+        let raw = CString::new(
+            r#"[{"id":"a","siblings":[{"rfilename":"bundles/x.vfts"},{"rfilename":"resources/x.vfts"}]}]"#,
+        )
+        .unwrap();
+        let summary = take(vifasttts_model_search_json(raw.as_ptr()));
+        assert_eq!(summary, r#"[{"id":"a","bundle_count":1}]"#);
+
+        let files = CString::new(
+            r#"[{"path":"bundles/x.vfts","size":10,"type":"file"},{"path":"onnx/x.onnx","size":1,"type":"file"}]"#,
+        )
+        .unwrap();
+        let summary = take(vifasttts_model_files_json(files.as_ptr(), 1));
+        assert_eq!(summary, r#"[{"path":"bundles/x.vfts","size":10}]"#);
+    }
+
+    #[test]
+    fn wav_from_pcm16_ffi_builds_riff() {
+        let pcm = [0u8, 1, 2, 3];
+        let mut out: *mut u8 = ptr::null_mut();
+        let mut len = 0usize;
+        let code = vifasttts_wav_from_pcm16(pcm.as_ptr(), pcm.len(), 24_000, 1, &mut out, &mut len);
+        assert_eq!(code, 0);
+        assert!(!out.is_null());
+        let bytes = unsafe { slice::from_raw_parts(out, len) };
+        assert_eq!(&bytes[..4], b"RIFF");
+        assert_eq!(u32::from_le_bytes(bytes[40..44].try_into().unwrap()), 4);
+        vifasttts_buffer_free(out, len);
     }
 
     #[test]

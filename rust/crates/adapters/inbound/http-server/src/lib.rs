@@ -19,7 +19,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
-use vifasttts_app::parse_dictionary;
+use vifasttts_app::{openapi_json, parse_dictionary};
 use vifasttts_model_manager::ModelManager;
 use vifasttts_native::{
     KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified, load_vfa,
@@ -215,6 +215,18 @@ async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
         alpha: state.alpha,
         pause: "model",
     })
+}
+
+/// OpenAPI 3.1 dùng chung `vifasttts-app`; client/generated DTO đọc từ đây.
+async fn openapi() -> Response {
+    match openapi_json() {
+        Ok(body) => (
+            [(header::CONTENT_TYPE, "application/json; charset=utf-8")],
+            body,
+        )
+            .into_response(),
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error).into_response(),
+    }
 }
 
 async fn config(State(state): State<Arc<AppState>>) -> Json<ConfigResponse> {
@@ -591,6 +603,7 @@ pub async fn serve(args: Args) -> Result<(), String> {
     let mut app = Router::new()
         .route("/healthz", get(health))
         .route("/api/config", get(config))
+        .route("/api/openapi.json", get(openapi))
         .route("/api/tts", post(tts))
         .route("/api/tts/stream", post(tts_stream))
         .route("/api/models/search", get(models_search))

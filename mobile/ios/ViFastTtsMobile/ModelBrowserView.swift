@@ -11,6 +11,7 @@ struct ModelBrowserView: View {
     @State private var selectedRepo = ""
     @State private var status = "Để trống Server URL để tải HuggingFace trực tiếp."
     @State private var busy = false
+    @State private var downloadProgress: Double?
     @State private var error: String?
 
     private var client: ModelCatalogClient {
@@ -38,6 +39,13 @@ struct ModelBrowserView: View {
                         .disabled(busy)
                     }
                     if busy { ProgressView() }
+                    if let downloadProgress {
+                        ProgressView(value: downloadProgress) {
+                            Text("Đang tải model…")
+                                .font(.caption)
+                        }
+                        .tint(VFTheme.accent)
+                    }
                     Text(status)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -140,9 +148,17 @@ struct ModelBrowserView: View {
     private func download(_ file: CatalogFile) async {
         busy = true
         error = nil
+        downloadProgress = 0
         status = "Đang tải \(file.path)…"
         do {
-            let (data, name) = try await client.download(repo: selectedRepo, path: file.path)
+            let (data, name) = try await client.download(
+                repo: selectedRepo,
+                path: file.path
+            ) { value in
+                Task { @MainActor in
+                    downloadProgress = value
+                }
+            }
             let directory = FileManager.default.urls(
                 for: .applicationSupportDirectory,
                 in: .userDomainMask
@@ -156,6 +172,7 @@ struct ModelBrowserView: View {
             self.error = error.localizedDescription
             status = "Tải model lỗi."
         }
+        downloadProgress = nil
         busy = false
     }
 }

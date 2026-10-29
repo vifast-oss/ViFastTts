@@ -12,3 +12,4 @@ serde_json.workspace = true
 vifasttts-engine = { path = "../engine" }
 vifasttts-settings = { path = "../../ports/settings" }
 vifasttts-text = { path = "../../domain/text" }
+urlencoding = "2.1"

@@ -5018,10 +5018,11 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vifasttts-app"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
+ "urlencoding",
  "vifasttts-engine",
  "vifasttts-settings",
  "vifasttts-text",
@@ -5029,18 +5030,18 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-audio"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "rustfft",
 ]
 
 [[package]]
 name = "vifasttts-audio-sink"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vifasttts-browser"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "js-sys",
  "serde",
@@ -5057,7 +5058,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -5078,7 +5079,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-desktop"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "directories",
  "eframe",
@@ -5097,7 +5098,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-engine"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vifasttts-audio",
  "vifasttts-ports",
@@ -5106,17 +5107,18 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-ffi"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde_json",
  "vifasttts-app",
+ "vifasttts-audio",
  "vifasttts-native",
  "vifasttts-text",
 ]
 
 [[package]]
 name = "vifasttts-http-client"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
  "serde",
@@ -5127,7 +5129,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-http-server"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "axum",
  "base64 0.22.1",
@@ -5145,7 +5147,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-huggingface"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -5155,7 +5157,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-mobile"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vifasttts-audio-sink",
  "vifasttts-model-source",
@@ -5164,7 +5166,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-model-manager"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde",
  "vifasttts-huggingface",
@@ -5173,11 +5175,11 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-model-source"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vifasttts-native"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vifasttts-engine",
  "vifasttts-ort",
@@ -5186,7 +5188,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-ort"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hex",
  "ort",
@@ -5199,7 +5201,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-ort-web"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "js-sys",
  "serde",
@@ -5211,7 +5213,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-parse"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -5221,15 +5223,15 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-ports"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vifasttts-settings"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vifasttts-text"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "fancy-regex 0.16.2",
  "hex",
@@ -5245,7 +5247,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-tools"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -5255,11 +5257,11 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-transport"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vifasttts-tui"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -5275,7 +5277,7 @@ dependencies = [
 
 [[package]]
 name = "vifasttts-vfts"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hex",
  "serde",

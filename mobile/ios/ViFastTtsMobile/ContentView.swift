@@ -29,13 +29,18 @@ struct ContentView: View {
     @AppStorage("vifasttts.resolveOov") private var resolveOov = true
     @AppStorage("vifasttts.dictionary") private var dictionary = ""
     @AppStorage("vifasttts.customReading") private var customReading = ""
+    @AppStorage("vifasttts.stream") private var stream = false
+    @AppStorage("vifasttts.streamSaveWav") private var streamSaveWav = true
+    @State private var streamCancellation: StreamCancellation?
+    @State private var streamStartedAt: Date?
     @State private var history = SharedContract.loadHistory()
     @State private var showHistory = false
     @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 14) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
                 Text(mode == "remote" ? "Remote HTTP · server API" : "Local ONNX · Rust C ABI")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -49,6 +54,18 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .tint(VFTheme.accent)
+
+                Toggle("Stream ngay khi tổng hợp", isOn: $stream)
+                    .font(VFTheme.caption)
+                if stream {
+                    Toggle("Lưu WAV + phụ đề khi stream", isOn: $streamSaveWav)
+                        .font(VFTheme.caption)
+                    if mode == "remote" {
+                        Text("Remote stream cần server Rust; server cũ sẽ tự chuyển full.")
+                            .font(.caption2)
+                            .foregroundStyle(VFTheme.muted)
+                    }
+                }
 
                 if mode == "remote" {
                     TextField("http://192.168.1.100:8000", text: $serverURL)
@@ -98,12 +115,13 @@ struct ContentView: View {
                     .disabled(busy)
 
                     Button {
+                        streamCancellation?.cancel()
                         player?.stop()
-                        status = "Đã dừng phát"
+                        status = streamCancellation == nil ? "Đã dừng phát" : "Đang dừng stream…"
                     } label: {
                         Label("Dừng", systemImage: "stop.fill")
                     }
-                    .disabled(player == nil)
+                    .disabled(player == nil && streamCancellation == nil)
 
                     if busy {
                         ProgressView()
@@ -143,9 +161,10 @@ struct ContentView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
+                }
+                .padding()
+                .padding(.bottom, 24)
             }
-            .padding()
             .background(VFTheme.background.ignoresSafeArea())
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -237,15 +256,29 @@ struct ContentView: View {
         if let value = environment["VIFASTT_MODE"] { mode = value }
         if let value = environment["VIFASTT_SERVER"] { serverURL = value }
         if let value = environment["VIFASTT_TOKEN"] { token = value }
+        if let value = environment["VIFASTT_STREAM"] { stream = value == "1" }
+        if let value = environment["VIFASTT_STREAM_SAVE"] { streamSaveWav = value == "1" }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             synthesize()
+        }
+        if let raw = environment["VIFASTT_CANCEL_AFTER"],
+           let seconds = Double(raw) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + seconds) {
+                streamCancellation?.cancel()
+            }
         }
         #endif
     }
 
     private var activeKaraokeText: String {
-        guard let player else { return "" }
-        let position = Int(player.currentTime * 1000)
+        let position: Int
+        if let streamStartedAt {
+            position = Int(Date().timeIntervalSince(streamStartedAt) * 1000)
+        } else if let player {
+            position = Int(player.currentTime * 1000)
+        } else {
+            return ""
+        }
         return karaokeUnits.first { position >= $0.start_ms && position < $0.end_ms }?.text ?? ""
     }
 
@@ -264,6 +297,8 @@ struct ContentView: View {
         error = nil
         karaokeUnits = []
         timingSummary = ""
+        streamStartedAt = nil
+        player?.stop()
         let estimate = SharedContract.eta(history: history, mode: mode, chars: input.count)
         let estimateText = estimate.map { String(format: " · ước tính ~%.1fs", Double($0) / 1000.0) } ?? ""
         status = (mode == "remote" ? "Đang gọi server…" : "Đang tổng hợp local…") + estimateText
@@ -273,6 +308,57 @@ struct ContentView: View {
                 let result: TtsResult
                 if mode == "remote" {
                     let client = try RemoteTtsClient(server: serverURL, token: token)
+                    if stream {
+                        let cancellation = StreamCancellation()
+                        streamCancellation = cancellation
+                        streamStartedAt = Date()
+                        do {
+                            let remote = try await client.stream(
+                                text: input,
+                                speed: Float(speed),
+                                alpha: Float(alpha),
+                                maxChars: maxChars,
+                                fixedPauses: fixedPauses,
+                                peakNormalize: peakNormalize,
+                                dialect: dialect,
+                                resolveOov: resolveOov,
+                                dictionary: dictionary,
+                                customReading: customReading,
+                                saveWav: streamSaveWav,
+                                cancellation: cancellation
+                            )
+                            streamCancellation = nil
+                            if remote.cancelled {
+                                karaokeUnits = []
+                                timingSummary = ""
+                                status = "Đã dừng stream remote"
+                                busy = false
+                                return
+                            }
+                            lastAudioURL = remote.wavURL
+                            lastSrtURL = remote.srtURL
+                            lastVttURL = remote.vttURL
+                            lastKaraokeURL = remote.karaokeURL
+                            karaokeUnits = remote.units
+                            timingSummary = remote.srtURL == nil
+                                ? "Stream · không lưu WAV/phụ đề"
+                                : "Stream · đã lưu WAV + SRT/VTT"
+                            status = String(format: "Xong stream remote · %.2f s", remote.duration)
+                            history = SharedContract.record(
+                                mode: "remote-stream",
+                                chars: input.count,
+                                elapsedMs: Int(Date().timeIntervalSince(startedAt) * 1000),
+                                text: input
+                            )
+                            busy = false
+                            return
+                        } catch {
+                            streamCancellation = nil
+                            streamStartedAt = nil
+                            self.error = nil
+                            status = "Server không stream được (\(error.localizedDescription)); chuyển full…"
+                        }
+                    }
                     let remote = try await client.synthesize(
                         text: input,
                         speed: Float(speed),
@@ -292,6 +378,49 @@ struct ContentView: View {
                         karaokeURL: nil,
                         units: remote.units
                     )
+                } else if stream {
+                    let cancellation = StreamCancellation()
+                    streamCancellation = cancellation
+                    streamStartedAt = Date()
+                    let result = try await TtsEngine.shared.synthesizeStream(
+                        text: input,
+                        speed: Float(speed),
+                        alpha: Float(alpha),
+                        maxChars: maxChars,
+                        fixedPauses: fixedPauses,
+                        peakNormalize: peakNormalize,
+                        dialect: dialect,
+                        resolveOov: resolveOov,
+                        dictionary: dictionary,
+                        customReading: customReading,
+                        saveWav: streamSaveWav,
+                        cancellation: cancellation
+                    )
+                    streamCancellation = nil
+                    if result.cancelled {
+                        karaokeUnits = []
+                        timingSummary = ""
+                        status = "Đã dừng stream local"
+                        busy = false
+                        return
+                    }
+                    lastAudioURL = result.wavURL
+                    lastSrtURL = result.srtURL
+                    lastVttURL = result.vttURL
+                    lastKaraokeURL = result.karaokeURL
+                    karaokeUnits = result.units
+                    timingSummary = result.srtURL == nil
+                        ? "Stream · không lưu WAV/phụ đề"
+                        : "Stream · đã lưu WAV + SRT/VTT"
+                    status = String(format: "Xong stream local · %.2f s", result.duration)
+                    history = SharedContract.record(
+                        mode: "local-stream",
+                        chars: input.count,
+                        elapsedMs: Int(Date().timeIntervalSince(startedAt) * 1000),
+                        text: input
+                    )
+                    busy = false
+                    return
                 } else {
                     result = try await TtsEngine.shared.synthesize(
                         text: input,
