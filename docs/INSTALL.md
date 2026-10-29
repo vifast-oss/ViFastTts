@@ -30,7 +30,7 @@ Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
 
 ## macOS 13+ (Apple Silicon) — ưu tiên
 
-1. Tải `ViFastTts-macos-arm64.zip`.
+1. Tải `vifasttts-desktop-macos-arm64.zip`.
 2. Giải nén, kéo `ViFastTts.app` vào `Applications`.
 3. Lần đầu mở: chuột phải → **Open** → **Open** (Gatekeeper).
    Nếu vẫn chặn:
@@ -122,7 +122,7 @@ cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép L
 
 ## Android
 
-Tải `app-debug.apk` (debug, chưa ký store), bật **Install unknown apps**, cài và
+Tải `vifasttts-mobile-android.apk` (debug, chưa ký store), bật **Install unknown apps**, cài và
 mở. Đây là client local ONNX + remote HTTP:
 
 - mặc định **local**, model FP32 ~86 MB đóng trong APK;
@@ -136,7 +136,7 @@ mở. Đây là client local ONNX + remote HTTP:
 
 ## iOS
 
-`ViFastTtsMobile-ios-simulator.zip` chỉ chạy trên **iOS Simulator** (chưa ký
+`vifasttts-mobile-ios-simulator.zip` chỉ chạy trên **iOS Simulator** (chưa ký
 Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 `mobile/ios/build-ios.sh`. Thiết bị thật cần ký + ORT device framework.
 

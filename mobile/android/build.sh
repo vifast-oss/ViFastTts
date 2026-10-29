@@ -57,5 +57,9 @@ else
   gradle assembleDebug --no-daemon
 fi
 
-echo "APK: $ROOT/mobile/android/app/build/outputs/apk/debug/app-debug.apk"
+APK="$ROOT/mobile/android/app/build/outputs/apk/debug/app-debug.apk"
+mkdir -p "$ROOT/desktop/dist"
+cp "$APK" "$ROOT/desktop/dist/vifasttts-mobile-android.apk"
+echo "APK: $APK"
+echo "Release APK: $ROOT/desktop/dist/vifasttts-mobile-android.apk"
 echo "Cài: adb install -r app/build/outputs/apk/debug/app-debug.apk"

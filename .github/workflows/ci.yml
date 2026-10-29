@@ -114,7 +114,7 @@ jobs:
         include:
           - os: macos-15
             platform: macos
-            artifact: desktop/dist/ViFastTts-macos-*.zip
+            artifact: desktop/dist/vifasttts-desktop-macos-*.zip
           - os: ubuntu-latest
             platform: linux
             artifact: desktop/dist/vifasttts-desktop-linux-x64.tar.gz
@@ -278,10 +278,14 @@ jobs:
         run: |
           chmod +x mobile/android/build.sh
           mobile/android/build.sh
+      - name: rename apk
+        run: |
+          mkdir -p desktop/dist
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk             desktop/dist/vifasttts-mobile-android.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: desktop/dist/vifasttts-mobile-android.apk
           if-no-files-found: error
 
   ios:
@@ -307,7 +311,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ios-simulator
-          path: mobile/ios/build/ViFastTtsMobile-ios-simulator.zip
+          path: mobile/ios/build/vifasttts-mobile-ios-simulator.zip
           if-no-files-found: error
 
   release:

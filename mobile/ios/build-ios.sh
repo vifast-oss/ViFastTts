@@ -66,7 +66,7 @@ xcodebuild \
 
 APP="$HERE/build/Build/Products/Debug-iphonesimulator/ViFastTtsMobile.app"
 [ -d "$APP" ] || { echo "Không thấy app: $APP" >&2; exit 1; }
-ARCHIVE="$HERE/build/ViFastTtsMobile-ios-simulator.zip"
+ARCHIVE="$HERE/build/vifasttts-mobile-ios-simulator.zip"
 rm -f "$ARCHIVE"
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ARCHIVE"
 echo "APP: $APP"

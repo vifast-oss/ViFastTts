@@ -82,7 +82,7 @@ if command -v codesign >/dev/null; then
 fi
 
 echo "APP: $APP"
-ARCHIVE="$ROOT/desktop/dist/ViFastTts-macos-$(uname -m).zip"
+ARCHIVE="$ROOT/desktop/dist/vifasttts-desktop-macos-$(uname -m).zip"
 mkdir -p "$(dirname "$ARCHIVE")"
 rm -f "$ARCHIVE"
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ARCHIVE"

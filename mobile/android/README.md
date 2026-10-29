@@ -10,7 +10,8 @@ production. UI SwiftUI/Compose/Flutter cuối cùng vẫn chưa chốt.
 ## Đã chạy được (29/10/2026)
 
 - Máy: Mac mini M6, Android Emulator **16 (API 36, arm64-v8a)**, không audio.
-- APK: `app-debug.apk` ~110 MB (model FP32 86 MB + ORT 33 MB + Rust 5 MB).
+- APK: `app-debug.apk` ~110 MB (model FP32 86 MB + ORT 33 MB + Rust 5 MB);
+  release asset đổi tên thành `vifasttts-mobile-android.apk`.
 - Bấm **Đọc** local với câu mặc định → status `Xong: 4.41 s`; WAV thật trong
   `cache/vifasttts.wav` dài **4,412 s / 24 kHz / mono / PCM16**.
 - Remote mode (checkbox **Dùng server remote**, URL mặc định
