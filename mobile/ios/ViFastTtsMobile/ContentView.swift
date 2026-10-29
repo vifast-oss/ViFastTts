@@ -500,15 +500,24 @@ private struct SettingsView: View {
                             .font(VFTheme.body)
                         Slider(value: $speed, in: 0.5...2.0, step: 0.05)
                             .tint(VFTheme.accent)
+                        Text("1× là bình thường; nhỏ hơn đọc chậm hơn, lớn hơn đọc nhanh hơn.")
+                            .font(VFTheme.caption)
+                            .foregroundStyle(VFTheme.muted)
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text(String(format: "Độ nét mel (alpha): %.2f", alpha))
                             .font(VFTheme.body)
                         Slider(value: $alpha, in: 0.5...3.0, step: 0.05)
                             .tint(VFTheme.accent)
+                        Text("1,5 là mặc định; cao hơn nét hơn nhưng dễ làm lộ rè/nhiễu, thấp hơn mềm hơn.")
+                            .font(VFTheme.caption)
+                            .foregroundStyle(VFTheme.muted)
                     }
                     Toggle("Pause cố định theo dấu câu", isOn: $fixedPauses)
                         .tint(VFTheme.accent)
+                    Text("Chèn khoảng lặng theo dấu câu thay vì để model tự nghỉ; mặc định tắt vì model tự nhiên hơn.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
                     Toggle("Peak normalize", isOn: $peakNormalize)
                         .tint(VFTheme.accent)
                     Text("Peak normalize: đưa đỉnh WAV về −3 dBFS, tránh clip và ổn định âm lượng; có thể làm to cả rè/nền. Không dùng khi stream vì cần biết đỉnh toàn file.")
@@ -517,13 +526,22 @@ private struct SettingsView: View {
                 }
                 Section("Giới hạn & ngôn ngữ") {
                     Stepper("Max ký tự/chunk: \(maxChars)", value: $maxChars, in: 50...5000, step: 50)
+                    Text("Câu dài tự chia nhỏ; nhỏ = ít RAM nhưng nhiều lần ngắt, lớn = ít ngắt nhưng chậm/nặng hơn.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
                     Picker("Phương ngữ", selection: $dialect) {
                         Text("Bắc").tag("north")
                         Text("Trung").tag("central")
                         Text("Nam").tag("south")
                     }
+                    Text("Model N0 hiện là giọng Bắc; đổi mục này chủ yếu đổi một số cách đọc, muốn đổi giọng nền cần model vùng đó.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
                     Toggle("Resolve OOV", isOn: $resolveOov)
                         .tint(VFTheme.accent)
+                    Text("OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
                 }
                 Section("Từ điển local") {
                     TextEditor(text: $dictionary)
@@ -544,6 +562,18 @@ private struct SettingsView: View {
                     Text("Mỗi dòng `cụm = cách đọc`, ví dụ `TP.HCM = thành phố hồ chí minh`.")
                         .font(VFTheme.caption)
                         .foregroundStyle(VFTheme.muted)
+                }
+                Section("Giải thích thêm") {
+                    DisclosureGroup("Local/Remote, stream, peak, RTF") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Local: model chạy trên máy. Remote: gửi văn bản tới server; server cũ có thể bỏ qua một số tùy chọn.")
+                            Text("Stream: phát ngay từng đoạn; không dùng peak normalize; WAV/SRT/VTT chỉ có sau khi xong nếu bật lưu.")
+                            Text("Peak normalize: đưa đỉnh toàn bộ WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền.")
+                            Text("RTF = thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.")
+                        }
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
+                    }
                 }
                 Section("Ghi chú") {
                     Text("Local áp dụng đầy đủ: tốc độ, alpha, max, pause, peak, phương ngữ, OOV và từ điển. Remote gửi cùng bộ tùy chọn; server cũ có thể bỏ qua.")

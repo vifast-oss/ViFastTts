@@ -380,6 +380,23 @@
               Local áp dụng trực tiếp; remote gửi `overrides` nếu server hỗ trợ.
             </p>
 
+            <details>
+              <summary>Giải thích các cài đặt</summary>
+              <div class="detailsBody">
+                <p class="hint"><b>Tốc độ:</b> 1.00× bình thường; nhỏ hơn chậm hơn, lớn hơn nhanh hơn.</p>
+                <p class="hint"><b>Alpha:</b> 1,5 mặc định; cao hơn nét hơn nhưng dễ lộ rè/nhiễu.</p>
+                <p class="hint"><b>Pause cố định:</b> chèn khoảng lặng theo dấu câu thay vì để model tự đoán.</p>
+                <p class="hint"><b>Peak normalize:</b> đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền. Không dùng khi stream.</p>
+                <p class="hint"><b>Stream:</b> phát ngay từng đoạn; không dùng peak normalize; file/phụ đề có sau khi xong.</p>
+                <p class="hint"><b>Resolve OOV:</b> OOV là token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển/đánh vần (VNG → “vê en giê”); tắt để giữ fallback.</p>
+                <p class="hint"><b>Phương ngữ:</b> đổi một số cách đọc qua normalizer; model hiện là giọng Bắc.</p>
+                <p class="hint"><b>Max ký tự/chunk:</b> câu dài tự chia; nhỏ = ít RAM nhưng nhiều lần ngắt.</p>
+                <p class="hint"><b>Từ điển:</b> mỗi dòng <code>từ = cách đọc</code>; áp trước normalizer/STEM.</p>
+                <p class="hint"><b>Local / Remote:</b> Local chạy model trong extension; Remote gửi văn bản tới server. Server cũ có thể bỏ qua một số tùy chọn.</p>
+                <p class="hint"><b>RTF:</b> thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.</p>
+              </div>
+            </details>
+
             <button id="clearCache" class="ghost" style="margin-top: 8px">Xoá cache model</button>
           </div>
         </details>

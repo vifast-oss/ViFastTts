@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-30 — v0.3.3
+
+- **Giải thích cài đặt trong mọi UI**: web Python, HF Space, web Vite, extension,
+  Android, iOS, desktop và TUI đều có mục giải thích tốc độ, alpha, pause, peak,
+  stream, max chunk, phương ngữ, **Resolve OOV**, từ điển/cách đọc, Local/Remote, RTF.
+- **Resolve OOV**: giải thích rõ OOV là token lạ; bật để tra từ điển/đánh vần tên chữ cái
+  (VNG → “vê en giê”), tắt để giữ fallback. Python web/Space có checkbox OOV thật và
+  server Python đã nhận `resolve_oov` cho cả full/stream.
+- **Space parity**: thêm phương ngữ, max ký tự/chunk, Resolve OOV và help panel.
+- Android có nút **Giải thích các cài đặt** + ghi chú OOV; iOS có caption từng mục +
+  DisclosureGroup; TUI có overlay `?`; desktop có mục gập.
+- Version: **0.3.3**; Android `versionCode 11`, iOS build 7.
+
 ## 2026-10-30 — v0.3.2
 
 - **Web Python + Space**: thêm lịch sử gần đây (localStorage, tối đa 8 câu, có RTF/audio),

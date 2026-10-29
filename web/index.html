@@ -19,6 +19,10 @@
       #karaoke span.active { background: #ffe08a; }
       pre { background: var(--vf-surface); border: 1px solid var(--vf-border); border-radius: 8px; padding: 1rem; overflow: auto; }
     .hidden { display: none; }
+    .help { color: var(--vf-muted); font-size: .9rem; line-height: 1.45; padding: .2rem .1rem .6rem; }
+    .help p { margin: .35rem 0; }
+    .help b { color: var(--vf-ink); }
+    .help code { background: var(--vf-soft); padding: 1px 4px; border-radius: 4px; }
     input, select { font: inherit; }
     #modelList, #modelFiles { max-height: 12rem; overflow: auto; }
     #modelList button, #modelFiles button { display: block; margin: .15rem 0; width: 100%; text-align: left; }
@@ -59,6 +63,21 @@
       </label>
       <label>Max ký tự/chunk <input id="maxChars" type="number" min="50" max="5000" step="50" value="300" style="width:5.5rem" /></label>
     </p>
+    <details>
+      <summary>Giải thích các cài đặt</summary>
+      <div class="help">
+        <p><b>Tốc độ:</b> 1.00× bình thường; nhỏ hơn chậm hơn, lớn hơn nhanh hơn (0,5–2,0×).</p>
+        <p><b>Alpha làm nét:</b> 1,5 mặc định; cao hơn nét hơn nhưng dễ lộ rè/nhiễu, thấp hơn mềm hơn.</p>
+        <p><b>Pause cố định:</b> chèn khoảng lặng theo dấu câu thay vì để model tự đoán; mặc định tắt.</p>
+        <p><b>Peak normalize:</b> đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền.</p>
+        <p><b>Resolve OOV:</b> OOV là từ/token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để thử tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.</p>
+        <p><b>Phương ngữ:</b> đổi một số cách đọc qua normalizer; model hiện là giọng Bắc, muốn đổi giọng nền cần model vùng đó.</p>
+        <p><b>Max ký tự/chunk:</b> câu dài tự chia nhỏ; nhỏ = ít RAM nhưng nhiều lần ngắt, lớn = ít ngắt nhưng chậm/nặng hơn.</p>
+        <p><b>Từ điển:</b> mỗi dòng <code>từ = cách đọc</code>; áp trước normalizer/STEM, dùng cho từ lạ, viết tắt, tên riêng, domain.</p>
+        <p><b>Local / Remote:</b> Local chạy trong trình duyệt; Remote gửi văn bản tới server. Server cũ có thể bỏ qua một số tùy chọn.</p>
+        <p><b>RTF:</b> thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.</p>
+      </div>
+    </details>
     <details>
       <summary>Từ điển local (mỗi dòng `từ = cách đọc`)</summary>
       <textarea id="dictionary" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;TP.HCM = thành phố hồ chí minh"></textarea>

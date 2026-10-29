@@ -94,6 +94,12 @@
   #player { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
   #player audio { width:100%; }
   .fine { color:var(--muted); font-size:.76rem; margin:12px 0 0; }
+  .help { margin:10px 0 0; border:1px solid var(--line); border-radius:10px; background:#FFFCF7; }
+  .help summary { cursor:pointer; padding:8px 10px; font-weight:700; font-size:.82rem; color:#6B3A2A; }
+  .help-body { padding:0 10px 10px; color:var(--muted); font-size:.78rem; }
+  .help-body p { margin:5px 0; }
+  .help-body b { color:var(--ink); }
+  .help-body code { white-space:nowrap; }
   .fine a { color:var(--accent); }
   .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
   .download-strip { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:6px; max-width:840px; }
@@ -278,6 +284,7 @@
         <span id="peakStreamNote" class="fine" hidden>Stream không dùng peak normalize.</span>
         <label class="checkline" for="streamMode"><input id="streamMode" type="checkbox"> Stream (phát ngay)</label>
         <span class="fine">Mặc định tắt</span>
+        <label class="checkline" for="resolveOov"><input id="resolveOov" type="checkbox" checked> Resolve OOV</label>
       </div>
       <div class="label-row">
         <label for="overrides">Cách đọc từ</label>
@@ -305,6 +312,22 @@
       </div>
       <div id="overrideStatus"></div>
       <pre id="builtin" hidden></pre>
+      <details class="help">
+        <summary>Giải thích các cài đặt</summary>
+        <div class="help-body">
+          <p><b>Tốc độ:</b> 1.00× là bình thường; nhỏ hơn chậm hơn, lớn hơn nhanh hơn (0,5–2,0×).</p>
+          <p><b>Độ nét mel (alpha):</b> 1,5 là mặc định; cao hơn nét hơn nhưng dễ làm rõ rè/nhiễu, thấp hơn mềm hơn.</p>
+          <p><b>Pause cố định:</b> tự chèn khoảng lặng sau dấu câu (khoảng 0,25 s sau phẩy; 0,55 s sau chấm/hỏi/than) thay vì để model tự đoán. Mặc định tắt.</p>
+          <p><b>Peak normalize:</b> đưa đỉnh toàn bộ WAV về −3 dBFS để tránh clip và ổn định âm lượng; có thể làm to cả rè/nền. Không dùng khi stream vì cần biết đỉnh cả file.</p>
+          <p><b>Stream:</b> phát ngay từng đoạn khi tổng hợp xong; không dùng peak normalize; WAV/SRT/VTT chỉ có sau khi stream xong nếu bật lưu.</p>
+          <p><b>Max ký tự/chunk:</b> độ dài tối đa mỗi đoạn đưa vào model. Nhỏ = ít RAM nhưng nhiều lần ngắt; lớn = ít ngắt nhưng chậm/nặng hơn.</p>
+          <p><b>Phương ngữ:</b> đổi cách đọc một số từ qua normalizer. Model N0 hiện là giọng Bắc; muốn đổi giọng nền hoàn toàn cần model của vùng đó.</p>
+          <p><b>Resolve OOV:</b> OOV là token lạ (tên riêng, viết tắt, từ tiếng Anh, mã sản phẩm…). Bật để thử tra từ điển/đánh vần tên chữ cái (ví dụ VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.</p>
+          <p><b>Từ điển / Cách đọc:</b> mỗi dòng <code>từ = cách đọc</code>; dùng cho từ lạ, viết tắt, tên riêng, domain. Quy tắc được áp trước normalizer/STEM; remote sẽ gửi kèm request.</p>
+          <p><b>Local / Remote:</b> Local chạy model trên máy/trình duyệt; Remote gửi văn bản tới server. Server cũ có thể bỏ qua một số tùy chọn.</p>
+          <p><b>RTF:</b> thời gian xử lý chia cho thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực (0,05 ≈ nhanh gấp 20 lần).</p>
+        </div>
+      </details>
   </section>
 
   <section class="panel feedback" id="feedback">
@@ -648,6 +671,7 @@ fetch(CONFIG_URL).then((response) => response.ok ? response.json() : null).then(
     if (defaults.dialect && $("dialect")) $("dialect").value = defaults.dialect;
     if ($("fixed")) $("fixed").checked = Boolean(defaults.fixed_pauses);
     if ($("peakNormalize")) $("peakNormalize").checked = Boolean(defaults.peak_normalize);
+    if ($("resolveOov")) $("resolveOov").checked = defaults.resolve_oov !== false;
   }
   const streamMode = $("streamMode");
   if (streamMode && data && data.capabilities && data.capabilities.stream === false) {
@@ -751,7 +775,7 @@ async function streamGenerate(value, started) {
   try {
     const response = await fetch(STREAM_URL, {
       method: "POST", headers: {"Content-Type": "application/json"}, signal: controller.signal,
-      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: false, dialect: $("dialect").value, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()}),
+      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: false, dialect: $("dialect").value, resolve_oov: $("resolveOov").checked, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()}),
     });
     if (!response.ok) {
       let detail = "Không stream được âm thanh.";
@@ -850,7 +874,7 @@ async function generate() {
     const response = await fetch(API_URL, {
       method: "POST", headers: {"Content-Type": "application/json"},
       signal: controller.signal,
-      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: $("peakNormalize").checked, dialect: $("dialect").value, karaoke: true, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()})
+      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: $("peakNormalize").checked, dialect: $("dialect").value, resolve_oov: $("resolveOov").checked, karaoke: true, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()})
     });
     if (!response.ok) {
       let detail = "Không tạo được âm thanh.";

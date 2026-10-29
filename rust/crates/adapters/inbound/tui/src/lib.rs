@@ -198,6 +198,7 @@ struct App {
     srt: Option<PathBuf>,
     vtt: Option<PathBuf>,
     show_settings: bool,
+    show_help: bool,
     busy: bool,
     quit: bool,
     status: String,
@@ -244,6 +245,7 @@ impl App {
             srt: args.srt,
             vtt: args.vtt,
             show_settings: false,
+            show_help: false,
             busy: false,
             quit: false,
             status: "Sẵn sàng".to_string(),
@@ -658,6 +660,12 @@ fn run_loop(
 
 fn handle_key(app: &mut App, key: KeyEvent) {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+    if app.show_help {
+        if key.code == KeyCode::Esc || key.code == KeyCode::F(1) || key.code == KeyCode::Char('?') {
+            app.show_help = false;
+        }
+        return;
+    }
     if app.model.open {
         handle_model_key(app, key, ctrl);
         return;
@@ -693,6 +701,7 @@ fn handle_key(app: &mut App, key: KeyEvent) {
         }
         KeyCode::Enter if ctrl => app.synthesize(),
         KeyCode::Enter => app.input.push('\n'),
+        KeyCode::F(1) => app.show_help = true,
         KeyCode::Tab => {
             app.mode = if app.mode == Mode::Local {
                 Mode::Remote
@@ -732,6 +741,7 @@ fn handle_settings_key(app: &mut App, key: KeyEvent, ctrl: bool) {
         KeyCode::Char('f') => app.fixed_pauses = !app.fixed_pauses,
         KeyCode::Char('p') => app.peak_normalize = !app.peak_normalize,
         KeyCode::Char('o') => app.resolve_oov = !app.resolve_oov,
+        KeyCode::Char('?') => app.show_help = true,
         KeyCode::Char('d') => {
             app.dialect = match app.dialect.as_str() {
                 "north" => "central".to_string(),
@@ -974,7 +984,7 @@ fn draw(frame: &mut Frame, app: &App) {
         .wrap(Wrap { trim: false });
     frame.render_widget(log, chunks[3]);
 
-    let footer = Paragraph::new("Ctrl+Enter/G/R/S hoặc F5 đọc · Ctrl+O model · Ctrl+P cài đặt · Tab local/remote · ↑/↓ speed · Ctrl+L xoá log · Ctrl+Q/Esc thoát")
+    let footer = Paragraph::new("Ctrl+Enter/G/R/S hoặc F5 đọc · Ctrl+O model · Ctrl+P cài đặt · Tab local/remote · ↑/↓ speed · Ctrl+L xoá log · F1/? giải thích · Ctrl+Q/Esc thoát")
         .style(Style::default().fg(Color::DarkGray));
     frame.render_widget(footer, chunks[4]);
 
@@ -983,6 +993,9 @@ fn draw(frame: &mut Frame, app: &App) {
     }
     if app.model.open {
         draw_model(frame, app);
+    }
+    if app.show_help {
+        draw_help(frame);
     }
 }
 
@@ -1019,13 +1032,56 @@ fn draw_settings(frame: &mut Frame, app: &App) {
             app.dictionary.len()
         )),
         Line::from(""),
-        Line::from("Esc/Ctrl+P đóng · Ctrl+S đọc với cấu hình này"),
+        Line::from("Esc/Ctrl+P đóng · ?/F1 giải thích · Ctrl+S đọc"),
     ];
     let block = Paragraph::new(lines)
         .block(
             Block::default()
                 .borders(Borders::ALL)
                 .title("Cài đặt âm thanh · Ctrl+P"),
+        )
+        .wrap(Wrap { trim: true });
+    frame.render_widget(block, popup);
+}
+
+fn draw_help(frame: &mut Frame) {
+    let area = frame.area();
+    let width = area.width.saturating_sub(6).max(50).min(area.width);
+    let height = area.height.saturating_sub(4).max(16).min(area.height);
+    let popup = ratatui::layout::Rect::new(
+        area.x + (area.width.saturating_sub(width)) / 2,
+        area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    );
+    frame.render_widget(Clear, popup);
+    let lines = vec![
+        Line::from("Tốc độ: 1.00× bình thường; nhỏ hơn chậm hơn, lớn hơn nhanh hơn (0,5–2,0×)."),
+        Line::from("Alpha: 1,5 mặc định; cao hơn nét hơn nhưng dễ lộ rè/nhiễu, thấp hơn mềm hơn."),
+        Line::from(
+            "Pause cố định: chèn khoảng lặng theo dấu câu thay vì để model tự đoán; mặc định tắt.",
+        ),
+        Line::from("Peak normalize: đưa đỉnh WAV về −3 dBFS để tránh clip; không dùng khi stream."),
+        Line::from("Stream: phát ngay từng đoạn; không dùng peak; file/phụ đề có sau khi xong."),
+        Line::from("Max ký tự/chunk: câu dài tự chia; nhỏ = ít RAM nhưng nhiều lần ngắt."),
+        Line::from("Phương ngữ: đổi một số cách đọc; model N0 hiện là giọng Bắc."),
+        Line::from("Resolve OOV: OOV là token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…)."),
+        Line::from(
+            "  Bật để tra từ điển/đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback.",
+        ),
+        Line::from("Từ điển: mỗi dòng `từ = cách đọc`; áp trước normalizer/STEM."),
+        Line::from("Local/Remote: Local chạy trên máy; Remote gửi văn bản tới server."),
+        Line::from(
+            "RTF: thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.",
+        ),
+        Line::from(""),
+        Line::from("Esc hoặc ? để đóng"),
+    ];
+    let block = Paragraph::new(lines)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Giải thích cài đặt · ?"),
         )
         .wrap(Wrap { trim: true });
     frame.render_widget(block, popup);

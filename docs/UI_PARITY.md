@@ -21,11 +21,12 @@ không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 | Desktop egui | Có | ONNX, bundle, HF trực tiếp | Đầy đủ + auto-play + history/ETA | Có, lưu SRT/VTT | Bản đầy đủ nhất |
 | CLI | Có | `--vfa/--vfts`, HF | Đầy đủ qua flags | WAV/SRT/VTT/JSON | Dùng script/terminal |
 | TUI | Có | `Ctrl+O`, HF; dùng chung `ModelBrowserState` | Speed/alpha/max/dialect/OOV/dictionary file | WAV/SRT/VTT | `Ctrl+P` cấu hình; dictionary qua `--dictionary` |
-| Web Python (server) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect + `/api/config` defaults | WAV/SRT/VTT; **stream NDJSON + WebAudio** | Engine Python `OnnxTtsEngine`; stream toggle, history/cancel/share, peak tự tắt khi stream |
+| Web Python (server) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect/OOV + `/api/config` defaults + **Giải thích cài đặt** | WAV/SRT/VTT; **stream NDJSON + WebAudio** | Engine Python `OnnxTtsEngine`; stream toggle, history/cancel/share, peak tự tắt khi stream |
+| HF Space (static) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect/OOV + defaults + **Giải thích cài đặt** | WAV; stream NDJSON + WebAudio | Bản tĩnh gọi VPS; cùng UI web Python, không có custom reading/feedback admin |
 | Web Vite | Có | HF trực tiếp hoặc server, file `.vfa/.vfts` | Đầy đủ | Có, WAV/SRT/VTT | Chạy được trong trình duyệt |
 | Chrome extension | Có | HF trực tiếp hoặc server, bundled | Đầy đủ | Có, WAV/SRT/VTT | Thêm stream/history/ETA |
-| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + custom reading + auto-play + output folder + stream local/remote + history/ETA + share + health + huỷ tải model | Karaoke; WAV/SRT/VTT/JSON; stream có WAV + phụ đề (tùy chọn lưu) | Câu mặc định có chữ “Android”; sample/ETA/từ điển/catalog dùng contract Rust |
-| iOS | Có | HF trực tiếp/server, bundle; progress + **huỷ tải model** | Đầy đủ + history/ETA | Karaoke; ShareLink WAV/SRT/VTT/JSON; stream local/remote có toggle lưu | Câu mặc định có chữ “iOS”; sample/ETA/catalog qua contract Rust |
+| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + custom reading + auto-play + output folder + stream local/remote + history/ETA + share + health + huỷ tải model + **giải thích cài đặt** | Karaoke; WAV/SRT/VTT/JSON; stream có WAV + phụ đề (tùy chọn lưu) | Câu mặc định có chữ “Android”; sample/ETA/từ điển/catalog dùng contract Rust |
+| iOS | Có | HF trực tiếp/server, bundle; progress + **huỷ tải model** | Đầy đủ + history/ETA + **giải thích cài đặt** | Karaoke; ShareLink WAV/SRT/VTT/JSON; stream local/remote có toggle lưu | Câu mặc định có chữ “iOS”; sample/ETA/catalog qua contract Rust |
 
 ## Android — kiểm tra parity (29/10)
 

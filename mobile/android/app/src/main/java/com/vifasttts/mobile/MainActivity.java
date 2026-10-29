@@ -1831,6 +1831,10 @@ public class MainActivity extends Activity {
         VfTheme.text(oov, font, 14, VfTheme.INK, false);
         oov.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(oov);
+        TextView oovNote = new TextView(this);
+        oovNote.setText("OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.");
+        VfTheme.text(oovNote, font, 12, VfTheme.MUTED, false);
+        form.addView(oovNote);
 
         TextView dictionaryLabel = new TextView(this);
         VfTheme.text(dictionaryLabel, font, 13, VfTheme.INK, true);
@@ -1912,6 +1916,15 @@ public class MainActivity extends Activity {
         noteParams.topMargin = VfTheme.dp(this, 8);
         form.addView(note, noteParams);
 
+        Button help = new Button(this);
+        help.setText("Giải thích các cài đặt");
+        VfTheme.secondaryButton(help, font);
+        help.setOnClickListener(view -> showSettingsHelp());
+        LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        helpParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(help, helpParams);
+
         ScrollView scroll = new ScrollView(this);
         scroll.addView(form);
         AlertDialog dialog = new AlertDialog.Builder(this)
@@ -1978,6 +1991,25 @@ public class MainActivity extends Activity {
                 });
         });
         dialog.show();
+    }
+
+    private void showSettingsHelp() {
+        String text = "Tốc độ: 1.00× là bình thường; nhỏ hơn đọc chậm hơn, lớn hơn đọc nhanh hơn (0,5–2,0×).\n\n"
+                + "Alpha (độ nét mel): 1,5 là mặc định; cao hơn nét hơn nhưng dễ làm lộ rè/nhiễu, thấp hơn mềm hơn.\n\n"
+                + "Pause cố định: chèn khoảng lặng theo dấu câu thay vì để model tự đoán; mặc định tắt.\n\n"
+                + "Peak normalize: đưa đỉnh toàn bộ WAV về −3 dBFS để tránh clip và ổn định âm lượng; có thể làm to cả rè/nền. Không dùng khi stream vì cần biết đỉnh cả file.\n\n"
+                + "Stream: phát ngay từng đoạn khi tổng hợp xong; không dùng peak normalize; WAV/SRT/VTT chỉ có sau khi xong nếu bật lưu.\n\n"
+                + "Max ký tự/chunk: câu dài tự chia nhỏ; nhỏ = ít RAM nhưng nhiều lần ngắt, lớn = ít ngắt nhưng chậm/nặng hơn.\n\n"
+                + "Phương ngữ: đổi một số cách đọc qua normalizer. Model N0 hiện là giọng Bắc; muốn đổi giọng nền cần model vùng đó.\n\n"
+                + "Resolve OOV: OOV là token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.\n\n"
+                + "Từ điển / Cách đọc: mỗi dòng `từ = cách đọc`; dùng cho từ lạ, viết tắt, tên riêng, domain. Quy tắc được áp trước normalizer/STEM.\n\n"
+                + "Local / Remote: Local chạy model trên máy; Remote gửi văn bản tới server. Server cũ có thể bỏ qua một số tùy chọn.\n\n"
+                + "RTF: thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.";
+        new AlertDialog.Builder(this)
+                .setTitle("Giải thích cài đặt")
+                .setMessage(text)
+                .setPositiveButton("Đóng", null)
+                .show();
     }
 
     private void showModelManager() {

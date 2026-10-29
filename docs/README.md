@@ -14,6 +14,7 @@
 | Hiểu kiến trúc as-built | `docs/ARCHITECTURE.md` · `docs/MODEL_FLOW.md` |
 | Hiểu cách tách âm tiết | `docs/SYLLABLE_GUIDE.md` · `docs/FRONTEND.md` |
 | Hiểu chuẩn hoá số/STEM | `docs/NORMALIZER.md` · `docs/STEM_NORMALIZER.md` |
+| Hiểu nhanh các nút cài đặt (tốc độ, OOV, peak…) | `docs/SETTINGS_GLOSSARY.md` |
 | Xem thiết kế/đo acoustic v2 | `docs/ACOUSTIC_V2.md` |
 | Chấm một checkpoint | `docs/EVAL_TOOLS.md` |
 | Benchmark N0 + model ngoài | `docs/BENCHMARK_N0.md` |
@@ -75,6 +76,7 @@
 | `docs/SYLLABLE_GUIDE.md` | Giải thích âm tiết cho người không chuyên |
 | `docs/G2P_VIETNAMESE.md` | Khảo sát G2P + IPA Bắc/Trung/Nam (chỉ phân tích) |
 | `docs/GLOSSARY.md` | Thuật ngữ âm đầu/đệm/chính/cuối, tone, alignment |
+| `docs/SETTINGS_GLOSSARY.md` | Giải thích các cài đặt UI: tốc độ, alpha, OOV, peak, stream, RTF… |
 
 ### 2.3 Model, dữ liệu, đánh giá
 

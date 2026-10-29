@@ -127,6 +127,8 @@ Nhờ vậy Android/iOS/java/Swift chỉ còn phần HTTP + UI; luật catalog n
 2. `contract_version` tăng khi bỏ/đổi nghĩa field.
 3. Client cũ gửi thiếu field → server dùng default canonical.
 4. `resolve_oov` default **true** cho UI mới; server vẫn chấp nhận false.
+   Bật: tra từ điển acronym/product/English rồi đánh vần tên chữ cái (`VNG` → “vê en giê”);
+   tắt: giữ fallback. Xem `docs/SETTINGS_GLOSSARY.md`.
 5. `max_chars=0` chỉ là legacy; normalize thành 300.
 6. `/api/config` trả `defaults`, `capabilities`, `endpoints`; UI mới đọc các field
    này thay vì hard-code. Server Rust và web Python cùng shape tối thiểu.

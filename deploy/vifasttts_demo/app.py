@@ -645,6 +645,7 @@ class TtsRequest(BaseModel):
     fixed_pauses: bool = False
     peak_normalize: bool = False
     dialect: str = "north"
+    resolve_oov: bool = True
     karaoke: bool = False
     visitor_id: str | None = None
     source: str = "api"
@@ -721,7 +722,8 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
                 overrides: dict[str, str], alpha: float = ALPHA,
                 chunk_chars: int = SYNTH_CHUNK_CHARS,
                 peak_normalize: bool = False,
-                dialect: str = "north") -> tuple[bytes, float, float, list[dict]]:
+                dialect: str = "north",
+                resolve_oov: bool = True) -> tuple[bytes, float, float, list[dict]]:
     """Full synthesis qua engine Python dùng chung; giữ merge từ điển của demo."""
     dialect, options = _normalizer_options(dialect, overrides)
     chunk_chars = max(50, min(int(chunk_chars or SYNTH_CHUNK_CHARS), MAX_CHARS))
@@ -733,6 +735,7 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
         fixed_pauses=bool(fixed_pauses),
         peak_normalize=bool(peak_normalize),
         dialect=dialect,
+        resolve_oov=bool(resolve_oov),
     )
     result = TTS_ENGINE.synthesize(text, settings, normalizer=options)
     return result.wav, result.elapsed, result.audio_seconds, result.units
@@ -969,6 +972,7 @@ def tts(payload: TtsRequest, request: Request) -> Response:
             text, speed, bool(payload.fixed_pauses), overrides,
             alpha=payload.alpha, chunk_chars=payload.max_chars,
             peak_normalize=bool(payload.peak_normalize), dialect=payload.dialect,
+            resolve_oov=bool(payload.resolve_oov),
         )
     except HTTPException:
         raise
@@ -1054,6 +1058,7 @@ def tts_stream(payload: TtsRequest, request: Request) -> Response:
         fixed_pauses=bool(payload.fixed_pauses),
         peak_normalize=False,
         dialect=dialect,
+        resolve_oov=bool(payload.resolve_oov),
     )
     # Không giữ _lock cho stream: ORT session chạy Run song song được, còn
     # generator sync có thể bị bỏ dở khi client ngắt khiến `finally` không chạy.

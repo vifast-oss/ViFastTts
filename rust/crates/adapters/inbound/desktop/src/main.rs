@@ -1313,10 +1313,31 @@ impl DesktopApp {
             });
         if ui
             .checkbox(&mut self.settings.app.resolve_oov, "Resolve OOV")
+            .on_hover_text(
+                "OOV là token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). \
+                 Bật để tra từ điển/đánh vần tên chữ cái; tắt để giữ fallback.",
+            )
             .changed()
         {
             self.settings_dirty = true;
         }
+        ui.small("OOV: bật để tự xử lý từ lạ; nếu đọc sai, thêm quy tắc vào Từ điển bên dưới.");
+
+        egui::CollapsingHeader::new("Giải thích các cài đặt")
+            .default_open(false)
+            .show(ui, |ui| {
+                ui.small("Tốc độ: 1.00× bình thường; nhỏ hơn chậm hơn, lớn hơn nhanh hơn (0,5–2,0×).");
+                ui.small("Alpha: 1,5 mặc định; cao hơn nét hơn nhưng dễ lộ rè/nhiễu, thấp hơn mềm hơn.");
+                ui.small("Pause cố định: chèn khoảng lặng theo dấu câu thay vì để model tự đoán; mặc định tắt.");
+                ui.small("Peak normalize: đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền. Không dùng khi stream.");
+                ui.small("Stream: phát ngay từng đoạn; không dùng peak normalize; file/phụ đề có sau khi xong.");
+                ui.small("Max ký tự/chunk: câu dài tự chia; nhỏ = ít RAM nhưng nhiều lần ngắt, lớn = ít ngắt nhưng chậm/nặng hơn.");
+                ui.small("Phương ngữ: đổi một số cách đọc; model N0 hiện là giọng Bắc, muốn đổi giọng nền cần model vùng đó.");
+                ui.small("Resolve OOV: OOV là token lạ; bật để tra từ điển/đánh vần (VNG → “vê en giê”); tắt để giữ fallback.");
+                ui.small("Từ điển: mỗi dòng `từ = cách đọc`; áp trước normalizer/STEM.");
+                ui.small("Local/Remote: Local chạy trên máy; Remote gửi văn bản tới server, server cũ có thể bỏ qua tùy chọn.");
+                ui.small("RTF: thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.");
+            });
 
         ui.add_space(8.0);
         ui.separator();

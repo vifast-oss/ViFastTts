@@ -39,6 +39,8 @@ for chunk in engine.iter_chunks("Câu một. Câu hai!", TtsSettings(max_chars=6
   đã merge; web demo dùng đúng options cho cả full và stream.
 - `karaoke_lines`, `srt_from_units`, `vtt_from_units`, `pcm16`, `wav_bytes` export
   cùng module để service khác không tự viết lại.
+- `TtsSettings.resolve_oov` nhận từ request `resolve_oov` của cả full và stream;
+  UI web/Space có checkbox **Resolve OOV** (`docs/SETTINGS_GLOSSARY.md`).
 
 ## 2. Web Python
 
