@@ -77,8 +77,9 @@ phần WASM dùng**. Android/iOS/web/extension vẫn tự viết lại các lu�
 
 Ví dụ đang thấy trong code:
 
-- `AppSettings::default()`: `max_chars = 0` (nghĩa "dùng 300" ở desktop), không có
-  `dialect`/`peak_normalize`/`resolve_oov`.
+- `AppSettings::default()` (sau phase 1): `max_chars = 300`, `resolve_oov = true`,
+  có `dialect`/`peak_normalize`/`custom_reading`; nhưng desktop vẫn dùng các field
+  riêng `DesktopSettings.dialect/peak_normalize/resolve_oov` nên chưa nối hết.
 - `DesktopSettings`: `max_chars = 300`, `resolve_oov = false`, `auto_play = true`.
 - TUI: `max_chars = 300`, `resolve_oov = true`; CLI `synth`: `resolve_oov = false`;
   `tui` subcommand: `resolve_oov = true`.
@@ -105,9 +106,9 @@ settings.
 
 File `rust/crates/core/application/app/src/contracts.rs`:
 
-- `SynthesisSettings`: mode, speed, alpha, max_chars, fixed_pauses, peak_normalize,
-  dialect, resolve_oov, dictionary, custom_reading, stream, server_url, token,
-  model_base_url.
+- `SynthesisSettings` = alias của `AppSettings`: mode, speed, alpha, max_chars,
+  fixed_pauses, peak_normalize, dialect, resolve_oov, dictionary, custom_reading,
+  stream, server_url, token, model_base_url. Không tạo schema settings thứ hai.
 - `defaults()` canonical: speed 1.0 · alpha 1.5 · max 300 · resolve OOV bật ·
   dialect Bắc.
 - `normalized()`: kẹp speed/alpha/max, chuẩn hoá dialect/server URL, bỏ custom
