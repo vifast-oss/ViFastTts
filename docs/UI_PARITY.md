@@ -24,7 +24,7 @@ không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 | Web Python (server) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect | WAV/SRT/VTT | Demo server, không có local WASM |
 | Web Vite | Có | HF trực tiếp hoặc server, file `.vfa/.vfts` | Đầy đủ | Có, WAV/SRT/VTT | Chạy được trong trình duyệt |
 | Chrome extension | Có | HF trực tiếp hoặc server, bundled | Đầy đủ | Có, WAV/SRT/VTT | Thêm stream/history/ETA |
-| Android | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; WAV/SRT/VTT/JSON vào Downloads | Câu mặc định có chữ “Android” |
+| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + stream local | Karaoke trên màn hình; WAV/SRT/VTT/JSON vào Downloads | Câu mặc định có chữ “Android” |
 | iOS | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS” |
 
 ## Cách đọc tên sản phẩm

@@ -77,6 +77,12 @@ Nên dùng **catalog** thay vì hard-code URL:
 - Android/iOS có cấu hình local: tốc độ, alpha, pause cố định, peak normalize,
   max ký tự/chunk, phương ngữ, resolve OOV và từ điển `key = cách đọc`.
 - Có karaoke theo âm tiết trên màn hình; lưu/chia sẻ WAV + SRT + VTT + JSON.
+- Màn hình **Model** có: bundled ONNX, danh sách `.vfa/.vfts` đã cài, tải
+  HuggingFace, chọn file `.vfa/.vfts`, hoặc chọn cặp `acoustic.onnx` +
+  `vocoder.onnx`.
+- **Stream local** là tùy chọn trong Cấu hình: FFI callback phát PCM ngay khi
+  tổng hợp; không lưu WAV ở chế độ stream.
+- Core đọc `ViFastTts` = **vi phát tê tê ét** (override toàn cục).
 - Android phát bằng `AudioTrack` 48 kHz, buffer 2 giây, resample 24→48 kHz
   trong app; không dùng `MediaPlayer` cho WAV TTS. Karaoke lấy vị trí từ
   `AudioTrack.getPlaybackHeadPosition()`.

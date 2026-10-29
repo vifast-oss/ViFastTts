@@ -3,8 +3,10 @@ package com.vifasttts.mobile;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.database.Cursor;
 import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -19,6 +21,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.text.InputType;
 import android.util.Base64;
 import android.view.Gravity;
@@ -40,6 +43,7 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
@@ -85,11 +89,18 @@ public class MainActivity extends Activity {
                                             String dialect, byte resolveOov, String dictionary,
                                             PointerByReference outWav, NativeLongByReference outLen,
                                             PointerByReference outKaraoke);
+        int vifasttts_synthesize_stream_ex(Pointer engine, String text, Options options,
+                                           String dialect, byte resolveOov, String dictionary,
+                                           StreamCallback callback, Pointer userData);
         Pointer vifasttts_karaoke_to_srt(String karaokeJson);
         Pointer vifasttts_karaoke_to_vtt(String karaokeJson);
         void vifasttts_string_free(Pointer value);
         void vifasttts_buffer_free(Pointer ptr, NativeLong len);
         String vifasttts_last_error();
+    }
+
+    interface StreamCallback extends Callback {
+        int invoke(Pointer samples, NativeLong length, int sampleRate, Pointer userData);
     }
 
     public static class Options extends Structure {
@@ -107,6 +118,8 @@ public class MainActivity extends Activity {
 
     private static final String PREFS = "vifasttts";
     private static final String KEY_ACTIVE_MODEL = "active_model";
+    private static final String KEY_ACTIVE_ACOUSTIC = "active_acoustic";
+    private static final String KEY_ACTIVE_VOCODER = "active_vocoder";
     private static final String KEY_MODE = "mode";
     private static final String KEY_SERVER = "server_url";
     private static final String KEY_TOKEN = "token";
@@ -118,6 +131,10 @@ public class MainActivity extends Activity {
     private static final String KEY_DIALECT = "dialect";
     private static final String KEY_RESOLVE_OOV = "resolve_oov";
     private static final String KEY_DICTIONARY = "dictionary";
+    private static final String KEY_STREAM = "stream";
+    private static final int REQUEST_BUNDLE = 2001;
+    private static final int REQUEST_ACOUSTIC = 2002;
+    private static final int REQUEST_VOCODER = 2003;
 
     private Ffi ffi;
     private Pointer engine;
@@ -153,6 +170,8 @@ public class MainActivity extends Activity {
     private AudioFocusRequest focusRequest;
     private SharedPreferences prefs;
     private String activeModelPath = "";
+    private String activeAcousticPath = "";
+    private String activeVocoderPath = "";
     private String mode = "local";
     private boolean remoteMode = false;
     private boolean busy = false;
@@ -163,6 +182,7 @@ public class MainActivity extends Activity {
     private boolean peakNormalize = false;
     private String dialect = "north";
     private boolean resolveOov = true;
+    private boolean streamMode = false;
     private String dictionaryText = "";
     private JSONArray karaokeUnits;
     private final Handler karaokeHandler = new Handler(Looper.getMainLooper());
@@ -223,7 +243,9 @@ public class MainActivity extends Activity {
         ensureFfi();
         File acoustic = copyAsset("acoustic.onnx");
         File vocoder = copyAsset("vocoder.onnx");
-        if (!activeModelPath.isEmpty()) {
+        if (!activeAcousticPath.isEmpty() && !activeVocoderPath.isEmpty()) {
+            engine = ffi.vifasttts_engine_new(activeAcousticPath, activeVocoderPath);
+        } else if (!activeModelPath.isEmpty()) {
             File bundle = new File(activeModelPath);
             if (!bundle.isFile()) {
                 throw new IllegalStateException("Không thấy bundle: " + activeModelPath);
@@ -252,9 +274,15 @@ public class MainActivity extends Activity {
     }
 
     private void updateModelLabel() {
-        String name = activeModelPath.isEmpty()
-                ? "Bundled acoustic/vocoder"
-                : new File(activeModelPath).getName();
+        String name;
+        if (!activeAcousticPath.isEmpty() && !activeVocoderPath.isEmpty()) {
+            name = "ONNX: " + new File(activeAcousticPath).getName()
+                    + " + " + new File(activeVocoderPath).getName();
+        } else if (!activeModelPath.isEmpty()) {
+            name = new File(activeModelPath).getName();
+        } else {
+            name = "Bundled acoustic/vocoder";
+        }
         modelLabel.setText("Model: " + name);
     }
 
@@ -404,6 +432,10 @@ public class MainActivity extends Activity {
             synthesizeRemote(input);
             return;
         }
+        if (streamMode) {
+            synthesizeLocalStream(input);
+            return;
+        }
         setBusy(true);
         setStatus("Đang tổng hợp local…");
         new Thread(() -> {
@@ -458,6 +490,88 @@ public class MainActivity extends Activity {
                 setBusy(false);
             }
         }).start();
+    }
+
+    private void synthesizeLocalStream(String input) {
+        setBusy(true);
+        setStatus("Đang stream local…");
+        new Thread(() -> {
+            AudioTrack track = null;
+            AudioTrack streamTrack = null;
+            try {
+                ensureEngine();
+                Options options = new Options();
+                options.speed = speechSpeed;
+                options.alpha = sharpenAlpha;
+                options.max_chars = new NativeLong(maxChars);
+                options.fixed_pauses = fixedPauses ? (byte) 1 : (byte) 0;
+                options.peak_normalize = peakNormalize ? (byte) 1 : (byte) 0;
+                int sampleRate = 24000;
+                int channelMask = AudioFormat.CHANNEL_OUT_MONO;
+                int minBuffer = AudioTrack.getMinBufferSize(
+                        sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT);
+                int bufferSize = Math.max(minBuffer * 4, sampleRate * 2 * 2);
+                track = new AudioTrack.Builder()
+                        .setAudioAttributes(speechAudioAttributes())
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setSampleRate(sampleRate)
+                                .setChannelMask(channelMask)
+                                .build())
+                        .setTransferMode(AudioTrack.MODE_STREAM)
+                        .setBufferSizeInBytes(bufferSize)
+                        .build();
+                if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+                    throw new IllegalStateException("AudioTrack stream chưa khởi tạo");
+                }
+                audioStopped = false;
+                audioTrack = track;
+                audioSampleRate = sampleRate;
+                audioChannels = 1;
+                track.play();
+                streamTrack = track;
+                final AudioTrack callbackTrack = streamTrack;
+                requestAudioFocus();
+                runOnUiThread(() -> {
+                    stopButton.setEnabled(true);
+                    if (saveButton != null) saveButton.setEnabled(false);
+                    stopKaraoke();
+                });
+                StreamCallback callback = (samples, length, sampleRateValue, userData) -> {
+                    if (audioStopped) return 1;
+                    int count = (int) length.longValue();
+                    short[] pcm = new short[count];
+                    for (int index = 0; index < count; index += 1) {
+                        float value = samples.getFloat(index * 4L);
+                        pcm[index] = (short) Math.max(-32768, Math.min(32767,
+                                Math.round(value * 32767f)));
+                    }
+                    int written = callbackTrack.write(pcm, 0, count, AudioTrack.WRITE_BLOCKING);
+                    return written < 0 ? 1 : 0;
+                };
+                int code = ffi.vifasttts_synthesize_stream_ex(
+                        engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
+                        dictionaryText, callback, null);
+                if (code < 0) throw new IllegalStateException(lastError());
+                setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local");
+            } catch (Throwable error) {
+                setStatus("Lỗi stream: " + error.getMessage());
+                setError(error.getMessage());
+            } finally {
+                if (streamTrack != null && audioTrack == streamTrack) {
+                    audioTrack = null;
+                    try {
+                        streamTrack.stop();
+                    } catch (Throwable ignored) {
+                        // Có thể đã stop từ UI.
+                    }
+                    streamTrack.release();
+                }
+                runOnUiThread(() -> stopButton.setEnabled(false));
+                abandonAudioFocus();
+                setBusy(false);
+            }
+        }, "vifasttts-stream").start();
     }
 
     private void synthesizeRemote(String input) {
@@ -901,6 +1015,13 @@ public class MainActivity extends Activity {
         peak.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(peak);
 
+        CheckBox stream = new CheckBox(this);
+        stream.setText("Stream local (phát ngay khi tổng hợp)");
+        stream.setChecked(streamMode);
+        VfTheme.text(stream, font, 14, VfTheme.INK, false);
+        stream.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        form.addView(stream);
+
         TextView dialectLabel = new TextView(this);
         VfTheme.text(dialectLabel, font, 13, VfTheme.INK, true);
         LinearLayout.LayoutParams dialectLabelParams = new LinearLayout.LayoutParams(
@@ -969,6 +1090,7 @@ public class MainActivity extends Activity {
                     }
                     fixedPauses = fixed.isChecked();
                     peakNormalize = peak.isChecked();
+                    streamMode = stream.isChecked();
                     int dialectIndex = dialectSpinner.getSelectedItemPosition();
                     dialect = dialectIndex == 1 ? "central" : dialectIndex == 2 ? "south" : "north";
                     resolveOov = oov.isChecked();
@@ -980,19 +1102,185 @@ public class MainActivity extends Activity {
                             .putInt(KEY_MAX_CHARS, maxChars)
                             .putBoolean(KEY_FIXED_PAUSES, fixedPauses)
                             .putBoolean(KEY_PEAK_NORMALIZE, peakNormalize)
+                            .putBoolean(KEY_STREAM, streamMode)
                             .putString(KEY_DIALECT, dialect)
                             .putBoolean(KEY_RESOLVE_OOV, resolveOov)
                             .putString(KEY_DICTIONARY, dictionaryText)
                             .apply();
                     setStatus(String.format(
-                            "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · tối đa %d ký tự · %d quy tắc",
+                            "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · stream %s · tối đa %d ký tự · %d quy tắc",
                             speechSpeed, sharpenAlpha,
                             dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc",
-                            resolveOov ? "bật" : "tắt", maxChars,
+                            resolveOov ? "bật" : "tắt", streamMode ? "bật" : "tắt", maxChars,
                             dictionaryText.isEmpty() ? 0 : dictionaryText.split("\n").length));
                     dialog.dismiss();
                 }));
         dialog.show();
+    }
+
+    private void showModelManager() {
+        String active = activeAcousticPath.isEmpty() || activeVocoderPath.isEmpty()
+                ? (activeModelPath.isEmpty() ? "Bundled ONNX" : new File(activeModelPath).getName())
+                : "ONNX acoustic + vocoder";
+        String[] options = {
+                "Dùng model bundled (ONNX)",
+                "Danh sách model đã cài",
+                "Tải từ HuggingFace",
+                "Chọn file .vfa/.vfts",
+                "Chọn acoustic.onnx",
+                "Chọn vocoder.onnx",
+        };
+        new AlertDialog.Builder(this)
+                .setTitle("Model · " + active)
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0 -> selectBundledModel();
+                        case 1 -> showInstalledModels();
+                        case 2 -> showModelSearch();
+                        case 3 -> chooseModelFile(REQUEST_BUNDLE);
+                        case 4 -> chooseModelFile(REQUEST_ACOUSTIC);
+                        case 5 -> chooseModelFile(REQUEST_VOCODER);
+                        default -> { }
+                    }
+                })
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
+    private void showInstalledModels() {
+        File directory = new File(getFilesDir(), "models");
+        File[] files = directory.listFiles((dir, name) ->
+                name.endsWith(".vfa") || name.endsWith(".vfts"));
+        if (files == null || files.length == 0) {
+            setStatus("Chưa có model .vfa/.vfts đã cài; dùng Tải từ HuggingFace.");
+            return;
+        }
+        java.util.Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        String[] labels = new String[files.length];
+        for (int index = 0; index < files.length; index += 1) {
+            labels[index] = files[index].getName() + " — "
+                    + (files[index].length() / 1_000_000) + " MB";
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Model đã cài")
+                .setItems(labels, (dialog, which) -> selectBundleModel(files[which]))
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
+    private void selectBundledModel() {
+        activeModelPath = "";
+        activeAcousticPath = "";
+        activeVocoderPath = "";
+        prefs.edit()
+                .remove(KEY_ACTIVE_MODEL)
+                .remove(KEY_ACTIVE_ACOUSTIC)
+                .remove(KEY_ACTIVE_VOCODER)
+                .apply();
+        resetEngine();
+        updateModelLabel();
+        setStatus("Đã chọn model bundled ONNX (acoustic + vocoder).");
+    }
+
+    private void selectBundleModel(File file) {
+        if (!file.isFile()) {
+            setStatus("Không thấy model: " + file);
+            return;
+        }
+        activeModelPath = file.getAbsolutePath();
+        activeAcousticPath = "";
+        activeVocoderPath = "";
+        prefs.edit()
+                .putString(KEY_ACTIVE_MODEL, activeModelPath)
+                .remove(KEY_ACTIVE_ACOUSTIC)
+                .remove(KEY_ACTIVE_VOCODER)
+                .apply();
+        resetEngine();
+        updateModelLabel();
+        setStatus("Đang dùng " + file.getName() + "; lần đọc tới sẽ nạp model này.");
+    }
+
+    private void chooseModelFile(int requestCode) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, requestCode);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        Uri uri = data.getData();
+        new Thread(() -> {
+            try {
+                if (requestCode == REQUEST_BUNDLE) {
+                    String display = displayName(uri);
+                    if (!display.endsWith(".vfa") && !display.endsWith(".vfts")) {
+                        throw new IllegalStateException("File phải là .vfa hoặc .vfts");
+                    }
+                    File directory = new File(getFilesDir(), "models");
+                    if (!directory.exists() && !directory.mkdirs()) {
+                        throw new IllegalStateException("Không tạo được thư mục models");
+                    }
+                    String safe = display.replaceAll("[^A-Za-z0-9._-]", "_");
+                    File destination = new File(directory, safe);
+                    copyUri(uri, destination);
+                    runOnUiThread(() -> selectBundleModel(destination));
+                } else if (requestCode == REQUEST_ACOUSTIC || requestCode == REQUEST_VOCODER) {
+                    File directory = new File(getFilesDir(), "onnx");
+                    if (!directory.exists() && !directory.mkdirs()) {
+                        throw new IllegalStateException("Không tạo được thư mục onnx");
+                    }
+                    boolean acoustic = requestCode == REQUEST_ACOUSTIC;
+                    File destination = new File(directory, acoustic ? "acoustic.onnx" : "vocoder.onnx");
+                    copyUri(uri, destination);
+                    if (acoustic) activeAcousticPath = destination.getAbsolutePath();
+                    else activeVocoderPath = destination.getAbsolutePath();
+                    prefs.edit()
+                            .putString(KEY_ACTIVE_ACOUSTIC, activeAcousticPath)
+                            .putString(KEY_ACTIVE_VOCODER, activeVocoderPath)
+                            .apply();
+                    if (!activeAcousticPath.isEmpty() && !activeVocoderPath.isEmpty()) {
+                        activeModelPath = "";
+                        prefs.edit().remove(KEY_ACTIVE_MODEL).apply();
+                        runOnUiThread(() -> {
+                            resetEngine();
+                            updateModelLabel();
+                            setStatus("Đang dùng cặp ONNX acoustic + vocoder.");
+                        });
+                    } else {
+                        setStatus("Đã chọn " + destination.getName() + "; chọn nốt file còn lại.");
+                    }
+                }
+            } catch (Throwable error) {
+                setStatus("Lỗi nhập model: " + error.getMessage());
+            }
+        }, "vifasttts-model-import").start();
+    }
+
+    private String displayName(Uri uri) {
+        try (Cursor cursor = getContentResolver().query(
+                uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String name = cursor.getString(0);
+                if (name != null && !name.isEmpty()) return name;
+            }
+        } catch (Throwable ignored) {
+            // Dùng tên mặc định bên dưới.
+        }
+        String fallback = uri.getLastPathSegment();
+        return fallback == null ? "model.vfa" : fallback;
+    }
+
+    private void copyUri(Uri uri, File destination) throws Exception {
+        try (InputStream input = getContentResolver().openInputStream(uri);
+             OutputStream output = new FileOutputStream(destination)) {
+            if (input == null) throw new IllegalStateException("Không mở được file");
+            byte[] buffer = new byte[1024 * 1024];
+            int read;
+            while ((read = input.read(buffer)) > 0) output.write(buffer, 0, read);
+        }
     }
 
     private void showModelSearch() {
@@ -1090,7 +1378,13 @@ public class MainActivity extends Activity {
                     throw new IllegalStateException("Không đổi tên model tải về");
                 }
                 activeModelPath = destination.getAbsolutePath();
-                prefs.edit().putString(KEY_ACTIVE_MODEL, activeModelPath).apply();
+                activeAcousticPath = "";
+                activeVocoderPath = "";
+                prefs.edit()
+                        .putString(KEY_ACTIVE_MODEL, activeModelPath)
+                        .remove(KEY_ACTIVE_ACOUSTIC)
+                        .remove(KEY_ACTIVE_VOCODER)
+                        .apply();
                 runOnUiThread(() -> {
                     resetEngine();
                     updateModelLabel();
@@ -1177,6 +1471,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         activeModelPath = prefs.getString(KEY_ACTIVE_MODEL, "");
+        activeAcousticPath = prefs.getString(KEY_ACTIVE_ACOUSTIC, "");
+        activeVocoderPath = prefs.getString(KEY_ACTIVE_VOCODER, "");
         mode = prefs.getString(KEY_MODE, "local");
         speechSpeed = prefs.getFloat(KEY_SPEED, 1.0f);
         sharpenAlpha = prefs.getFloat(KEY_ALPHA, 1.5f);
@@ -1186,6 +1482,7 @@ public class MainActivity extends Activity {
         dialect = prefs.getString(KEY_DIALECT, "north");
         resolveOov = prefs.getBoolean(KEY_RESOLVE_OOV, true);
         dictionaryText = prefs.getString(KEY_DICTIONARY, "");
+        streamMode = prefs.getBoolean(KEY_STREAM, false);
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);
@@ -1238,7 +1535,7 @@ public class MainActivity extends Activity {
         modelButton = new Button(this);
         modelButton.setText("Model");
         VfTheme.secondaryButton(modelButton, font);
-        modelButton.setOnClickListener(view -> showModelSearch());
+        modelButton.setOnClickListener(view -> showModelManager());
         header.addView(modelButton, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(header, new LinearLayout.LayoutParams(

@@ -275,6 +275,12 @@ mod tests {
     }
 
     #[test]
+    fn vifasttts_uses_custom_reading() {
+        let options = live_parse_options(Dialect::North, None, None);
+        assert_eq!(normalize_input("ViFastTts", &options), "vi phát tê tê ét");
+    }
+
+    #[test]
     fn fallback_encodable() {
         let items = parse_text_default("Zibble");
         assert_eq!(items.len(), 1);

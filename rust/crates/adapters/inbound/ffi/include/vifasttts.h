@@ -58,6 +58,11 @@ int vifasttts_synthesize_stream(VifasttEngine engine, const char *text,
                                 const VifasttOptions *options,
                                 VifasttChunkCallback callback,
                                 void *user_data);
+int vifasttts_synthesize_stream_ex(VifasttEngine engine, const char *text,
+                                   const VifasttOptions *options,
+                                   const char *dialect, uint8_t resolve_oov,
+                                   const char *dictionary,
+                                   VifasttChunkCallback callback, void *user_data);
 void vifasttts_buffer_free(uint8_t *ptr, size_t len);
 void vifasttts_string_free(char *value);
 

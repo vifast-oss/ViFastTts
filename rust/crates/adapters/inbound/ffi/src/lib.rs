@@ -456,6 +456,41 @@ pub extern "C" fn vifasttts_synthesize_stream(
     })
 }
 
+/// Streaming PCM có đầy đủ phương ngữ/OOV/từ điển (dùng cho mobile).
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_stream_ex(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    callback: Option<VifasttChunkCallback>,
+    user_data: *mut c_void,
+) -> i32 {
+    guard(-1, || {
+        let Some(callback) = callback else {
+            return Err("callback null".to_string());
+        };
+        if engine.is_null() {
+            return Err("engine null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex(options, dialect, resolve_oov != 0, dictionary)?;
+        let engine = unsafe { &mut *engine };
+        let summary = engine.synthesize_stream(&text, &options, |samples, sample_rate| {
+            let code = callback(samples.as_ptr(), samples.len(), sample_rate, user_data);
+            if code == 0 {
+                StreamControl::Continue
+            } else {
+                StreamControl::Cancel
+            }
+        })?;
+        Ok(if summary.cancelled { 1 } else { 0 })
+    })
+}
+
 /// Giải phóng buffer WAV do `vifasttts_synthesize` trả về.
 #[unsafe(no_mangle)]
 pub extern "C" fn vifasttts_buffer_free(ptr: *mut u8, len: usize) {
