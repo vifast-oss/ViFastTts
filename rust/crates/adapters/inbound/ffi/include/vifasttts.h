@@ -24,6 +24,15 @@ const char *vifasttts_last_error(void);
 const char *vifasttts_version(void);
 const char *vifasttts_ort_info(void);
 
+/* Hợp đồng UI dùng chung: JSON UTF-8, giải phóng bằng vifasttts_string_free. */
+char *vifasttts_settings_defaults_json(void);
+char *vifasttts_settings_normalize_json(const char *json);
+char *vifasttts_sample_texts_json(const char *platform);
+char *vifasttts_eta_estimate_json(const char *history_json, const char *mode,
+                                  uint32_t chars, uint32_t max_samples);
+char *vifasttts_dictionary_json(const char *dictionary);
+char *vifasttts_api_contract_json(void);
+
 VifasttEngine vifasttts_engine_new(const char *acoustic, const char *vocoder);
 VifasttEngine vifasttts_engine_new_vfts(const char *vfts);
 VifasttEngine vifasttts_engine_new_vfa(const char *vfa, const char *vocoder);

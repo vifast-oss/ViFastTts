@@ -11,7 +11,12 @@ mod wasm {
     use serde::{Deserialize, Serialize};
     use wasm_bindgen::prelude::*;
 
-    use vifasttts_app::{EtaEstimator, EtaSample, parse_dictionary};
+    use vifasttts_app::{
+        EtaEstimator, EtaSample, api_contract_json as app_api_contract_json, default_text,
+        dictionary_json as app_dictionary_json, sample_texts,
+        settings_defaults_json as app_settings_defaults_json,
+        settings_normalize_json as app_settings_normalize_json,
+    };
     use vifasttts_audio as audio;
     use vifasttts_engine::{
         StreamControl, SynthesisEngine, SynthesisOptions, timed_units_from_slots,
@@ -50,14 +55,33 @@ mod wasm {
     /// `{rules, warnings, overrides}` để UI/offscreen không parse lại bằng JS.
     #[wasm_bindgen]
     pub fn dictionary_json(text: &str) -> Result<String, JsValue> {
-        let dictionary = parse_dictionary(text);
+        app_dictionary_json(text).map_err(|error| JsValue::from_str(&error))
+    }
+
+    /// Defaults/validate dùng chung với FFI; web/extension không hard-code nữa.
+    #[wasm_bindgen]
+    pub fn settings_defaults_json() -> Result<String, JsValue> {
+        app_settings_defaults_json().map_err(|error| JsValue::from_str(&error))
+    }
+
+    #[wasm_bindgen]
+    pub fn settings_normalize_json(json: &str) -> Result<String, JsValue> {
+        app_settings_normalize_json(json).map_err(|error| JsValue::from_str(&error))
+    }
+
+    #[wasm_bindgen]
+    pub fn sample_texts_json(platform: &str) -> Result<String, JsValue> {
         let payload = serde_json::json!({
-            "rules": dictionary.rules,
-            "warnings": dictionary.warnings,
-            "overrides": dictionary.overrides(),
+            "default": default_text(platform),
+            "samples": sample_texts(platform),
         });
         serde_json::to_string(&payload)
-            .map_err(|error| JsValue::from_str(&format!("dictionary JSON: {error}")))
+            .map_err(|error| JsValue::from_str(&format!("sample texts JSON: {error}")))
+    }
+
+    #[wasm_bindgen]
+    pub fn api_contract_json() -> Result<String, JsValue> {
+        app_api_contract_json().map_err(|error| JsValue::from_str(&error))
     }
 
     /// Ước lượng ETA bằng đúng median `EtaEstimator` của application app.

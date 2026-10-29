@@ -24,6 +24,7 @@
 | Cài đặt desktop/server/TUI/extension | `docs/INSTALL.md` |
 | Phát hành Chrome/Edge extension | `docs/EXTENSION_STORE.md` |
 | Kiểm tra parity tính năng các UI | `docs/UI_PARITY.md` |
+| Rà soát tái sử dụng UI/logic & hợp đồng chung | `docs/UI_REUSE_AUDIT.md` |
 | Định dạng model `.vfts` | `docs/VFTS_FORMAT.md` |
 | Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
 | Mobile: model bundle/tải nhiều giọng | `docs/MOBILE_MODELS.md` |

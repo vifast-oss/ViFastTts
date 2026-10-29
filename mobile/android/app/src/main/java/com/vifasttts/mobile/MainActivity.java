@@ -103,6 +103,10 @@ public class MainActivity extends Activity {
                                            StreamCallback callback, Pointer userData);
         Pointer vifasttts_karaoke_to_srt(String karaokeJson);
         Pointer vifasttts_karaoke_to_vtt(String karaokeJson);
+        Pointer vifasttts_eta_estimate_json(String historyJson, String mode, int chars,
+                                            int maxSamples);
+        Pointer vifasttts_dictionary_json(String dictionary);
+        Pointer vifasttts_sample_texts_json(String platform);
         void vifasttts_string_free(Pointer value);
         void vifasttts_buffer_free(Pointer ptr, NativeLong len);
         String vifasttts_last_error();
@@ -177,6 +181,8 @@ public class MainActivity extends Activity {
     private volatile boolean audioStopped = false;
     private HttpURLConnection streamConnection;
     private org.json.JSONArray history = new org.json.JSONArray();
+    private org.json.JSONArray sharedSamples;
+    private String sharedDefaultText = "Xin chào các bạn, đây là bản Android của ViFastTts.";
     private Uri lastSavedWavUri;
     private int audioSampleRate = 24000;
     private int audioChannels = 1;
@@ -317,22 +323,36 @@ public class MainActivity extends Activity {
     }
 
     private long estimateMs(String mode, int chars) {
-        if (chars <= 0) return 0;
+        if (chars <= 0 || ffi == null || history.length() == 0) return 0;
         try {
-            java.util.ArrayList<Double> samples = new java.util.ArrayList<>();
-            for (int index = Math.max(0, history.length() - 12); index < history.length(); index += 1) {
+            // ETA là median dùng chung trong vifasttts-app; Android chỉ gửi
+            // history tối thiểu, không tự tính lại công thức.
+            JSONArray samples = new JSONArray();
+            for (int index = 0; index < history.length(); index += 1) {
                 JSONObject row = history.optJSONObject(index);
                 if (row == null) continue;
-                String rowMode = row.optString("mode", "");
-                if (!rowMode.equals(mode) && !rowMode.startsWith(mode + "-")) continue;
-                double rowChars = row.optDouble("chars", 0);
                 double elapsed = row.optDouble("elapsed_ms", 0);
-                if (rowChars > 0 && elapsed > 0) samples.add(elapsed / rowChars);
+                int count = row.optInt("chars", 0);
+                String rowMode = row.optString("mode", "");
+                if (elapsed <= 0 || count <= 0 || rowMode.isEmpty()) continue;
+                JSONObject slim = new JSONObject();
+                slim.put("mode", rowMode);
+                slim.put("chars", count);
+                slim.put("elapsed_ms", Math.round(elapsed));
+                samples.put(slim);
             }
-            if (samples.isEmpty()) return 0;
-            java.util.Collections.sort(samples);
-            double median = samples.get(samples.size() / 2);
-            return Math.max(1, Math.round(median * chars));
+            if (samples.length() == 0) return 0;
+            Pointer value = ffi.vifasttts_eta_estimate_json(
+                    samples.toString(), mode, chars, 20);
+            if (value == null) return 0;
+            String raw;
+            try {
+                raw = value.getString(0, "UTF-8");
+            } finally {
+                ffi.vifasttts_string_free(value);
+            }
+            if (raw == null || raw.isEmpty() || "null".equals(raw)) return 0;
+            return Math.max(1, Math.round(Double.parseDouble(raw)));
         } catch (Throwable ignored) {
             return 0;
         }
@@ -343,6 +363,46 @@ public class MainActivity extends Activity {
         return estimate > 0
                 ? String.format(Locale.US, " · ước tính ~%.1fs", estimate / 1000.0)
                 : "";
+    }
+
+    private String dictionarySummary(String text) {
+        if (text.trim().isEmpty()) return "0 quy tắc";
+        try {
+            ensureFfi();
+            Pointer value = ffi.vifasttts_dictionary_json(text);
+            if (value == null) return "0 quy tắc";
+            String raw;
+            try {
+                raw = value.getString(0, "UTF-8");
+            } finally {
+                ffi.vifasttts_string_free(value);
+            }
+            JSONObject payload = new JSONObject(raw);
+            int rules = payload.optJSONArray("rules") == null
+                    ? 0 : payload.optJSONArray("rules").length();
+            int warnings = payload.optJSONArray("warnings") == null
+                    ? 0 : payload.optJSONArray("warnings").length();
+            return rules + " quy tắc" + (warnings > 0 ? " · " + warnings + " cảnh báo" : "");
+        } catch (Throwable ignored) {
+            return "0 quy tắc";
+        }
+    }
+
+    private void loadSharedSamples(String platform) {
+        if (ffi == null) return;
+        Pointer value = null;
+        try {
+            value = ffi.vifasttts_sample_texts_json(platform);
+            if (value == null) return;
+            String raw = value.getString(0, "UTF-8");
+            JSONObject payload = new JSONObject(raw);
+            sharedDefaultText = payload.optString("default", sharedDefaultText);
+            sharedSamples = payload.optJSONArray("samples");
+        } catch (Throwable ignored) {
+            // Giữ fallback tiếng Việt nếu FFI chưa sẵn sàng.
+        } finally {
+            if (value != null) ffi.vifasttts_string_free(value);
+        }
     }
 
     private void showHistory() {
@@ -1525,11 +1585,11 @@ public class MainActivity extends Activity {
                             .putString(KEY_DICTIONARY, dictionaryText)
                             .apply();
                     setStatus(String.format(
-                            "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · stream %s · tối đa %d ký tự · %d quy tắc",
+                            "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · stream %s · tối đa %d ký tự · %s",
                             speechSpeed, sharpenAlpha,
                             dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc",
                             resolveOov ? "bật" : "tắt", streamMode ? "bật" : "tắt", maxChars,
-                            dictionaryText.isEmpty() ? 0 : dictionaryText.split("\n").length));
+                            dictionarySummary(dictionaryText)));
                     if (streamQuick != null) streamQuick.setChecked(streamMode);
                     updateSettingsSummary();
                     dialog.dismiss();
@@ -1925,6 +1985,12 @@ public class MainActivity extends Activity {
         dictionaryText = prefs.getString(KEY_DICTIONARY, "");
         streamMode = prefs.getBoolean(KEY_STREAM, false);
         loadHistory();
+        try {
+            ensureFfi();
+            loadSharedSamples("android");
+        } catch (Throwable ignored) {
+            // Model/synth sẽ báo lỗi rõ hơn khi thực sự chạy.
+        }
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);
@@ -2101,7 +2167,7 @@ public class MainActivity extends Activity {
         textCard.addView(textHead);
 
         text = new EditText(this);
-        text.setText("Xin chào các bạn, đây là bản Android của ViFastTts.");
+        text.setText(sharedDefaultText);
         text.setHint("Nhập hoặc dán câu tiếng Việt…");
         VfTheme.text(text, font, 15, VfTheme.INK, false);
         text.setBackgroundColor(Color.TRANSPARENT);
@@ -2133,11 +2199,24 @@ public class MainActivity extends Activity {
         sampleLabel.setText("Mẫu");
         VfTheme.text(sampleLabel, font, 11, VfTheme.MUTED, false);
         samples.addView(sampleLabel);
-        for (String[] sample : new String[][]{
-                {"Chào", "Xin chào các bạn, hôm nay trời đẹp."},
-                {"Android", "Xin chào các bạn, đây là bản Android của ViFastTts."},
-                {"iOS", "Xin chào, đây là bản iOS của ViFastTts."},
-        }) {
+        java.util.List<String[]> sampleItems = new ArrayList<>();
+        if (sharedSamples != null) {
+            for (int index = 0; index < sharedSamples.length(); index += 1) {
+                JSONObject sample = sharedSamples.optJSONObject(index);
+                if (sample == null) continue;
+                String label = sample.optString("label", "");
+                String value = sample.optString("text", "");
+                if (!label.isEmpty() && !value.isEmpty()) {
+                    sampleItems.add(new String[]{label, value});
+                }
+            }
+        }
+        if (sampleItems.isEmpty()) {
+            sampleItems.add(new String[]{"Chào", "Xin chào các bạn, hôm nay trời đẹp."});
+            sampleItems.add(new String[]{"Android", sharedDefaultText});
+            sampleItems.add(new String[]{"iOS", "Xin chào, đây là bản iOS của ViFastTts."});
+        }
+        for (String[] sample : sampleItems) {
             Button chip = new Button(this);
             chip.setText(sample[0]);
             VfTheme.chipButton(chip, font);

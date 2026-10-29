@@ -10,7 +10,10 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::ptr;
 use std::slice;
 
-use vifasttts_app::parse_dictionary;
+use vifasttts_app::{
+    api_contract_json, default_text, dictionary_json, eta_estimate_json, parse_dictionary,
+    sample_texts, settings_defaults_json, settings_normalize_json,
+};
 use vifasttts_native::{
     NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfa, load_vfa_auto,
     load_vfts, ort_info,
@@ -159,6 +162,74 @@ fn guard<T>(default: T, f: impl FnOnce() -> Result<T, String>) -> T {
             default
         }
     }
+}
+
+/// Chuyển JSON String thành C string; caller giải phóng bằng `vifasttts_string_free`.
+fn json_c_string(result: Result<String, String>) -> *mut c_char {
+    guard(ptr::null_mut(), || {
+        let value = result?;
+        CString::new(value)
+            .map(CString::into_raw)
+            .map_err(|_| "JSON chứa NUL".to_string())
+    })
+}
+
+/// Defaults/validate dùng chung cho mọi UI. Trả JSON UTF-8.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_settings_defaults_json() -> *mut c_char {
+    json_c_string(settings_defaults_json())
+}
+
+/// Chuẩn hoá settings JSON cũ/lạ; trả JSON đã normalize hoặc NULL + last_error.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_settings_normalize_json(json: *const c_char) -> *mut c_char {
+    json_c_string((|| {
+        let raw = c_text(json)?;
+        settings_normalize_json(&raw)
+    })())
+}
+
+/// Sample text theo platform (`android`, `ios`, `desktop`, `tui`, `web`, ...).
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_sample_texts_json(platform: *const c_char) -> *mut c_char {
+    json_c_string((|| {
+        let platform = c_text_optional(platform)?.unwrap_or_default();
+        let payload = serde_json::json!({
+            "default": default_text(&platform),
+            "samples": sample_texts(&platform),
+        });
+        serde_json::to_string(&payload).map_err(|error| format!("sample texts JSON: {error}"))
+    })())
+}
+
+/// ETA dùng chung; history có thể chứa field UI riêng (serde bỏ qua field lạ).
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_eta_estimate_json(
+    history_json: *const c_char,
+    mode: *const c_char,
+    chars: u32,
+    max_samples: u32,
+) -> *mut c_char {
+    json_c_string((|| {
+        let history = c_text_optional(history_json)?.unwrap_or_default();
+        let mode = c_text(mode)?;
+        eta_estimate_json(&history, &mode, chars, max_samples)
+    })())
+}
+
+/// Parse từ điển dùng chung; trả `{rules,warnings,overrides}`.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_dictionary_json(dictionary: *const c_char) -> *mut c_char {
+    json_c_string((|| {
+        let dictionary = c_text_optional(dictionary)?.unwrap_or_default();
+        dictionary_json(&dictionary)
+    })())
+}
+
+/// Hợp đồng endpoint/version để client không tự đoán path.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_api_contract_json() -> *mut c_char {
+    json_c_string(api_contract_json())
 }
 
 /// Nạp model từ path. Trả NULL nếu lỗi.
@@ -501,4 +572,46 @@ pub extern "C" fn vifasttts_buffer_free(ptr: *mut u8, len: usize) {
         let slice = ptr::slice_from_raw_parts_mut(ptr, len);
         drop(Box::from_raw(slice));
     }));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn take(ptr: *mut c_char) -> String {
+        assert!(!ptr.is_null(), "FFI trả NULL: {}", unsafe {
+            CStr::from_ptr(vifasttts_last_error()).to_string_lossy()
+        });
+        let text = unsafe { CStr::from_ptr(ptr) }.to_string_lossy().to_string();
+        vifasttts_string_free(ptr);
+        text
+    }
+
+    #[test]
+    fn json_contract_ffi_roundtrip() {
+        let defaults = take(vifasttts_settings_defaults_json());
+        assert!(defaults.contains("\"max_chars\": 300"));
+        assert!(defaults.contains("\"resolve_oov\": true"));
+
+        let platform = CString::new("android").unwrap();
+        let samples = take(vifasttts_sample_texts_json(platform.as_ptr()));
+        assert!(samples.contains("Android"));
+
+        let history =
+            CString::new(r#"[{"mode":"local","chars":100,"elapsed_ms":500,"audio_seconds":1.0}]"#)
+                .unwrap();
+        let mode = CString::new("local").unwrap();
+        let eta = take(vifasttts_eta_estimate_json(
+            history.as_ptr(),
+            mode.as_ptr(),
+            200,
+            20,
+        ));
+        assert_eq!(eta, "1000");
+
+        let dictionary = CString::new("AI = ây ai").unwrap();
+        let parsed = take(vifasttts_dictionary_json(dictionary.as_ptr()));
+        assert!(parsed.contains("\"rules\""));
+        assert!(!take(vifasttts_api_contract_json()).is_empty());
+    }
 }
