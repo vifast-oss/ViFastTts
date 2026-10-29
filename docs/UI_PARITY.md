@@ -27,6 +27,24 @@ không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 | Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + stream local | Karaoke trên màn hình; WAV/SRT/VTT/JSON vào Downloads | Câu mặc định có chữ “Android” |
 | iOS | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS” |
 
+## Android — kiểm tra parity (29/10)
+
+**Đã có:** local/remote, model bundled ONNX, danh sách `.vfa/.vfts` đã cài, tải
+HuggingFace trực tiếp/server, chọn file bundle, chọn cặp `acoustic.onnx` +
+`vocoder.onnx`; speed/alpha/pause/peak/max/dialect/OOV/từ điển; stream local;
+karaoke; WAV/SRT/VTT/JSON vào Downloads; audio focus.
+
+**Chưa có so với desktop/extension:**
+
+1. History + ETA.
+2. Share sheet (hiện chỉ lưu Downloads; iOS có ShareLink).
+3. Custom reading token-level (Android chỉ có dictionary `key = cách đọc`).
+4. Nút kiểm tra server (`/healthz`).
+5. Đếm ký tự + toggle auto-play (Android luôn tự phát).
+6. Tiến trình/huỷ tải model, xoá/đổi tên model, metadata model.
+7. Chọn thư mục xuất.
+8. Stream chưa lưu WAV/SRT; remote stream mới thêm, cần test end-to-end.
+
 ## Cách đọc tên sản phẩm
 
 Đã chốt trong `overrides_vi.json` (Rust + Python demo):
