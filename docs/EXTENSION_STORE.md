@@ -1,7 +1,7 @@
 # Đưa extension lên Chrome Web Store và Microsoft Edge Add-ons
 
 Trạng thái hiện tại: extension MV3 `0.1.1`, package phát hành
-`extension.zip` (~84 MB) trong GitHub Release `v0.1.1`.
+`vifasttts-extension.zip` (~84 MB) trong GitHub Release `v0.1.1`.
 
 ## 1. Package gửi store
 
@@ -9,15 +9,15 @@ Không upload thư mục `extension/`; phải upload file ZIP có `manifest.json
 **root**.
 
 ```text
-https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/extension.zip
-sha256 255fea56b440fbb7f8bd640abac264ce68ed0429288dbbb9a5194a182fac3a3e
+https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-extension.zip
+sha256 71942e03fcf4531ad8ddef621a8fa8a10507ebed39970924cec760ee8bfc7ead
 ```
 
 Kiểm tra nhanh:
 
 ```bash
-unzip -p extension.zip manifest.json | head
-unzip -l extension.zip | head -20
+unzip -p vifasttts-extension.zip manifest.json | head
+unzip -l vifasttts-extension.zip | head -20
 ```
 
 Package hiện có cả `vendored/ORT/model`; không cần build lại nếu dùng đúng tag
@@ -38,7 +38,7 @@ qua CLI.
 
 ### Tạo item
 
-1. **New item** → upload `extension.zip`.
+1. **New item** → upload `vifasttts-extension.zip`.
 2. Điền Store listing:
    - Name: `ViFastTts Local`
    - Summary: `Đọc tiếng Việt local-first bằng WASM + ONNX; hỗ trợ đọc trang và đoạn bôi đen.`
@@ -79,7 +79,7 @@ Edge dùng cùng package MV3 và cùng `manifest.json`.
 1. Đăng nhập Microsoft Partner Center:
    <https://partner.microsoft.com/dashboard/microsoftedge/>
 2. Tạo tài khoản developer (Microsoft account; Edge Add-ons miễn phí).
-3. **New extension** → upload cùng `extension.zip`.
+3. **New extension** → upload cùng `vifasttts-extension.zip`.
 4. Điền:
    - Name, summary, description: dùng cùng nội dung Chrome.
    - Category: Productivity.

@@ -30,7 +30,7 @@ nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 | Linux x64 | `vifasttts-desktop-linux-x64.tar.gz` |
 | Android | `vifasttts-mobile-android.apk` |
 | iOS Simulator | `vifasttts-mobile-ios-simulator.zip` |
-| Chrome extension | `extension.zip` |
+| Chrome extension | `vifasttts-extension.zip` |
 | CLI/TUI/server | `vifasttts-cli-windows-x64.zip` (hoặc macOS/Linux tương ứng) |
 | Web tĩnh riêng | `web-dist.tar.gz` (nâng cao) |
 

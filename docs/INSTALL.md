@@ -122,7 +122,7 @@ cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép L
 
 ## Extension + Web
 
-- Extension: tải `extension.zip` → `chrome://extensions` → Developer mode →
+- Extension: tải `vifasttts-extension.zip` → `chrome://extensions` → Developer mode →
   **Load unpacked** → chọn thư mục đã giải nén. Không dùng `ttsEngine`.
 - Web local: package desktop/CLI đã kèm `web/`; server tự phục vụ tại `/`.
   Nếu cần web tĩnh riêng, dùng `web-dist.tar.gz` (đã kèm `models/` + ORT wasm),
