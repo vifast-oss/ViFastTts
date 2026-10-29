@@ -22,6 +22,7 @@
 | Xem quyết định Q | `docs/Q_ONSET.md` |
 | Xem kế hoạch + trạng thái port Rust | `docs/RUST_PORT.md` |
 | Cài đặt desktop/server/TUI/extension | `docs/INSTALL.md` |
+| Phát hành Chrome/Edge extension | `docs/EXTENSION_STORE.md` |
 | Định dạng model `.vfts` | `docs/VFTS_FORMAT.md` |
 | Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
 | Mobile: model bundle/tải nhiều giọng | `docs/MOBILE_MODELS.md` |

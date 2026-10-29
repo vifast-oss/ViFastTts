@@ -42,6 +42,8 @@ edge://extensions → Developer mode → Load unpacked
 Bản này **không dùng `ttsEngine`**, nên không có cảnh báo quyền đọc TTS.
 Quyền chính: `offscreen`, `storage`, `contextMenus`, `activeTab`, `scripting`.
 
+Hướng dẫn nộp Chrome Web Store / Edge Add-ons: `docs/EXTENSION_STORE.md`.
+
 ## Cách dùng
 
 ### Popup
