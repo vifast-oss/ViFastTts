@@ -1774,6 +1774,10 @@ public class MainActivity extends Activity {
         VfTheme.text(peak, font, 14, VfTheme.INK, false);
         peak.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(peak);
+        TextView peakNote = new TextView(this);
+        peakNote.setText("Peak normalize: đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền. Không dùng khi stream.");
+        VfTheme.text(peakNote, font, 12, VfTheme.MUTED, false);
+        form.addView(peakNote);
 
         CheckBox stream = new CheckBox(this);
         stream.setText("Stream local/remote (phát ngay)");

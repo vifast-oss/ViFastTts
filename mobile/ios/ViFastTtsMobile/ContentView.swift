@@ -501,6 +501,9 @@ private struct SettingsView: View {
                         .tint(VFTheme.accent)
                     Toggle("Peak normalize", isOn: $peakNormalize)
                         .tint(VFTheme.accent)
+                    Text("Peak normalize: đưa đỉnh WAV về −3 dBFS, tránh clip và ổn định âm lượng; có thể làm to cả rè/nền. Không dùng khi stream vì cần biết đỉnh toàn file.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
                 }
                 Section("Giới hạn & ngôn ngữ") {
                     Stepper("Max ký tự/chunk: \(maxChars)", value: $maxChars, in: 50...5000, step: 50)

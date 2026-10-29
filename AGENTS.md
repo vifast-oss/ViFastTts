@@ -95,6 +95,9 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
   `docker compose up -d --build`); upload Space bằng `huggingface_hub` (token trong
   `~/.cache/huggingface`). **Sau khi deploy phải kiểm chứng**: tải thử từng link release
   trên cả `https://vifasttts.hoctuthien.com/` và Space, không chỉ nói đã cập nhật.
+- **Sau mỗi lần deploy Python web** (kể cả không phát hành release): bắt buộc upload lại
+  `huggingface/space-static/` lên HF Space, rồi kiểm tra `raw/main/index.html` + URL static;
+  không được chỉ deploy VPS rồi báo xong. Space và web phải cùng version/tính năng.
 - Báo cáo trung thực: nêu cả trường hợp trượt cổng + cảnh báo rõ.
 - Quy trình 3 vai: Agent 0 (kiến trúc, ra addendum khi số đo khác kỳ vọng) · Agent 1 (soát code) ·
   Agent 2 (chạy trên M6). Sub-agent khi được giao việc **không tự commit** — trả file + cách chạy cho phiên chính.

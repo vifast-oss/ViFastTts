@@ -142,6 +142,8 @@
     .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv" "feedback"; }
   }
   @media (max-width:600px) {
+    .info .tip { position:fixed; top:24vh; left:12px; right:12px; bottom:auto;
+                 transform:none; width:auto; max-width:none; max-height:52vh; overflow:auto; }
     main { padding:16px 12px 34px; }
     .brandbar { flex-wrap:wrap; gap:8px; }
     .brand-lockup { width:min(300px,84vw); }
@@ -251,6 +253,9 @@
       <div class="option-row">
         <label class="checkline" for="fixed"><input id="fixed" type="checkbox"> Nghỉ cố định</label>
         <label class="checkline" for="peakNormalize"><input id="peakNormalize" type="checkbox"> Peak normalize</label>
+        <span class="info" tabindex="0" role="img" aria-label="Giải thích Peak normalize">i
+          <span class="tip" role="tooltip">Peak normalize: chuẩn hoá đỉnh của toàn bộ WAV về −3 dBFS để không bị clip và âm lượng ổn định hơn. Có thể làm to cả tiếng nền/rè; không dùng khi stream vì cần biết đỉnh toàn file. Mặc định tắt.</span>
+        </span>
         <label class="checkline" for="streamMode"><input id="streamMode" type="checkbox"> Stream (phát ngay)</label>
         <span class="info" tabindex="0" role="img" aria-label="Giải thích nghỉ cố định">i
           <span class="tip" role="tooltip">Nghỉ cố định: chèn khoảng lặng theo dấu câu (0,25 giây sau phẩy; 0,55 giây sau chấm/hỏi/than) thay vì để model tự dự đoán. Mặc định tắt vì model tự ngắt nghỉ tự nhiên hơn; bật khi cần nhịp đọc đều, dễ đoán.</span>
