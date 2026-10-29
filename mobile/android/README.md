@@ -9,10 +9,10 @@ test. UI Compose/Flutter vẫn là lựa chọn tương lai, chưa thay bản hi
 
 ## Đã chạy được (29/10/2026)
 
-- Bản **0.1.3** (`versionCode 4`), APK ~110 MB (model FP32 86 MB + ORT 33 MB +
+- Bản **0.1.4** (`versionCode 5`), APK ~110 MB (model FP32 86 MB + ORT 33 MB +
   Rust 6 MB).
 - Local/remote; model bundled, `.vfa/.vfts`, cặp ONNX, HuggingFace trực tiếp/server.
-- Stream local/remote có **WAV + SRT/VTT/JSON**, drain hết buffer, phát 48 kHz.
+- Stream local/remote có **WAV + SRT/VTT/JSON** (toggle “Lưu WAV + phụ đề khi stream”), drain hết buffer, phát 48 kHz.
 - Custom reading token-level, history/ETA, auto-play, chọn thư mục xuất, share
   WAV + phụ đề, kiểm tra `/healthz`, tải/đổi tên/xoá model, karaoke.
 - Máy: Mac mini M6, Android Emulator **16 (API 36, arm64-v8a)**; emulator có lỗi

@@ -73,6 +73,17 @@ final class VfTheme {
         button.setMinHeight(dp(button.getContext(), 44));
     }
 
+    /** Nút nhỏ cho hàng lựa chọn phụ (thư mục, tác vụ phụ). */
+    static void smallButton(Button button, Typeface base) {
+        button.setAllCaps(false);
+        text(button, base, 12, ACCENT_DARK, false);
+        button.setBackground(rounded(button.getContext(), SOFT, BORDER, 9, 1));
+        int pad = dp(button.getContext(), 10);
+        button.setPadding(pad, dp(button.getContext(), 5), pad, dp(button.getContext(), 5));
+        button.setMinWidth(0);
+        button.setMinHeight(0);
+    }
+
     /** Nút chip nhỏ cho ví dụ nhanh. */
     static void chipButton(Button button, Typeface base) {
         button.setAllCaps(false);
@@ -80,7 +91,9 @@ final class VfTheme {
         button.setBackground(rounded(button.getContext(), SURFACE, BORDER, 999, 1));
         int pad = dp(button.getContext(), 10);
         button.setPadding(pad, dp(button.getContext(), 5), pad, dp(button.getContext(), 5));
-        button.setMinHeight(dp(button.getContext(), 32));
+        button.setMinWidth(0);
+        button.setMinHeight(0);
+        button.setMinimumHeight(dp(button.getContext(), 32));
     }
 
     static GradientDrawable background(Context context) {

@@ -168,6 +168,7 @@ public class MainActivity extends Activity {
     private static final String KEY_AUTO_PLAY = "auto_play";
     private static final String KEY_OUTPUT_TREE = "output_tree";
     private static final String KEY_STREAM = "stream";
+    private static final String KEY_STREAM_SAVE_WAV = "stream_save_wav";
     private static final String KEY_HISTORY = "history";
     private static final int REQUEST_BUNDLE = 2001;
     private static final int REQUEST_ACOUSTIC = 2002;
@@ -182,6 +183,7 @@ public class MainActivity extends Activity {
     private TextView outputFolderLabel;
     private TextView charCountLabel;
     private CheckBox streamQuick;
+    private CheckBox streamSaveQuick;
     private TextView subtitle;
     private TextView errorLabel;
     private TextView hintLabel;
@@ -235,6 +237,7 @@ public class MainActivity extends Activity {
     private String dialect = "north";
     private boolean resolveOov = true;
     private boolean streamMode = false;
+    private boolean streamSaveWav = true;
     private boolean autoPlay = true;
     private String dictionaryText = "";
     private String customReadingText = "";
@@ -566,7 +569,8 @@ public class MainActivity extends Activity {
         String dialectLabel = dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc";
         settingsSummary.setText(String.format(java.util.Locale.US,
                 "%.2f× · alpha %.2f · %s%s%s", speechSpeed, sharpenAlpha, dialectLabel,
-                streamMode ? " · stream" : "", autoPlay ? "" : " · không tự phát"));
+                streamMode ? (streamSaveWav ? " · stream+WAV" : " · stream") : "",
+                autoPlay ? "" : " · không tự phát"));
     }
 
     private void updateModelLabel() {
@@ -577,7 +581,7 @@ public class MainActivity extends Activity {
         } else if (!activeModelPath.isEmpty()) {
             name = new File(activeModelPath).getName();
         } else {
-            name = "Bundled acoustic/vocoder";
+            name = "Bundled ONNX";
         }
         modelLabel.setText("Model: " + name);
     }
@@ -889,6 +893,7 @@ public class MainActivity extends Activity {
                     stopKaraoke();
                 });
                 final long[] framesWritten = {0};
+                final boolean saveStream = streamSaveWav;
                 final ByteArrayOutputStream pcmBuffer = new ByteArrayOutputStream();
                 StreamCallback callback = (samples, length, sampleRateValue, userData) -> {
                     if (audioStopped) return 1;
@@ -904,7 +909,7 @@ public class MainActivity extends Activity {
                         pcmBytes[index * 2] = (byte) (pcm[index] & 0xff);
                         pcmBytes[index * 2 + 1] = (byte) ((pcm[index] >> 8) & 0xff);
                     }
-                    pcmBuffer.write(pcmBytes, 0, pcmBytes.length);
+                    if (saveStream) pcmBuffer.write(pcmBytes, 0, pcmBytes.length);
                     short[] upsampled = resamplePcm(pcm, 24000, 48000, 1);
                     int written = callbackTrack.write(upsampled, 0, upsampled.length,
                             AudioTrack.WRITE_BLOCKING);
@@ -912,9 +917,16 @@ public class MainActivity extends Activity {
                     return written < 0 ? 1 : 0;
                 };
                 PointerByReference outKaraoke = new PointerByReference();
-                int code = ffi.vifasttts_synthesize_stream_karaoke_ex2(
-                        engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
-                        dictionaryText, customReadingJson(), callback, null, outKaraoke);
+                int code;
+                if (saveStream) {
+                    code = ffi.vifasttts_synthesize_stream_karaoke_ex2(
+                            engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
+                            dictionaryText, customReadingJson(), callback, null, outKaraoke);
+                } else {
+                    code = ffi.vifasttts_synthesize_stream_ex2(
+                            engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
+                            dictionaryText, customReadingJson(), callback, null);
+                }
                 if (code < 0) throw new IllegalStateException(lastError());
                 if (code == 0) waitForPlayback(streamTrack, framesWritten[0], 8000);
                 String streamKaraoke = "";
@@ -927,7 +939,7 @@ public class MainActivity extends Activity {
                     }
                 }
                 byte[] pcm = pcmBuffer.toByteArray();
-                if (pcm.length > 0) {
+                if (saveStream && pcm.length > 0) {
                     File streamFile = new File(getCacheDir(), "vifasttts-stream.wav");
                     writeWavFile(streamFile, pcm, 24000, 1);
                     lastAudioFile = streamFile;
@@ -938,10 +950,20 @@ public class MainActivity extends Activity {
                         if (saveButton != null) saveButton.setEnabled(true);
                         if (shareButton != null) shareButton.setEnabled(false);
                     });
+                } else if (!saveStream) {
+                    lastAudioFile = null;
+                    lastKaraokeJson = "";
+                    lastSrt = "";
+                    lastVtt = "";
+                    runOnUiThread(() -> {
+                        if (saveButton != null) saveButton.setEnabled(false);
+                        if (shareButton != null) shareButton.setEnabled(false);
+                    });
                 }
                 recordRun("local-stream", input, System.currentTimeMillis() - runStarted,
                         framesWritten[0] / 48000.0);
                 setStatus(code == 1 ? "Đã dừng stream"
+                        : !saveStream ? "Xong stream local · không lưu WAV"
                         : lastSrt.isEmpty() ? "Xong stream local · đã có WAV"
                         : "Xong stream local · đã có WAV + phụ đề");
             } catch (Throwable error) {
@@ -969,6 +991,7 @@ public class MainActivity extends Activity {
         setBusy(true);
         setStatus("Đang stream remote…" + estimateSuffix("remote-stream", input));
         final long runStarted = System.currentTimeMillis();
+        final boolean saveStream = streamSaveWav;
         new Thread(() -> {
             AudioTrack track = null;
             HttpURLConnection connection = null;
@@ -1047,7 +1070,7 @@ public class MainActivity extends Activity {
                         if ("audio".equals(type)) {
                             byte[] raw = Base64.decode(event.optString("pcm_base64", ""),
                                     Base64.DEFAULT);
-                            pcmBuffer.write(raw, 0, raw.length);
+                            if (saveStream) pcmBuffer.write(raw, 0, raw.length);
                             short[] pcm = new short[raw.length / 2];
                             for (int index = 0; index < pcm.length; index += 1) {
                                 int low = raw[index * 2] & 0xff;
@@ -1061,7 +1084,7 @@ public class MainActivity extends Activity {
                             framesWritten += written;
                         } else if ("units".equals(type)) {
                             JSONArray units = event.optJSONArray("units");
-                            if (units != null) {
+                            if (saveStream && units != null) {
                                 for (int index = 0; index < units.length(); index += 1) {
                                     streamUnits.put(units.get(index));
                                 }
@@ -1073,7 +1096,7 @@ public class MainActivity extends Activity {
                 }
                 if (!audioStopped) waitForPlayback(streamTrack, framesWritten, 8000);
                 String streamKaraoke = "";
-                if (streamUnits.length() > 0) {
+                if (saveStream && streamUnits.length() > 0) {
                     Pointer karaokePointer = ffi.vifasttts_karaoke_from_units_json(
                             streamUnits.toString(), 24000,
                             Math.round(framesWritten * 1000.0 / 48000.0), 80);
@@ -1086,7 +1109,7 @@ public class MainActivity extends Activity {
                     }
                 }
                 byte[] pcm = pcmBuffer.toByteArray();
-                if (pcm.length > 0) {
+                if (saveStream && pcm.length > 0) {
                     File streamFile = new File(getCacheDir(), "vifasttts-remote-stream.wav");
                     writeWavFile(streamFile, pcm, 24000, 1);
                     lastAudioFile = streamFile;
@@ -1097,10 +1120,20 @@ public class MainActivity extends Activity {
                         if (saveButton != null) saveButton.setEnabled(true);
                         if (shareButton != null) shareButton.setEnabled(false);
                     });
+                } else if (!saveStream) {
+                    lastAudioFile = null;
+                    lastKaraokeJson = "";
+                    lastSrt = "";
+                    lastVtt = "";
+                    runOnUiThread(() -> {
+                        if (saveButton != null) saveButton.setEnabled(false);
+                        if (shareButton != null) shareButton.setEnabled(false);
+                    });
                 }
                 recordRun("remote-stream", input, System.currentTimeMillis() - runStarted,
                         framesWritten / 48000.0);
                 setStatus(audioStopped ? "Đã dừng stream remote"
+                        : !saveStream ? "Xong stream remote · không lưu WAV"
                         : lastSrt.isEmpty() ? "Xong stream remote · đã có WAV"
                         : "Xong stream remote · đã có WAV + phụ đề");
             } catch (Throwable error) {
@@ -1552,7 +1585,7 @@ public class MainActivity extends Activity {
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
         int pad = VfTheme.dp(this, 18);
-        form.setPadding(pad, VfTheme.dp(this, 8), pad, VfTheme.dp(this, 8));
+        form.setPadding(pad, VfTheme.dp(this, 8), pad, VfTheme.dp(this, 84));
 
         TextView speedLabel = new TextView(this);
         VfTheme.text(speedLabel, font, 13, VfTheme.INK, true);
@@ -1617,11 +1650,20 @@ public class MainActivity extends Activity {
         form.addView(peak);
 
         CheckBox stream = new CheckBox(this);
-        stream.setText("Stream local (phát ngay khi tổng hợp)");
+        stream.setText("Stream local/remote (phát ngay)");
         stream.setChecked(streamMode);
         VfTheme.text(stream, font, 14, VfTheme.INK, false);
         stream.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(stream);
+
+        CheckBox streamSave = new CheckBox(this);
+        streamSave.setText("Lưu WAV + phụ đề khi stream");
+        streamSave.setChecked(streamSaveWav);
+        streamSave.setEnabled(streamMode);
+        VfTheme.text(streamSave, font, 14, VfTheme.INK, false);
+        streamSave.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        form.addView(streamSave);
+        stream.setOnCheckedChangeListener((button, checked) -> streamSave.setEnabled(checked));
 
         TextView dialectLabel = new TextView(this);
         VfTheme.text(dialectLabel, font, 13, VfTheme.INK, true);
@@ -1700,17 +1742,17 @@ public class MainActivity extends Activity {
         LinearLayout outputRow = new LinearLayout(this);
         outputRow.setOrientation(LinearLayout.HORIZONTAL);
         Button chooseFolder = new Button(this);
-        chooseFolder.setText("Chọn thư mục xuất");
-        VfTheme.secondaryButton(chooseFolder, font);
+        chooseFolder.setText("Chọn thư mục");
+        VfTheme.smallButton(chooseFolder, font);
         chooseFolder.setOnClickListener(view -> chooseOutputFolder());
         outputRow.addView(chooseFolder, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                0, VfTheme.dp(this, 38), 1f));
         Button downloadsFolder = new Button(this);
-        downloadsFolder.setText("Về Downloads");
-        VfTheme.secondaryButton(downloadsFolder, font);
+        downloadsFolder.setText("Downloads");
+        VfTheme.smallButton(downloadsFolder, font);
         downloadsFolder.setOnClickListener(view -> useDownloadsFolder());
         LinearLayout.LayoutParams downloadsParams = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                0, VfTheme.dp(this, 38), 1f);
         downloadsParams.leftMargin = VfTheme.dp(this, 8);
         outputRow.addView(downloadsFolder, downloadsParams);
         LinearLayout.LayoutParams outputRowParams = new LinearLayout.LayoutParams(
@@ -1720,7 +1762,7 @@ public class MainActivity extends Activity {
 
         TextView note = new TextView(this);
         VfTheme.text(note, font, 12, VfTheme.MUTED, false);
-        note.setText("Local áp dụng đầy đủ: tốc độ, alpha, max, pause, peak, phương ngữ, OOV và từ điển. Remote gửi cùng bộ tùy chọn; server cũ có thể bỏ qua. Model base 60k nặng hơn small; máy yếu nên dùng small.");
+        note.setText("Local áp dụng đầy đủ: tốc độ, alpha, max, pause, peak, phương ngữ, OOV, từ điển và custom reading. Remote gửi cùng bộ tùy chọn. Stream vẫn phải tổng hợp; tắt 'Lưu WAV khi stream' để bớt bộ nhớ đệm/ghi đĩa.");
         LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         noteParams.topMargin = VfTheme.dp(this, 8);
@@ -1734,7 +1776,10 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Lưu", null)
                 .setNegativeButton("Huỷ", null)
                 .create();
-        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        dialog.setOnShowListener(ignored -> {
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setAllCaps(false);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setAllCaps(false);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setOnClickListener(view -> {
                     speechSpeed = 0.5f + speedBar.getProgress() / 100f;
                     sharpenAlpha = 0.5f + alphaBar.getProgress() / 100f;
@@ -1747,6 +1792,7 @@ public class MainActivity extends Activity {
                     fixedPauses = fixed.isChecked();
                     peakNormalize = peak.isChecked();
                     streamMode = stream.isChecked();
+                    streamSaveWav = streamSave.isChecked();
                     int dialectIndex = dialectSpinner.getSelectedItemPosition();
                     dialect = dialectIndex == 1 ? "central" : dialectIndex == 2 ? "south" : "north";
                     resolveOov = oov.isChecked();
@@ -1761,6 +1807,7 @@ public class MainActivity extends Activity {
                             .putBoolean(KEY_FIXED_PAUSES, fixedPauses)
                             .putBoolean(KEY_PEAK_NORMALIZE, peakNormalize)
                             .putBoolean(KEY_STREAM, streamMode)
+                            .putBoolean(KEY_STREAM_SAVE_WAV, streamSaveWav)
                             .putString(KEY_DIALECT, dialect)
                             .putBoolean(KEY_RESOLVE_OOV, resolveOov)
                             .putString(KEY_DICTIONARY, dictionaryText)
@@ -1771,13 +1818,21 @@ public class MainActivity extends Activity {
                             "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · stream %s · tối đa %d ký tự · %s",
                             speechSpeed, sharpenAlpha,
                             dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc",
-                            resolveOov ? "bật" : "tắt", streamMode ? "bật" : "tắt", maxChars,
+                            resolveOov ? "bật" : "tắt",
+                            streamMode ? (streamSaveWav ? "bật + lưu WAV" : "bật, không lưu") : "tắt",
+                            maxChars,
                             dictionarySummary(dictionaryText)
                                     + " · " + customReadingCount() + " custom"));
                     if (streamQuick != null) streamQuick.setChecked(streamMode);
+                    if (streamSaveQuick != null) {
+                        streamSaveQuick.setChecked(streamSaveWav);
+                        streamSaveQuick.setEnabled(streamMode);
+                        streamSaveQuick.setVisibility(streamMode ? View.VISIBLE : View.GONE);
+                    }
                     updateSettingsSummary();
                     dialog.dismiss();
-                }));
+                });
+        });
         dialog.show();
     }
 
@@ -1819,7 +1874,14 @@ public class MainActivity extends Activity {
         File[] files = directory.listFiles((dir, name) ->
                 name.endsWith(".vfa") || name.endsWith(".vfts"));
         if (files == null || files.length == 0) {
-            setStatus("Chưa có model .vfa/.vfts đã cài; dùng Tải từ HuggingFace.");
+            new AlertDialog.Builder(this)
+                    .setTitle("Model đã cài")
+                    .setMessage("Chưa có model .vfa/.vfts nào trong máy.\n\n"
+                            + "Bạn có thể tải từ HuggingFace hoặc chọn file từ bộ nhớ.")
+                    .setPositiveButton("Tải từ HuggingFace",
+                            (dialog, which) -> showModelSearch())
+                    .setNegativeButton("Đóng", null)
+                    .show();
             return;
         }
         java.util.Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
@@ -2292,6 +2354,7 @@ public class MainActivity extends Activity {
         autoPlay = prefs.getBoolean(KEY_AUTO_PLAY, true);
         outputTreeUri = prefs.getString(KEY_OUTPUT_TREE, "");
         streamMode = prefs.getBoolean(KEY_STREAM, false);
+        streamSaveWav = prefs.getBoolean(KEY_STREAM_SAVE_WAV, true);
         loadHistory();
         try {
             ensureFfi();
@@ -2353,7 +2416,7 @@ public class MainActivity extends Activity {
         VfTheme.chipButton(modelButton, font);
         modelButton.setOnClickListener(view -> showModelManager());
         header.addView(modelButton, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                ViewGroup.LayoutParams.WRAP_CONTENT, VfTheme.dp(this, 36)));
         root.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -2395,7 +2458,7 @@ public class MainActivity extends Activity {
         remoteTab.setText("Remote");
         remoteTab.setOnClickListener(view -> setMode("remote"));
         LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                0, VfTheme.dp(this, 42), 1f);
         tabParams.leftMargin = VfTheme.dp(this, 2);
         tabParams.rightMargin = VfTheme.dp(this, 2);
         segments.addView(localTab, tabParams);
@@ -2486,7 +2549,7 @@ public class MainActivity extends Activity {
                 | InputType.TYPE_TEXT_FLAG_MULTI_LINE
                 | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         LinearLayout.LayoutParams editorParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, VfTheme.dp(this, 170));
+                ViewGroup.LayoutParams.MATCH_PARENT, VfTheme.dp(this, 145));
         editorParams.topMargin = VfTheme.dp(this, 6);
         textCard.addView(text, editorParams);
         text.addTextChangedListener(new TextWatcher() {
@@ -2530,7 +2593,7 @@ public class MainActivity extends Activity {
             VfTheme.chipButton(chip, font);
             chip.setOnClickListener(view -> text.setText(sample[1]));
             LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    ViewGroup.LayoutParams.WRAP_CONTENT, VfTheme.dp(this, 36));
             chipParams.leftMargin = VfTheme.dp(this, 6);
             samples.addView(chip, chipParams);
         }
@@ -2540,19 +2603,40 @@ public class MainActivity extends Activity {
         textCard.addView(samples, samplesParams);
 
         streamQuick = new CheckBox(this);
-        streamQuick.setText("Stream khi đọc (phát ngay, không lưu WAV)");
+        streamQuick.setText("Stream khi đọc (phát ngay)");
         streamQuick.setChecked(streamMode);
         VfTheme.text(streamQuick, font, 12, VfTheme.MUTED, false);
         streamQuick.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         streamQuick.setOnCheckedChangeListener((button, checked) -> {
             streamMode = checked;
             prefs.edit().putBoolean(KEY_STREAM, streamMode).apply();
+            if (streamSaveQuick != null) {
+                streamSaveQuick.setEnabled(streamMode);
+                streamSaveQuick.setVisibility(streamMode ? View.VISIBLE : View.GONE);
+            }
             updateSettingsSummary();
         });
         LinearLayout.LayoutParams streamQuickParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         streamQuickParams.topMargin = VfTheme.dp(this, 6);
         textCard.addView(streamQuick, streamQuickParams);
+
+        streamSaveQuick = new CheckBox(this);
+        streamSaveQuick.setText("Lưu WAV + phụ đề khi stream");
+        streamSaveQuick.setChecked(streamSaveWav);
+        streamSaveQuick.setEnabled(streamMode);
+        streamSaveQuick.setVisibility(streamMode ? View.VISIBLE : View.GONE);
+        VfTheme.text(streamSaveQuick, font, 12, VfTheme.MUTED, false);
+        streamSaveQuick.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        streamSaveQuick.setOnCheckedChangeListener((button, checked) -> {
+            streamSaveWav = checked;
+            prefs.edit().putBoolean(KEY_STREAM_SAVE_WAV, streamSaveWav).apply();
+            updateSettingsSummary();
+        });
+        LinearLayout.LayoutParams streamSaveParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        streamSaveParams.topMargin = VfTheme.dp(this, 2);
+        textCard.addView(streamSaveQuick, streamSaveParams);
         LinearLayout.LayoutParams textCardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         textCardParams.topMargin = VfTheme.dp(this, 14);
@@ -2645,7 +2729,7 @@ public class MainActivity extends Activity {
         LinearLayout exportRow = new LinearLayout(this);
         exportRow.setOrientation(LinearLayout.HORIZONTAL);
         shareButton = new Button(this);
-        shareButton.setText("Chia sẻ WAV + phụ đề");
+        shareButton.setText("Chia sẻ");
         VfTheme.secondaryButton(shareButton, font);
         shareButton.setEnabled(false);
         shareButton.setOnClickListener(view -> shareWav());
