@@ -441,6 +441,7 @@ def _stats_payload() -> dict:
             totals = connection.execute(
                 "SELECT COALESCE(SUM(audio_seconds),0) AS audio, "
                 "COALESCE(SUM(chars),0) AS chars, "
+                "COALESCE(SUM(elapsed),0) AS elapsed_total, "
                 "COALESCE(AVG(elapsed),0) AS elapsed FROM usage"
             ).fetchone()
             recent = [dict(row) for row in connection.execute(
@@ -469,10 +470,14 @@ def _stats_payload() -> dict:
         "chars_total": int(totals["chars"]),
         "avg_chars": round(float(totals["chars"]) / tts, 1) if tts else 0.0,
         "avg_elapsed": round(float(totals["elapsed"]), 3) if tts else 0.0,
+        "avg_rtf": round(float(totals["elapsed_total"]) / float(totals["audio"]), 4)
+                   if tts and float(totals["audio"]) > 0 else 0.0,
         "recent": [
             {**row, "time": datetime.fromtimestamp(float(row["ts"]), VN_TZ).strftime("%m-%d %H:%M:%S"),
              "visitor": str(row["visitor"])[:10], "audio_seconds": round(float(row["audio_seconds"]), 2),
-             "elapsed": round(float(row["elapsed"]), 3)}
+             "elapsed": round(float(row["elapsed"]), 3),
+             "rtf": round(float(row["elapsed"]) / float(row["audio_seconds"]), 4)
+                    if float(row["audio_seconds"]) > 0 else 0.0}
             for row in recent
         ],
     }
@@ -519,7 +524,7 @@ def _feedback_admin_rows(items: list[dict]) -> str:
 def _admin_html(stats: dict) -> str:
     rows = "".join(
         f"<tr><td>{item['time']}</td><td>{item['visitor']}</td><td>{item['chars']}</td>"
-        f"<td>{item['audio_seconds']:.2f}s</td><td>{item['elapsed']:.2f}s</td>"
+        f"<td>{item['audio_seconds']:.2f}s</td><td>{item['elapsed']:.2f}s</td><td>{item.get('rtf', 0):.3f}</td>"
         f"<td>{item.get('source', 'api')}</td><td>{'có' if item['fixed_pauses'] else 'không'}</td></tr>"
         for item in stats["recent"]
     ) or "<tr><td colspan='7'>Chưa có lượt tạo nào.</td></tr>"
@@ -597,6 +602,8 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
   <div class="card"><b>{stats['tts_api']}</b><span>tạo qua API</span></div>
   <div class="card"><b>{stats['audio_seconds'] / 60:.1f} phút</b><span>audio đã tạo</span></div>
   <div class="card"><b>{stats['avg_chars']}</b><span>ký tự / lượt</span></div>
+  <div class="card"><b>{stats['avg_elapsed']:.2f}s</b><span>xử lý / lượt</span></div>
+  <div class="card"><b>{stats['avg_rtf']:.3f}</b><span>RTF trung bình</span></div>
   <div class="card"><b>{stats['suggestions_pending']}</b><span>đề xuất chờ duyệt</span></div>
   <div class="card"><b>{stats['suggestions_approved']}</b><span>quy tắc đã duyệt</span></div>
   <div class="card"><b>{stats['feedback_total']}</b><span>góp ý / báo lỗi</span></div>
@@ -612,7 +619,7 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 <table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Nguồn</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
 <tbody>{feedback_rows}</tbody></table>
 <h2 style="margin:24px 0 4px">Lượt tạo gần đây</h2>
-<table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
+<table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>RTF</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="note">Số “người dùng” là ước lượng theo hash visitor/IP, không lưu IP/text TTS.
 Góp ý chỉ lưu nội dung bạn gửi và liên hệ (nếu có), chỉ admin đã đặt mật khẩu mới xem được. {auth_note}</div>
@@ -980,6 +987,9 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         return JSONResponse({
             "sample_rate": SAMPLE_RATE,
             "duration_ms": round(audio_seconds * 1000),
+            "processing_seconds": round(elapsed, 3),
+            "audio_seconds": round(audio_seconds, 2),
+            "rtf": round(rtf, 4),
             "audio_base64": base64.b64encode(audio).decode("ascii"),
             "karaoke": {
                 "units": units,
@@ -990,6 +1000,13 @@ def tts(payload: TtsRequest, request: Request) -> Response:
             "srt": srt_from_units(units),
             "vtt": vtt_from_units(units),
             "vtt_karaoke": vtt_from_units(units),
+        }, headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "X-Processing-Seconds": f"{elapsed:.3f}",
+            "X-Audio-Seconds": f"{audio_seconds:.2f}",
+            "X-RTF": f"{rtf:.4f}",
+            "X-Characters": str(len(text)),
         })
     return Response(content=audio, media_type="audio/wav", headers={
         "Content-Disposition": 'inline; filename="vifasttts-demo.wav"',
@@ -1068,11 +1085,15 @@ def tts_stream(payload: TtsRequest, request: Request) -> Response:
             except Exception:
                 logger.exception("tts stream stats failed")
             logger.info("tts stream ok %.2fs chars=%d chunks=%d", elapsed, len(text), chunks)
+            rtf = elapsed / audio_seconds if audio_seconds > 0 else 0.0
             yield (json.dumps({
                 "type": "done",
                 "samples": samples,
                 "chunks": chunks,
                 "sample_rate": TTS_ENGINE.sample_rate,
+                "processing_seconds": round(elapsed, 3),
+                "audio_seconds": round(audio_seconds, 2),
+                "rtf": round(rtf, 4),
                 "cancelled": False,
             }) + "\n").encode("utf-8")
         except Exception:

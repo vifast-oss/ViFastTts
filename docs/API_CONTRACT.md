@@ -51,6 +51,9 @@ Contract version hiện tại: **1** (`vifasttts_api_contract_json`); schema đ�
 {
   "sample_rate": 24000,
   "duration_ms": 2000,
+  "processing_seconds": 0.42,
+  "audio_seconds": 2.0,
+  "rtf": 0.21,
   "audio_base64": "UklGR...",
   "karaoke": {
     "version": 1,
@@ -66,14 +69,17 @@ Contract version hiện tại: **1** (`vifasttts_api_contract_json`); schema đ�
 ```
 
 `karaoke` có thể `null` nếu model không xuất slot durations; client vẫn phát
-`audio_base64` và bỏ phụ đề.
+`audio_base64` và bỏ phụ đề. Response JSON cũng trả `processing_seconds`,
+`audio_seconds`, `rtf` (và header `X-Processing-Seconds`/`X-Audio-Seconds`/`X-RTF`)
+để UI hiển thị tốc độ; server ghi cùng số vào `/admin.json`.
 
 ## 4. Stream NDJSON
 
 ```text
 {"type":"units","units":[...]}
 {"type":"audio","sample_rate":24000,"pcm_base64":"..."}
-{"type":"done","samples":48000,"chunks":3,"cancelled":false,"sample_rate":24000}
+{"type":"done","samples":48000,"chunks":3,"cancelled":false,"sample_rate":24000,
+ "processing_seconds":0.42,"audio_seconds":2.0,"rtf":0.21}
 ```
 
 - PCM là 16-bit mono little-endian, base64.

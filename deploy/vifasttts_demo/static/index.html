@@ -641,7 +641,7 @@ async function streamGenerate(value, started) {
   streamAudioContext = ctx;
   try { await ctx.resume(); } catch (_) {}
   let nextTime = ctx.currentTime + 0.08;
-  const pcmParts = []; const units = []; let samples = 0;
+  const pcmParts = []; const units = []; let samples = 0; let doneInfo = null;
   try {
     const response = await fetch(STREAM_URL, {
       method: "POST", headers: {"Content-Type": "application/json"}, signal: controller.signal,
@@ -657,6 +657,7 @@ async function streamGenerate(value, started) {
     let pending = "";
     const handle = (event) => {
       if (event.type === "units" && Array.isArray(event.units)) units.push(...event.units);
+      if (event.type === "done") doneInfo = event;
       if (event.type === "error") throw new Error(event.message || "Server stream lỗi");
       if (event.type === "audio" && event.pcm_base64) {
         const binary = atob(event.pcm_base64);
@@ -703,10 +704,11 @@ async function streamGenerate(value, started) {
       if (text) { link.href = URL.createObjectURL(new Blob([text], {type})); link.hidden = false; } else link.hidden = true;
     }
     player.style.display = "block";
-    const audioSeconds = samples / 24000;
-    const processing = (performance.now() - started) / 1000;
+    const audioSeconds = doneInfo && Number.isFinite(Number(doneInfo.audio_seconds)) ? Number(doneInfo.audio_seconds) : samples / 24000;
+    const processing = doneInfo && Number.isFinite(Number(doneInfo.processing_seconds)) ? Number(doneInfo.processing_seconds) : (performance.now() - started) / 1000;
+    const rtf = doneInfo && Number.isFinite(Number(doneInfo.rtf)) ? Number(doneInfo.rtf) : (audioSeconds > 0 ? processing / audioSeconds : 0);
     const metrics = $("metrics");
-    if (metrics) { metrics.textContent = `Stream ${audioSeconds.toFixed(1)}s · xử lý ${processing.toFixed(2)}s`; metrics.title = "Audio đã phát ngay khi từng chunk về; WAV tải xuống được ghép từ PCM."; metrics.hidden = false; }
+    if (metrics) { metrics.textContent = `Xử lý ${processing.toFixed(2)}s · Audio ${formatAudio(audioSeconds)} · RTF ${rtf.toFixed(4)} · stream`; metrics.title = "RTF = thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực. Audio đã phát ngay khi từng chunk về."; metrics.hidden = false; }
     setStatus("Xong stream. Bấm play để nghe lại.");
     const waitMs = Math.max(0, (nextTime - ctx.currentTime) * 1000) + 500;
     setTimeout(() => { if (streamAudioContext === ctx) { ctx.close().catch(() => {}); streamAudioContext = null; } }, waitMs);
@@ -740,10 +742,13 @@ async function generate() {
       try { const j = await response.json(); if (j.detail) detail = j.detail; } catch (_) {}
       throw new Error(detail);
     }
-    const processing = parseFloat(response.headers.get("X-Processing-Seconds") || "");
-    const audioSeconds = parseFloat(response.headers.get("X-Audio-Seconds") || "");
-    const rtf = parseFloat(response.headers.get("X-RTF") || "");
+    const processingHeader = parseFloat(response.headers.get("X-Processing-Seconds") || "");
+    const audioHeader = parseFloat(response.headers.get("X-Audio-Seconds") || "");
+    const rtfHeader = parseFloat(response.headers.get("X-RTF") || "");
     const payload = await response.json();
+    const processing = Number.isFinite(processingHeader) ? processingHeader : Number(payload.processing_seconds);
+    const audioSeconds = Number.isFinite(audioHeader) ? audioHeader : Number(payload.audio_seconds);
+    const rtf = Number.isFinite(rtfHeader) ? rtfHeader : Number(payload.rtf);
     if (!payload.audio_base64) throw new Error("Server không trả audio_base64.");
     const binary = atob(payload.audio_base64);
     const bytes = new Uint8Array(binary.length);
