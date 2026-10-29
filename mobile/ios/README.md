@@ -6,9 +6,9 @@ Client SwiftUI **local-first + remote HTTP**:
 - Remote: `POST /api/tts` tới server desktop/LAN/online → WAV.
 - UI chọn Local/Remote, nhập Server URL + Bearer token. `AVAudioPlayer` phát WAV.
 
-## Trạng thái (29/10/2026)
+## Trạng thái (30/10/2026)
 
-**Đã build và chạy trên iOS Simulator 27.0** với Xcode 27.1:
+**Đã build và chạy trên iOS Simulator 27.0/27.1** với Xcode 27.1:
 
 ```text
 Local FFI:  Xong local  · 2.77 s
@@ -29,7 +29,8 @@ sudo. Thiết bị thật vẫn cần ký Apple Developer và ORT device slice.
 - `RemoteTts.swift`: gọi `/api/tts`, nhận WAV hoặc JSON `audio_base64`,
   Bearer token; dùng chung Server URL/token với model browser.
 - `ModelCatalog.swift`, `ModelBrowserView.swift`: Server URL trống → gọi
-  HuggingFace trực tiếp; nhập URL → qua server `/api/models/*`.
+  HuggingFace trực tiếp; nhập URL → qua server `/api/models/*`; tải có tiến độ %/MB
+  và **huỷ giữa chừng**.
 - `ContentView` + `TtsEngine`/`RemoteTts`: sheet **Cấu hình** cho tốc độ, alpha,
   pause cố định, peak normalize, max ký tự/chunk; truyền vào FFI local và server remote.
 - `ViFastTtsMobile-Bridging-Header.h`: include trực tiếp header canonical của
@@ -60,7 +61,7 @@ script đổ Rust `.a` + framework + model vào đó.
 
 - Thiết bị thật: ký Apple Developer, ORT device slice/chứng chỉ.
 - HTTP remote dùng ATS exception cho dev; production nên HTTPS.
-- Audio session/background playback, streaming PCM, settings/history/dictionary.
+- Audio session/background playback; settings/history/dictionary đã có bản cơ bản.
 - UniFFI/Swift binding tự sinh; hiện gọi C ABI trực tiếp.
 - ORT iOS dùng framework **static 1.30.0** (`api-30`); desktop/Android vẫn dùng
   load-dynamic 1.31.1. Build iOS dùng `cargo rustc --crate-type staticlib`, Xcode
