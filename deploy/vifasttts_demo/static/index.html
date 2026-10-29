@@ -86,6 +86,19 @@
   #player audio { width:100%; }
   .fine { color:var(--muted); font-size:.76rem; margin:12px 0 0; }
   .fine a { color:var(--accent); }
+  .downloads { margin:14px 0 0; padding:13px 14px; background:#fff; border:1px solid var(--line);
+               border-radius:14px; box-shadow:0 10px 28px rgba(90,45,25,.06); }
+  .downloads-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .downloads-head h2 { font-size:.95rem; margin:0; }
+  .download-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:7px; }
+  .download-card { display:flex; flex-direction:column; gap:2px; padding:8px 10px; border:1px solid #F0D2CA;
+                   border-radius:9px; background:#FFFCF7; color:var(--ink); text-decoration:none; }
+  .download-card:hover { border-color:var(--accent); background:#FFF7F0; }
+  .download-card b { color:#9B2C20; font-size:.82rem; }
+  .download-card small { color:var(--muted); font-size:.7rem; }
+  .download-links { margin:9px 0 0; color:var(--muted); font-size:.77rem; }
+  .download-links a { color:var(--accent); font-weight:650; text-decoration:none; }
+  .download-links a:hover { text-decoration:underline; }
   footer { color:var(--muted); font-size:.75rem; margin-top:16px; line-height:1.6; }
   footer a { color:var(--accent); text-decoration:none; }
   footer a:hover { text-decoration:underline; }
@@ -150,7 +163,7 @@
   </a>
   <nav class="links" aria-label="Liên kết">
     <a class="src" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub ↗</a>
-    <a class="src" href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face ↗</a>
+    <a class="src" href="https://huggingface.co/dvchd" target="_blank" rel="noopener">Hugging Face ↗</a>
         <a class="src" href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space ↗</a>
   </nav>
 </header>
@@ -267,14 +280,47 @@
   </section>
 </div>
 
+<section class="downloads" id="downloads" aria-labelledby="downloads-title">
+  <div class="downloads-head">
+    <h2 id="downloads-title">Tải ứng dụng ViFastTts</h2>
+    <span class="pill">v0.1.1 · bản chạy ngay</span>
+  </div>
+  <div class="download-grid">
+    <a class="download-card" href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-desktop-windows-x64.zip" target="_blank" rel="noopener">
+      <b>Windows</b><small>desktop x64 · ZIP</small>
+    </a>
+    <a class="download-card" href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-desktop-macos-arm64.zip" target="_blank" rel="noopener">
+      <b>macOS</b><small>Apple Silicon · ZIP</small>
+    </a>
+    <a class="download-card" href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-desktop-linux-x64.tar.gz" target="_blank" rel="noopener">
+      <b>Linux</b><small>x64 · tar.gz</small>
+    </a>
+    <a class="download-card" href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-mobile-android.apk" target="_blank" rel="noopener">
+      <b>Android</b><small>APK · debug</small>
+    </a>
+    <a class="download-card" href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/extension.zip" target="_blank" rel="noopener">
+      <b>Extension</b><small>Chrome · MV3 · ZIP</small>
+    </a>
+    <a class="download-card" href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener">
+      <b>iOS Simulator</b><small>Xcode · ZIP</small>
+    </a>
+  </div>
+  <p class="download-links">
+    Model: <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">N0 Ngọc Huyền small</a>
+    · <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-base" target="_blank" rel="noopener">base 60k</a>
+    · <a href="https://huggingface.co/dvchd" target="_blank" rel="noopener">tất cả model trên HuggingFace</a>
+    · <a href="https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1" target="_blank" rel="noopener">release v0.1.1</a>
+  </p>
+</section>
+
 <p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
   <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
   <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
   · <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
-   · <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space demo</a> · <a href="https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1" target="_blank" rel="noopener">research release</a>.</p>
+   · <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space demo</a> · <a href="https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1" target="_blank" rel="noopener">release v0.1.1</a>.</p>
 <footer>ViFastTts · single-speaker · CC-BY-NC-4.0 · không production ·
   <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a> ·
+  <a href="https://huggingface.co/dvchd" target="_blank" rel="noopener">Hugging Face</a> ·
   <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a> ·
   <a href="#feedback" id="feedbackLink">Góp ý</a> ·
   <a href="/admin">Thống kê</a></footer>
