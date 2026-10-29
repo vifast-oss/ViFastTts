@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var busy = false
     @State private var error: String?
     @State private var player: AVAudioPlayer?
+    @State private var lastAudioURL: URL?
     @State private var showModels = false
     @State private var activeModel = TtsEngine.shared.activeModel
     @State private var ready = TtsEngine.shared.isReady
@@ -124,6 +125,15 @@ struct ContentView: View {
             }
             .padding()
             .background(VFTheme.background.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if let lastAudioURL {
+                        ShareLink(item: lastAudioURL) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
+            }
             .tint(VFTheme.accent)
             .font(VFTheme.body)
             .navigationTitle("ViFastTts")
@@ -205,6 +215,7 @@ struct ContentView: View {
                         peakNormalize: peakNormalize
                     )
                 }
+                player?.stop()
                 let session = AVAudioSession.sharedInstance()
                 try? session.setCategory(.playback, mode: .spokenAudio)
                 try? session.setActive(true)
@@ -212,6 +223,7 @@ struct ContentView: View {
                 audio.prepareToPlay()
                 audio.play()
                 player = audio
+                lastAudioURL = url
                 status = String(format: mode == "remote" ? "Xong remote · %.2f s" : "Xong local · %.2f s", audio.duration)
             } catch {
                 self.error = error.localizedDescription

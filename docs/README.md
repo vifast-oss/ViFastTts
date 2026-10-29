@@ -23,6 +23,7 @@
 | Xem kế hoạch + trạng thái port Rust | `docs/RUST_PORT.md` |
 | Cài đặt desktop/server/TUI/extension | `docs/INSTALL.md` |
 | Phát hành Chrome/Edge extension | `docs/EXTENSION_STORE.md` |
+| Kiểm tra parity tính năng các UI | `docs/UI_PARITY.md` |
 | Định dạng model `.vfts` | `docs/VFTS_FORMAT.md` |
 | Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
 | Mobile: model bundle/tải nhiều giọng | `docs/MOBILE_MODELS.md` |

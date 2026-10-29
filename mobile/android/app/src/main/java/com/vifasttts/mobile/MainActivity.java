@@ -2,6 +2,7 @@ package com.vifasttts.mobile;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -9,8 +10,11 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
@@ -39,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -107,8 +112,10 @@ public class MainActivity extends Activity {
     private Button stopButton;
     private Button modelButton;
     private Button settingsButton;
+    private Button saveButton;
     private ProgressBar progress;
     private MediaPlayer player;
+    private File lastAudioFile;
     private AudioManager audioManager;
     private AudioFocusRequest focusRequest;
     private SharedPreferences prefs;
@@ -467,6 +474,8 @@ public class MainActivity extends Activity {
                 });
                 player.prepare();
                 player.start();
+                lastAudioFile = out;
+                if (saveButton != null) saveButton.setEnabled(true);
                 stopButton.setEnabled(true);
             } catch (Exception error) {
                 status.setText("Đã tạo WAV, lỗi phát: " + error.getMessage());
@@ -711,6 +720,39 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    private void saveWav() {
+        if (lastAudioFile == null || !lastAudioFile.isFile()) {
+            setStatus("Chưa có WAV để lưu");
+            return;
+        }
+        String name = "vifasttts-" + System.currentTimeMillis() + ".wav";
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/wav");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                Uri uri = getContentResolver().insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IllegalStateException("MediaStore trả URI null");
+                try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                    if (out == null) throw new IllegalStateException("Không mở được Downloads");
+                    Files.copy(lastAudioFile.toPath(), out);
+                }
+                setStatus("Đã lưu vào Downloads/" + name);
+            } else {
+                File dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+                if (dir == null) throw new IllegalStateException("Không có thư mục Music");
+                File out = new File(dir, name);
+                Files.copy(lastAudioFile.toPath(), out.toPath());
+                setStatus("Đã lưu: " + out.getAbsolutePath());
+            }
+        } catch (Throwable error) {
+            setStatus("Lỗi lưu WAV: " + error.getMessage());
+            setError(error.getMessage());
+        }
+    }
+
     private void requestLocalNetworkPermission() {
         if (Build.VERSION.SDK_INT >= 36) {
             requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"}, 1001);
@@ -912,6 +954,20 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         actionParams.topMargin = VfTheme.dp(this, 14);
         root.addView(actions, actionParams);
+
+        saveButton = new Button(this);
+        saveButton.setText("Lưu WAV");
+        VfTheme.secondaryButton(saveButton, font);
+        saveButton.setEnabled(false);
+        saveButton.setOnClickListener(view -> saveWav());
+        LinearLayout utility = new LinearLayout(this);
+        utility.setOrientation(LinearLayout.HORIZONTAL);
+        utility.addView(saveButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams utilityParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        utilityParams.topMargin = VfTheme.dp(this, 8);
+        root.addView(utility, utilityParams);
 
         status = new TextView(this);
         status.setText("Sẵn sàng");

@@ -9,6 +9,8 @@ const statusEl = document.getElementById('status');
 const runEl = document.getElementById('run');
 const textEl = document.getElementById('text');
 const fixedEl = document.getElementById('fixed');
+const speedEl = document.getElementById('speed');
+const speedValueEl = document.getElementById('speedValue');
 const modeEl = document.getElementById('mode');
 const serverUrlEl = document.getElementById('serverUrl');
 const tokenEl = document.getElementById('token');
@@ -20,6 +22,7 @@ const modelStatusEl = document.getElementById('modelStatus');
 const modelListEl = document.getElementById('modelList');
 const modelFilesEl = document.getElementById('modelFiles');
 const audioEl = document.getElementById('audio');
+const downloadEl = document.getElementById('download');
 const karaokeEl = document.getElementById('karaoke');
 const srtEl = document.getElementById('srt');
 
@@ -49,6 +52,10 @@ function playBytes(bytes) {
   currentAudioUrl = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
   audioEl.src = currentAudioUrl;
   audioEl.load();
+  if (downloadEl) {
+    downloadEl.href = currentAudioUrl;
+    downloadEl.classList.remove('hidden');
+  }
   return audioEl.play().catch(() => {});
 }
 
@@ -162,7 +169,7 @@ async function vocoder(mel, frames, mels) {
 async function runLocal(text) {
   await loadModels();
   setStatus('Đang tổng hợp local…');
-  const result = await synthesize(text, 1.0, fixedEl.checked, acoustic, vocoder);
+  const result = await synthesize(text, Number(speedEl.value), fixedEl.checked, acoustic, vocoder);
   await playBytes(new Uint8Array(result.wav));
   document_ = result.karaoke;
   renderKaraoke(document_);
@@ -183,7 +190,7 @@ async function runRemote(text) {
     headers,
     body: JSON.stringify({
       text,
-      speed: 1.0,
+      speed: Number(speedEl.value),
       fixed_pauses: fixedEl.checked,
       karaoke: true,
     }),
@@ -302,6 +309,9 @@ audioEl.addEventListener('timeupdate', () => {
   }
 });
 
+speedEl.addEventListener('input', () => {
+  speedValueEl.textContent = `${Number(speedEl.value).toFixed(2)}×`;
+});
 modeEl.addEventListener('change', () => {
   setModeFields();
   setStatus(modeEl.value === 'remote' ? 'Remote: nhập server URL.' : 'Local: bấm Đọc để nạp model.');
