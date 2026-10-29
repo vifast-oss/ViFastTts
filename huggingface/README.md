@@ -24,13 +24,12 @@ library_name: vifasttts
 > Code ViFastTts là MIT; quyền dataset/giọng vẫn giữ nguyên.
 
 Model TTS tiếng Việt **một giọng nữ**, acoustic **small 6,1M tham số**, 24 kHz.
-Repo này chứa checkpoint, config, stats, ONNX FP32, Vocos pretrained và 10 câu demo.
+Repo này chứa checkpoint, config, stats, ONNX FP32, bundle `.vfa/.vfts` và 10 câu demo.
 
 ## Bundle `.vfa` / `.vfts`
 
 - `bundles/n0-ngochuyen.vfa` — acoustic-only, dùng `onnx/vocoder.onnx`.
 - `bundles/n0-ngochuyen.vfts` — full bundle, tự chứa vocoder + frontend.
-- `resources/` là bản sao tiện dụng của hai bundle trên (cùng SHA256).
 - Base 60k **sau Q** nằm ở repo riêng:
   https://huggingface.co/dvchd/vifasttts-ngochuyen-base
 
@@ -100,14 +99,19 @@ Quy trình và số đo đầy đủ:
 ## File
 
 ```text
-runs/acoustic_ngochuyen/best.pt        # acoustic small 60k
-configs/small_ngochuyen.yaml            # config
+best.pt                         # acoustic small Q-init 60k
+config.yaml                     # configs/small_ngochuyen.yaml
+resolved_config.json
 data/ngochuyen/mel_stats.json
 data/ngochuyen/f0_stats_v2.json
-artifacts/pretrained/vocos-mel-24khz/pytorch_model.bin
 onnx/acoustic.onnx
 onnx/vocoder.onnx
-demo/                                   # 10 câu mới + texts.json
+bundles/n0-ngochuyen.vfa
+bundles/n0-ngochuyen.vfts
+bundles/README.md
+models.json                     # catalog tham khảo
+demo/                           # 10 câu mới + texts.json
+assets/
 ```
 
 ## Giấy phép và attribution
@@ -116,6 +120,14 @@ demo/                                   # 10 câu mới + texts.json
   **CC BY-NC 4.0**.
 - Vocos: `charactr/vocos-mel-24khz`, MIT.
 - Model weights: chỉ dùng research/non-commercial; xem `LICENSE.md`.
+
+## Download stats
+
+HuggingFace chỉ tính download cho các **query file** (`config.json`, `config.yaml`,
+`hyperparams.yaml`, `params.json`, `meta.yaml`), không tính trực tiếp file
+`.vfa`/`.vfts`. Vì vậy tải bundle trực tiếp từ app có thể không hiện trong
+`downloads` của repo. Đây là giới hạn của HF, không phải lỗi catalog; không tạo
+request giả để tăng số.
 
 ## Liên kết
 

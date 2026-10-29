@@ -35,7 +35,7 @@ Ví dụ repo:
 
 ```text
 dvchd/vifasttts-ngochuyen-small
-  bundles/models.json
+  models.json
   vocoders/vocos-mel-24khz.onnx
   voices/n0-ngochuyen/
     n0-ngochuyen.vfa
