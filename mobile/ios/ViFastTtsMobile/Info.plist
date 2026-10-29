@@ -27,5 +27,12 @@
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ViFastTts cần kết nối tới server TTS trong mạng LAN.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

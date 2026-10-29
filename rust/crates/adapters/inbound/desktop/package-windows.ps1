@@ -51,6 +51,7 @@ try {
 
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path (Join-Path $Out "models") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $Out "licenses") | Out-Null
 Copy-Item (Join-Path $Root "rust/target/release/vifasttts-desktop.exe") (Join-Path $Out "vifasttts-desktop.exe")
 Copy-Item (Join-Path $Root "rust/target/release/vifasttts.exe") (Join-Path $Out "vifasttts.exe")
 if ($WebDir -and (Test-Path $WebDir)) {
@@ -60,6 +61,7 @@ if ($WebDir -and (Test-Path $WebDir)) {
 Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
+Copy-Item (Join-Path $Root "resources/fonts/BeVietnamPro-OFL.txt") (Join-Path $Out "licenses/BeVietnamPro-OFL.txt")
 @"
 ViFastTts Desktop + unified CLI/TUI/server sidecar (Windows x64)
 Chạy GUI: vifasttts-desktop.exe

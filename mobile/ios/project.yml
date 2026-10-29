@@ -30,6 +30,9 @@ targets:
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
+        NSLocalNetworkUsageDescription: "ViFastTts cần kết nối tới server TTS trong mạng LAN."
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vifasttts.mobile

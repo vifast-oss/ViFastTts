@@ -10,18 +10,36 @@ struct ContentView: View {
     @State private var showModels = false
     @State private var activeModel = TtsEngine.shared.activeModel
     @State private var ready = TtsEngine.shared.isReady
+    @AppStorage("vifasttts.mode") private var mode = "local"
+    @AppStorage("vifasttts.serverURL") private var serverURL = "http://127.0.0.1:8000"
+    @AppStorage("vifasttts.token") private var token = ""
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 14) {
                 Text("ViFastTts Mobile")
                     .font(.largeTitle.bold())
-                Text("Local ONNX · Rust C ABI")
+                Text(mode == "remote" ? "Remote HTTP · server API" : "Local ONNX · Rust C ABI")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text(activeModel.isEmpty ? "Chưa có model" : "Model: \(activeModel)")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+
+                Picker("Chế độ", selection: $mode) {
+                    Text("Local").tag("local")
+                    Text("Remote").tag("remote")
+                }
+                .pickerStyle(.segmented)
+
+                if mode == "remote" {
+                    TextField("Server URL", text: $serverURL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .textFieldStyle(.roundedBorder)
+                    SecureField("Bearer token (tuỳ chọn)", text: $token)
+                        .textFieldStyle(.roundedBorder)
+                }
 
                 TextEditor(text: $text)
                     .frame(minHeight: 180)
@@ -38,7 +56,7 @@ struct ContentView: View {
                         Label("Đọc", systemImage: "play.fill")
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(busy || !ready)
+                    .disabled(busy || (mode == "local" && !ready))
 
                     Button {
                         showModels = true
@@ -67,10 +85,15 @@ struct ContentView: View {
                         .font(.callout)
                         .foregroundStyle(.red)
                 }
-                if !ready {
+                if mode == "local" && !ready {
                     Text("Chưa có model trong bundle hoặc FFI/ORT chưa nạp.")
                         .font(.footnote)
                         .foregroundStyle(.orange)
+                }
+                if mode == "remote" {
+                    Text("Remote gọi /api/tts; server có thể là desktop local, LAN hoặc online.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
             }
@@ -79,9 +102,14 @@ struct ContentView: View {
             .sheet(isPresented: $showModels, onDismiss: {
                 ready = TtsEngine.shared.isReady
                 activeModel = TtsEngine.shared.activeModel
-                status = ready ? "Model sẵn sàng" : "Model chưa sẵn sàng"
+                status = mode == "remote"
+                    ? "Remote: \(serverURL)"
+                    : (ready ? "Model sẵn sàng" : "Model chưa sẵn sàng")
             }) {
                 ModelBrowserView()
+            }
+            .onChange(of: mode) { value in
+                status = value == "remote" ? "Remote: nhập server URL" : "Local: sẵn sàng"
             }
         }
     }
@@ -94,15 +122,21 @@ struct ContentView: View {
         }
         busy = true
         error = nil
-        status = "Đang tổng hợp…"
+        status = mode == "remote" ? "Đang gọi server…" : "Đang tổng hợp local…"
         Task {
             do {
-                let url = try await TtsEngine.shared.synthesize(text: input)
+                let url: URL
+                if mode == "remote" {
+                    let client = try RemoteTtsClient(server: serverURL, token: token)
+                    url = try await client.synthesize(text: input)
+                } else {
+                    url = try await TtsEngine.shared.synthesize(text: input)
+                }
                 let audio = try AVAudioPlayer(contentsOf: url)
                 audio.prepareToPlay()
                 audio.play()
                 player = audio
-                status = String(format: "Xong · %.2f s", audio.duration)
+                status = String(format: mode == "remote" ? "Xong remote · %.2f s" : "Xong local · %.2f s", audio.duration)
             } catch {
                 self.error = error.localizedDescription
                 status = "Tổng hợp lỗi"

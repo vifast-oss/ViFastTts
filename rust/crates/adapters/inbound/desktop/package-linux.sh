@@ -37,7 +37,7 @@ fi
 (cd "$ROOT/rust" && cargo build --release -p vifasttts-desktop -p vifasttts-cli)
 
 rm -rf "$OUT"
-mkdir -p "$OUT/models"
+mkdir -p "$OUT/models" "$OUT/licenses"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$OUT/vifasttts-desktop"
 cp "$ROOT/rust/target/release/vifasttts" "$OUT/vifasttts"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then
@@ -48,6 +48,7 @@ fi
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"
+cp "$ROOT/resources/fonts/BeVietnamPro-OFL.txt" "$OUT/licenses/"
 cat > "$OUT/run.sh" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail

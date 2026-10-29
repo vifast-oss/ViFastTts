@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0F060A7455876E9320A97CF9 /* ModelBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84444AA436CA56193774EDC5 /* ModelBrowserView.swift */; };
 		1FA506E67C9DFDF6F42D6C2A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72172E92AB370DE14DC3C667 /* App.swift */; };
 		459DB27C037FD291CF6FA50C /* .gitkeep in Resources */ = {isa = PBXBuildFile; fileRef = EAF71428C78B2A34BAE87B98 /* .gitkeep */; };
+		54533A854341B273073DF57F /* RemoteTts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98C311ED8675C1F3CCB39F3 /* RemoteTts.swift */; };
 		58BEFC72D97646F04C0A2DE3 /* TtsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5430608CBB478CB7841A3CD /* TtsEngine.swift */; };
+		597479704D42FC34E20B9DDD /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1B046763A40988F96E4876 /* ModelCatalog.swift */; };
 		834CC4F359BB7B5D42D35E7A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B760FF6380734375480A1CF6 /* ContentView.swift */; };
 		933D5181840B94DF8ACE3AA5 /* acoustic.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 882F8B80EEA3585A91ADC603 /* acoustic.onnx */; };
 		9BB2447D5F0C7AA2F98D65B0 /* vocoder.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */; };
@@ -17,12 +20,15 @@
 
 /* Begin PBXFileReference section */
 		0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ViFastTtsMobile-Bridging-Header.h"; sourceTree = "<group>"; };
+		1C1B046763A40988F96E4876 /* ModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalog.swift; sourceTree = "<group>"; };
 		70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */ = {isa = PBXFileReference; path = vocoder.onnx; sourceTree = "<group>"; };
 		72172E92AB370DE14DC3C667 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		84444AA436CA56193774EDC5 /* ModelBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelBrowserView.swift; sourceTree = "<group>"; };
 		882F8B80EEA3585A91ADC603 /* acoustic.onnx */ = {isa = PBXFileReference; path = acoustic.onnx; sourceTree = "<group>"; };
 		A40017915543C869B945B2F4 /* ViFastTtsMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViFastTtsMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5430608CBB478CB7841A3CD /* TtsEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TtsEngine.swift; sourceTree = "<group>"; };
 		B760FF6380734375480A1CF6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C98C311ED8675C1F3CCB39F3 /* RemoteTts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteTts.swift; sourceTree = "<group>"; };
 		D154395D136B6DD5189A9A62 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EAF71428C78B2A34BAE87B98 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -43,6 +49,9 @@
 				72172E92AB370DE14DC3C667 /* App.swift */,
 				B760FF6380734375480A1CF6 /* ContentView.swift */,
 				D154395D136B6DD5189A9A62 /* Info.plist */,
+				84444AA436CA56193774EDC5 /* ModelBrowserView.swift */,
+				1C1B046763A40988F96E4876 /* ModelCatalog.swift */,
+				C98C311ED8675C1F3CCB39F3 /* RemoteTts.swift */,
 				B5430608CBB478CB7841A3CD /* TtsEngine.swift */,
 				0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */,
 			);
@@ -138,6 +147,9 @@
 			files = (
 				1FA506E67C9DFDF6F42D6C2A /* App.swift in Sources */,
 				834CC4F359BB7B5D42D35E7A /* ContentView.swift in Sources */,
+				0F060A7455876E9320A97CF9 /* ModelBrowserView.swift in Sources */,
+				597479704D42FC34E20B9DDD /* ModelCatalog.swift in Sources */,
+				54533A854341B273073DF57F /* RemoteTts.swift in Sources */,
 				58BEFC72D97646F04C0A2DE3 /* TtsEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -66,6 +66,11 @@ GUI
 không mở TUI; TUI chỉ chạy khi gọi từ terminal. CI build cả ba nền tảng; macOS/Linux đã test
 smoke, Windows do CI test.
 
+## Font tiếng Việt
+
+Desktop bundle font **Be Vietnam Pro** (OFL, `resources/fonts/`) và đăng ký làm
+font chính trong egui, nên không còn mất dấu khi dùng font mặc định.
+
 ## Cấu hình
 
 - `~/Library/Application Support/com.vifasttts.ViFastTts/desktop.json` (theo

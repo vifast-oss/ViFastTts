@@ -23,7 +23,7 @@ người dùng.
 | Web (static) | — | ✅ input file | ✅ ORT Web |
 | Extension | ✅ Cài đặt → HuggingFace | ✅ cache + active bundle | ✅ ORT Web |
 | Android | ✅ nút Tải model | ✅ lưu `filesDir/models` | ✅ FFI `.vfa/.vfts` |
-| iOS | ✅ sheet Model (source) | ✅ Application Support | ✅ FFI `.vfa/.vfts` (chưa chạy thật) |
+| iOS | ✅ sheet Model (source) | ✅ Application Support | ✅ FFI `.vfa/.vfts` + remote HTTP (chưa chạy thật) |
 
 ## Desktop
 
@@ -130,7 +130,8 @@ Sheet **Model** trong app:
 - `.vfts/.vfa` nạp qua C ABI; `.vfa` dùng vocoder bundled.
 
 Phần iOS mới là source scaffold, chưa chạy trên simulator/device vì máy build
-không có Xcode/iOS SDK.
+không có Xcode/iOS SDK. App có cả **Local FFI** và **Remote `/api/tts`**; remote
+dùng Server URL/token trong UI.
 
 ## Server API
 

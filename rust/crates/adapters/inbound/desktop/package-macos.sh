@@ -45,7 +45,7 @@ cd "$ROOT/rust"
 cargo build --release -p vifasttts-desktop -p vifasttts-cli
 
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/licenses"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-desktop"
 cp "$ROOT/rust/target/release/vifasttts" "$APP/Contents/MacOS/vifasttts"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then
@@ -56,6 +56,7 @@ fi
 cp "$ORT_LIB" "$APP/Contents/MacOS/libonnxruntime.dylib"
 cp "$MODEL_DIR/acoustic.onnx" "$APP/Contents/Resources/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$APP/Contents/Resources/vocoder.onnx"
+cp "$ROOT/resources/fonts/BeVietnamPro-OFL.txt" "$APP/Contents/Resources/licenses/"
 
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

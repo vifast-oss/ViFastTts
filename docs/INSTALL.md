@@ -141,8 +141,18 @@ Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 `mobile/ios/build-ios.sh`. Thiết bị thật cần ký + ORT device framework.
 
 Sheet **Model** trong app tìm/tải `.vfa/.vfts` qua server, lưu Application
-Support và tự nạp lại C ABI. Phần iOS chưa được chạy thật trên máy không có
-Xcode/iOS SDK.
+Support và tự nạp lại C ABI.
+
+App có **Local** và **Remote**:
+
+- Local: FFI + ONNX Runtime iOS, model bundled/`.vfa/.vfts`.
+- Remote: nhập Server URL (`http://127.0.0.1:8000`, LAN hoặc online) + Bearer
+  token, gọi `/api/tts`.
+- HTTP dev dùng ATS exception + mô tả Local Network; production nên HTTPS.
+
+Phần iOS mới là source scaffold, chưa chạy thật vì máy build không có
+Xcode/iOS SDK. Cài Xcode cần Apple ID/2FA (App Store hoặc Apple Developer),
+không thể chỉ bằng mật khẩu sudo.
 
 ## Từ source
 

@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -50,8 +51,34 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "ViFastTts Desktop",
         options,
-        Box::new(move |cc| Ok(Box::new(DesktopApp::new(cc, settings)))),
+        Box::new(move |cc| {
+            // Font mặc định của egui thiếu đầy đủ glyph tiếng Việt (dấu bị mất).
+            install_vietnamese_font(&cc.egui_ctx);
+            Ok(Box::new(DesktopApp::new(cc, settings)))
+        }),
     )
+}
+
+/// Be Vietnam Pro (OFL) phủ đủ chữ có dấu; thêm làm font chính cho UI.
+fn install_vietnamese_font(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+    fonts.font_data.insert(
+        "be_vietnam_pro".to_owned(),
+        Arc::new(egui::FontData::from_static(include_bytes!(
+            "../../../../../../resources/fonts/BeVietnamPro-Regular.ttf"
+        ))),
+    );
+    fonts
+        .families
+        .entry(egui::FontFamily::Proportional)
+        .or_default()
+        .insert(0, "be_vietnam_pro".to_owned());
+    fonts
+        .families
+        .entry(egui::FontFamily::Monospace)
+        .or_default()
+        .push("be_vietnam_pro".to_owned());
+    ctx.set_fonts(fonts);
 }
 
 /// Kiểm tra headless: nạp model + synth + kiểm WAV, không mở cửa sổ.

@@ -1,7 +1,10 @@
 # ViFastTts Mobile — iOS
 
-Client SwiftUI **local-first** gọi Rust C ABI (`vifasttts-ffi`) → ONNX Runtime
-iOS → WAV → `AVAudioPlayer`.
+Client SwiftUI **local-first + remote HTTP**:
+
+- Local: Rust C ABI (`vifasttts-ffi`) → ONNX Runtime iOS → WAV.
+- Remote: `POST /api/tts` tới server desktop/LAN/online → WAV.
+- UI chọn Local/Remote, nhập Server URL + Bearer token. `AVAudioPlayer` phát WAV.
 
 ## Trạng thái (29/10/2026)
 
@@ -18,10 +21,12 @@ Không thể tự cài Xcode: cần Apple ID/2FA và App Store/Apple Developer.
 
 ## Có gì
 
-- `App.swift`, `ContentView.swift`: UI SwiftUI tối thiểu (text, đọc, dừng,
-  trạng thái, sheet Model).
+- `App.swift`, `ContentView.swift`: UI SwiftUI tối thiểu (text, local/remote,
+  server URL/token, đọc, dừng, trạng thái, sheet Model).
 - `TtsEngine.swift`: cầu nối C ABI, serial queue, synth async, ghi WAV tạm,
   `AVAudioPlayer`; nạp `.vfa/.vfts` và ghi nhớ active model.
+- `RemoteTts.swift`: gọi `/api/tts`, nhận WAV hoặc JSON `audio_base64`,
+  Bearer token; dùng chung Server URL/token với model browser.
 - `ModelCatalog.swift`, `ModelBrowserView.swift`: tìm/tải bundle qua server
   `/api/models/*` dùng chung protocol với web/extension/Android.
 - `ViFastTtsMobile-Bridging-Header.h`: include trực tiếp header canonical của
@@ -51,7 +56,8 @@ script đổ Rust `.a` + framework + model vào đó.
 ## Chưa có
 
 - Chạy trên simulator/thiết bị thật, ký Apple Developer, XCFramework/bitcode.
-- Sheet Model mới ở mức source; chưa được typecheck bằng Xcode/iOS SDK trên máy này.
+- Source đã thêm remote; chưa build bằng Xcode/iOS SDK trên máy này.
+- HTTP remote cần `NSAppTransportSecurity` cho dev; production nên HTTPS.
 - Audio session/background playback, streaming PCM, settings/history/dictionary.
 - UniFFI/Swift binding tự sinh; hiện gọi C ABI trực tiếp.
 - ORT iOS adapter hoàn chỉnh: pod archive mới nhất là **1.30.0** (chưa có 1.31.1
