@@ -61,7 +61,7 @@ script đổ Rust `.a` + framework + model vào đó.
 
 - Thiết bị thật: ký Apple Developer, ORT device slice/chứng chỉ.
 - HTTP remote dùng ATS exception cho dev; production nên HTTPS.
-- Audio session/background playback; settings/history/dictionary đã có bản cơ bản.
+- Audio session/background playback (chưa tối ưu); settings/history/dictionary đã có bản cơ bản.
 - UniFFI/Swift binding tự sinh; hiện gọi C ABI trực tiếp.
 - ORT iOS dùng framework **static 1.30.0** (`api-30`); desktop/Android vẫn dùng
   load-dynamic 1.31.1. Build iOS dùng `cargo rustc --crate-type staticlib`, Xcode
