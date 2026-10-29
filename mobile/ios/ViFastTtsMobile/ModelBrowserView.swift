@@ -9,7 +9,7 @@ struct ModelBrowserView: View {
     @State private var models: [CatalogModel] = []
     @State private var files: [CatalogFile] = []
     @State private var selectedRepo = ""
-    @State private var status = "Nhập server URL rồi tìm model."
+    @State private var status = "Để trống Server URL để tải HuggingFace trực tiếp."
     @State private var busy = false
     @State private var error: String?
 

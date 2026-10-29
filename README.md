@@ -45,7 +45,7 @@ Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.m
 | CLI / TUI | Gọi HuggingFace API trực tiếp | **Không** |
 | Web mở qua server | Gọi `/api/models/*` của server | Có (server đang phục vụ web) |
 | Chrome extension | Gọi `/api/models/*` của server | Có (mặc định `http://127.0.0.1:8000`) |
-| Android / iOS | Gọi `/api/models/*` của server LAN | Có (nhập IP LAN của máy chạy server) |
+| Android / iOS | Trực tiếp HuggingFace nếu Server URL trống; hoặc server LAN | **Không bắt buộc** |
 | Web tĩnh (file HTML) | Không tìm; nạp `.vfa/.vfts` thủ công | Không |
 
 - **Desktop** dùng `vifasttts-model-manager` + HuggingFace adapter trực tiếp. Nút
@@ -54,7 +54,8 @@ Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.m
 - **Extension** không gọi HuggingFace trực tiếp. Nó gọi server để tránh CORS và để
   server kiểm hash; nếu server tắt, extension vẫn đọc được model bundled nhưng
   không tìm/tải model mới.
-- **Android/iOS** cũng gọi server. Server URL mặc định để **trống**; nhập kiểu
+- **Android/iOS** ưu tiên tải trực tiếp HuggingFace khi Server URL để **trống**
+  (native không bị CORS). Nếu muốn dùng server để kiểm hash/catalog tập trung, nhập
   `http://192.168.1.100:8000` (cùng Wi-Fi/LAN), bật **Cho phép LAN** trên desktop
   và mở firewall. Điện thoại không dùng được `127.0.0.1` của máy tính.
 - **Web** khi được server phục vụ dùng API server; bản web tĩnh chỉ nạp bundle thủ công.

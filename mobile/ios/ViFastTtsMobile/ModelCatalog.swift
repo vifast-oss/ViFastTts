@@ -30,11 +30,19 @@ struct CatalogFile: Decodable, Identifiable {
 struct ModelCatalogClient {
     let baseURL: String
     let token: String
+    /// URL trống = gọi HuggingFace trực tiếp (native không bị CORS).
+    let direct: Bool
 
-    private func endpoint(_ path: String, query: [URLQueryItem]) throws -> URL {
+    init(baseURL: String, token: String) {
         let trimmed = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard var components = URLComponents(string: trimmed) else {
+        self.direct = trimmed.isEmpty
+        self.baseURL = trimmed.isEmpty ? "https://huggingface.co" : trimmed
+        self.token = token
+    }
+
+    private func endpoint(_ path: String, query: [URLQueryItem]) throws -> URL {
+        guard var components = URLComponents(string: baseURL) else {
             throw CatalogError.message("Server URL không hợp lệ")
         }
         components.path += path
@@ -67,25 +75,43 @@ struct ModelCatalogClient {
     }
 
     func search(query: String) async throws -> [CatalogModel] {
-        let url = try endpoint("/api/models/search", query: [
-            URLQueryItem(name: "q", value: query),
-            URLQueryItem(name: "limit", value: "20"),
-        ])
+        let url: URL
+        if direct {
+            url = try endpoint("/api/models", query: [
+                URLQueryItem(name: "search", value: query),
+                URLQueryItem(name: "limit", value: "20"),
+                URLQueryItem(name: "full", value: "true"),
+            ])
+        } else {
+            url = try endpoint("/api/models/search", query: [
+                URLQueryItem(name: "q", value: query),
+                URLQueryItem(name: "limit", value: "20"),
+            ])
+        }
         return try JSONDecoder().decode([CatalogModel].self, from: try await get(url))
     }
 
     func files(repo: String) async throws -> [CatalogFile] {
-        let url = try endpoint("/api/models/files", query: [
-            URLQueryItem(name: "repo", value: repo),
-        ])
-        return try JSONDecoder().decode([CatalogFile].self, from: try await get(url))
+        let url = try endpoint(
+            direct ? "/api/models/\(repo)/tree/main" : "/api/models/files",
+            query: direct ? [URLQueryItem(name: "recursive", value: "true")]
+                : [URLQueryItem(name: "repo", value: repo)]
+        )
+        let files = try JSONDecoder().decode([CatalogFile].self, from: try await get(url))
+        guard direct else { return files }
+        return files.filter {
+            $0.path.hasSuffix(".vfa") || $0.path.hasSuffix(".vfts")
+        }
     }
 
     func download(repo: String, path: String) async throws -> (Data, String) {
-        let url = try endpoint("/api/models/download", query: [
-            URLQueryItem(name: "repo", value: repo),
-            URLQueryItem(name: "path", value: path),
-        ])
+        let url = try endpoint(
+            direct ? "/\(repo)/resolve/main/\(path)" : "/api/models/download",
+            query: direct ? [] : [
+                URLQueryItem(name: "repo", value: repo),
+                URLQueryItem(name: "path", value: path),
+            ]
+        )
         let data = try await get(url)
         let name = path.split(separator: "/").last.map(String.init) ?? "model.vfa"
         guard name.hasSuffix(".vfa") || name.hasSuffix(".vfts") else {

@@ -35,7 +35,7 @@ Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
 | Desktop | Trực tiếp trong app | **Không** |
 | CLI/TUI | Trực tiếp | **Không** |
 | Extension | `/api/models/*` | Có, mặc định `http://127.0.0.1:8000` |
-| Android/iOS | `/api/models/*` | Có, nhập IP LAN của desktop |
+| Android/iOS | HuggingFace trực tiếp nếu URL trống; hoặc `/api/models/*` | **Không bắt buộc** |
 | Web qua server | `/api/models/*` | Có |
 | Web tĩnh | Không tìm, nạp file thủ công | Không |
 
@@ -141,7 +141,8 @@ Tải `vifasttts-mobile-android.apk` (debug, chưa ký store), bật **Install u
 mở. Đây là client local ONNX + remote HTTP:
 
 - mặc định **local**, model FP32 ~86 MB đóng trong APK;
-- nút **Tải model .vfa/.vfts** tìm/tải qua server `/api/models/*`, lưu vào
+- nút **Tải model .vfa/.vfts**: để trống Server URL thì tải **trực tiếp
+  HuggingFace**; nhập URL server LAN thì tải qua `/api/models/*`; lưu vào
   `filesDir/models/` và dùng cho lần đọc local sau;
 - tick **Dùng server remote**, nhập URL desktop (`http://IP:8000`) hoặc server
   online, token nếu có;
@@ -155,7 +156,8 @@ mở. Đây là client local ONNX + remote HTTP:
 Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 `mobile/ios/build-ios.sh`. Thiết bị thật cần ký + ORT device framework.
 
-Sheet **Model** trong app tìm/tải `.vfa/.vfts` qua server, lưu Application
+Sheet **Model** trong app: để trống Server URL thì tìm/tải trực tiếp
+HuggingFace; nhập URL server LAN thì qua `/api/models/*`; lưu Application
 Support và tự nạp lại C ABI.
 
 App có **Local** và **Remote**:

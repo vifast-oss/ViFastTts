@@ -6,12 +6,13 @@ Mọi UI dùng **cùng một catalog** và **chỉ tải bundle**:
   `vifasttts-huggingface`.
 - web/extension: module chung `web/shared/model-api.js` (extension copy qua
   `extension/build.sh`).
-- Android/iOS: gọi HTTP API `/api/models/*` của server.
+- Android/iOS: mặc định gọi HuggingFace **trực tiếp** khi Server URL trống;
+  nhập URL server LAN thì dùng `/api/models/*` (proxy/kiểm hash).
 - Server: `vifasttts-model-manager` kiểm manifest/hash trước khi trả file.
 
-**Desktop/CLI/TUI tìm HuggingFace trực tiếp**, không cần server. **Extension,
-Android, iOS và web chạy qua server** dùng `/api/models/*`; server phải chạy và
-điện thoại phải nhập IP LAN (không dùng `127.0.0.1`).
+**Desktop/CLI/TUI/Android/iOS tìm HuggingFace trực tiếp**, không cần server.
+Extension và web chạy qua server dùng `/api/models/*`; nếu dùng server cho mobile
+thì nhập IP LAN (không dùng `127.0.0.1`).
 
 Raw `acoustic.onnx`/`vocoder.onnx` là file nội bộ/dev, không hiện trong catalog
 người dùng.
@@ -26,8 +27,8 @@ người dùng.
 | Web (server) | ✅ mục HuggingFace | ✅ qua `/api/models/download` | ✅ ORT Web |
 | Web (static) | — | ✅ input file | ✅ ORT Web |
 | Extension | ✅ Cài đặt → HuggingFace | ✅ cache + active bundle | ✅ ORT Web |
-| Android | ✅ nút Tải model | ✅ lưu `filesDir/models` | ✅ FFI `.vfa/.vfts` |
-| iOS | ✅ sheet Model | ✅ Application Support | ✅ FFI `.vfa/.vfts` + remote HTTP (simulator đã chạy) |
+| Android | ✅ nút Tải model (trực tiếp nếu URL trống) | ✅ lưu `filesDir/models` | ✅ FFI `.vfa/.vfts` |
+| iOS | ✅ sheet Model (trực tiếp nếu URL trống) | ✅ Application Support | ✅ FFI `.vfa/.vfts` + remote HTTP (simulator đã chạy) |
 
 ## Desktop
 
@@ -117,7 +118,7 @@ CORS và tránh tải file raw.
 
 Nút **Tải model .vfa/.vfts**:
 
-- dùng Server URL + Bearer token đang nhập;
+- để trống Server URL → tải trực tiếp HuggingFace; nhập URL → qua server;
 - tìm repo → chọn file → tải vào `filesDir/models/`;
 - lưu active model trong `SharedPreferences`;
 - lần đọc local sau dùng FFI:
@@ -130,7 +131,7 @@ Remote mode vẫn dùng `/api/tts`, không cần model local.
 
 Sheet **Model** trong app:
 
-- nhập Server URL + token;
+- để trống Server URL → tải trực tiếp HuggingFace; nhập URL → qua server;
 - tìm repo, chọn file;
 - lưu vào Application Support, gọi `TtsEngine.loadModel`;
 - `.vfts/.vfa` nạp qua C ABI; `.vfa` dùng vocoder bundled.

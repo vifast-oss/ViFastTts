@@ -6,7 +6,7 @@
   - `assets/acoustic.onnx` ~31,6 MB
   - `assets/vocoder.onnx` ~54,2 MB
   - APK ~110 MB; copy sang `filesDir` lần đầu.
-- **Không tải model từ HuggingFace** khi chạy lần đầu.
+- Model bundled có sẵn; model browser có thể tải HuggingFace trực tiếp nếu Server URL trống.
 - Chỉ có một model; chưa có catalog/chọn giọng/tải thêm.
 - Android đã có **local + remote**; remote gọi `/api/tts` của desktop/server.
 - Không có server mode trên mobile (theo quyết định hiện tại).
@@ -70,7 +70,7 @@ Nên dùng **catalog** thay vì hard-code URL:
 }
 ```
 
-- Nguồn catalog: HuggingFace (`models.json`) và/hoặc desktop server `/api/models`.
+- Nguồn catalog: HuggingFace trực tiếp (mặc định khi Server URL trống) hoặc desktop server `/api/models` (tuỳ chọn).
 - File tải nên là `.vfts` (manifest + ONNX + dictionary snapshot) để một file
   chứa đủ model và kiểm hash.
 - Client lưu nhiều model, chọn active model; xoá từng model; không tải trùng.

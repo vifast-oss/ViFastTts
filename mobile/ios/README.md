@@ -28,8 +28,8 @@ sudo. Thiết bị thật vẫn cần ký Apple Developer và ORT device slice.
   `AVAudioPlayer`; nạp `.vfa/.vfts` và ghi nhớ active model.
 - `RemoteTts.swift`: gọi `/api/tts`, nhận WAV hoặc JSON `audio_base64`,
   Bearer token; dùng chung Server URL/token với model browser.
-- `ModelCatalog.swift`, `ModelBrowserView.swift`: tìm/tải bundle qua server
-  `/api/models/*` dùng chung protocol với web/extension/Android.
+- `ModelCatalog.swift`, `ModelBrowserView.swift`: Server URL trống → gọi
+  HuggingFace trực tiếp; nhập URL → qua server `/api/models/*`.
 - `ViFastTtsMobile-Bridging-Header.h`: include trực tiếp header canonical của
   crate FFI, không copy hợp đồng.
 - `project.yml`: XcodeGen spec; link `libvifasttts_ffi.a` + `onnxruntime.framework`.

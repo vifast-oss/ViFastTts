@@ -14,8 +14,8 @@ production. UI SwiftUI/Compose/Flutter cuối cùng vẫn chưa chốt.
   release asset đổi tên thành `vifasttts-mobile-android.apk`.
 - Bấm **Đọc** local với câu mặc định → status `Xong: 4.41 s`; WAV thật trong
   `cache/vifasttts.wav` dài **4,412 s / 24 kHz / mono / PCM16**.
-- Remote mode (checkbox **Dùng server remote**, URL mặc định
-  `http://10.0.2.2:8000` cho emulator) đã test: server desktop trả WAV,
+- Remote mode (**Remote** + URL server LAN; URL mặc định để trống) đã test:
+  server desktop trả WAV, emulator dùng `http://10.0.2.2:8000` nếu cần,
   `cache/vifasttts-remote.wav` ~2,38 s. Trên điện thoại đổi URL thành IP desktop
   hoặc server online; token nếu server đặt `--token`.
 - Không nghe được trong lần chạy này vì emulator bật `-no-audio`; `MediaPlayer`
@@ -79,13 +79,14 @@ adb shell am start -n com.vifasttts.mobile/.MainActivity
 - Local mặc định vẫn đóng model FP32 ~86 MB trong APK (`assets/`) và copy sang
   `filesDir`; remote mode không cần model local.
 - Nút **Tải model .vfa/.vfts** (29/10/2026):
-  - gọi server `/api/models/search|files|download` bằng URL/token đang nhập;
+  - Server URL trống → gọi trực tiếp HuggingFace;
+  - nhập Server URL → gọi `/api/models/search|files|download` qua server;
   - lưu vào `filesDir/models/`, ghi active model vào `SharedPreferences`;
   - `.vfts` nạp bằng `vifasttts_engine_new_vfts`;
   - `.vfa` nạp bằng `vifasttts_engine_new_vfa` + `vocoder.onnx` bundled;
   - remote mode vẫn độc lập, không cần tải model.
 - UI vẫn là smoke client (programmatic view), chưa Compose; catalog nằm ở
-  server, không lặp logic HuggingFace trong Java.
+  server; vẫn có fallback gọi HuggingFace trực tiếp khi URL trống.
 - Theme/icon dùng chung: `VfTheme.java`, font Be Vietnam Pro, launcher icon
   lấy từ `resources/brand/vifasttts-icon-512.png`.
 - Chưa có: Compose UI, audio focus/foreground service, streaming PCM xuống

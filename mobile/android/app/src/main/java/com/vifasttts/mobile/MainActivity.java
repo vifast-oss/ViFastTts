@@ -194,6 +194,50 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    /** Trống Server URL = tải trực tiếp HuggingFace (native không bị CORS). */
+    private boolean directModelMode() {
+        return baseUrl().isEmpty();
+    }
+
+    private String modelSource() {
+        return directModelMode() ? "HuggingFace trực tiếp" : "server " + baseUrl();
+    }
+
+    private static String encodePath(String value) {
+        StringBuilder out = new StringBuilder();
+        String[] parts = value.split("/", -1);
+        for (int index = 0; index < parts.length; index += 1) {
+            if (index > 0) out.append('/');
+            out.append(encode(parts[index]).replace("+", "%20"));
+        }
+        return out.toString();
+    }
+
+    private String modelSearchUrl(String query) {
+        if (directModelMode()) {
+            return "https://huggingface.co/api/models?search=" + encode(query)
+                    + "&limit=20&full=true";
+        }
+        return baseUrl() + "/api/models/search?q=" + encode(query) + "&limit=20";
+    }
+
+    private String modelFilesUrl(String repo) {
+        if (directModelMode()) {
+            return "https://huggingface.co/api/models/" + encodePath(repo)
+                    + "/tree/main?recursive=true";
+        }
+        return baseUrl() + "/api/models/files?repo=" + encode(repo);
+    }
+
+    private String modelDownloadUrl(String repo, String path) {
+        if (directModelMode()) {
+            return "https://huggingface.co/" + encodePath(repo)
+                    + "/resolve/main/" + encodePath(path);
+        }
+        return baseUrl() + "/api/models/download?repo=" + encode(repo)
+                + "&path=" + encode(path);
+    }
+
     private void setMode(String next) {
         mode = "remote".equals(next) ? "remote" : "local";
         remoteMode = "remote".equals(mode);
@@ -204,8 +248,8 @@ public class MainActivity extends Activity {
         remoteFields.setVisibility(remoteMode ? View.VISIBLE : View.GONE);
         subtitle.setText(remoteMode ? "Remote HTTP · server API" : "Local ONNX · Rust C ABI");
         hintLabel.setText(remoteMode
-                ? "Remote gọi /api/tts; server có thể là desktop LAN hoặc online."
-                : "Local dùng model bundled hoặc .vfa/.vfts đã tải.");
+                ? "Remote TTS dùng /api/tts. Model browser: để trống URL = tải HuggingFace trực tiếp, nhập URL = qua server."
+                : "Local dùng model bundled hoặc .vfa/.vfts đã tải. Model browser tự tải trực tiếp HuggingFace nếu Server URL trống.");
     }
 
     private void setBusy(boolean value) {
@@ -392,11 +436,10 @@ public class MainActivity extends Activity {
     }
 
     private void searchModels(String query) {
-        if (!requireServer()) return;
-        status.setText("Đang tìm model…");
+        status.setText("Đang tìm model qua " + modelSource() + "…");
         new Thread(() -> {
             try {
-                byte[] body = getBytes(baseUrl() + "/api/models/search?q=" + encode(query) + "&limit=20");
+                byte[] body = getBytes(modelSearchUrl(query));
                 JSONArray models = new JSONArray(new String(body, StandardCharsets.UTF_8));
                 if (models.length() == 0) {
                     setStatus("Không thấy repo model.");
@@ -419,11 +462,10 @@ public class MainActivity extends Activity {
     }
 
     private void loadFiles(String repo) {
-        if (!requireServer()) return;
-        status.setText("Đang xem " + repo + "…");
+        status.setText("Đang xem " + repo + " qua " + modelSource() + "…");
         new Thread(() -> {
             try {
-                byte[] body = getBytes(baseUrl() + "/api/models/files?repo=" + encode(repo));
+                byte[] body = getBytes(modelFilesUrl(repo));
                 JSONArray files = new JSONArray(new String(body, StandardCharsets.UTF_8));
                 if (files.length() == 0) {
                     setStatus("Repo chưa có .vfa/.vfts.");
@@ -433,7 +475,9 @@ public class MainActivity extends Activity {
                 List<String> paths = new ArrayList<>();
                 for (int index = 0; index < files.length(); index += 1) {
                     JSONObject file = files.getJSONObject(index);
-                    String path = file.getString("path");
+                    if (!"file".equals(file.optString("type", "file"))) continue;
+                    String path = file.optString("path", "");
+                    if (!path.endsWith(".vfa") && !path.endsWith(".vfts")) continue;
                     paths.add(path);
                     labels.add(path + " — " + (file.optLong("size", 0) / 1_000_000) + " MB");
                 }
@@ -454,11 +498,10 @@ public class MainActivity extends Activity {
         status.setText("Đang tải " + path + "…");
         new Thread(() -> {
             try {
-                byte[] bytes = getBytes(baseUrl() + "/api/models/download?repo=" + encode(repo)
-                        + "&path=" + encode(path));
+                byte[] bytes = getBytes(modelDownloadUrl(repo, path));
                 String name = path.substring(path.lastIndexOf('/') + 1).replaceAll("[^A-Za-z0-9._-]", "_");
                 if (!name.endsWith(".vfa") && !name.endsWith(".vfts")) {
-                    throw new IllegalStateException("Server trả file không phải .vfa/.vfts");
+                    throw new IllegalStateException("Nguồn trả file không phải .vfa/.vfts");
                 }
                 File directory = new File(getFilesDir(), "models");
                 if (!directory.exists() && !directory.mkdirs()) {
