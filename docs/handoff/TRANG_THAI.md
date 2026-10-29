@@ -17,7 +17,7 @@
 4. Demo có **cách đọc tự thêm**, từ điển **229 quy tắc tinh gọn** + fallback tiếng Anh,
    ví dụ STEM (hoá học/toán/vật lý/LaTeX),
    góp ý/báo lỗi và thống kê; nội dung góp ý còn khoá vì chưa đặt `ADMIN_PASSWORD`.
-5. Test **2.941 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
+5. Test **2.942 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
 
 ## 1. Đang chạy production
 
@@ -92,7 +92,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 5. Test / tài liệu
 
-- `pytest -q`: **2.941 passed, 24 skipped** (~40 s).
+- `pytest -q`: **2.942 passed, 24 skipped** (~40 s).
 - `ruff check .`: sạch.
 - Parser audit: **49.104 tổ hợp, 0 vấn đề**; wordlist 39K: 6.617/6.633 parse OK.
 - Tài liệu hiện hành: `docs/README.md`; lịch sử: `docs/archive/README.md`.
