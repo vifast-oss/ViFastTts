@@ -17,7 +17,7 @@
 4. Demo có **cách đọc tự thêm**, từ điển **229 quy tắc tinh gọn** + fallback tiếng Anh,
    ví dụ STEM (hoá học/toán/vật lý/LaTeX),
    góp ý/báo lỗi và thống kê; nội dung góp ý còn khoá vì chưa đặt `ADMIN_PASSWORD`.
-5. Test **2.916 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
+5. Test **2.936 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
 
 ## 1. Đang chạy production
 
@@ -51,7 +51,10 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 3. Release & Hugging Face
 
-- **GitHub Releases cũ: đã xoá toàn bộ ngày 29/10/2026.**
+- **GitHub Releases:** bản mới nhất **v0.3.0** (30/10/2026) — Android 0.3.0,
+  iOS simulator stream local/remote, desktop/CLI 3 nền tảng, extension, web,
+  `.vfa/.vfts`; kèm `SHA256SUMS.txt`. Bản **v0.2.0** vẫn giữ để đối chiếu.
+  Web Python + HF Space đã cập nhật link v0.3.0.
 - Hugging Face small: https://huggingface.co/dvchd/vifasttts-ngochuyen-small (ONNX Q, `.vfa`/`.vfts`).
 - Bundle: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
 - Base 60k sau Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
@@ -86,7 +89,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 5. Test / tài liệu
 
-- `pytest -q`: **2.916 passed, 24 skipped** (~40 s).
+- `pytest -q`: **2.936 passed, 24 skipped** (~40 s).
 - `ruff check .`: sạch.
 - Parser audit: **49.104 tổ hợp, 0 vấn đề**; wordlist 39K: 6.617/6.633 parse OK.
 - Tài liệu hiện hành: `docs/README.md`; lịch sử: `docs/archive/README.md`.
