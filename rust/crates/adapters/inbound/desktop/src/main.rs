@@ -848,6 +848,11 @@ impl DesktopApp {
         Some(socket.local_addr().ok()?.ip().to_string())
     }
 
+    fn port_busy(port: u16) -> bool {
+        let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+        std::net::TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok()
+    }
+
     fn server_binary() -> PathBuf {
         let name = if cfg!(windows) {
             "vifasttts.exe"
@@ -867,6 +872,14 @@ impl DesktopApp {
 
     fn start_server(&mut self) {
         if self.server_child.is_some() {
+            return;
+        }
+        if Self::port_busy(self.settings.server_port) {
+            self.server_status = format!(
+                "Port {} đang bận; tắt server/process khác hoặc đổi port.",
+                self.settings.server_port
+            );
+            self.error = Some(self.server_status.clone());
             return;
         }
         let binary = Self::server_binary();
