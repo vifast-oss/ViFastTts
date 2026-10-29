@@ -132,7 +132,7 @@ curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
 - ONNX live: `onnx/acoustic.onnx` (`df61599a…`) + `onnx/vocoder.onnx` (`b3eb09cf…`)
   trong repo small.
 - Bundle app: `bundles/n0-ngochuyen.vfa` / `.vfts` (Q-init, đang live).
-- Base N0 gốc trước Q: repo riêng `dvchd/vifasttts-ngochuyen-base`.
+- Base 60k sau Q: repo riêng `dvchd/vifasttts-ngochuyen-base`.
 - GitHub Releases cũ đã xoá ngày 29/10/2026; nguồn phân phối chính là HuggingFace.
 
 ## 5. Giới hạn

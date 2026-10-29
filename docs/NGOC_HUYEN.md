@@ -120,7 +120,7 @@ Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùn
   `artifacts/onnx/n0_q_ft/`; bản N0 cũ `artifacts/onnx/n0/` bị runtime mới từ chối.
 - Release:
   - bundle app hiện tại: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
-  - base N0 archive trước Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
+  - base 60k sau Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
   - 3 mẫu VPS: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo
   - GitHub Releases cũ đã xoá ngày 29/10/2026; nguồn phân phối chính là HuggingFace.
 

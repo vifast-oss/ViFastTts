@@ -145,9 +145,10 @@ Large ≈ 32M.
   Khác biệt **chưa đủ mạnh** (7–2, p ≈ 0,18); small vẫn ổn.
 - Lỗi từ điển phát hiện trong lượt này: `Qualcomm` và `H2SO4` bị fallback thành "a"
   trong benchmark local vì chưa nạp đủ built-in/approved; đã merge các quy tắc lõi vào
-  `configs/overrides_tech_vi.json` (229 quy tắc) + test; A/B mới chuẩn hoá bằng từ điển production.
+  `configs/overrides_vi.json` (229 quy tắc) + test; A/B mới chuẩn hoá bằng từ điển production.
 - Quyết định: **giữ small production**; không promote base60.
-- Không release công khai base60: không thắng đủ rõ, chậm/nặng hơn small; giữ checkpoint local để tái lập nghiên cứu.
+- Base60 **không promote production**, nhưng đã công bố research trên HuggingFace
+  `dvchd/vifasttts-ngochuyen-base` (29/10/2026) để tái lập/so sánh.
 
 ## 4. Mặc định suy luận N0
 

@@ -66,7 +66,7 @@ cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần to
   `ADMIN_PASSWORD` (nội dung bị khoá nếu chưa đặt).
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Model bundles:** [.vfa/.vfts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles) ·
-  [base N0 gốc trước Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
+  [base 60k sau Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
   [3 mẫu nghe](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo)
 
 ### Chọn đúng luồng

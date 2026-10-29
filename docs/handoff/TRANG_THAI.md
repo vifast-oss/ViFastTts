@@ -54,7 +54,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 - **GitHub Releases cũ: đã xoá toàn bộ ngày 29/10/2026.**
 - Hugging Face small: https://huggingface.co/dvchd/vifasttts-ngochuyen-small (ONNX Q, `.vfa`/`.vfts`).
 - Bundle: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
-- Base N0 archive: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
+- Base 60k sau Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
 - 3 WAV mẫu: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo (`fetch_demo_samples.sh`).
 - Static Space: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 

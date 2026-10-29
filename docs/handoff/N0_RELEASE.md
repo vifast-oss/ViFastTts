@@ -3,7 +3,7 @@
 > **LƯU TRỮ LỊCH SỬ:** toàn bộ release trong tài liệu này đã bị xoá ngày
 > 29/10/2026. Nguồn phân phối hiện tại là HuggingFace:
 > `dvchd/vifasttts-ngochuyen-small` (bundle/ONNX) và
-> `dvchd/vifasttts-ngochuyen-base` (base N0 trước Q).
+> `dvchd/vifasttts-ngochuyen-base` (base 60k sau Q).
 
 
 > **Trạng thái:** 2 release chính (`prod`, `research`) + **1 preview tạm** cho A/B Q-init vs

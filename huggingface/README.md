@@ -31,7 +31,7 @@ Repo này chứa checkpoint, config, stats, ONNX FP32, Vocos pretrained và 10 c
 - `bundles/n0-ngochuyen.vfa` — acoustic-only, dùng `onnx/vocoder.onnx`.
 - `bundles/n0-ngochuyen.vfts` — full bundle, tự chứa vocoder + frontend.
 - `resources/` là bản sao tiện dụng của hai bundle trên (cùng SHA256).
-- Base N0 gốc **trước Q** nằm ở repo riêng:
+- Base 60k **sau Q** nằm ở repo riêng:
   https://huggingface.co/dvchd/vifasttts-ngochuyen-base
 
 ## Vocab Q (27/10/2026)
@@ -124,7 +124,7 @@ demo/                                   # 10 câu mới + texts.json
 - Hugging Face: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - Space demo: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - Model bundles: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
-- Base N0 archive: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
+- Base 60k sau Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
 - ONNX: `onnx/acoustic.onnx`, `onnx/vocoder.onnx`
 
 ## Giới hạn
