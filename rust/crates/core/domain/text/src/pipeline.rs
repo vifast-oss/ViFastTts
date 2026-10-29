@@ -263,6 +263,18 @@ mod tests {
     }
 
     #[test]
+    fn ios_uses_english_reading() {
+        let options = live_parse_options(Dialect::North, None, None);
+        assert_eq!(normalize_input("iOS", &options), "ai âu ét");
+    }
+
+    #[test]
+    fn android_uses_natural_reading() {
+        let options = live_parse_options(Dialect::North, None, None);
+        assert_eq!(normalize_input("Android", &options), "an đờ roi");
+    }
+
+    #[test]
     fn fallback_encodable() {
         let items = parse_text_default("Zibble");
         assert_eq!(items.len(), 1);

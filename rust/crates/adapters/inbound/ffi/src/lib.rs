@@ -10,10 +10,14 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::ptr;
 use std::slice;
 
+use vifasttts_app::parse_dictionary;
 use vifasttts_native::{
     NativeEngine, StreamControl, SynthesisOptions, from_bytes, load, load_vfa, load_vfa_auto,
     load_vfts, ort_info,
 };
+use vifasttts_text::dialect::Dialect;
+use vifasttts_text::karaoke::KaraokeDocument;
+use vifasttts_text::pipeline::live_parse_options;
 
 thread_local! {
     static LAST_ERROR: RefCell<CString> = RefCell::new(CString::new("").unwrap());
@@ -67,6 +71,18 @@ fn c_text(value: *const c_char) -> Result<String, String> {
         .map_err(|_| "text không phải UTF-8".to_string())
 }
 
+/// Chuỗi tuỳ chọn: NULL/chuỗi rỗng đều trả None.
+fn c_text_optional(value: *const c_char) -> Result<Option<String>, String> {
+    if value.is_null() {
+        return Ok(None);
+    }
+    let text = unsafe { CStr::from_ptr(value) }
+        .to_str()
+        .map_err(|_| "chuỗi không phải UTF-8".to_string())?
+        .to_string();
+    Ok((!text.trim().is_empty()).then_some(text))
+}
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct VifasttOptions {
@@ -107,6 +123,28 @@ fn synth_options(options: *const VifasttOptions) -> SynthesisOptions {
         result.gate_threshold = 1.01;
     }
     result
+}
+
+/// Options + các trường mobile cần nhưng chưa có trong struct ABI cũ.
+/// Tách hàm `_ex` để không phá client FFI đang dùng `VifasttOptions`.
+fn synth_options_ex(
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: bool,
+    dictionary: *const c_char,
+) -> Result<SynthesisOptions, String> {
+    let mut result = synth_options(options);
+    let dialect_name = c_text_optional(dialect)?.unwrap_or_else(|| "north".to_string());
+    let dialect = Dialect::from_name(&dialect_name)?;
+    let dictionary_text = c_text_optional(dictionary)?;
+    let mut merged = std::collections::HashMap::new();
+    if let Some(text) = dictionary_text {
+        merged.extend(parse_dictionary(&text).overrides());
+    }
+    let mut parse = live_parse_options(dialect, Some(&merged), None);
+    parse.resolve_oov = resolve_oov;
+    result.parse = parse;
+    Ok(result)
 }
 
 fn guard<T>(default: T, f: impl FnOnce() -> Result<T, String>) -> T {
@@ -277,6 +315,99 @@ pub extern "C" fn vifasttts_synthesize_karaoke(
             *out_karaoke = json.into_raw();
         }
         Ok(0)
+    })
+}
+
+/// Như `vifasttts_synthesize` nhưng nhận dialect/OOV/từ điển text.
+///
+/// Các tham số chuỗi có thể NULL; `dictionary` dùng cùng cú pháp `key = cách đọc`.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_ex(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    out_len: *mut usize,
+) -> *mut u8 {
+    guard(ptr::null_mut(), || {
+        if engine.is_null() || out_len.is_null() {
+            return Err("engine/out_len null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex(options, dialect, resolve_oov != 0, dictionary)?;
+        let engine = unsafe { &mut *engine };
+        let result = engine.synthesize(&text, &options)?;
+        let bytes: Box<[u8]> = result.wav.into_boxed_slice();
+        let len = bytes.len();
+        let ptr = Box::into_raw(bytes) as *mut u8;
+        unsafe { *out_len = len };
+        Ok(ptr)
+    })
+}
+
+/// Như `vifasttts_synthesize_karaoke` nhưng nhận dialect/OOV/từ điển text.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_karaoke_ex(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    out_wav: *mut *mut u8,
+    out_wav_len: *mut usize,
+    out_karaoke: *mut *mut c_char,
+) -> i32 {
+    guard(-1, || {
+        if engine.is_null() || out_wav.is_null() || out_wav_len.is_null() || out_karaoke.is_null() {
+            return Err("engine/out null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex(options, dialect, resolve_oov != 0, dictionary)?;
+        let engine = unsafe { &mut *engine };
+        let result = engine.synthesize(&text, &options)?;
+        let document = result
+            .karaoke
+            .ok_or_else(|| "model không xuất timing (slot_durations)".to_string())?;
+        let json =
+            serde_json::to_string(&document).map_err(|err| format!("serialize karaoke: {err}"))?;
+        let json = CString::new(json).map_err(|_| "karaoke JSON chứa NUL".to_string())?;
+        let bytes: Box<[u8]> = result.wav.into_boxed_slice();
+        let len = bytes.len();
+        unsafe {
+            *out_wav = Box::into_raw(bytes) as *mut u8;
+            *out_wav_len = len;
+            *out_karaoke = json.into_raw();
+        }
+        Ok(0)
+    })
+}
+
+/// Chuyển JSON karaoke thành SRT; caller giải phóng bằng `vifasttts_string_free`.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_karaoke_to_srt(json: *const c_char) -> *mut c_char {
+    guard(ptr::null_mut(), || {
+        let text = c_text(json)?;
+        let document: KaraokeDocument =
+            serde_json::from_str(&text).map_err(|err| format!("karaoke JSON: {err}"))?;
+        CString::new(document.to_srt())
+            .map(CString::into_raw)
+            .map_err(|_| "SRT chứa NUL".to_string())
+    })
+}
+
+/// Chuyển JSON karaoke thành WebVTT karaoke; caller giải phóng bằng `vifasttts_string_free`.
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_karaoke_to_vtt(json: *const c_char) -> *mut c_char {
+    guard(ptr::null_mut(), || {
+        let text = c_text(json)?;
+        let document: KaraokeDocument =
+            serde_json::from_str(&text).map_err(|err| format!("karaoke JSON: {err}"))?;
+        CString::new(document.to_vtt_karaoke())
+            .map(CString::into_raw)
+            .map_err(|_| "VTT chứa NUL".to_string())
     })
 }
 

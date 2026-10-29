@@ -89,8 +89,18 @@ struct HttpTtsRequest {
     text: String,
     #[serde(default = "one")]
     speed: f32,
+    #[serde(default = "default_alpha")]
+    alpha: f32,
+    #[serde(default = "default_chunk_chars")]
+    max_chars: usize,
     #[serde(default)]
     fixed_pauses: bool,
+    #[serde(default)]
+    peak_normalize: bool,
+    #[serde(default = "default_dialect")]
+    dialect: String,
+    #[serde(default)]
+    resolve_oov: bool,
     /// Trả JSON kèm audio base64 + timing/karaoke thay vì WAV.
     #[serde(default)]
     karaoke: bool,
@@ -100,20 +110,37 @@ struct HttpTtsRequest {
     /// Từ điển dạng text `key = cách đọc` (dùng chung parser `vifasttts-app`).
     #[serde(default)]
     dictionary: Option<String>,
+    /// Custom reading token-level: `{"TP.HCM": "thành phố hồ chí minh"}`.
+    #[serde(default)]
+    custom_reading: Option<HashMap<String, String>>,
 }
 
+fn default_alpha() -> f32 {
+    1.5
+}
+
+fn default_chunk_chars() -> usize {
+    300
+}
+
+fn default_dialect() -> String {
+    "north".to_string()
+}
+
+#[allow(clippy::too_many_arguments)]
 fn synth_options(
     speed: f32,
+    alpha: f32,
+    max_chars: usize,
     fixed_pauses: bool,
+    peak_normalize: bool,
+    dialect: &str,
+    resolve_oov: bool,
     overrides: Option<&HashMap<String, String>>,
     dictionary: Option<&str>,
+    custom_reading: Option<&HashMap<String, String>>,
 ) -> SynthesisOptions {
-    let mut options = SynthesisOptions {
-        speed,
-        fixed_pauses,
-        alpha: 1.5,
-        ..SynthesisOptions::default()
-    };
+    let dialect = Dialect::from_name(dialect).unwrap_or(Dialect::North);
     let mut merged = HashMap::new();
     if let Some(overrides) = overrides {
         merged.extend(
@@ -125,9 +152,18 @@ fn synth_options(
     if let Some(text) = dictionary {
         merged.extend(parse_dictionary(text).overrides());
     }
-    if !merged.is_empty() {
-        options.parse = live_parse_options(Dialect::North, Some(&merged), None);
-    }
+    let mut parse = live_parse_options(dialect, Some(&merged), None);
+    parse.resolve_oov = resolve_oov;
+    parse.custom_reading = custom_reading.cloned();
+    let mut options = SynthesisOptions {
+        speed: speed.clamp(0.5, 2.0),
+        fixed_pauses,
+        alpha: alpha.clamp(0.5, 3.0),
+        max_chars: max_chars.clamp(50, 5000),
+        peak_normalize,
+        parse,
+        ..SynthesisOptions::default()
+    };
     if fixed_pauses {
         options.gate_threshold = 1.01;
     }
@@ -307,7 +343,7 @@ async fn tts_stream(
     if !text.chars().any(char::is_alphabetic) {
         return (StatusCode::UNPROCESSABLE_ENTITY, "Cần ít nhất một chữ cái").into_response();
     }
-    let speed = payload.speed.clamp(0.8, 1.2);
+    let speed = payload.speed.clamp(0.5, 2.0);
     let fixed_pauses = payload.fixed_pauses;
     let state_ref = Arc::clone(&state);
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(64);
@@ -323,9 +359,15 @@ async fn tts_stream(
         };
         let options = synth_options(
             speed,
+            payload.alpha,
+            payload.max_chars,
             fixed_pauses,
+            payload.peak_normalize,
+            &payload.dialect,
+            payload.resolve_oov,
             payload.overrides.as_ref(),
             payload.dictionary.as_deref(),
+            payload.custom_reading.as_ref(),
         );
         let audio_tx = tx.clone();
         let units_tx = tx.clone();
@@ -397,11 +439,17 @@ async fn tts(
     if !text.chars().any(char::is_alphabetic) {
         return (StatusCode::UNPROCESSABLE_ENTITY, "Cần ít nhất một chữ cái").into_response();
     }
-    let speed = payload.speed.clamp(0.8, 1.2);
+    let speed = payload.speed.clamp(0.5, 2.0);
     let fixed_pauses = payload.fixed_pauses;
     let karaoke = payload.karaoke;
+    let alpha = payload.alpha;
+    let max_chars = payload.max_chars;
+    let peak_normalize = payload.peak_normalize;
+    let dialect = payload.dialect;
+    let resolve_oov = payload.resolve_oov;
     let overrides = payload.overrides;
     let dictionary = payload.dictionary;
+    let custom_reading = payload.custom_reading;
     let state_ref = Arc::clone(&state);
     let result = tokio::task::spawn_blocking(move || {
         let mut engine = state_ref
@@ -410,9 +458,15 @@ async fn tts(
             .map_err(|_| "engine lock".to_string())?;
         let options = synth_options(
             speed,
+            alpha,
+            max_chars,
             fixed_pauses,
+            peak_normalize,
+            &dialect,
+            resolve_oov,
             overrides.as_ref(),
             dictionary.as_deref(),
+            custom_reading.as_ref(),
         );
         engine.synthesize(&text, &options)
     })

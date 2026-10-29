@@ -31,6 +31,7 @@ use vifasttts_huggingface::{HfFile, HfModel};
 use vifasttts_model_manager::ModelManager;
 use vifasttts_native::{NativeEngine, SynthesisOptions, load, load_vfa, load_vfts};
 use vifasttts_text::dialect::Dialect;
+use vifasttts_text::karaoke::KaraokeDocument;
 use vifasttts_text::pipeline::live_parse_options;
 
 #[derive(Parser, Debug)]
@@ -51,8 +52,18 @@ pub struct TuiArgs {
     pub token: Option<String>,
     #[arg(long, default_value_t = 1.0)]
     pub speed: f32,
+    #[arg(long, default_value_t = 1.5)]
+    pub alpha: f32,
+    #[arg(long, default_value_t = 300)]
+    pub max_chars: usize,
     #[arg(long)]
     pub fixed_pauses: bool,
+    #[arg(long)]
+    pub peak_normalize: bool,
+    #[arg(long, default_value = "north")]
+    pub dialect: String,
+    #[arg(long)]
+    pub resolve_oov: bool,
     /// File từ điển `key = cách đọc` (tuỳ chọn).
     #[arg(long)]
     pub dictionary: Option<PathBuf>,
@@ -62,6 +73,12 @@ pub struct TuiArgs {
     /// Nạp acoustic-only `.vfa` (dùng `--vocoder`).
     #[arg(long)]
     pub vfa: Option<PathBuf>,
+    /// Xuất SRT sau khi đọc xong.
+    #[arg(long)]
+    pub srt: Option<PathBuf>,
+    /// Xuất WebVTT sau khi đọc xong.
+    #[arg(long)]
+    pub vtt: Option<PathBuf>,
     /// Thư mục model dùng cho model browser (Ctrl+O).
     #[arg(long, default_value = "models")]
     pub model_dir: PathBuf,
@@ -99,10 +116,17 @@ impl Default for TuiArgs {
             server: None,
             token: None,
             speed: 1.0,
+            alpha: 1.5,
+            max_chars: 300,
             fixed_pauses: false,
+            peak_normalize: false,
+            dialect: "north".to_string(),
+            resolve_oov: true,
             dictionary: None,
             vfts: None,
             vfa: None,
+            srt: None,
+            vtt: None,
             model_dir: PathBuf::from("models"),
         }
     }
@@ -121,6 +145,7 @@ enum TuiEvent {
         wav: Vec<u8>,
         elapsed_ms: u64,
         mode: Mode,
+        karaoke: Option<KaraokeDocument>,
     },
     Error(String),
     ModelResults(Vec<HfModel>),
@@ -167,7 +192,15 @@ struct App {
     server: Option<String>,
     token: Option<String>,
     speed: f32,
+    alpha: f32,
+    max_chars: usize,
     fixed_pauses: bool,
+    peak_normalize: bool,
+    dialect: String,
+    resolve_oov: bool,
+    srt: Option<PathBuf>,
+    vtt: Option<PathBuf>,
+    show_settings: bool,
     busy: bool,
     quit: bool,
     status: String,
@@ -205,7 +238,15 @@ impl App {
             server: args.server,
             token: args.token,
             speed: args.speed,
+            alpha: args.alpha,
+            max_chars: args.max_chars,
             fixed_pauses: args.fixed_pauses,
+            peak_normalize: args.peak_normalize,
+            dialect: args.dialect,
+            resolve_oov: args.resolve_oov,
+            srt: args.srt,
+            vtt: args.vtt,
+            show_settings: false,
             busy: false,
             quit: false,
             status: "Sẵn sàng".to_string(),
@@ -228,11 +269,15 @@ impl App {
     }
 
     fn make_options(&self) -> SynthesisOptions {
-        let mut parse = live_parse_options(Dialect::North, Some(&self.dictionary), None);
-        parse.resolve_oov = true;
+        let dialect = Dialect::from_name(&self.dialect).unwrap_or(Dialect::North);
+        let mut parse = live_parse_options(dialect, Some(&self.dictionary), None);
+        parse.resolve_oov = self.resolve_oov;
         let mut options = SynthesisOptions {
             speed: self.speed,
+            alpha: self.alpha,
+            max_chars: self.max_chars.clamp(50, 5000),
             fixed_pauses: self.fixed_pauses,
+            peak_normalize: self.peak_normalize,
             parse,
             ..SynthesisOptions::default()
         };
@@ -281,23 +326,42 @@ impl App {
                 let token = self.token.clone();
                 let event_tx = self.event_sender();
                 let speed = self.speed;
+                let alpha = self.alpha;
+                let max_chars = self.max_chars;
                 let fixed = self.fixed_pauses;
+                let peak = self.peak_normalize;
+                let dialect = self.dialect.clone();
+                let resolve_oov = self.resolve_oov;
+                let overrides = (!self.dictionary.is_empty()).then(|| self.dictionary.clone());
                 thread::spawn(move || {
                     let started = Instant::now();
                     let client = HttpTtsClient::new(server, token.filter(|v| !v.trim().is_empty()));
                     let request = HttpTtsRequest {
                         text,
                         speed,
+                        alpha,
+                        max_chars,
                         fixed_pauses: fixed,
+                        peak_normalize: peak,
+                        dialect,
+                        resolve_oov,
+                        overrides,
+                        ..HttpTtsRequest::default()
                     };
-                    match client.synthesize_wav(&request) {
-                        Ok(wav) => {
-                            let _ = event_tx.send(TuiEvent::Done {
-                                wav,
-                                elapsed_ms: started.elapsed().as_millis() as u64,
-                                mode: Mode::Remote,
-                            });
-                        }
+                    match client.synthesize_karaoke(&request) {
+                        Ok(response) => match response.audio_bytes() {
+                            Ok(wav) => {
+                                let _ = event_tx.send(TuiEvent::Done {
+                                    wav,
+                                    elapsed_ms: started.elapsed().as_millis() as u64,
+                                    mode: Mode::Remote,
+                                    karaoke: Some(response.karaoke),
+                                });
+                            }
+                            Err(error) => {
+                                let _ = event_tx.send(TuiEvent::Error(error));
+                            }
+                        },
                         Err(error) => {
                             let _ = event_tx.send(TuiEvent::Error(error));
                         }
@@ -401,6 +465,7 @@ impl App {
                     wav,
                     elapsed_ms,
                     mode,
+                    karaoke,
                 } => {
                     self.busy = false;
                     self.status = format!("Xong · {elapsed_ms} ms · {}", self.output.display());
@@ -416,6 +481,28 @@ impl App {
                             wav.len()
                         )),
                         Err(error) => self.last_error = Some(format!("ghi WAV: {error}")),
+                    }
+                    if let Some(path) = &self.srt {
+                        if let Some(document) = &karaoke {
+                            if let Err(error) = fs::write(path, document.to_srt()) {
+                                self.last_error = Some(format!("ghi SRT: {error}"));
+                            } else {
+                                self.log(format!("đã ghi {}", path.display()));
+                            }
+                        } else {
+                            self.last_error = Some("Model không có timing để ghi SRT".to_string());
+                        }
+                    }
+                    if let Some(path) = &self.vtt {
+                        if let Some(document) = &karaoke {
+                            if let Err(error) = fs::write(path, document.to_vtt_karaoke()) {
+                                self.last_error = Some(format!("ghi VTT: {error}"));
+                            } else {
+                                self.log(format!("đã ghi {}", path.display()));
+                            }
+                        } else {
+                            self.last_error = Some("Model không có timing để ghi VTT".to_string());
+                        }
                     }
                 }
                 TuiEvent::Error(error) => {
@@ -502,6 +589,7 @@ fn spawn_local(
                                 wav: result.wav,
                                 elapsed_ms: started.elapsed().as_millis() as u64,
                                 mode: Mode::Local,
+                                karaoke: result.karaoke,
                             });
                         }
                         Err(error) => {
@@ -581,13 +669,23 @@ fn handle_key(app: &mut App, key: KeyEvent) {
         handle_model_key(app, key, ctrl);
         return;
     }
+    if app.show_settings {
+        handle_settings_key(app, key, ctrl);
+        return;
+    }
     match key.code {
         KeyCode::Char('q') if ctrl => app.quit = true,
         KeyCode::Char('s') if ctrl => app.synthesize(),
+        KeyCode::Char('g') if ctrl => app.synthesize(),
+        KeyCode::Char('r') if ctrl => app.synthesize(),
+        KeyCode::F(5) => app.synthesize(),
         KeyCode::Char('l') if ctrl => app.logs.clear(),
         KeyCode::Char('o') if ctrl => {
             app.model.open = true;
             app.model_search();
+        }
+        KeyCode::Char('p') if ctrl => {
+            app.show_settings = true;
         }
         KeyCode::Char('r') if ctrl => {
             app.last_error = None;
@@ -617,6 +715,37 @@ fn handle_key(app: &mut App, key: KeyEvent) {
             app.speed = (app.speed - 0.05).max(0.5);
         }
         KeyCode::Char(c) if !ctrl => app.input.push(c),
+        _ => {}
+    }
+}
+
+fn handle_settings_key(app: &mut App, key: KeyEvent, ctrl: bool) {
+    if key.code == KeyCode::Esc || (ctrl && key.code == KeyCode::Char('p')) {
+        app.show_settings = false;
+        return;
+    }
+    if ctrl && key.code == KeyCode::Char('s') {
+        app.show_settings = false;
+        app.synthesize();
+        return;
+    }
+    match key.code {
+        KeyCode::Up => app.speed = (app.speed + 0.05).min(2.0),
+        KeyCode::Down => app.speed = (app.speed - 0.05).max(0.5),
+        KeyCode::Char('a') => app.alpha = (app.alpha + 0.05).min(3.0),
+        KeyCode::Char('A') => app.alpha = (app.alpha - 0.05).max(0.5),
+        KeyCode::Char('m') => app.max_chars = (app.max_chars + 50).min(5000),
+        KeyCode::Char('M') => app.max_chars = app.max_chars.saturating_sub(50).max(50),
+        KeyCode::Char('f') => app.fixed_pauses = !app.fixed_pauses,
+        KeyCode::Char('p') => app.peak_normalize = !app.peak_normalize,
+        KeyCode::Char('o') => app.resolve_oov = !app.resolve_oov,
+        KeyCode::Char('d') => {
+            app.dialect = match app.dialect.as_str() {
+                "north" => "central".to_string(),
+                "central" => "south".to_string(),
+                _ => "north".to_string(),
+            };
+        }
         _ => {}
     }
 }
@@ -792,14 +921,12 @@ fn draw(frame: &mut Frame, app: &App) {
                 .add_modifier(Modifier::BOLD),
         ),
         Span::raw(format!(
-            " {:?} · {:.2}× · {} · {} ký tự",
+            " {:?} · {:.2}× · α{:.2} · {} · {} · {} ký tự",
             app.mode,
             app.speed,
-            if app.fixed_pauses {
-                "fixed"
-            } else {
-                "model pause"
-            },
+            app.alpha,
+            if app.fixed_pauses { "fixed" } else { "model pause" },
+            app.dialect,
             app.input.chars().count()
         )),
     ]))
@@ -846,11 +973,52 @@ fn draw(frame: &mut Frame, app: &App) {
         .wrap(Wrap { trim: false });
     frame.render_widget(log, chunks[3]);
 
-    let footer = Paragraph::new("Ctrl+Enter đọc · Ctrl+S đọc · Ctrl+O model · Tab đổi local/remote · ↑/↓ speed · Ctrl+L xoá log · Ctrl+Q/Esc thoát")
+    let footer = Paragraph::new("Ctrl+Enter/G/R/S hoặc F5 đọc · Ctrl+O model · Ctrl+P cài đặt · Tab local/remote · ↑/↓ speed · Ctrl+L xoá log · Ctrl+Q/Esc thoát")
         .style(Style::default().fg(Color::DarkGray));
     frame.render_widget(footer, chunks[4]);
 
+    if app.show_settings {
+        draw_settings(frame, app);
+    }
     if app.model.open {
         draw_model(frame, app);
     }
+}
+
+fn draw_settings(frame: &mut Frame, app: &App) {
+    let area = frame.area();
+    let width = area.width.saturating_sub(8).max(44).min(area.width);
+    let height = 18.min(area.height);
+    let popup = ratatui::layout::Rect::new(
+        area.x + (area.width.saturating_sub(width)) / 2,
+        area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    );
+    frame.render_widget(Clear, popup);
+    let lines = vec![
+        Line::from(format!("Tốc độ          {:.2}×   ↑/↓", app.speed)),
+        Line::from(format!("Alpha mel       {:.2}   a/A", app.alpha)),
+        Line::from(format!("Max ký tự/chunk {}      m/M", app.max_chars)),
+        Line::from(format!(
+            "Pause cố định   {}      f",
+            if app.fixed_pauses { "bật" } else { "tắt" }
+        )),
+        Line::from(format!(
+            "Peak normalize  {}      p",
+            if app.peak_normalize { "bật" } else { "tắt" }
+        )),
+        Line::from(format!(
+            "Resolve OOV     {}      o",
+            if app.resolve_oov { "bật" } else { "tắt" }
+        )),
+        Line::from(format!("Phương ngữ      {}      d", app.dialect)),
+        Line::from(format!("Từ điển         {} quy tắc (--dictionary)", app.dictionary.len())),
+        Line::from(""),
+        Line::from("Esc/Ctrl+P đóng · Ctrl+S đọc với cấu hình này"),
+    ];
+    let block = Paragraph::new(lines)
+        .block(Block::default().borders(Borders::ALL).title("Cài đặt âm thanh · Ctrl+P"))
+        .wrap(Wrap { trim: true });
+    frame.render_widget(block, popup);
 }

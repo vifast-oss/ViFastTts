@@ -6,8 +6,8 @@ import init, {
   karaoke_from_units,
   karaoke_to_srt,
   karaoke_to_vtt,
-  synthesize_stream_with_options,
-  synthesize_with_options,
+  synthesize_stream_full,
+  synthesize_full,
 } from './vendor/pkg/vifasttts_wasm.js';
 import * as ort from './vendor/ort/ort.wasm.min.mjs';
 import { parseBundle } from './shared/bundle.js';
@@ -117,6 +117,19 @@ async function loadBundleModel(key, settings_) {
 
 function bundleSignature(request) {
   return `${request.bundleKey || ''}|${request.modelBaseUrl || ''}`;
+}
+
+async function localOptions(request) {
+  return {
+    speed: Number(request.speed) || 1,
+    alpha: Number(request.alpha) || 1.5,
+    max_chars: Number(request.maxChars) || 300,
+    fixed_pauses: Boolean(request.fixedPauses),
+    peak_normalize: Boolean(request.peakNormalize),
+    dialect: request.dialect || 'north',
+    resolve_oov: request.resolveOov !== false,
+    overrides: await parseDictionary(request.dictionary),
+  };
 }
 
 async function initLocal(request) {
@@ -353,13 +366,10 @@ async function runLocalStream(request) {
   resetStream();
   const context = await ensureAudioContext();
   streamNextTime = context.currentTime + 0.06;
-  const dictionary = await parseDictionary(request.dictionary);
-  const summary = await synthesize_stream_with_options(
+  const options = await localOptions(request);
+  const summary = await synthesize_stream_full(
     request.text,
-    request.speed,
-    request.fixedPauses,
-    JSON.stringify(dictionary),
-    '',
+    JSON.stringify(options),
     acoustic,
     vocoder,
     (event) => {
@@ -401,8 +411,13 @@ async function runRemoteStream(request) {
     signal: streamAbortController.signal,
     body: JSON.stringify({
       text: request.text,
-      speed: request.speed,
-      fixed_pauses: request.fixedPauses,
+      speed: Number(request.speed) || 1,
+      alpha: Number(request.alpha) || 1.5,
+      max_chars: Number(request.maxChars) || 300,
+      fixed_pauses: Boolean(request.fixedPauses),
+      peak_normalize: Boolean(request.peakNormalize),
+      dialect: request.dialect || 'north',
+      resolve_oov: request.resolveOov !== false,
       overrides: await parseDictionary(request.dictionary),
       dictionary: request.dictionary,
     }),
@@ -459,13 +474,10 @@ async function runRemoteStream(request) {
 
 async function runLocal(request) {
   await initLocal(request);
-  const dictionary = await parseDictionary(request.dictionary);
-  const result = await synthesize_with_options(
+  const options = await localOptions(request);
+  const result = await synthesize_full(
     request.text,
-    request.speed,
-    request.fixedPauses,
-    JSON.stringify(dictionary),
-    '',
+    JSON.stringify(options),
     acoustic,
     vocoder,
   );
@@ -497,8 +509,13 @@ async function runRemote(request) {
     headers,
     body: JSON.stringify({
       text: request.text,
-      speed: request.speed,
-      fixed_pauses: request.fixedPauses,
+      speed: Number(request.speed) || 1,
+      alpha: Number(request.alpha) || 1.5,
+      max_chars: Number(request.maxChars) || 300,
+      fixed_pauses: Boolean(request.fixedPauses),
+      peak_normalize: Boolean(request.peakNormalize),
+      dialect: request.dialect || 'north',
+      resolve_oov: request.resolveOov !== false,
       karaoke: true,
       overrides: await parseDictionary(request.dictionary),
       dictionary: request.dictionary,

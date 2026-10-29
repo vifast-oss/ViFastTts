@@ -39,10 +39,21 @@ void vifasttts_engine_free(VifasttEngine engine);
 
 uint8_t *vifasttts_synthesize(VifasttEngine engine, const char *text,
                               const VifasttOptions *options, size_t *out_len);
+uint8_t *vifasttts_synthesize_ex(VifasttEngine engine, const char *text,
+                                 const VifasttOptions *options, const char *dialect,
+                                 uint8_t resolve_oov, const char *dictionary,
+                                 size_t *out_len);
 int vifasttts_synthesize_karaoke(VifasttEngine engine, const char *text,
                                  const VifasttOptions *options,
                                  uint8_t **out_wav, size_t *out_wav_len,
                                  char **out_karaoke_json);
+int vifasttts_synthesize_karaoke_ex(VifasttEngine engine, const char *text,
+                                    const VifasttOptions *options, const char *dialect,
+                                    uint8_t resolve_oov, const char *dictionary,
+                                    uint8_t **out_wav, size_t *out_wav_len,
+                                    char **out_karaoke_json);
+char *vifasttts_karaoke_to_srt(const char *karaoke_json);
+char *vifasttts_karaoke_to_vtt(const char *karaoke_json);
 int vifasttts_synthesize_stream(VifasttEngine engine, const char *text,
                                 const VifasttOptions *options,
                                 VifasttChunkCallback callback,

@@ -19,6 +19,13 @@ const SETTINGS_DEFAULTS = {
   bundleName: '',
   selectionAction: 'hidden',
   dictionary: '',
+  alpha: 1.5,
+  maxChars: 300,
+  peakNormalize: false,
+  dialect: 'north',
+  resolveOov: true,
+  speed: 1,
+  fixedPauses: false,
 };
 const HISTORY_KEY = 'vifasttts_history_v1';
 const HISTORY_LIMIT = 20;
@@ -202,8 +209,13 @@ async function speakSelection(text) {
       request: {
         mode: settings_.mode,
         text: text.slice(0, MAX_TEXT),
-        speed: 1,
-        fixedPauses: false,
+        speed: Number(settings_.speed) || 1,
+        alpha: Number(settings_.alpha) || 1.5,
+        maxChars: Number(settings_.maxChars) || 300,
+        peakNormalize: Boolean(settings_.peakNormalize),
+        dialect: settings_.dialect || 'north',
+        resolveOov: settings_.resolveOov !== false,
+        fixedPauses: Boolean(settings_.fixedPauses),
         serverUrl: settings_.serverUrl,
         token: settings_.token,
         modelBaseUrl: settings_.modelBaseUrl,

@@ -1,6 +1,6 @@
 // Local WASM hoặc remote server; cùng một UI/karaoke.
 import * as ort from 'onnxruntime-web';
-import init, { synthesize, karaoke_to_srt, karaoke_to_vtt } from './pkg/vifasttts_wasm.js';
+import init, { dictionary_json, synthesize_full, karaoke_to_srt, karaoke_to_vtt } from './pkg/vifasttts_wasm.js';
 import { unzipSync, strFromU8 } from 'fflate';
 import { sha256 } from 'js-sha256';
 import { ModelApi, bundleFiles, normalizeServerBase } from './shared/model-api.js';
@@ -11,18 +11,29 @@ const textEl = document.getElementById('text');
 const fixedEl = document.getElementById('fixed');
 const speedEl = document.getElementById('speed');
 const speedValueEl = document.getElementById('speedValue');
+const alphaEl = document.getElementById('alpha');
+const alphaValueEl = document.getElementById('alphaValue');
+const peakEl = document.getElementById('peak');
+const resolveOovEl = document.getElementById('resolveOov');
+const dialectEl = document.getElementById('dialect');
+const maxCharsEl = document.getElementById('maxChars');
+const dictionaryEl = document.getElementById('dictionary');
+const dictionaryStatusEl = document.getElementById('dictionaryStatus');
 const modeEl = document.getElementById('mode');
 const serverUrlEl = document.getElementById('serverUrl');
 const tokenEl = document.getElementById('token');
 const remoteFields = document.getElementById('remoteFields');
 const modelFileEl = document.getElementById('modelFile');
 const modelQueryEl = document.getElementById('modelQuery');
+const directModelsEl = document.getElementById('directModels');
 const modelSearchEl = document.getElementById('modelSearch');
 const modelStatusEl = document.getElementById('modelStatus');
 const modelListEl = document.getElementById('modelList');
 const modelFilesEl = document.getElementById('modelFiles');
 const audioEl = document.getElementById('audio');
 const downloadEl = document.getElementById('download');
+const downloadSrtEl = document.getElementById('downloadSrt');
+const downloadVttEl = document.getElementById('downloadVtt');
 const karaokeEl = document.getElementById('karaoke');
 const srtEl = document.getElementById('srt');
 
@@ -34,6 +45,44 @@ let currentAudioUrl = null;
 
 function setStatus(text) {
   statusEl.textContent = text;
+}
+
+async function dictionaryOverrides() {
+  const text = dictionaryEl.value.trim();
+  if (!text) {
+    dictionaryStatusEl.textContent = '';
+    return {};
+  }
+  const payload = JSON.parse(await dictionary_json(text));
+  dictionaryStatusEl.textContent = `${(payload.rules || []).length} quy tắc` +
+    (payload.warnings?.length ? ` · ${payload.warnings.length} cảnh báo` : '');
+  return payload.overrides || {};
+}
+
+function synthOptions(overrides) {
+  return {
+    speed: Number(speedEl.value),
+    alpha: Number(alphaEl.value),
+    max_chars: Math.max(50, Math.min(5000, Number(maxCharsEl.value) || 300)),
+    fixed_pauses: fixedEl.checked,
+    peak_normalize: peakEl.checked,
+    dialect: dialectEl.value,
+    resolve_oov: resolveOovEl.checked,
+    overrides,
+  };
+}
+
+function setDownload(link, text, type) {
+  if (!link) return;
+  if (!text) {
+    link.classList.add('hidden');
+    if (link.href.startsWith('blob:')) URL.revokeObjectURL(link.href);
+    link.removeAttribute('href');
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  link.href = url;
+  link.classList.remove('hidden');
 }
 
 function setModeFields() {
@@ -169,13 +218,18 @@ async function vocoder(mel, frames, mels) {
 async function runLocal(text) {
   await loadModels();
   setStatus('Đang tổng hợp local…');
-  const result = await synthesize(text, Number(speedEl.value), fixedEl.checked, acoustic, vocoder);
+  const overrides = await dictionaryOverrides();
+  const options = synthOptions(overrides);
+  const result = await synthesize_full(text, JSON.stringify(options), acoustic, vocoder);
   await playBytes(new Uint8Array(result.wav));
   document_ = result.karaoke;
   renderKaraoke(document_);
-  srtEl.textContent = await karaoke_to_srt(document_);
-  window.__vifastttVtt = await karaoke_to_vtt(document_);
-  setStatus(`Xong local: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_.units.length} âm tiết.`);
+  const srt = document_ ? await karaoke_to_srt(document_) : '';
+  const vtt = document_ ? await karaoke_to_vtt(document_) : '';
+  srtEl.textContent = srt;
+  setDownload(downloadSrtEl, srt, 'text/plain');
+  setDownload(downloadVttEl, vtt, 'text/vtt');
+  setStatus(`Xong local: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_?.units?.length || 0} âm tiết.`);
 }
 
 async function runRemote(text) {
@@ -185,13 +239,15 @@ async function runRemote(text) {
   setStatus(`Đang gọi ${url}…`);
   const headers = { 'content-type': 'application/json' };
   if (tokenEl.value.trim()) headers.authorization = `Bearer ${tokenEl.value.trim()}`;
+  const overrides = await dictionaryOverrides();
+  const options = synthOptions(overrides);
   const response = await fetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify({
       text,
-      speed: Number(speedEl.value),
-      fixed_pauses: fixedEl.checked,
+      ...options,
+      dictionary: dictionaryEl.value.trim(),
       karaoke: true,
     }),
   });
@@ -201,8 +257,11 @@ async function runRemote(text) {
   await playBytes(base64ToBytes(result.audio_base64));
   document_ = result.karaoke;
   renderKaraoke(document_);
-  srtEl.textContent = result.srt || (document_ ? await karaoke_to_srt(document_) : '');
-  window.__vifastttVtt = result.vtt || result.vtt_karaoke || '';
+  const srt = result.srt || (document_ ? await karaoke_to_srt(document_) : '');
+  const vtt = result.vtt || result.vtt_karaoke || '';
+  srtEl.textContent = srt;
+  setDownload(downloadSrtEl, srt, 'text/plain');
+  setDownload(downloadVttEl, vtt, 'text/vtt');
   setStatus(`Xong remote: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_?.units?.length || 0} âm tiết.`);
 }
 
@@ -210,6 +269,7 @@ function modelApi() {
   return new ModelApi({
     baseUrl: normalizeServerBase(serverUrlEl.value.trim(), window.location.origin),
     token: tokenEl.value,
+    direct: Boolean(directModelsEl?.checked),
   });
 }
 
@@ -312,6 +372,9 @@ audioEl.addEventListener('timeupdate', () => {
 speedEl.addEventListener('input', () => {
   speedValueEl.textContent = `${Number(speedEl.value).toFixed(2)}×`;
 });
+alphaEl.addEventListener('input', () => {
+  alphaValueEl.textContent = Number(alphaEl.value).toFixed(2);
+});
 modeEl.addEventListener('change', () => {
   setModeFields();
   setStatus(modeEl.value === 'remote' ? 'Remote: nhập server URL.' : 'Local: bấm Đọc để nạp model.');
@@ -329,6 +392,25 @@ modelFileEl.addEventListener('change', async () => {
   }
 });
 runEl.addEventListener('click', run);
+const saved = JSON.parse(localStorage.getItem('vifasttts.web.settings') || '{}');
+for (const [id, value] of Object.entries(saved)) {
+  const element = document.getElementById(id);
+  if (!element) continue;
+  if (element.type === 'checkbox') element.checked = Boolean(value);
+  else element.value = value;
+}
+for (const element of [speedEl, alphaEl, fixedEl, peakEl, resolveOovEl, dialectEl, maxCharsEl, dictionaryEl]) {
+  element.addEventListener('change', () => {
+    const values = {};
+    for (const id of ['speed', 'alpha', 'fixed', 'peak', 'resolveOov', 'dialect', 'maxChars', 'dictionary', 'directModels']) {
+      const item = document.getElementById(id);
+      values[id] = item.type === 'checkbox' ? item.checked : item.value;
+    }
+    localStorage.setItem('vifasttts.web.settings', JSON.stringify(values));
+  });
+}
+speedValueEl.textContent = `${Number(speedEl.value).toFixed(2)}×`;
+alphaValueEl.textContent = Number(alphaEl.value).toFixed(2);
 setModeFields();
 runEl.disabled = false;
 
@@ -348,5 +430,6 @@ runEl.disabled = false;
       // fall through local
     }
   }
+  if (directModelsEl) directModelsEl.checked = true;
   setStatus('Local WASM — bấm Đọc hoặc nạp .vfa/.vfts.');
 })();

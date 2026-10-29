@@ -37,6 +37,11 @@ nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 Tất cả nằm trong [release v0.1.1](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1).
 Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
 
+> **Lưu ý bản build:** các thay đổi UI 29/10 (alpha/peak/max, HuggingFace trực
+> tiếp, từ điển mobile, karaoke/SRT/VTT, cách đọc `iOS = ai âu ét`,
+> `Android = an đờ roi`) đang ở `main` và **chưa có trong asset v0.1.1**. Muốn
+> dùng ngay, build từ source hoặc chờ release v0.1.2; xem `docs/UI_PARITY.md`.
+
 ### Cài Chrome extension (Windows/macOS/Linux)
 
 Extension dùng model bundled nên **không cần Python/server** để đọc local.
@@ -55,8 +60,8 @@ Lưu ý:
 - Hiện extension **chưa có trên Chrome Web Store/Edge Add-ons**, nên phải
   `Load unpacked`; khi store duyệt xong sẽ có link cài trực tiếp.
 - Chỉ tải ZIP từ GitHub Release chính thức; đừng tải từ nguồn lạ.
-- Local mode đọc bằng model bundled. Tìm/tải model HuggingFace trong extension
-  vẫn cần server `/api/models/*` (tùy chọn).
+- Local mode đọc bằng model bundled. Tìm/tải model HuggingFace có thể dùng
+  **HuggingFace trực tiếp** hoặc server `/api/models/*` (tùy chọn).
 - Hướng dẫn nộp store/kiểm tra quyền: `docs/EXTENSION_STORE.md`.
 
 ## Tìm model từ HuggingFace: bản nào cần server?
@@ -66,21 +71,22 @@ Lưu ý:
 | **Desktop** | Gọi HuggingFace API trực tiếp trong app | **Không** |
 | CLI / TUI | Gọi HuggingFace API trực tiếp | **Không** |
 | Web mở qua server | Gọi `/api/models/*` của server | Có (server đang phục vụ web) |
-| Chrome extension | Gọi `/api/models/*` của server | Có (mặc định `http://127.0.0.1:8000`) |
+| Chrome extension | HuggingFace trực tiếp hoặc `/api/models/*` | **Không bắt buộc** |
 | Android / iOS | Trực tiếp HuggingFace nếu Server URL trống; hoặc server LAN | **Không bắt buộc** |
-| Web tĩnh (file HTML) | Không tìm; nạp `.vfa/.vfts` thủ công | Không |
+| Web tĩnh (file HTML) | HuggingFace trực tiếp hoặc nạp `.vfa/.vfts` thủ công | Không |
 
 - **Desktop** dùng `vifasttts-model-manager` + HuggingFace adapter trực tiếp. Nút
   **Bật server** trong desktop chỉ để phục vụ web/extension/điện thoại; nó **không**
   cần thiết cho việc tìm model của chính desktop.
-- **Extension** không gọi HuggingFace trực tiếp. Nó gọi server để tránh CORS và để
-  server kiểm hash; nếu server tắt, extension vẫn đọc được model bundled nhưng
-  không tìm/tải model mới.
+- **Extension** có checkbox **HuggingFace trực tiếp** trong mục thêm giọng;
+  không cần server. Nếu dùng server, extension gọi `/api/models/*` để server
+  kiểm hash/catalog tập trung. Model bundled vẫn đọc được khi offline.
 - **Android/iOS** ưu tiên tải trực tiếp HuggingFace khi Server URL để **trống**
   (native không bị CORS). Nếu muốn dùng server để kiểm hash/catalog tập trung, nhập
   `http://192.168.1.100:8000` (cùng Wi-Fi/LAN), bật **Cho phép LAN** trên desktop
   và mở firewall. Điện thoại không dùng được `127.0.0.1` của máy tính.
-- **Web** khi được server phục vụ dùng API server; bản web tĩnh chỉ nạp bundle thủ công.
+- **Web** khi được server phục vụ dùng API server; bản web tĩnh có thể dùng
+  **HuggingFace trực tiếp** hoặc nạp bundle thủ công.
 - Model browser chỉ hiện file `.vfa`/`.vfts`; raw `acoustic.onnx` là file nội bộ/dev.
 
 ## Dành cho developer

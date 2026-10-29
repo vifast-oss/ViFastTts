@@ -1,5 +1,25 @@
 import Foundation
 
+struct KaraokeUnit: Decodable, Identifiable {
+    let text: String
+    let start_ms: Int
+    let end_ms: Int
+    var id: String { "\(start_ms)-\(end_ms)-\(text)" }
+}
+
+struct KaraokeDoc: Decodable {
+    let units: [KaraokeUnit]
+}
+
+/// Kết quả một lần tổng hợp: WAV + phụ đề + timing karaoke.
+struct TtsResult {
+    let wavURL: URL
+    let srtURL: URL?
+    let vttURL: URL?
+    let karaokeURL: URL?
+    let units: [KaraokeUnit]
+}
+
 /// Cầu nối mỏng sang C ABI `vifasttts-ffi`.
 ///
 /// Engine không thread-safe; mọi lời gọi đi qua serial queue. UI không gọi
@@ -40,8 +60,11 @@ final class TtsEngine: @unchecked Sendable {
         alpha: Float = 1.5,
         maxChars: Int = 300,
         fixedPauses: Bool = false,
-        peakNormalize: Bool = false
-    ) async throws -> URL {
+        peakNormalize: Bool = false,
+        dialect: String = "north",
+        resolveOov: Bool = true,
+        dictionary: String = ""
+    ) async throws -> TtsResult {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 guard let engine = self.engine else {
@@ -55,25 +78,125 @@ final class TtsEngine: @unchecked Sendable {
                     fixed_pauses: fixedPauses ? 1 : 0,
                     peak_normalize: peakNormalize ? 1 : 0
                 )
-                var length = 0
-                let pointer = text.withCString { cText in
-                    vifasttts_synthesize(engine, cText, &options, &length)
+                var wavPointer: UnsafeMutablePointer<UInt8>?
+                var wavLength = 0
+                var karaokePointer: UnsafeMutablePointer<CChar>?
+                // Gọi bản `_ex` để có đủ phương ngữ/OOV/từ điển và timing.
+                let code = text.withCString { cText in
+                    dialect.withCString { cDialect in
+                        dictionary.withCString { cDictionary in
+                            vifasttts_synthesize_karaoke_ex(
+                                engine,
+                                cText,
+                                &options,
+                                cDialect,
+                                resolveOov ? 1 : 0,
+                                cDictionary,
+                                &wavPointer,
+                                &wavLength,
+                                &karaokePointer
+                            )
+                        }
+                    }
                 }
-                guard let pointer, length > 0 else {
+
+                var wavData: Data?
+                var karaokeJSON: String?
+                if code == 0, let pointer = wavPointer, wavLength > 0 {
+                    wavData = Data(bytes: pointer, count: wavLength)
+                    vifasttts_buffer_free(pointer, wavLength)
+                    if let jsonPointer = karaokePointer {
+                        karaokeJSON = String(cString: jsonPointer)
+                        vifasttts_string_free(jsonPointer)
+                    }
+                } else {
+                    if let jsonPointer = karaokePointer {
+                        vifasttts_string_free(jsonPointer)
+                    }
+                    // Model không xuất timing vẫn đọc được; chỉ thiếu phụ đề.
+                    var plainLength = 0
+                    let plain = text.withCString { cText in
+                        dialect.withCString { cDialect in
+                            dictionary.withCString { cDictionary in
+                                vifasttts_synthesize_ex(
+                                    engine,
+                                    cText,
+                                    &options,
+                                    cDialect,
+                                    resolveOov ? 1 : 0,
+                                    cDictionary,
+                                    &plainLength
+                                )
+                            }
+                        }
+                    }
+                    guard let plain, plainLength > 0 else {
+                        continuation.resume(throwing: self.error(self.lastError()))
+                        return
+                    }
+                    wavData = Data(bytes: plain, count: plainLength)
+                    vifasttts_buffer_free(plain, plainLength)
+                }
+
+                guard let wavData, !wavData.isEmpty else {
                     continuation.resume(throwing: self.error(self.lastError()))
                     return
                 }
-                let data = Data(bytes: pointer, count: length)
-                vifasttts_buffer_free(pointer, length)
-                let url = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("vifasttts-\(UUID().uuidString).wav")
+
+                let base = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("vifasttts-\(UUID().uuidString)")
+                let wavURL = base.appendingPathExtension("wav")
                 do {
-                    try data.write(to: url, options: .atomic)
-                    continuation.resume(returning: url)
+                    try wavData.write(to: wavURL, options: .atomic)
+                    var srtURL: URL?
+                    var vttURL: URL?
+                    var karaokeURL: URL?
+                    var units: [KaraokeUnit] = []
+                    if let karaokeJSON {
+                        if let data = karaokeJSON.data(using: .utf8),
+                           let doc = try? JSONDecoder().decode(KaraokeDoc.self, from: data) {
+                            units = doc.units
+                        }
+                        srtURL = self.writeSubtitle(karaokeJSON, base: base, extension: "srt", srt: true)
+                        vttURL = self.writeSubtitle(karaokeJSON, base: base, extension: "vtt", srt: false)
+                        let jsonURL = base.appendingPathExtension("karaoke.json")
+                        if (try? karaokeJSON.write(to: jsonURL, atomically: true, encoding: .utf8)) != nil {
+                            karaokeURL = jsonURL
+                        }
+                    }
+                    continuation.resume(returning: TtsResult(
+                        wavURL: wavURL,
+                        srtURL: srtURL,
+                        vttURL: vttURL,
+                        karaokeURL: karaokeURL,
+                        units: units
+                    ))
                 } catch {
                     continuation.resume(throwing: error)
                 }
             }
+        }
+    }
+
+    private func writeSubtitle(
+        _ json: String,
+        base: URL,
+        extension ext: String,
+        srt: Bool
+    ) -> URL? {
+        let pointer = json.withCString { cJSON in
+            srt ? vifasttts_karaoke_to_srt(cJSON) : vifasttts_karaoke_to_vtt(cJSON)
+        }
+        guard let pointer else { return nil }
+        defer { vifasttts_string_free(pointer) }
+        let text = String(cString: pointer)
+        guard !text.isEmpty else { return nil }
+        let url = base.appendingPathExtension(ext)
+        do {
+            try text.write(to: url, atomically: true, encoding: .utf8)
+            return url
+        } catch {
+            return nil
         }
     }
 

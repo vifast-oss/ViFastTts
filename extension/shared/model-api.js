@@ -8,9 +8,10 @@ export function normalizeServerBase(value, fallback = '') {
 }
 
 export class ModelApi {
-  constructor({ baseUrl = '', token = '', fetchImpl = globalThis.fetch } = {}) {
+  constructor({ baseUrl = '', token = '', direct = false, fetchImpl = globalThis.fetch } = {}) {
     this.baseUrl = normalizeServerBase(baseUrl, globalThis.location?.origin || '');
     this.token = String(token || '').trim();
+    this.direct = Boolean(direct);
     this.fetch = fetchImpl.bind(globalThis);
   }
 
@@ -43,15 +44,44 @@ export class ModelApi {
     return response.json();
   }
 
-  search(query = 'vifasttts', limit = 20) {
+  async search(query = 'vifasttts', limit = 20) {
+    if (this.direct) {
+      const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}&limit=${limit}&full=true`;
+      const response = await this.fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HuggingFace HTTP ${response.status}`);
+      return response.json();
+    }
     return this.json('/api/models/search', { q: query, limit });
   }
 
-  files(repo) {
+  async files(repo) {
+    if (this.direct) {
+      const response = await this.fetch(
+        `https://huggingface.co/api/models/${repo.split('/').map(encodeURIComponent).join('/')}`,
+        { cache: 'no-store' },
+      );
+      if (!response.ok) throw new Error(`HuggingFace HTTP ${response.status}`);
+      const model = await response.json();
+      return (model.siblings || []).map((file) => ({
+        path: file.rfilename || file.path || '',
+        size: file.size || 0,
+        type: 'file',
+      })).filter((file) => file.path.endsWith('.vfa') || file.path.endsWith('.vfts'));
+    }
     return this.json('/api/models/files', { repo });
   }
 
   async download(repo, path) {
+    if (this.direct) {
+      const encoded = String(path).split('/').map(encodeURIComponent).join('/');
+      const url = `https://huggingface.co/${repo.split('/').map(encodeURIComponent).join('/')}/resolve/main/${encoded}`;
+      const response = await this.fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HuggingFace HTTP ${response.status}`);
+      return {
+        blob: await response.blob(),
+        filename: String(path).split('/').pop() || 'model.vfa',
+      };
+    }
     const response = await this.fetch(this.url('/api/models/download', { repo, path }), {
       headers: this.headers(),
       cache: 'no-store',

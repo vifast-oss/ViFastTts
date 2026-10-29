@@ -407,11 +407,19 @@ fn to_output(result: SynthesisResult, elapsed_ms: u64, mode: &str, chars: usize)
     }
 }
 
+fn dialect_name(dialect: Dialect) -> &'static str {
+    match dialect {
+        Dialect::North => "north",
+        Dialect::Central => "central",
+        Dialect::South => "south",
+    }
+}
+
 fn spawn_remote(
     event_tx: Sender<BackendEvent>,
     text: String,
-    speed: f32,
-    fixed_pauses: bool,
+    options: SynthesisOptions,
+    dictionary: String,
     server: String,
     token: String,
 ) {
@@ -428,8 +436,15 @@ fn spawn_remote(
         );
         let request = HttpTtsRequest {
             text,
-            speed,
-            fixed_pauses,
+            speed: options.speed,
+            alpha: options.alpha,
+            max_chars: options.max_chars,
+            fixed_pauses: options.fixed_pauses,
+            peak_normalize: options.peak_normalize,
+            dialect: dialect_name(options.parse.normalizer.dialect).to_string(),
+            resolve_oov: options.parse.resolve_oov,
+            dictionary: (!dictionary.trim().is_empty()).then_some(dictionary),
+            ..HttpTtsRequest::default()
         };
         match client.synthesize_karaoke(&request) {
             Ok(response) => match response.audio_bytes() {
@@ -753,8 +768,8 @@ impl DesktopApp {
                 spawn_remote(
                     self.event_tx.clone(),
                     text,
-                    options.speed,
-                    options.fixed_pauses,
+                    options,
+                    self.settings.app.dictionary.clone(),
                     self.settings.app.server_url.clone(),
                     self.settings.app.token.clone(),
                 );
@@ -1221,7 +1236,7 @@ impl DesktopApp {
                     }
                 });
             }
-            ui.small("Remote dùng /api/tts karaoke; model/alpha do server quyết định.");
+            ui.small("Remote dùng /api/tts karaoke và gửi đầy đủ tốc độ/alpha/max/pause/peak/phương ngữ/OOV/từ điển; model do server quyết định.");
         }
 
         ui.add_space(8.0);

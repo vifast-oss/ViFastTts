@@ -174,12 +174,14 @@
       .speedRow {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 8px;
         color: var(--muted);
         font-size: 11px;
         margin-top: 3px;
       }
-      .speedRow input { flex: 1; }
+      .speedRow input[type="range"] { flex: 1; min-width: 90px; }
+      .speedRow select, .speedRow input[type="number"] { font-size: 11px; }
       .check { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 12px; font-weight: 500; }
       .hidden { display: none !important; }
       details {
@@ -285,10 +287,29 @@
 
         <div class="speedRow">
           <span>Tốc độ</span>
-          <input id="speed" type="range" min="0.8" max="1.2" step="0.05" value="1" />
+          <input id="speed" type="range" min="0.5" max="2.0" step="0.05" value="1" />
           <span id="speedValue">1.00×</span>
           <label class="check"><input id="fixed" type="checkbox" /> đọc đều</label>
           <label class="check"><input id="stream" type="checkbox" /> stream</label>
+        </div>
+        <div class="speedRow">
+          <span>Alpha</span>
+          <input id="alpha" type="range" min="0.5" max="3.0" step="0.05" value="1.5" />
+          <span id="alphaValue">1.50</span>
+          <label class="check"><input id="peakNormalize" type="checkbox" /> peak</label>
+          <label class="check"><input id="resolveOov" type="checkbox" checked /> OOV</label>
+        </div>
+        <div class="speedRow">
+          <label>Phương ngữ
+            <select id="dialect">
+              <option value="north">Bắc</option>
+              <option value="central">Trung</option>
+              <option value="south">Nam</option>
+            </select>
+          </label>
+          <label>Max ký tự/chunk
+            <input id="maxChars" type="number" min="50" max="5000" step="50" value="300" style="width:64px" />
+          </label>
         </div>
 
         <details class="settings">
@@ -328,6 +349,7 @@
                   Cache Storage và dùng cho lần đọc local tiếp theo.
                 </p>
                 <input id="modelQuery" type="text" value="vifasttts" />
+                <label class="check"><input id="directModels" type="checkbox" /> HuggingFace trực tiếp</label>
                 <div class="actions">
                   <button id="modelSearch" class="ghost" type="button">Tìm</button>
                   <button id="modelClear" class="ghost" type="button">Bỏ bundle</button>

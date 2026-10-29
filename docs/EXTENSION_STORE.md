@@ -1,7 +1,8 @@
 # Đưa extension lên Chrome Web Store và Microsoft Edge Add-ons
 
-Trạng thái hiện tại: extension MV3 `0.1.1`, package phát hành
-`vifasttts-extension.zip` (~84 MB) trong GitHub Release `v0.1.1`.
+Trạng thái hiện tại: extension MV3 `0.1.1`; các thay đổi UI 29/10 (alpha/peak/
+max, HuggingFace trực tiếp, OOV, karaoke) nằm trên `main` và cần build package
+mới trước khi nộp store.
 
 ## 1. Package gửi store
 
@@ -62,9 +63,10 @@ qua CLI.
    - `storage`, `unlimitedStorage`: settings/history/model cache.
    - `contextMenus`: đọc đoạn bôi đen/trang qua menu chuột phải.
    - `activeTab`, `scripting`: chỉ đọc nội dung trang sau khi người dùng bấm.
-   - `host_permissions` localhost: server TTS local tùy chọn.
-   - `optional_host_permissions` HTTP/HTTPS: server LAN/online hoặc model host do
-     người dùng nhập; xin quyền lúc chạy.
+   - `host_permissions`: localhost (server TTS local), `huggingface.co` và
+     `*.hf.co` (tìm/tải model trực tiếp khi người dùng bật checkbox).
+   - `optional_host_permissions` HTTP/HTTPS: server LAN/online do người dùng nhập;
+     xin quyền lúc chạy.
 6. Remote code:
    - Trả lời **No remote code**. WASM, ORT và JS đều đóng trong package.
    - `.vfa/.vfts` tải về là **model data**, không phải JavaScript; extension kiểm
@@ -97,7 +99,7 @@ hiện dùng `chrome.*`, `offscreen`, `contextMenus`, `activeTab`, `scripting`.
 - [ ] `version` là `0.1.1` (hoặc bump version nếu sửa package).
 - [ ] Không có token, `.env`, file local, `node_modules`, `target`.
 - [ ] Test **Load unpacked** trên Chrome sạch; bấm icon → Đọc không cần server.
-- [ ] Test đọc trang/bôi đen và Remote mode với server local.
+- [ ] Test đọc trang/bôi đen, Remote mode với server local, và **HuggingFace trực tiếp**.
 - [ ] Có ít nhất 1 screenshot 1280×800.
 - [ ] Privacy policy URL mở được khi không đăng nhập.
 - [ ] Giải thích rõ `optional_host_permissions` và mô hình ONNX.
@@ -105,11 +107,10 @@ hiện dùng `chrome.*`, `offscreen`, `contextMenus`, `activeTab`, `scripting`.
 
 ## 5. Giới hạn hiện tại
 
-- Extension **không tự gọi HuggingFace trực tiếp**; catalog đi qua server
-  `/api/models/*`. Local mode vẫn chạy được nếu đã có model bundled hoặc bundle
-  trong Cache Storage.
+- Extension có thể gọi **HuggingFace trực tiếp** (checkbox trong mục thêm giọng)
+  hoặc dùng server `/api/models/*`. Local mode vẫn chạy được nếu đã có model
+  bundled hoặc bundle trong Cache Storage.
 - Cần tài khoản developer/2FA để nộp; không có API công khai không cần đăng nhập.
-- Nếu Chrome reviewer yêu cầu thu hẹp quyền, có thể bỏ `optional_host_permissions`
-  toàn bộ và chỉ giữ localhost; khi đó Remote server ngoài localhost sẽ không dùng
-  được cho đến khi thêm lại quyền.
+- Nếu Chrome reviewer yêu cầu thu hẹp quyền, có thể bỏ host `huggingface.co` và
+  `*.hf.co`; khi đó chỉ dùng model bundled/server, không tìm/tải HF trực tiếp.
 - Screenshots hiện chưa được commit; cần tạo từ extension UI trước khi nộp.

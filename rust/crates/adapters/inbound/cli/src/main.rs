@@ -222,6 +222,8 @@ enum Command {
         acoustic: PathBuf,
         #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
         vocoder: PathBuf,
+        #[arg(long, default_value = "Xin chào, đây là bản TUI của ViFastTts.")]
+        text: String,
         #[arg(long)]
         vfa: Option<PathBuf>,
         #[arg(long)]
@@ -236,8 +238,24 @@ enum Command {
         output: PathBuf,
         #[arg(long, default_value_t = 1.0)]
         speed: f32,
+        #[arg(long, default_value_t = 1.5)]
+        alpha: f32,
+        #[arg(long, default_value_t = 300)]
+        max_chars: usize,
         #[arg(long)]
         fixed_pauses: bool,
+        #[arg(long)]
+        peak_normalize: bool,
+        #[arg(long, default_value = "north")]
+        dialect: String,
+        #[arg(long, default_value_t = true)]
+        resolve_oov: bool,
+        #[arg(long)]
+        dictionary: Option<PathBuf>,
+        #[arg(long)]
+        srt: Option<PathBuf>,
+        #[arg(long)]
+        vtt: Option<PathBuf>,
     },
     /// Chạy HTTP server + web UI (mặc định dùng thư mục `web` nếu có).
     Server {
@@ -425,7 +443,15 @@ fn main() -> Result<()> {
                 let request = HttpTtsRequest {
                     text: text.clone(),
                     speed,
+                    alpha,
+                    max_chars,
                     fixed_pauses,
+                    peak_normalize,
+                    dialect: dialect.clone(),
+                    resolve_oov,
+                    overrides: load_map(&overrides)?,
+                    custom_reading: load_map(&custom_reading)?,
+                    ..HttpTtsRequest::default()
                 };
                 let wants_subtitles =
                     srt.is_some() || vtt.is_some() || vtt_karaoke.is_some() || karaoke.is_some();
@@ -583,6 +609,7 @@ fn main() -> Result<()> {
         Command::Tui {
             acoustic,
             vocoder,
+            text,
             vfa,
             vfts,
             server,
@@ -590,11 +617,20 @@ fn main() -> Result<()> {
             model_dir,
             output,
             speed,
+            alpha,
+            max_chars,
             fixed_pauses,
+            peak_normalize,
+            dialect,
+            resolve_oov,
+            dictionary,
+            srt,
+            vtt,
         } => {
             let args = vifasttts_tui::TuiArgs {
                 acoustic,
                 vocoder,
+                text,
                 vfa,
                 vfts,
                 server,
@@ -602,7 +638,15 @@ fn main() -> Result<()> {
                 model_dir,
                 output,
                 speed,
+                alpha,
+                max_chars,
                 fixed_pauses,
+                peak_normalize,
+                dialect,
+                resolve_oov,
+                dictionary,
+                srt,
+                vtt,
                 ..vifasttts_tui::TuiArgs::default()
             };
             vifasttts_tui::run(args).map_err(anyhow::Error::msg)?

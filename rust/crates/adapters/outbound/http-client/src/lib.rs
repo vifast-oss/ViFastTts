@@ -1,5 +1,7 @@
 //! HTTP client cho `vifasttts-http-server` (WAV + karaoke JSON).
 
+use std::collections::HashMap;
+
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use serde::{Deserialize, Serialize};
@@ -17,8 +19,21 @@ pub struct HttpTtsRequest {
     pub text: String,
     #[serde(default)]
     pub speed: f32,
+    pub alpha: f32,
+    pub max_chars: usize,
     #[serde(default)]
     pub fixed_pauses: bool,
+    #[serde(default)]
+    pub peak_normalize: bool,
+    pub dialect: String,
+    #[serde(default)]
+    pub resolve_oov: bool,
+    #[serde(default)]
+    pub overrides: Option<HashMap<String, String>>,
+    #[serde(default)]
+    pub dictionary: Option<String>,
+    #[serde(default)]
+    pub custom_reading: Option<HashMap<String, String>>,
 }
 
 impl Default for HttpTtsRequest {
@@ -26,7 +41,15 @@ impl Default for HttpTtsRequest {
         Self {
             text: String::new(),
             speed: 1.0,
+            alpha: 1.5,
+            max_chars: 300,
             fixed_pauses: false,
+            peak_normalize: false,
+            dialect: "north".to_string(),
+            resolve_oov: false,
+            overrides: None,
+            dictionary: None,
+            custom_reading: None,
         }
     }
 }
@@ -35,8 +58,7 @@ impl HttpTtsRequest {
     pub fn new(text: impl Into<String>) -> Self {
         Self {
             text: text.into(),
-            speed: 1.0,
-            fixed_pauses: false,
+            ..Self::default()
         }
     }
 }

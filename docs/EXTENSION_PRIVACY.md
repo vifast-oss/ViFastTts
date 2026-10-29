@@ -13,6 +13,8 @@ This policy covers the browser extension, not the separate desktop/mobile apps.
 - Synthesizes speech locally with bundled WASM + ONNX models.
 - Optionally sends text to a TTS server **only when you select Remote mode** and
   configure that server URL.
+- Optionally queries HuggingFace (`huggingface.co`) for model search/download when
+  you enable **HuggingFace trực tiếp**. Text being read is not sent for this.
 
 ## Data the extension handles
 
@@ -43,9 +45,10 @@ you configure.
 - `contextMenus` — add the right-click “read selection/page” actions.
 - `activeTab`, `scripting` — read page text only after an explicit user action.
 - Host permissions for localhost — optional local TTS server.
-- Optional host permissions for other HTTP/HTTPS origins — a server or model host
-  that the user explicitly configures. These are requested at runtime, not
-  silently granted.
+- Host permissions for `huggingface.co` and `*.hf.co` — optional direct model
+  search/download when the user enables that checkbox.
+- Optional host permissions for other HTTP/HTTPS origins — a server that the user
+  explicitly configures. These are requested at runtime, not silently granted.
 
 ## Data sharing and sale
 

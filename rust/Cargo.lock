@@ -5109,7 +5109,9 @@ name = "vifasttts-ffi"
 version = "0.1.1"
 dependencies = [
  "serde_json",
+ "vifasttts-app",
  "vifasttts-native",
+ "vifasttts-text",
 ]
 
 [[package]]

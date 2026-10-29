@@ -14,11 +14,16 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.InputType;
+import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -27,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -37,6 +43,7 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
+import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.Structure;
 
 import java.io.ByteArrayOutputStream;
@@ -67,6 +74,16 @@ public class MainActivity extends Activity {
         void vifasttts_engine_free(Pointer engine);
         Pointer vifasttts_synthesize(Pointer engine, String text, Options options,
                                      NativeLongByReference outLen);
+        Pointer vifasttts_synthesize_ex(Pointer engine, String text, Options options,
+                                        String dialect, byte resolveOov, String dictionary,
+                                        NativeLongByReference outLen);
+        int vifasttts_synthesize_karaoke_ex(Pointer engine, String text, Options options,
+                                            String dialect, byte resolveOov, String dictionary,
+                                            PointerByReference outWav, NativeLongByReference outLen,
+                                            PointerByReference outKaraoke);
+        Pointer vifasttts_karaoke_to_srt(String karaokeJson);
+        Pointer vifasttts_karaoke_to_vtt(String karaokeJson);
+        void vifasttts_string_free(Pointer value);
         void vifasttts_buffer_free(Pointer ptr, NativeLong len);
         String vifasttts_last_error();
     }
@@ -94,6 +111,9 @@ public class MainActivity extends Activity {
     private static final String KEY_MAX_CHARS = "max_chars";
     private static final String KEY_FIXED_PAUSES = "fixed_pauses";
     private static final String KEY_PEAK_NORMALIZE = "peak_normalize";
+    private static final String KEY_DIALECT = "dialect";
+    private static final String KEY_RESOLVE_OOV = "resolve_oov";
+    private static final String KEY_DICTIONARY = "dictionary";
 
     private Ffi ffi;
     private Pointer engine;
@@ -102,6 +122,7 @@ public class MainActivity extends Activity {
     private TextView subtitle;
     private TextView errorLabel;
     private TextView hintLabel;
+    private TextView karaokeView;
     private EditText text;
     private EditText serverUrl;
     private EditText token;
@@ -116,6 +137,9 @@ public class MainActivity extends Activity {
     private ProgressBar progress;
     private MediaPlayer player;
     private File lastAudioFile;
+    private String lastSrt = "";
+    private String lastVtt = "";
+    private String lastKaraokeJson = "";
     private AudioManager audioManager;
     private AudioFocusRequest focusRequest;
     private SharedPreferences prefs;
@@ -128,6 +152,29 @@ public class MainActivity extends Activity {
     private int maxChars = 300;
     private boolean fixedPauses = false;
     private boolean peakNormalize = false;
+    private String dialect = "north";
+    private boolean resolveOov = true;
+    private String dictionaryText = "";
+    private JSONArray karaokeUnits;
+    private final Handler karaokeHandler = new Handler(Looper.getMainLooper());
+    private final Runnable karaokeTick = new Runnable() {
+        @Override
+        public void run() {
+            if (karaokeView == null || karaokeUnits == null || player == null) return;
+            int position = player.getCurrentPosition();
+            String active = "";
+            for (int index = 0; index < karaokeUnits.length(); index += 1) {
+                JSONObject unit = karaokeUnits.optJSONObject(index);
+                if (unit == null) continue;
+                if (position >= unit.optLong("start_ms") && position < unit.optLong("end_ms")) {
+                    active = unit.optString("text", "");
+                    break;
+                }
+            }
+            if (!active.isEmpty()) karaokeView.setText(active);
+            karaokeHandler.postDelayed(this, 100);
+        }
+    };
 
     private String lastError() {
         try {
@@ -359,15 +406,43 @@ public class MainActivity extends Activity {
                 options.max_chars = new NativeLong(maxChars);
                 options.fixed_pauses = fixedPauses ? (byte) 1 : (byte) 0;
                 options.peak_normalize = peakNormalize ? (byte) 1 : (byte) 0;
+                byte[] wav = null;
+                String karaoke = null;
+                PointerByReference outWav = new PointerByReference();
+                PointerByReference outKaraoke = new PointerByReference();
                 NativeLongByReference len = new NativeLongByReference();
-                Pointer data = ffi.vifasttts_synthesize(engine, input, options, len);
-                if (data == null) throw new IllegalStateException(lastError());
-                long size = len.getValue().longValue();
-                byte[] wav = data.getByteArray(0, (int) size);
-                ffi.vifasttts_buffer_free(data, len.getValue());
+                int code = ffi.vifasttts_synthesize_karaoke_ex(
+                        engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
+                        dictionaryText, outWav, len, outKaraoke);
+                if (code == 0) {
+                    Pointer data = outWav.getValue();
+                    if (data == null) throw new IllegalStateException(lastError());
+                    long size = len.getValue().longValue();
+                    wav = data.getByteArray(0, (int) size);
+                    ffi.vifasttts_buffer_free(data, len.getValue());
+                    Pointer json = outKaraoke.getValue();
+                    if (json != null) {
+                        karaoke = json.getString(0, "UTF-8");
+                        ffi.vifasttts_string_free(json);
+                    }
+                } else {
+                    // Model không xuất timing: vẫn đọc được, chỉ không có phụ đề.
+                    NativeLongByReference plainLen = new NativeLongByReference();
+                    Pointer data = ffi.vifasttts_synthesize_ex(
+                            engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
+                            dictionaryText, plainLen);
+                    if (data == null) throw new IllegalStateException(lastError());
+                    long size = plainLen.getValue().longValue();
+                    wav = data.getByteArray(0, (int) size);
+                    ffi.vifasttts_buffer_free(data, plainLen.getValue());
+                }
                 File out = new File(getCacheDir(), "vifasttts.wav");
                 Files.write(out.toPath(), wav);
-                play(out, "Xong: " + String.format("%.2f s", wav.length / 2.0 / 24000.0));
+                lastKaraokeJson = karaoke == null ? "" : karaoke;
+                lastSrt = karaokeText(karaoke, true);
+                lastVtt = karaokeText(karaoke, false);
+                String suffix = lastSrt.isEmpty() ? "" : " · có phụ đề";
+                play(out, "Xong: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
             } catch (Throwable error) {
                 setStatus("Lỗi: " + error.getMessage());
                 setError(error.getMessage());
@@ -391,7 +466,14 @@ public class MainActivity extends Activity {
                 JSONObject body = new JSONObject();
                 body.put("text", input);
                 body.put("speed", speechSpeed);
+                body.put("alpha", sharpenAlpha);
+                body.put("max_chars", maxChars);
                 body.put("fixed_pauses", fixedPauses);
+                body.put("peak_normalize", peakNormalize);
+                body.put("dialect", dialect);
+                body.put("resolve_oov", resolveOov);
+                body.put("dictionary", dictionaryText);
+                body.put("karaoke", true);
                 byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(payload.length);
                 try (java.io.OutputStream out = connection.getOutputStream()) {
@@ -402,10 +484,26 @@ public class MainActivity extends Activity {
                     String error = new String(readError(connection), StandardCharsets.UTF_8);
                     throw new IllegalStateException("HTTP " + code + ": " + error);
                 }
-                byte[] wav = readAll(connection.getInputStream());
+                String contentType = connection.getContentType();
+                byte[] wav;
+                if (contentType != null && contentType.contains("application/json")) {
+                    JSONObject result = new JSONObject(new String(
+                            readAll(connection.getInputStream()), StandardCharsets.UTF_8));
+                    wav = Base64.decode(result.getString("audio_base64"), Base64.DEFAULT);
+                    lastSrt = result.optString("srt", "");
+                    lastVtt = result.optString("vtt", result.optString("vtt_karaoke", ""));
+                    lastKaraokeJson = result.optJSONObject("karaoke") == null
+                            ? "" : result.optJSONObject("karaoke").toString();
+                } else {
+                    wav = readAll(connection.getInputStream());
+                    lastSrt = "";
+                    lastVtt = "";
+                    lastKaraokeJson = "";
+                }
                 File out = new File(getCacheDir(), "vifasttts-remote.wav");
                 Files.write(out.toPath(), wav);
-                play(out, "Xong remote: " + String.format("%.2f s", wav.length / 2.0 / 24000.0));
+                String suffix = lastSrt.isEmpty() ? "" : " · có phụ đề";
+                play(out, "Xong remote: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
             } catch (Throwable error) {
                 setStatus("Lỗi remote: " + error.getMessage());
                 setError(error.getMessage());
@@ -465,6 +563,7 @@ public class MainActivity extends Activity {
                 player.setDataSource(out.getAbsolutePath());
                 player.setOnCompletionListener(done -> {
                     stopButton.setEnabled(false);
+                    stopKaraoke();
                     abandonAudioFocus();
                 });
                 player.setOnErrorListener((mp, what, extra) -> {
@@ -474,6 +573,7 @@ public class MainActivity extends Activity {
                 });
                 player.prepare();
                 player.start();
+                startKaraoke();
                 lastAudioFile = out;
                 if (saveButton != null) saveButton.setEnabled(true);
                 stopButton.setEnabled(true);
@@ -486,6 +586,7 @@ public class MainActivity extends Activity {
     }
 
     private void stopPlayback() {
+        stopKaraoke();
         if (player != null) {
             try {
                 player.stop();
@@ -498,6 +599,32 @@ public class MainActivity extends Activity {
         stopButton.setEnabled(false);
         abandonAudioFocus();
         setStatus("Đã dừng phát");
+    }
+
+    private void startKaraoke() {
+        stopKaraoke();
+        if (karaokeView == null || lastKaraokeJson.isEmpty()) {
+            if (karaokeView != null) karaokeView.setVisibility(View.GONE);
+            return;
+        }
+        try {
+            karaokeUnits = new JSONObject(lastKaraokeJson).optJSONArray("units");
+        } catch (Throwable error) {
+            karaokeUnits = null;
+        }
+        if (karaokeUnits == null || karaokeUnits.length() == 0) {
+            karaokeView.setVisibility(View.GONE);
+            return;
+        }
+        karaokeView.setText("");
+        karaokeView.setVisibility(View.VISIBLE);
+        karaokeHandler.post(karaokeTick);
+    }
+
+    private void stopKaraoke() {
+        karaokeHandler.removeCallbacks(karaokeTick);
+        karaokeUnits = null;
+        if (karaokeView != null) karaokeView.setVisibility(View.GONE);
     }
 
     private void showSettings() {
@@ -569,9 +696,49 @@ public class MainActivity extends Activity {
         peak.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(peak);
 
+        TextView dialectLabel = new TextView(this);
+        VfTheme.text(dialectLabel, font, 13, VfTheme.INK, true);
+        LinearLayout.LayoutParams dialectLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialectLabelParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(dialectLabel, dialectLabelParams);
+        dialectLabel.setText("Phương ngữ");
+        Spinner dialectSpinner = new Spinner(this);
+        String[] dialectLabels = {"Bắc", "Trung", "Nam"};
+        ArrayAdapter<String> dialectAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, dialectLabels);
+        dialectAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dialectSpinner.setAdapter(dialectAdapter);
+        dialectSpinner.setSelection(dialect.equals("central") ? 1 : dialect.equals("south") ? 2 : 0);
+        form.addView(dialectSpinner);
+
+        CheckBox oov = new CheckBox(this);
+        oov.setText("Resolve OOV");
+        oov.setChecked(resolveOov);
+        VfTheme.text(oov, font, 14, VfTheme.INK, false);
+        oov.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        form.addView(oov);
+
+        TextView dictionaryLabel = new TextView(this);
+        VfTheme.text(dictionaryLabel, font, 13, VfTheme.INK, true);
+        LinearLayout.LayoutParams dictionaryLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dictionaryLabelParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(dictionaryLabel, dictionaryLabelParams);
+        dictionaryLabel.setText("Từ điển local (mỗi dòng `từ = cách đọc`)");
+        EditText dictionaryInput = new EditText(this);
+        dictionaryInput.setText(dictionaryText);
+        dictionaryInput.setHint("AI = ây ai\nVPS = vi pi ét");
+        dictionaryInput.setMinLines(4);
+        dictionaryInput.setGravity(Gravity.TOP | Gravity.START);
+        dictionaryInput.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        VfTheme.input(dictionaryInput, font);
+        form.addView(dictionaryInput);
+
         TextView note = new TextView(this);
         VfTheme.text(note, font, 12, VfTheme.MUTED, false);
-        note.setText("Local: áp dụng đầy đủ. Remote: server chỉ nhận tốc độ và pause cố định; alpha/max do server quyết định. Model base 60k nặng hơn small; máy yếu nên dùng small.");
+        note.setText("Local áp dụng đầy đủ: tốc độ, alpha, max, pause, peak, phương ngữ, OOV và từ điển. Remote gửi cùng bộ tùy chọn; server cũ có thể bỏ qua. Model base 60k nặng hơn small; máy yếu nên dùng small.");
         LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         noteParams.topMargin = VfTheme.dp(this, 8);
@@ -597,6 +764,10 @@ public class MainActivity extends Activity {
                     }
                     fixedPauses = fixed.isChecked();
                     peakNormalize = peak.isChecked();
+                    int dialectIndex = dialectSpinner.getSelectedItemPosition();
+                    dialect = dialectIndex == 1 ? "central" : dialectIndex == 2 ? "south" : "north";
+                    resolveOov = oov.isChecked();
+                    dictionaryText = dictionaryInput.getText().toString().trim();
                     maxInput.setText(String.valueOf(maxChars));
                     prefs.edit()
                             .putFloat(KEY_SPEED, speechSpeed)
@@ -604,10 +775,16 @@ public class MainActivity extends Activity {
                             .putInt(KEY_MAX_CHARS, maxChars)
                             .putBoolean(KEY_FIXED_PAUSES, fixedPauses)
                             .putBoolean(KEY_PEAK_NORMALIZE, peakNormalize)
+                            .putString(KEY_DIALECT, dialect)
+                            .putBoolean(KEY_RESOLVE_OOV, resolveOov)
+                            .putString(KEY_DICTIONARY, dictionaryText)
                             .apply();
                     setStatus(String.format(
-                            "Đã lưu cấu hình · %.2f× · alpha %.2f · tối đa %d ký tự",
-                            speechSpeed, sharpenAlpha, maxChars));
+                            "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · tối đa %d ký tự · %d quy tắc",
+                            speechSpeed, sharpenAlpha,
+                            dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc",
+                            resolveOov ? "bật" : "tắt", maxChars,
+                            dictionaryText.isEmpty() ? 0 : dictionaryText.split("\n").length));
                     dialog.dismiss();
                 }));
         dialog.show();
@@ -720,37 +897,68 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    private String karaokeText(String json, boolean srt) {
+        if (json == null || json.isEmpty()) return "";
+        Pointer value = null;
+        try {
+            value = srt ? ffi.vifasttts_karaoke_to_srt(json) : ffi.vifasttts_karaoke_to_vtt(json);
+            return value == null ? "" : value.getString(0, "UTF-8");
+        } catch (Throwable error) {
+            return "";
+        } finally {
+            if (value != null) ffi.vifasttts_string_free(value);
+        }
+    }
+
     private void saveWav() {
         if (lastAudioFile == null || !lastAudioFile.isFile()) {
             setStatus("Chưa có WAV để lưu");
             return;
         }
-        String name = "vifasttts-" + System.currentTimeMillis() + ".wav";
+        String base = "vifasttts-" + System.currentTimeMillis();
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/wav");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                Uri uri = getContentResolver().insert(
-                        MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                if (uri == null) throw new IllegalStateException("MediaStore trả URI null");
-                try (OutputStream out = getContentResolver().openOutputStream(uri)) {
-                    if (out == null) throw new IllegalStateException("Không mở được Downloads");
-                    Files.copy(lastAudioFile.toPath(), out);
-                }
-                setStatus("Đã lưu vào Downloads/" + name);
-            } else {
-                File dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
-                if (dir == null) throw new IllegalStateException("Không có thư mục Music");
-                File out = new File(dir, name);
-                Files.copy(lastAudioFile.toPath(), out.toPath());
-                setStatus("Đã lưu: " + out.getAbsolutePath());
+            String location = saveBytes(base + ".wav",
+                    Files.readAllBytes(lastAudioFile.toPath()), "audio/wav");
+            int extra = 0;
+            if (!lastSrt.isEmpty()) {
+                saveBytes(base + ".srt", lastSrt.getBytes(StandardCharsets.UTF_8), "application/x-subrip");
+                extra += 1;
             }
+            if (!lastVtt.isEmpty()) {
+                saveBytes(base + ".vtt", lastVtt.getBytes(StandardCharsets.UTF_8), "text/vtt");
+                extra += 1;
+            }
+            if (!lastKaraokeJson.isEmpty()) {
+                saveBytes(base + ".karaoke.json",
+                        lastKaraokeJson.getBytes(StandardCharsets.UTF_8), "application/json");
+                extra += 1;
+            }
+            setStatus("Đã lưu " + location + (extra > 0 ? " + " + extra + " tệp phụ đề" : ""));
         } catch (Throwable error) {
-            setStatus("Lỗi lưu WAV: " + error.getMessage());
+            setStatus("Lỗi lưu file: " + error.getMessage());
             setError(error.getMessage());
         }
+    }
+
+    private String saveBytes(String name, byte[] bytes, String mime) throws Exception {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) throw new IllegalStateException("MediaStore trả URI null");
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                if (out == null) throw new IllegalStateException("Không mở được Downloads");
+                out.write(bytes);
+            }
+            return "Downloads/" + name;
+        }
+        File dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+        if (dir == null) throw new IllegalStateException("Không có thư mục Music");
+        File out = new File(dir, name);
+        Files.write(out.toPath(), bytes);
+        return out.getAbsolutePath();
     }
 
     private void requestLocalNetworkPermission() {
@@ -770,6 +978,9 @@ public class MainActivity extends Activity {
         maxChars = prefs.getInt(KEY_MAX_CHARS, 300);
         fixedPauses = prefs.getBoolean(KEY_FIXED_PAUSES, false);
         peakNormalize = prefs.getBoolean(KEY_PEAK_NORMALIZE, false);
+        dialect = prefs.getString(KEY_DIALECT, "north");
+        resolveOov = prefs.getBoolean(KEY_RESOLVE_OOV, true);
+        dictionaryText = prefs.getString(KEY_DICTIONARY, "");
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);
@@ -898,7 +1109,7 @@ public class MainActivity extends Activity {
         textCard.setOrientation(LinearLayout.VERTICAL);
         VfTheme.card(textCard);
         text = new EditText(this);
-        text.setText("Xin chào các bạn, hôm nay trời đẹp.");
+        text.setText("Xin chào các bạn, đây là bản Android của ViFastTts.");
         VfTheme.text(text, font, 15, VfTheme.INK, false);
         text.setBackgroundColor(Color.TRANSPARENT);
         text.setGravity(Gravity.TOP | Gravity.START);
@@ -956,7 +1167,7 @@ public class MainActivity extends Activity {
         root.addView(actions, actionParams);
 
         saveButton = new Button(this);
-        saveButton.setText("Lưu WAV");
+        saveButton.setText("Lưu WAV + phụ đề");
         VfTheme.secondaryButton(saveButton, font);
         saveButton.setEnabled(false);
         saveButton.setOnClickListener(view -> saveWav());
@@ -976,6 +1187,14 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         statusParams.topMargin = VfTheme.dp(this, 14);
         root.addView(status, statusParams);
+
+        karaokeView = new TextView(this);
+        VfTheme.text(karaokeView, font, 22, VfTheme.ACCENT, true);
+        karaokeView.setGravity(Gravity.CENTER);
+        karaokeView.setPadding(0, VfTheme.dp(this, 8), 0, VfTheme.dp(this, 8));
+        karaokeView.setVisibility(View.GONE);
+        root.addView(karaokeView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         errorLabel = new TextView(this);
         VfTheme.text(errorLabel, font, 13, VfTheme.ERROR, false);

@@ -11,6 +11,12 @@ const DEFAULTS = {
   selectionAction: 'hidden',
   dictionary: '',
   stream: false,
+  directModels: false,
+  alpha: 1.5,
+  maxChars: 300,
+  peakNormalize: false,
+  dialect: 'north',
+  resolveOov: true,
 };
 
 const HISTORY_KEY = 'vifasttts_history_v1';
@@ -26,6 +32,12 @@ const textEl = $('text');
 const countEl = $('count');
 const speedEl = $('speed');
 const speedValueEl = $('speedValue');
+const alphaEl = $('alpha');
+const alphaValueEl = $('alphaValue');
+const peakNormalizeEl = $('peakNormalize');
+const resolveOovEl = $('resolveOov');
+const dialectEl = $('dialect');
+const maxCharsEl = $('maxChars');
 const fixedEl = $('fixed');
 const streamEl = $('stream');
 const runEl = $('run');
@@ -43,6 +55,7 @@ const srtEl = $('srt');
 const downloadSrtEl = $('downloadSrt');
 const downloadVttEl = $('downloadVtt');
 const modelQueryEl = $('modelQuery');
+const directModelsEl = $('directModels');
 const modelSearchEl = $('modelSearch');
 const modelClearEl = $('modelClear');
 const modelStatusEl = $('modelStatus');
@@ -106,6 +119,14 @@ function saveSettings() {
     selectionAction: selectionActionEl.value,
     dictionary: dictionaryEl.value,
     stream: streamEl.checked,
+    directModels: directModelsEl.checked,
+    speed: Number(speedEl.value),
+    fixedPauses: fixedEl.checked,
+    alpha: Number(alphaEl.value),
+    maxChars: Number(maxCharsEl.value),
+    peakNormalize: peakNormalizeEl.checked,
+    dialect: dialectEl.value,
+    resolveOov: resolveOovEl.checked,
   });
 }
 
@@ -122,6 +143,18 @@ async function loadSettings() {
     : DEFAULTS.selectionAction;
   dictionaryEl.value = settings.dictionary || '';
   streamEl.checked = Boolean(settings.stream);
+  directModelsEl.checked = Boolean(settings.directModels);
+  speedEl.value = Number(settings.speed) || 1;
+  fixedEl.checked = Boolean(settings.fixedPauses);
+  alphaEl.value = Number(settings.alpha) || 1.5;
+  maxCharsEl.value = Number(settings.maxChars) || 300;
+  peakNormalizeEl.checked = Boolean(settings.peakNormalize);
+  dialectEl.value = ['north', 'central', 'south'].includes(settings.dialect)
+    ? settings.dialect
+    : 'north';
+  resolveOovEl.checked = settings.resolveOov !== false;
+  speedValueEl.textContent = `${Number(speedEl.value).toFixed(2)}×`;
+  alphaValueEl.textContent = Number(alphaEl.value).toFixed(2);
   updateBundleLabel();
   await loadHistory();
   setModeFields();
@@ -169,7 +202,19 @@ function modelServerUrl() {
 }
 
 function modelApi() {
-  return new ModelApi({ baseUrl: modelServerUrl(), token: tokenEl.value });
+  return new ModelApi({
+    baseUrl: modelServerUrl(),
+    token: tokenEl.value,
+    direct: directModelsEl.checked,
+  });
+}
+
+async function ensureModelPermission() {
+  if (directModelsEl.checked) {
+    await ensureRemotePermission('https://huggingface.co');
+    return;
+  }
+  await ensureRemotePermission(modelServerUrl());
 }
 
 function bundleCacheUrl(repo, path) {
@@ -189,7 +234,7 @@ async function searchModels() {
   modelFilesEl.innerHTML = '';
   modelStatusEl.textContent = 'Đang tìm…';
   try {
-    await ensureRemotePermission(modelServerUrl());
+    await ensureModelPermission();
     const models = await modelApi().search(query, 20);
     modelStatusEl.textContent = `${models.length} repo`;
     for (const model of models) {
@@ -208,7 +253,7 @@ async function loadModelFiles(repo) {
   modelFilesEl.innerHTML = '';
   modelStatusEl.textContent = `Đang xem ${repo}…`;
   try {
-    await ensureRemotePermission(modelServerUrl());
+    await ensureModelPermission();
     const files = await modelApi().files(repo);
     if (!files.length) {
       modelStatusEl.textContent = 'Repo chưa có .vfa/.vfts.';
@@ -230,7 +275,7 @@ async function loadModelFiles(repo) {
 async function downloadModel(repo, path) {
   modelStatusEl.textContent = `Đang tải ${path}…`;
   try {
-    await ensureRemotePermission(modelServerUrl());
+    await ensureModelPermission();
     const downloaded = await modelApi().download(repo, path);
     const key = bundleCacheUrl(repo, path);
     const cache = await caches.open('vifasttts-models-v1');
@@ -369,6 +414,11 @@ async function run() {
         mode,
         text,
         speed: Number(speedEl.value),
+        alpha: Number(alphaEl.value),
+        maxChars: Number(maxCharsEl.value),
+        peakNormalize: peakNormalizeEl.checked,
+        dialect: dialectEl.value,
+        resolveOov: resolveOovEl.checked,
         fixedPauses: fixedEl.checked,
         serverUrl: serverUrlEl.value.trim(),
         token: tokenEl.value,
@@ -477,10 +527,18 @@ speedEl.addEventListener('input', () => {
   speedValueEl.textContent = `${Number(speedEl.value).toFixed(2)}×`;
   saveSettings();
 });
-for (const element of [serverUrlEl, tokenEl, modelBaseUrlEl, selectionActionEl, dictionaryEl]) {
+alphaEl.addEventListener('input', () => {
+  alphaValueEl.textContent = Number(alphaEl.value).toFixed(2);
+  saveSettings();
+});
+for (const element of [
+  serverUrlEl, tokenEl, modelBaseUrlEl, selectionActionEl, dictionaryEl,
+  peakNormalizeEl, resolveOovEl, dialectEl, maxCharsEl,
+]) {
   element.addEventListener('change', saveSettings);
 }
 streamEl.addEventListener('change', saveSettings);
+directModelsEl.addEventListener('change', saveSettings);
 modelSearchEl.addEventListener('click', searchModels);
 modelClearEl.addEventListener('click', clearBundle);
 stopStreamEl.addEventListener('click', async () => {

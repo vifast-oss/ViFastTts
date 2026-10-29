@@ -279,6 +279,153 @@ mod wasm {
         serde_wasm_bindgen::to_value(&result).map_err(|err| JsValue::from_str(&err.to_string()))
     }
 
+    /// Bộ tham số đầy đủ cho UI web/extension. JSON để thêm field mới mà
+    /// không phá chữ ký wasm-bindgen; mọi field đều có default an toàn.
+    #[derive(Debug, Default, Deserialize)]
+    struct BrowserSynthOptions {
+        #[serde(default = "default_speed")]
+        speed: f32,
+        #[serde(default = "default_alpha")]
+        alpha: f32,
+        #[serde(default = "default_max_chars")]
+        max_chars: usize,
+        #[serde(default)]
+        fixed_pauses: bool,
+        #[serde(default)]
+        peak_normalize: bool,
+        #[serde(default = "default_dialect")]
+        dialect: String,
+        #[serde(default)]
+        resolve_oov: bool,
+        #[serde(default)]
+        overrides: HashMap<String, String>,
+        #[serde(default)]
+        custom_reading: HashMap<String, String>,
+    }
+
+    fn default_speed() -> f32 {
+        1.0
+    }
+
+    fn default_alpha() -> f32 {
+        1.5
+    }
+
+    fn default_max_chars() -> usize {
+        300
+    }
+
+    fn default_dialect() -> String {
+        "north".to_string()
+    }
+
+    fn options_from_json(json: &str) -> Result<SynthesisOptions, String> {
+        let raw: BrowserSynthOptions = if json.trim().is_empty() {
+            BrowserSynthOptions::default()
+        } else {
+            serde_json::from_str(json).map_err(|err| format!("options JSON lỗi: {err}"))?
+        };
+        let dialect = vifasttts_text::dialect::Dialect::from_name(&raw.dialect)
+            .unwrap_or(vifasttts_text::dialect::Dialect::North);
+        let mut parse = live_parse_options(dialect, Some(&raw.overrides), None);
+        parse.resolve_oov = raw.resolve_oov;
+        if !raw.custom_reading.is_empty() {
+            parse.custom_reading = Some(raw.custom_reading);
+        }
+        let mut options = SynthesisOptions {
+            speed: raw.speed.clamp(0.5, 2.0),
+            alpha: raw.alpha.clamp(0.5, 3.0),
+            max_chars: raw.max_chars.clamp(50, 5000),
+            fixed_pauses: raw.fixed_pauses,
+            peak_normalize: raw.peak_normalize,
+            parse,
+            ..SynthesisOptions::default()
+        };
+        if options.fixed_pauses {
+            options.gate_threshold = 1.01;
+        }
+        Ok(options)
+    }
+
+    /// Tổng hợp với đầy đủ options (JSON) — dùng cho web và extension.
+    #[wasm_bindgen]
+    pub async fn synthesize_full(
+        text: &str,
+        options_json: &str,
+        acoustic: js_sys::Function,
+        vocoder: js_sys::Function,
+    ) -> Result<JsValue, JsValue> {
+        let options = options_from_json(options_json).map_err(js_error)?;
+        let components = OrtWebModelBundle::new(acoustic, vocoder, OrtWebContract::default());
+        let mut engine =
+            SynthesisEngine::new(components.acoustic, components.vocoder, components.info);
+        let synthesis = engine.synthesize(text, &options).await.map_err(js_error)?;
+        let duration_ms =
+            (synthesis.waveform.len() as u64) * 1000 / synthesis.sample_rate.max(1) as u64;
+        let result = WasmSynthesis {
+            wav: synthesis.wav,
+            sample_rate: synthesis.sample_rate,
+            duration_ms,
+            karaoke: synthesis.karaoke,
+        };
+        serde_wasm_bindgen::to_value(&result).map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
+    /// Streaming với đầy đủ options; callback giống `synthesize_stream_with_options`.
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen]
+    pub async fn synthesize_stream_full(
+        text: &str,
+        options_json: &str,
+        acoustic: js_sys::Function,
+        vocoder: js_sys::Function,
+        on_audio: js_sys::Function,
+        on_units: js_sys::Function,
+    ) -> Result<JsValue, JsValue> {
+        let options = options_from_json(options_json).map_err(js_error)?;
+        let components = OrtWebModelBundle::new(acoustic, vocoder, OrtWebContract::default());
+        let mut engine =
+            SynthesisEngine::new(components.acoustic, components.vocoder, components.info);
+        let summary = engine
+            .synthesize_stream_with_units(
+                text,
+                &options,
+                |samples, sample_rate| {
+                    let event = js_sys::Object::new();
+                    let array = js_sys::Float32Array::from(samples);
+                    if js_sys::Reflect::set(&event, &"samples".into(), &array).is_err()
+                        || js_sys::Reflect::set(
+                            &event,
+                            &"sample_rate".into(),
+                            &JsValue::from_f64(sample_rate as f64),
+                        )
+                        .is_err()
+                    {
+                        return StreamControl::Cancel;
+                    }
+                    match on_audio.call1(&JsValue::NULL, &event) {
+                        Ok(value) if value.as_bool() == Some(false) => StreamControl::Cancel,
+                        Ok(_) => StreamControl::Continue,
+                        Err(_) => StreamControl::Cancel,
+                    }
+                },
+                |units| {
+                    if let Ok(value) = serde_wasm_bindgen::to_value(units) {
+                        let _ = on_units.call1(&JsValue::NULL, &value);
+                    }
+                },
+            )
+            .await
+            .map_err(js_error)?;
+        let result = WasmStreamSummary {
+            chunks: summary.chunks,
+            samples: summary.samples,
+            cancelled: summary.cancelled,
+            sample_rate: summary.sample_rate,
+        };
+        serde_wasm_bindgen::to_value(&result).map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
     #[derive(Serialize)]
     struct WasmStreamSummary {
         chunks: usize,

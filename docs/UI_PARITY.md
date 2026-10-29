@@ -1,55 +1,72 @@
-# UI parity — kiểm tra tính năng cơ bản
+# UI parity — trạng thái tính năng
 
-Cập nhật: 29/10/2026. Mục tiêu: mọi UI đều đủ để dùng hằng ngày, không có
-trường hợp một bản thiếu cấu hình cơ bản như Android/iOS trước đây.
+Cập nhật: 29/10/2026. Mục tiêu: mọi UI đều có cùng bộ tính năng TTS cơ bản và
+không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 
-## Checklist cơ bản
+## Bộ tính năng chuẩn
 
-- [x] Nhập text và đọc
-- [x] Chọn Local / Remote
-- [x] Chọn/tải model
-- [x] Phát và dừng
-- [x] Trạng thái/lỗi rõ ràng
-- [x] Tốc độ
-- [x] Pause cố định
-- [ ] Alpha / peak normalize / max ký tự trên mọi UI
-- [x] Lưu/chia sẻ WAV trên desktop/web/extension/Android/iOS
-- [ ] Từ điển/custom reading trên mobile
-- [ ] Karaoke/SRT/VTT trên mobile
+- Nhập text, đếm ký tự, đọc câu dài (chia chunk).
+- Local / Remote.
+- Chọn model: bundled, `.vfa/.vfts`, HuggingFace (server hoặc trực tiếp).
+- Phát / dừng, trạng thái và lỗi rõ ràng.
+- Tốc độ 0,5–2,0×; alpha 0,5–3,0; pause cố định; peak normalize; max ký tự/chunk.
+- Phương ngữ Bắc/Trung/Nam; resolve OOV; từ điển `key = cách đọc`.
+- Karaoke/timing; xuất WAV, SRT, VTT (nơi có timing).
+- Model browser và cấu hình được lưu lại.
 
-## Trạng thái từng UI
+## Ma trận UI
 
-| UI | Local/Remote | Model | Cấu hình âm thanh | Xuất file | Ghi chú |
+| UI | Local/Remote | Model | Cấu hình | Karaoke / phụ đề | Ghi chú |
 |---|---|---|---|---|---|
-| Desktop egui | Có | Bundle/ONNX, browser | Speed, alpha, fixed pause, peak, max chars, dialect, OOV | WAV, SRT, VTT | Đầy đủ nhất |
-| CLI | Có | `--vfa/--vfts`, models | flags speed/fixed/alpha | WAV/SRT/VTT | Phụ thuộc flags |
-| TUI | Có | `Ctrl+O` | Speed, fixed pause, dictionary | WAV | Alpha/peak/max chưa có UI |
-| Web Python (server) | Remote | Không có browser trong trang demo | Speed, fixed pause | WAV | Là demo server, không phải client đầy đủ |
-| Web Vite local | Có | HF browser/manual bundle | Speed, fixed pause | WAV (đã thêm) | Chưa có alpha/peak/max |
-| Chrome extension | Có | HF browser qua server | Speed, fixed pause, dictionary | WAV/SRT/VTT | Chưa có alpha/peak/max |
-| Android | Có | HF trực tiếp/server, bundle | Speed, alpha, fixed, peak, max | WAV vào Downloads (Android 10+) | Đã sửa top inset; tên app `ViFastTts` |
-| iOS | Có | HF trực tiếp/server, bundle | Speed, alpha, fixed, peak, max | Chia sẻ WAV qua ShareLink | Chưa test thiết bị thật |
+| Desktop egui | Có | ONNX, bundle, HF trực tiếp | Đầy đủ + auto-play + history/ETA | Có, lưu SRT/VTT | Bản đầy đủ nhất |
+| CLI | Có | `--vfa/--vfts`, HF | Đầy đủ qua flags | WAV/SRT/VTT/JSON | Dùng script/terminal |
+| TUI | Có | `Ctrl+O`, HF | Speed/alpha/max/dialect/OOV/dictionary file | WAV/SRT/VTT | `Ctrl+P` cấu hình; dictionary qua `--dictionary` |
+| Web Python (server) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect | WAV/SRT/VTT | Demo server, không có local WASM |
+| Web Vite | Có | HF trực tiếp hoặc server, file `.vfa/.vfts` | Đầy đủ | Có, WAV/SRT/VTT | Chạy được trong trình duyệt |
+| Chrome extension | Có | HF trực tiếp hoặc server, bundled | Đầy đủ | Có, WAV/SRT/VTT | Thêm stream/history/ETA |
+| Android | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; WAV/SRT/VTT/JSON vào Downloads | Câu mặc định có chữ “Android” |
+| iOS | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS” |
 
-## Các gap còn lại (không chặn dùng cơ bản)
+## Cách đọc tên sản phẩm
 
-1. **Mobile chưa có từ điển/custom reading** — desktop/extension có, nhưng FFI C
-   ABI hiện chỉ nhận text + options; cần mở rộng ABI hoặc xử lý dictionary ở
-   tầng app trước khi gọi FFI.
-2. **Mobile chưa có karaoke/SRT/VTT** — cần dùng `vifasttts_synthesize_karaoke`
-   hoặc thêm ShareLink/Intent cho file phụ đề.
-3. ~~Android chưa có nút chia sẻ WAV~~ — đã thêm **Lưu WAV** vào Downloads
-   trên Android 10+; máy cũ lưu vào thư mục Music của app.
-4. **TUI chưa có alpha/peak/max UI** — TUI hiện chỉ chỉnh speed/fixed; các tham
-   số còn lại dùng default. Không chặn dùng, nhưng chưa ngang desktop.
-5. **Web/Extension chưa có alpha/peak/max** — server web dùng alpha cố định;
-   extension WASM hiện chỉ truyền speed/fixed. Cần mở rộng options nếu muốn parity.
-6. **Audio mobile cần test máy thật** — đã thêm AudioFocus/AVAudioSession và
-   cảnh báo base model nặng; nếu vẫn giật, thu clip + tên model/thiết bị.
+Đã chốt trong `overrides_vi.json` (Rust + Python demo):
 
-## Kết luận
+```json
+"ios": "ai âu ét",
+"android": "an đờ roi"
+```
 
-Các UI hiện **đủ để dùng cơ bản**: nhập text, local/remote, model, phát/dừng,
-trạng thái/lỗi, speed và pause. Desktop vẫn là bản đầy đủ nhất. Android/iOS đã
-được nâng từ mức “chỉ đọc” lên mức có cấu hình âm thanh và tải model trực tiếp;
-các phần từ điển/karaoke/export nâng cao có thể làm tiếp mà không chặn bản dùng
-hằng ngày.
+- `iOS` đọc theo hướng tiếng Anh `/aɪ.oʊˈɛs/`, không còn `ai ốt ét`.
+- `Android` đọc tự nhiên `/ˈændrɔɪd/`; không dùng `an đờ rô ít`.
+- Có test hồi quy trong `rust/crates/core/domain/text/src/pipeline.rs`.
+
+## Các điểm còn cần kiểm trên máy thật
+
+1. **Android audio thật**: đã thêm AudioFocus/AudioAttributes và karaoke; emulator
+   chạy được, nhưng chưa xác nhận hết giật trên thiết bị thật.
+2. **iOS thiết bị thật**: simulator đã chạy local/remote + phụ đề; ký Apple
+   Developer và framework device vẫn là bước riêng.
+3. **Chrome/Edge store**: extension đã có host permission cho HuggingFace trực
+   tiếp; cần chụp ảnh 1280×800 và nộp store.
+4. **TUI**: dictionary hiện nhập qua file `--dictionary`; chưa có editor văn bản
+   trong terminal (không chặn dùng).
+
+## Lệnh kiểm tra nhanh
+
+```bash
+# Rust
+cd rust
+cargo test -p vifasttts-text -p vifasttts-http-server -p vifasttts-ffi -p vifasttts-tui
+
+# Python
+.venv/bin/ruff check .
+.venv/bin/python -m pytest -q
+
+# Web + extension
+./web/build.sh && (cd web && npm run build)
+./extension/build.sh
+
+# Mobile
+JAVA_HOME="$(/usr/libexec/java_home -v 21)" ./mobile/android/build.sh
+ONNXRUNTIME_XCFRAMEWORK=/private/tmp/opencode/ios-ort/onnxruntime.xcframework ./mobile/ios/build-ios.sh
+```

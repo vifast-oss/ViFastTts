@@ -42,17 +42,38 @@
         </select>
       </label>
       <label><input type="checkbox" id="fixed" /> đọc đều (fixed pauses)</label>
-      <label>Tốc độ <input id="speed" type="range" min="0.5" max="2.0" step="0.05" value="1" /> <span id="speedValue">1.00×</span></label>
+      <label><input type="checkbox" id="peak" /> Peak normalize</label>
+      <label><input type="checkbox" id="resolveOov" checked /> Resolve OOV</label>
     </p>
+    <p>
+      <label>Tốc độ <input id="speed" type="range" min="0.5" max="2.0" step="0.05" value="1" /> <span id="speedValue">1.00×</span></label>
+      <label>Alpha làm nét <input id="alpha" type="range" min="0.5" max="3.0" step="0.05" value="1.5" /> <span id="alphaValue">1.50</span></label>
+    </p>
+    <p>
+      <label>Phương ngữ
+        <select id="dialect">
+          <option value="north">Bắc</option>
+          <option value="central">Trung</option>
+          <option value="south">Nam</option>
+        </select>
+      </label>
+      <label>Max ký tự/chunk <input id="maxChars" type="number" min="50" max="5000" step="50" value="300" style="width:5.5rem" /></label>
+    </p>
+    <details>
+      <summary>Từ điển local (mỗi dòng `từ = cách đọc`)</summary>
+      <textarea id="dictionary" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;TP.HCM = thành phố hồ chí minh"></textarea>
+      <div id="dictionaryStatus" style="color:var(--vf-muted);font-size:.85rem"></div>
+    </details>
     <p id="remoteFields" class="hidden">
       <label>Server URL <input id="serverUrl" size="34" value="http://127.0.0.1:8000" /></label>
       <label>Token <input id="token" type="password" size="20" /></label>
     </p>
     <details id="modelBrowser">
-      <summary>Thêm giọng từ HuggingFace (qua server)</summary>
+      <summary>Thêm giọng từ HuggingFace</summary>
       <p>
         <input id="modelQuery" value="vifasttts" />
         <button id="modelSearch" type="button">Tìm</button>
+        <label><input type="checkbox" id="directModels" /> HuggingFace trực tiếp (không cần server)</label>
         <span id="modelStatus"></span>
       </p>
       <div id="modelList"></div>
@@ -65,7 +86,11 @@
     </p>
     <p><button id="run" class="primary">Đọc</button></p>
     <audio id="audio" controls></audio>
-    <p><a id="download" class="hidden" download="vifasttts.wav" href="#">Tải WAV</a></p>
+    <p>
+      <a id="download" class="hidden" download="vifasttts.wav" href="#">Tải WAV</a>
+      <a id="downloadSrt" class="hidden" download="vifasttts.srt" href="#">Tải SRT</a>
+      <a id="downloadVtt" class="hidden" download="vifasttts.vtt" href="#">Tải VTT</a>
+    </p>
     <div id="karaoke"></div>
     <pre id="srt"></pre>
     <script type="module" src="/app.js"></script>

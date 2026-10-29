@@ -142,3 +142,14 @@ Quy trình 5 bước theo tinh thần viG2P (viết lại, không dùng code GPL
 4. Còn lại trả `None` → giữ `FALLBACK_REQUIRED` kèm `raw` để log và bổ sung override.
 
 Bật khi cần bằng `parse_text(text, resolve_oov=True)`; mặc định tắt để hành vi không đổi. Các âm tiết sinh từ đánh vần có `confidence=0.5` và giữ `raw` là token gốc.
+
+## Đọc tên sản phẩm công nghệ
+
+Bảng `overrides_vi.json` (Rust live + Python demo) chốt:
+
+- `iOS` → **ai âu ét** (hướng tiếng Anh `/aɪ.oʊˈɛs/`).
+- `Android` → **an đờ roi** (hướng tiếng Anh `/ˈændrɔɪd/`).
+- `macOS`/`OS` giữ cách đọc hiện có; nếu đổi phải sửa đồng bộ Rust + Python + test.
+
+Test hồi quy: `pipeline::tests::ios_uses_english_reading` và
+`pipeline::tests::android_uses_natural_reading`.

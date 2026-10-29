@@ -8,6 +8,11 @@ struct ContentView: View {
     @State private var error: String?
     @State private var player: AVAudioPlayer?
     @State private var lastAudioURL: URL?
+    @State private var lastSrtURL: URL?
+    @State private var lastVttURL: URL?
+    @State private var lastKaraokeURL: URL?
+    @State private var karaokeUnits: [KaraokeUnit] = []
+    @State private var timingSummary = ""
     @State private var showModels = false
     @State private var activeModel = TtsEngine.shared.activeModel
     @State private var ready = TtsEngine.shared.isReady
@@ -20,6 +25,9 @@ struct ContentView: View {
     @AppStorage("vifasttts.fixedPauses") private var fixedPauses = false
     @AppStorage("vifasttts.peakNormalize") private var peakNormalize = false
     @AppStorage("vifasttts.maxChars") private var maxChars = 300
+    @AppStorage("vifasttts.dialect") private var dialect = "north"
+    @AppStorage("vifasttts.resolveOov") private var resolveOov = true
+    @AppStorage("vifasttts.dictionary") private var dictionary = ""
     @State private var showSettings = false
 
     var body: some View {
@@ -106,6 +114,21 @@ struct ContentView: View {
                 Text(status)
                     .font(VFTheme.body)
                     .foregroundStyle(VFTheme.ink)
+                if !timingSummary.isEmpty {
+                    Text(timingSummary)
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
+                }
+                if !karaokeUnits.isEmpty {
+                    TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+                        let active = activeKaraokeText
+                        Text(active.isEmpty ? "♪" : active)
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(VFTheme.accent)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 6)
+                    }
+                }
                 if let error {
                     Text(error)
                         .font(.callout)
@@ -128,7 +151,26 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if let lastAudioURL {
-                        ShareLink(item: lastAudioURL) {
+                        Menu {
+                            ShareLink(item: lastAudioURL) {
+                                Label("Chia sẻ WAV", systemImage: "waveform")
+                            }
+                            if let lastSrtURL {
+                                ShareLink(item: lastSrtURL) {
+                                    Label("Chia sẻ SRT", systemImage: "captions.bubble")
+                                }
+                            }
+                            if let lastVttURL {
+                                ShareLink(item: lastVttURL) {
+                                    Label("Chia sẻ VTT", systemImage: "text.bubble")
+                                }
+                            }
+                            if let lastKaraokeURL {
+                                ShareLink(item: lastKaraokeURL) {
+                                    Label("Chia sẻ JSON karaoke", systemImage: "curlybraces")
+                                }
+                            }
+                        } label: {
                             Image(systemName: "square.and.arrow.up")
                         }
                     }
@@ -152,7 +194,10 @@ struct ContentView: View {
                     alpha: $alpha,
                     fixedPauses: $fixedPauses,
                     peakNormalize: $peakNormalize,
-                    maxChars: $maxChars
+                    maxChars: $maxChars,
+                    dialect: $dialect,
+                    resolveOov: $resolveOov,
+                    dictionary: $dictionary
                 )
             }
             .onChange(of: mode) { value in
@@ -181,6 +226,12 @@ struct ContentView: View {
         #endif
     }
 
+    private var activeKaraokeText: String {
+        guard let player else { return "" }
+        let position = Int(player.currentTime * 1000)
+        return karaokeUnits.first { position >= $0.start_ms && position < $0.end_ms }?.text ?? ""
+    }
+
     private func synthesize() {
         let input = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else {
@@ -194,36 +245,61 @@ struct ContentView: View {
         }
         busy = true
         error = nil
+        karaokeUnits = []
+        timingSummary = ""
         status = mode == "remote" ? "Đang gọi server…" : "Đang tổng hợp local…"
         Task {
             do {
-                let url: URL
+                let result: TtsResult
                 if mode == "remote" {
                     let client = try RemoteTtsClient(server: serverURL, token: token)
-                    url = try await client.synthesize(
-                        text: input,
-                        speed: Float(speed),
-                        fixedPauses: fixedPauses
-                    )
-                } else {
-                    url = try await TtsEngine.shared.synthesize(
+                    let remote = try await client.synthesize(
                         text: input,
                         speed: Float(speed),
                         alpha: Float(alpha),
                         maxChars: maxChars,
                         fixedPauses: fixedPauses,
-                        peakNormalize: peakNormalize
+                        peakNormalize: peakNormalize,
+                        dialect: dialect,
+                        resolveOov: resolveOov,
+                        dictionary: dictionary
+                    )
+                    result = TtsResult(
+                        wavURL: remote.wavURL,
+                        srtURL: remote.srtURL,
+                        vttURL: remote.vttURL,
+                        karaokeURL: nil,
+                        units: remote.units
+                    )
+                } else {
+                    result = try await TtsEngine.shared.synthesize(
+                        text: input,
+                        speed: Float(speed),
+                        alpha: Float(alpha),
+                        maxChars: maxChars,
+                        fixedPauses: fixedPauses,
+                        peakNormalize: peakNormalize,
+                        dialect: dialect,
+                        resolveOov: resolveOov,
+                        dictionary: dictionary
                     )
                 }
                 player?.stop()
                 let session = AVAudioSession.sharedInstance()
                 try? session.setCategory(.playback, mode: .spokenAudio)
                 try? session.setActive(true)
-                let audio = try AVAudioPlayer(contentsOf: url)
+                let audio = try AVAudioPlayer(contentsOf: result.wavURL)
                 audio.prepareToPlay()
                 audio.play()
                 player = audio
-                lastAudioURL = url
+                lastAudioURL = result.wavURL
+                lastSrtURL = result.srtURL
+                lastVttURL = result.vttURL
+                lastKaraokeURL = result.karaokeURL
+                karaokeUnits = result.units
+                timingSummary = result.srtURL == nil
+                    ? "Không có timing/karaoke"
+                    : "Có phụ đề SRT + VTT"
                 status = String(format: mode == "remote" ? "Xong remote · %.2f s" : "Xong local · %.2f s", audio.duration)
             } catch {
                 self.error = error.localizedDescription
@@ -242,6 +318,9 @@ private struct SettingsView: View {
     @Binding var fixedPauses: Bool
     @Binding var peakNormalize: Bool
     @Binding var maxChars: Int
+    @Binding var dialect: String
+    @Binding var resolveOov: Bool
+    @Binding var dictionary: String
 
     var body: some View {
         NavigationStack {
@@ -264,11 +343,28 @@ private struct SettingsView: View {
                     Toggle("Peak normalize", isOn: $peakNormalize)
                         .tint(VFTheme.accent)
                 }
-                Section("Giới hạn") {
+                Section("Giới hạn & ngôn ngữ") {
                     Stepper("Max ký tự/chunk: \(maxChars)", value: $maxChars, in: 50...5000, step: 50)
+                    Picker("Phương ngữ", selection: $dialect) {
+                        Text("Bắc").tag("north")
+                        Text("Trung").tag("central")
+                        Text("Nam").tag("south")
+                    }
+                    Toggle("Resolve OOV", isOn: $resolveOov)
+                        .tint(VFTheme.accent)
+                }
+                Section("Từ điển local") {
+                    TextEditor(text: $dictionary)
+                        .font(.system(.caption, design: .monospaced))
+                        .frame(minHeight: 120)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Text("Mỗi dòng `từ = cách đọc`. Local và remote đều nhận từ điển.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
                 }
                 Section("Ghi chú") {
-                    Text("Local áp dụng đầy đủ các tùy chọn. Remote chỉ gửi tốc độ và pause cố định; alpha/max do server quyết định.")
+                    Text("Local áp dụng đầy đủ: tốc độ, alpha, max, pause, peak, phương ngữ, OOV và từ điển. Remote gửi cùng bộ tùy chọn; server cũ có thể bỏ qua.")
                         .font(VFTheme.caption)
                         .foregroundStyle(VFTheme.muted)
                     Text("Model base 60k nặng hơn small; nếu máy chậm, dùng small hoặc giảm max ký tự/chunk.")
