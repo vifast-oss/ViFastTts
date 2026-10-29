@@ -10,8 +10,8 @@
 
 **Cách nhanh nhất:** tải ZIP → giải nén → chạy `vifasttts-desktop.exe`.
 
-1. Vào [Releases v0.1.0](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0) và tải
-   [`vifasttts-desktop-windows-x64.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.1.0/vifasttts-desktop-windows-x64.zip)
+1. Vào [Releases v0.1.1](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1) và tải
+   [`vifasttts-desktop-windows-x64.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-desktop-windows-x64.zip)
    (~92 MB).
 2. Chuột phải file ZIP → **Extract All** (đừng chạy trực tiếp trong file ZIP).
 3. Mở thư mục vừa giải nén → chạy `vifasttts-desktop.exe`.
@@ -34,7 +34,7 @@ nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 | CLI/TUI/server | `vifasttts-cli-windows-x64.zip` (hoặc macOS/Linux tương ứng) |
 | Web tĩnh riêng | `web-dist.tar.gz` (nâng cao) |
 
-Tất cả nằm trong [release v0.1.0](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0).
+Tất cả nằm trong [release v0.1.1](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1).
 Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
 
 ## Tìm model từ HuggingFace: bản nào cần server?
@@ -104,7 +104,7 @@ Người dùng Windows bình thường nên dùng bản desktop ở trên; mục
 - **Model bundles:** [.vfa/.vfts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles) ·
   [base 60k sau Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
   [3 mẫu nghe](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo)
-- **App release:** [v0.1.0](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0)
+- **App release:** [v0.1.1](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1)
 
 ### Chọn đúng luồng
 

@@ -25,8 +25,8 @@ targets:
       path: ViFastTtsMobile/Info.plist
       properties:
         CFBundleDisplayName: ViFastTts
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "0.1.1"
+        CFBundleVersion: "2"
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
