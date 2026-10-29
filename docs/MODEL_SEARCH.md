@@ -57,8 +57,8 @@ vifasttts models files dvchd/vifasttts-ngochuyen-small
 
 # tải bundle (kiểm manifest/hash)
 vifasttts models download \
-  dvchd/vifasttts-models \
-  voices/n0-ngochuyen/n0-ngochuyen.vfa \
+  dvchd/vifasttts-ngochuyen-small \
+  bundles/n0-ngochuyen.vfa \
   --output models
 
 # liệt kê bundle đã tải
@@ -138,7 +138,7 @@ dùng Server URL/token trong UI. Thiết bị thật chưa test vì cần ký Ap
 
 ```text
 GET /api/models/search?q=vifasttts&limit=20
-GET /api/models/files?repo=dvchd/vifasttts-models
+GET /api/models/files?repo=dvchd/vifasttts-ngochuyen-small
 GET /api/models/download?repo=...&path=voices/n0.vfa
 ```
 

@@ -102,7 +102,7 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
   (sha256 `3c330cfc…`); ONNX live `artifacts/onnx/n0_q/acoustic.onnx` (sha256 `df61599a…`).
 - **Q:** onset thứ 25 ở cuối vocab; cờ `onset_has_q` đã bỏ 28/10/2026, thay bằng
   `vocab_version` + `vocab_hash`; **không có adapter Q→K**. Fine-tune Q 3k (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export
-  nhưng **chưa live**; so tai qua release tạm `q-preview-2026-10-27`.
+  nhưng **chưa live**; release nghe thử cũ đã xoá, artifact base/bundle nằm trên HuggingFace.
 - **Demo:** custom reading local-first (gửi duyệt khi bật checkbox), 570 quy tắc có sẵn,
   mục STEM (hoá học/toán/vật lý/LaTeX), feedback/báo lỗi, admin thống kê. Feedback content
   còn khoá đến khi đặt `ADMIN_PASSWORD`.

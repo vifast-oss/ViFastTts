@@ -11,7 +11,8 @@ struct ContentView: View {
     @State private var activeModel = TtsEngine.shared.activeModel
     @State private var ready = TtsEngine.shared.isReady
     @AppStorage("vifasttts.mode") private var mode = "local"
-    @AppStorage("vifasttts.serverURL") private var serverURL = "http://127.0.0.1:8000"
+    // Điện thoại không có localhost của máy dev: để trống, chỉ gợi ý IP LAN.
+    @AppStorage("vifasttts.serverURL") private var serverURL = ""
     @AppStorage("vifasttts.token") private var token = ""
 
     var body: some View {
@@ -36,9 +37,10 @@ struct ContentView: View {
                 .tint(VFTheme.accent)
 
                 if mode == "remote" {
-                    TextField("Server URL", text: $serverURL)
+                    TextField("http://192.168.1.100:8000", text: $serverURL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .textContentType(.URL)
                         .textFieldStyle(.roundedBorder)
                     SecureField("Bearer token (tuỳ chọn)", text: $token)
                         .textFieldStyle(.roundedBorder)
@@ -124,7 +126,13 @@ struct ContentView: View {
             .onChange(of: mode) { value in
                 status = value == "remote" ? "Remote: nhập server URL" : "Local: sẵn sàng"
             }
-            .onAppear(perform: runAutoTestIfNeeded)
+            .onAppear {
+                // Bản cũ lưu localhost; xoá để máy thật không gọi nhầm.
+                if serverURL == "http://127.0.0.1:8000" || serverURL == "http://localhost:8000" {
+                    serverURL = ""
+                }
+                runAutoTestIfNeeded()
+            }
         }
     }
 
@@ -145,6 +153,11 @@ struct ContentView: View {
         let input = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else {
             error = "Chưa có text"
+            return
+        }
+        if mode == "remote" && serverURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            error = "Nhập server URL LAN trước khi đọc remote."
+            status = "Thiếu server URL"
             return
         }
         busy = true

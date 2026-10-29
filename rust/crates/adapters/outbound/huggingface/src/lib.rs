@@ -3,6 +3,7 @@
 //! Public API không cần token; set `HF_TOKEN` cho repo private. Loader vẫn là
 //! `vifasttts-vfts`/`vifasttts-native` ở phía sau.
 
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -91,16 +92,37 @@ pub fn bundle_files(repo: &str) -> Result<Vec<HfFile>, String> {
         .body_mut()
         .read_json()
         .map_err(|error| format!("parse HuggingFace tree: {error}"))?;
-    Ok(entries.into_iter().filter(HfFile::is_bundle).collect())
+    // Repo có thể mirror cùng bundle ở `bundles/` và `resources/`; chỉ trả một
+    // đại diện (tên file + size) để model browser không hiện trùng.
+    let mut seen = HashSet::new();
+    Ok(entries
+        .into_iter()
+        .filter(HfFile::is_bundle)
+        .filter(|file| {
+            let name = Path::new(&file.path)
+                .file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or(&file.path);
+            seen.insert((name.to_string(), file.size))
+        })
+        .collect())
 }
 
 /// File bundle từ `siblings` của search (không cần gọi tree).
 pub fn bundles_from_siblings(model: &HfModel) -> Vec<String> {
+    let mut seen = HashSet::new();
     model
         .siblings
         .iter()
         .map(|file| file.rfilename.clone())
         .filter(|path| path.ends_with(".vfa") || path.ends_with(".vfts"))
+        .filter(|path| {
+            let name = Path::new(path)
+                .file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or(path);
+            seen.insert(name.to_string())
+        })
         .collect()
 }
 
@@ -136,6 +158,8 @@ pub fn download_bytes(repo: &str, path: &str) -> Result<Vec<u8>, String> {
     }
     let bytes = response
         .body_mut()
+        .with_config()
+        .limit(MAX_DOWNLOAD)
         .read_to_vec()
         .map_err(|error| format!("tải {url}: {error}"))?;
     if bytes.len() as u64 > MAX_DOWNLOAD {

@@ -26,6 +26,14 @@ library_name: vifasttts
 Model TTS tiếng Việt **một giọng nữ**, acoustic **small 6,1M tham số**, 24 kHz.
 Repo này chứa checkpoint, config, stats, ONNX FP32, Vocos pretrained và 10 câu demo.
 
+## Bundle `.vfa` / `.vfts`
+
+- `bundles/n0-ngochuyen.vfa` — acoustic-only, dùng `onnx/vocoder.onnx`.
+- `bundles/n0-ngochuyen.vfts` — full bundle, tự chứa vocoder + frontend.
+- `resources/` là bản sao tiện dụng của hai bundle trên (cùng SHA256).
+- Base N0 gốc **trước Q** nằm ở repo riêng:
+  https://huggingface.co/dvchd/vifasttts-ngochuyen-base
+
 ## Vocab Q (27/10/2026)
 
 ONNX trong repo này đã có onset **Q** (`vocab_version` + `vocab_hash`) cho chữ `qu`; Q ở cuối vocab,
@@ -115,8 +123,9 @@ demo/                                   # 10 câu mới + texts.json
 - Demo: https://vifasttts.hoctuthien.com/
 - Hugging Face: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - Space demo: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
-- Research release: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
-- ONNX release: `n0_onnx_fp32.zip`
+- Model bundles: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
+- Base N0 archive: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
+- ONNX: `onnx/acoustic.onnx`, `onnx/vocoder.onnx`
 
 ## Giới hạn
 

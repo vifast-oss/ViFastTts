@@ -55,7 +55,7 @@ cd ViFastTts
 # mở http://127.0.0.1:8090
 ```
 
-Script tự tải ONNX FP32 **Q-init** (`n0_onnx_fp32.zip`, có kiểm sha256), tạo `.venv-demo`,
+Script tự tải ONNX FP32 **Q-init** từ HuggingFace (có kiểm sha256), tạo `.venv-demo`,
 cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 
 - **Demo online:** https://vifasttts.hoctuthien.com/
@@ -65,10 +65,9 @@ cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần to
 - **Góp ý / báo lỗi:** form trên web và Space; admin xem tại `/admin` sau khi đặt
   `ADMIN_PASSWORD` (nội dung bị khoá nếu chưa đặt).
 - **Model/card:** `docs/NGOC_HUYEN.md`
-- **Release:** [prod candidate](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1) ·
-  [research](https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1) ·
-  [nghe thử Q](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27) (tạm) ·
-  [3 mẫu VPS](https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1)
+- **Model bundles:** [.vfa/.vfts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles) ·
+  [base N0 gốc trước Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
+  [3 mẫu nghe](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo)
 
 ### Chọn đúng luồng
 
@@ -82,7 +81,7 @@ cache, train, eval, export. Bắt đầu ở `docs/TRAINING_N0.md` (N0) hoặc `
 > Model Ngọc Huyền chỉ dùng **nghiên cứu/phi thương mại**; không dùng giả giọng, lừa đảo
 > hoặc production thương mại. Code repo là MIT.
 
-![Luồng model N0](https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-research-v1/vifasttts_model_flow.png)
+![Luồng model N0](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/og-image.png)
 
 > **Đọc nhanh:** muốn hiểu kiến trúc → mục 2–3; muốn train lại → `docs/TRAINING_N0.md`;
 > muốn triển khai → `docs/handoff/N0_DEPLOY.md`.
@@ -142,8 +141,8 @@ Chi tiết + license: **`docs/NGOC_HUYEN.md`**.
 > **Vocab Q:** từ commit `60b5cf9`, onset **Q** đứng cuối vocab (ID cũ không đổi) cho chữ `qu`.
 > Checkpoint/ONNX mới mang `vocab_version` + `vocab_hash`; artifact cũ không còn được hỗ trợ,
 > không dùng adapter Q→K. Bản **đang live** là Q-init (`Q = K`, bit-exact N0 Bắc cũ);
-> fine-tune Q 3k đã train/export nhưng **chưa chọn** — nghe A/B tại release tạm
-> [`q-preview-2026-10-27`](https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27).
+> fine-tune Q 3k đã train/export nhưng **chưa chọn**; release nghe thử cũ đã xoá
+> (29/10/2026), artifact base/bundle nằm trên [HuggingFace](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles).
 > Xem `docs/Q_ONSET.md`, `CHANGELOG.md`, `docs/SYLLABLE_GUIDE.md`.
 
 ## 3. Luồng hoạt động trong 30 giây

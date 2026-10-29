@@ -1161,7 +1161,7 @@ Workflow `.github/workflows/ci.yml` (push main/PR/tag, dispatch):
 | `ios` | macOS runner: Rust staticlib + ORT pod `1.30.0` + xcodebuild simulator; artifact có model |
 | `release` | tag `v*`: tải artifact và tạo/cập nhật GitHub Release |
 
-- Model CI lấy từ release `n0-ngochuyen-prod-v1/n0_onnx_fp32.zip` (pin), ORT
+- Model CI lấy từ HuggingFace `dvchd/vifasttts-ngochuyen-small/onnx` (pin sha256), ORT
   desktop/Android tải bản 1.31.1; iOS dùng pod archive 1.30.0 vì CocoaPods chưa
   có 1.31.1.
 - iOS job build simulator với ORT static 1.30.0; local/remote đã test trên máy

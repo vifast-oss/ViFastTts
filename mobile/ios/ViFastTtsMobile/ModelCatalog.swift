@@ -10,8 +10,12 @@ struct CatalogModel: Decodable, Identifiable {
     }
 
     var bundleCount: Int {
-        (siblings ?? []).filter {
-            $0.rfilename.hasSuffix(".vfa") || $0.rfilename.hasSuffix(".vfts")
+        var seen = Set<String>()
+        return (siblings ?? []).filter {
+            guard $0.rfilename.hasSuffix(".vfa") || $0.rfilename.hasSuffix(".vfts") else {
+                return false
+            }
+            return seen.insert(($0.rfilename as NSString).lastPathComponent).inserted
         }.count
     }
 }

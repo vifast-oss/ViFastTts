@@ -3,17 +3,21 @@ package com.vifasttts.mobile;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
-import android.graphics.Typeface;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -72,18 +76,33 @@ public class MainActivity extends Activity {
 
     private static final String PREFS = "vifasttts";
     private static final String KEY_ACTIVE_MODEL = "active_model";
+    private static final String KEY_MODE = "mode";
+    private static final String KEY_SERVER = "server_url";
+    private static final String KEY_TOKEN = "token";
 
     private Ffi ffi;
     private Pointer engine;
     private TextView status;
     private TextView modelLabel;
+    private TextView subtitle;
+    private TextView errorLabel;
+    private TextView hintLabel;
     private EditText text;
     private EditText serverUrl;
     private EditText token;
-    private CheckBox remote;
+    private LinearLayout remoteFields;
+    private Button localTab;
+    private Button remoteTab;
+    private Button runButton;
+    private Button stopButton;
+    private Button modelButton;
+    private ProgressBar progress;
     private MediaPlayer player;
     private SharedPreferences prefs;
     private String activeModelPath = "";
+    private String mode = "local";
+    private boolean remoteMode = false;
+    private boolean busy = false;
 
     private String lastError() {
         try {
@@ -163,8 +182,46 @@ public class MainActivity extends Activity {
     }
 
     private String baseUrl() {
-        String base = serverUrl.getText().toString().trim();
-        return (base.isEmpty() ? "http://10.0.2.2:8000" : base).replaceAll("/+$", "");
+        // Không tự đoán localhost/10.0.2.2: điện thoại thật không có localhost
+        // của máy dev. UI chỉ gợi ý IP LAN, người dùng phải nhập.
+        return serverUrl.getText().toString().trim().replaceAll("/+$", "");
+    }
+
+    private boolean requireServer() {
+        if (!baseUrl().isEmpty()) return true;
+        setStatus("Nhập server URL (LAN) trước.");
+        setError("Server URL đang trống.");
+        return false;
+    }
+
+    private void setMode(String next) {
+        mode = "remote".equals(next) ? "remote" : "local";
+        remoteMode = "remote".equals(mode);
+        prefs.edit().putString(KEY_MODE, mode).apply();
+        if (localTab == null) return;
+        VfTheme.segmentButton(localTab, !remoteMode, VfTheme.typeface(this));
+        VfTheme.segmentButton(remoteTab, remoteMode, VfTheme.typeface(this));
+        remoteFields.setVisibility(remoteMode ? View.VISIBLE : View.GONE);
+        subtitle.setText(remoteMode ? "Remote HTTP · server API" : "Local ONNX · Rust C ABI");
+        hintLabel.setText(remoteMode
+                ? "Remote gọi /api/tts; server có thể là desktop LAN hoặc online."
+                : "Local dùng model bundled hoặc .vfa/.vfts đã tải.");
+    }
+
+    private void setBusy(boolean value) {
+        busy = value;
+        runOnUiThread(() -> {
+            runButton.setEnabled(!value);
+            modelButton.setEnabled(!value);
+            progress.setVisibility(value ? View.VISIBLE : View.GONE);
+        });
+    }
+
+    private void setError(String value) {
+        runOnUiThread(() -> {
+            errorLabel.setText(value == null ? "" : value);
+            errorLabel.setVisibility(value == null || value.isEmpty() ? View.GONE : View.VISIBLE);
+        });
     }
 
     private HttpURLConnection open(String url) throws Exception {
@@ -211,14 +268,18 @@ public class MainActivity extends Activity {
     private void synthesize() {
         final String input = text.getText().toString().trim();
         if (input.isEmpty()) {
-            status.setText("Nhập text");
+            setStatus("Nhập text");
             return;
         }
-        if (remote.isChecked()) {
+        if (busy) return;
+        setError("");
+        if (remoteMode) {
+            if (!requireServer()) return;
             synthesizeRemote(input);
             return;
         }
-        status.setText("Đang tổng hợp local…");
+        setBusy(true);
+        setStatus("Đang tổng hợp local…");
         new Thread(() -> {
             try {
                 ensureEngine();
@@ -239,13 +300,16 @@ public class MainActivity extends Activity {
                 play(out, "Xong: " + String.format("%.2f s", wav.length / 2.0 / 24000.0));
             } catch (Throwable error) {
                 setStatus("Lỗi: " + error.getMessage());
+                setError(error.getMessage());
+                setBusy(false);
             }
         }).start();
     }
 
     private void synthesizeRemote(String input) {
         final String base = baseUrl();
-        status.setText("Đang gọi server…");
+        setBusy(true);
+        setStatus("Đang gọi server…");
         new Thread(() -> {
             HttpURLConnection connection = null;
             try {
@@ -274,6 +338,8 @@ public class MainActivity extends Activity {
                 play(out, "Xong remote: " + String.format("%.2f s", wav.length / 2.0 / 24000.0));
             } catch (Throwable error) {
                 setStatus("Lỗi remote: " + error.getMessage());
+                setError(error.getMessage());
+                setBusy(false);
             } finally {
                 if (connection != null) connection.disconnect();
             }
@@ -283,16 +349,33 @@ public class MainActivity extends Activity {
     private void play(File out, String message) {
         runOnUiThread(() -> {
             status.setText(message);
+            setBusy(false);
             try {
                 if (player != null) player.release();
                 player = new MediaPlayer();
                 player.setDataSource(out.getAbsolutePath());
                 player.prepare();
                 player.start();
+                stopButton.setEnabled(true);
             } catch (Exception error) {
                 status.setText("Đã tạo WAV, lỗi phát: " + error.getMessage());
+                setError(error.getMessage());
             }
         });
+    }
+
+    private void stopPlayback() {
+        if (player != null) {
+            try {
+                player.stop();
+            } catch (Throwable ignored) {
+                // MediaPlayer chưa start vẫn có thể ném; vẫn release bên dưới.
+            }
+            player.release();
+            player = null;
+        }
+        stopButton.setEnabled(false);
+        setStatus("Đã dừng phát");
     }
 
     private void showModelSearch() {
@@ -309,6 +392,7 @@ public class MainActivity extends Activity {
     }
 
     private void searchModels(String query) {
+        if (!requireServer()) return;
         status.setText("Đang tìm model…");
         new Thread(() -> {
             try {
@@ -335,6 +419,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadFiles(String repo) {
+        if (!requireServer()) return;
         status.setText("Đang xem " + repo + "…");
         new Thread(() -> {
             try {
@@ -412,71 +497,214 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         activeModelPath = prefs.getString(KEY_ACTIVE_MODEL, "");
+        mode = prefs.getString(KEY_MODE, "local");
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);
 
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(VfTheme.BG);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(
-                VfTheme.dp(this, 24), VfTheme.dp(this, 56),
-                VfTheme.dp(this, 24), VfTheme.dp(this, 24));
-        root.setGravity(Gravity.TOP);
-        root.setBackgroundColor(VfTheme.BG);
+        int pad = VfTheme.dp(this, 20);
+        root.setPadding(pad, pad, pad, VfTheme.dp(this, 28));
+        scroll.addView(root, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        // Header: icon + tên app, nút Model ở bên phải (giống toolbar iOS).
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(R.mipmap.ic_launcher);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+                VfTheme.dp(this, 42), VfTheme.dp(this, 42));
+        iconParams.rightMargin = VfTheme.dp(this, 12);
+        header.addView(icon, iconParams);
+
+        LinearLayout titleBlock = new LinearLayout(this);
+        titleBlock.setOrientation(LinearLayout.VERTICAL);
         TextView title = new TextView(this);
-        title.setText("ViFastTts Mobile");
-        VfTheme.text(title, font, 26, VfTheme.INK, true);
-        root.addView(title);
+        title.setText("ViFastTts");
+        VfTheme.text(title, font, 27, VfTheme.INK, true);
+        titleBlock.addView(title);
+        subtitle = new TextView(this);
+        VfTheme.text(subtitle, font, 13, VfTheme.MUTED, false);
+        titleBlock.addView(subtitle);
+        header.addView(titleBlock, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        modelButton = new Button(this);
+        modelButton.setText("Model");
+        VfTheme.secondaryButton(modelButton, font);
+        modelButton.setOnClickListener(view -> showModelSearch());
+        header.addView(modelButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.addView(header, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         modelLabel = new TextView(this);
         VfTheme.text(modelLabel, font, 12, VfTheme.MUTED, false);
-        root.addView(modelLabel);
         updateModelLabel();
+        LinearLayout.LayoutParams modelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        modelParams.topMargin = VfTheme.dp(this, 2);
+        root.addView(modelLabel, modelParams);
 
-        Button model = new Button(this);
-        model.setText("Tải model .vfa/.vfts");
-        VfTheme.secondaryButton(model, font);
-        model.setOnClickListener(view -> showModelSearch());
-        root.addView(model);
+        // Segmented Local/Remote giống Picker(.segmented) iOS.
+        LinearLayout segments = new LinearLayout(this);
+        segments.setOrientation(LinearLayout.HORIZONTAL);
+        segments.setBackground(VfTheme.rounded(this, VfTheme.SOFT, VfTheme.BORDER, 12, 1));
+        int segmentPad = VfTheme.dp(this, 4);
+        segments.setPadding(segmentPad, segmentPad, segmentPad, segmentPad);
+        localTab = new Button(this);
+        localTab.setText("Local");
+        localTab.setOnClickListener(view -> setMode("local"));
+        remoteTab = new Button(this);
+        remoteTab.setText("Remote");
+        remoteTab.setOnClickListener(view -> setMode("remote"));
+        LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        tabParams.leftMargin = VfTheme.dp(this, 2);
+        tabParams.rightMargin = VfTheme.dp(this, 2);
+        segments.addView(localTab, tabParams);
+        segments.addView(remoteTab, tabParams);
+        LinearLayout.LayoutParams segmentParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        segmentParams.topMargin = VfTheme.dp(this, 14);
+        root.addView(segments, segmentParams);
 
-        text = new EditText(this);
-        text.setText("Xin chào các bạn, hôm nay trời đẹp.");
-        VfTheme.input(text, font);
-        text.setMinLines(3);
-        text.setGravity(Gravity.TOP);
-        root.addView(text, new LinearLayout.LayoutParams(
+        remoteFields = new LinearLayout(this);
+        remoteFields.setOrientation(LinearLayout.VERTICAL);
+        TextView serverLabel = new TextView(this);
+        serverLabel.setText("Server URL");
+        VfTheme.text(serverLabel, font, 12, VfTheme.MUTED, false);
+        remoteFields.addView(serverLabel);
+        serverUrl = new EditText(this);
+        serverUrl.setHint("http://192.168.1.100:8000");
+        serverUrl.setSingleLine(true);
+        serverUrl.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        VfTheme.input(serverUrl, font);
+        remoteFields.addView(serverUrl, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        remote = new CheckBox(this);
-        remote.setText("Dùng server remote");
-        VfTheme.text(remote, font, 14, VfTheme.INK, false);
-        remote.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
-        root.addView(remote);
-
-        serverUrl = new EditText(this);
-        serverUrl.setText("http://10.0.2.2:8000");
-        serverUrl.setHint("Server URL");
-        VfTheme.input(serverUrl, font);
-        root.addView(serverUrl);
-
+        TextView tokenLabel = new TextView(this);
+        tokenLabel.setText("Bearer token (tuỳ chọn)");
+        VfTheme.text(tokenLabel, font, 12, VfTheme.MUTED, false);
+        LinearLayout.LayoutParams tokenLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tokenLabelParams.topMargin = VfTheme.dp(this, 8);
+        remoteFields.addView(tokenLabel, tokenLabelParams);
         token = new EditText(this);
-        token.setHint("Bearer token (tuỳ chọn)");
+        token.setHint("Token nếu server yêu cầu");
+        token.setSingleLine(true);
+        token.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         VfTheme.input(token, font);
-        root.addView(token);
+        remoteFields.addView(token, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        Button run = new Button(this);
-        run.setText("Đọc");
-        VfTheme.primaryButton(run, font);
-        run.setOnClickListener(view -> synthesize());
-        root.addView(run);
+        LinearLayout.LayoutParams remoteParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        remoteParams.topMargin = VfTheme.dp(this, 12);
+        root.addView(remoteFields, remoteParams);
+
+        // Text editor card.
+        LinearLayout textCard = new LinearLayout(this);
+        textCard.setOrientation(LinearLayout.VERTICAL);
+        VfTheme.card(textCard);
+        text = new EditText(this);
+        text.setText("Xin chào các bạn, hôm nay trời đẹp.");
+        VfTheme.text(text, font, 15, VfTheme.INK, false);
+        text.setBackgroundColor(Color.TRANSPARENT);
+        text.setGravity(Gravity.TOP | Gravity.START);
+        text.setMinLines(7);
+        text.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        textCard.addView(text, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, VfTheme.dp(this, 190)));
+        LinearLayout.LayoutParams textCardParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        textCardParams.topMargin = VfTheme.dp(this, 14);
+        root.addView(textCard, textCardParams);
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        runButton = new Button(this);
+        runButton.setText("Đọc");
+        VfTheme.primaryButton(runButton, font);
+        runButton.setOnClickListener(view -> synthesize());
+        actions.addView(runButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        stopButton = new Button(this);
+        stopButton.setText("Dừng");
+        VfTheme.secondaryButton(stopButton, font);
+        stopButton.setEnabled(false);
+        stopButton.setOnClickListener(view -> stopPlayback());
+        LinearLayout.LayoutParams stopParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        stopParams.leftMargin = VfTheme.dp(this, 8);
+        actions.addView(stopButton, stopParams);
+
+        progress = new ProgressBar(this);
+        progress.setIndeterminate(true);
+        progress.setVisibility(View.GONE);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                VfTheme.dp(this, 24), VfTheme.dp(this, 24));
+        progressParams.leftMargin = VfTheme.dp(this, 8);
+        actions.addView(progress, progressParams);
+
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        actionParams.topMargin = VfTheme.dp(this, 14);
+        root.addView(actions, actionParams);
 
         status = new TextView(this);
         status.setText("Sẵn sàng");
         VfTheme.text(status, font, 15, VfTheme.INK, false);
-        root.addView(status);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        statusParams.topMargin = VfTheme.dp(this, 14);
+        root.addView(status, statusParams);
 
-        setContentView(root);
+        errorLabel = new TextView(this);
+        VfTheme.text(errorLabel, font, 13, VfTheme.ERROR, false);
+        errorLabel.setVisibility(View.GONE);
+        LinearLayout.LayoutParams errorParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        errorParams.topMargin = VfTheme.dp(this, 4);
+        root.addView(errorLabel, errorParams);
+
+        hintLabel = new TextView(this);
+        VfTheme.text(hintLabel, font, 12, VfTheme.MUTED, false);
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hintParams.topMargin = VfTheme.dp(this, 8);
+        root.addView(hintLabel, hintParams);
+
+        String savedServer = prefs.getString(KEY_SERVER, "");
+        if (savedServer.startsWith("http://127.0.0.1") || savedServer.startsWith("http://localhost")) {
+            savedServer = "";
+        }
+        serverUrl.setText(savedServer);
+        token.setText(prefs.getString(KEY_TOKEN, ""));
+        setMode(mode);
+
+        setContentView(scroll);
         requestLocalNetworkPermission();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (serverUrl != null) {
+            prefs.edit()
+                    .putString(KEY_SERVER, serverUrl.getText().toString().trim())
+                    .putString(KEY_TOKEN, token.getText().toString().trim())
+                    .apply();
+        }
     }
 
     @Override

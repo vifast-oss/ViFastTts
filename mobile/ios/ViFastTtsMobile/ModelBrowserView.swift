@@ -3,7 +3,7 @@ import SwiftUI
 /// Model browser iOS: tìm/tải `.vfa`/`.vfts` qua API server dùng chung.
 struct ModelBrowserView: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("vifasttts.serverURL") private var serverURL = "http://127.0.0.1:8000"
+    @AppStorage("vifasttts.serverURL") private var serverURL = ""
     @AppStorage("vifasttts.token") private var token = ""
     @State private var query = "vifasttts"
     @State private var models: [CatalogModel] = []
@@ -21,9 +21,10 @@ struct ModelBrowserView: View {
         NavigationStack {
             Form {
                 Section("Server") {
-                    TextField("http://127.0.0.1:8000", text: $serverURL)
+                    TextField("http://192.168.1.100:8000", text: $serverURL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .textContentType(.URL)
                     SecureField("Bearer token (tuỳ chọn)", text: $token)
                 }
 
@@ -92,6 +93,11 @@ struct ModelBrowserView: View {
             .tint(VFTheme.accent)
             .font(VFTheme.body)
             .navigationTitle("Model")
+            .onAppear {
+                if serverURL == "http://127.0.0.1:8000" || serverURL == "http://localhost:8000" {
+                    serverURL = ""
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Đóng") { dismiss() }

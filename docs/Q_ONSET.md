@@ -39,7 +39,7 @@ Config `configs/small_ngochuyen_q.yaml`; 3.000 bước, LR 5e-5, Q khởi tạo 
 
 Fine-tune không thắng rõ cả mel và rough; **chưa deploy**. Q-init (Q=K) đang là bản
 an toàn cho N0 Bắc, giữ đúng giọng đã được nghe. Candidate fine-tune để so tai:
-`q-preview-2026-10-27` (release tạm: https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27).
+release nghe thử `q-preview-2026-10-27` (đã xoá 29/10/2026; artifact QFT giữ local, chưa đưa lên HF).
 
 ## 4. Validator
 
@@ -57,11 +57,12 @@ an toàn cho N0 Bắc, giữ đúng giọng đã được nghe. Candidate fine-t
   - Checkpoint: `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…`.
   - ONNX: `artifacts/onnx/n0_q/acoustic.onnx` sha256 `df61599a15984dcc…`;
     vocoder `b3eb09cf5c3baa…`; `healthz` báo `vocab_version` + `vocab_hash`.
-  - Release asset: `n0_onnx_fp32.zip` sha256 `c613b1206cb8b57140d9429564da71c969c71b2491ae4d0da87becc2c89ba98a`
-    (trong `n0-ngochuyen-prod-v1`).
+  - HuggingFace: `onnx/acoustic.onnx` (`df61599a…`) + `onnx/vocoder.onnx` (`b3eb09cf…`)
+    trong `dvchd/vifasttts-ngochuyen-small`; bundle `bundles/n0-ngochuyen.vfa/.vfts`.
+  - GitHub Releases cũ đã xoá ngày 29/10/2026.
 - **Chưa live:** fine-tune 3k `runs/acoustic_ngochuyen_q/best.pt`
   (sha256 `30dc41642461…`), ONNX `artifacts/onnx/n0_q_ft/acoustic.onnx`
-  (sha256 `394fa657fc6e52…`). Nghe A/B tại `q-preview-2026-10-27`
-  (`init.wav` / `finetune.wav`); xoá preview sau khi chọn.
+  (sha256 `394fa657fc6e52…`). Release nghe A/B `q-preview-2026-10-27` đã xoá;
+  artifact QFT giữ local, chưa đưa lên HF vì chưa chọn.
 - **Bản cũ bị từ chối:** ONNX N0 `6c8bde3d…` thiếu hash; không có adapter Q→K.
 - Quyết định chọn model + hash/release cập nhật ở `docs/handoff/TRANG_THAI.md`.

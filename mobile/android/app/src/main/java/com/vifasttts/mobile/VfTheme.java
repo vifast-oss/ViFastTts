@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /** Palette/font dùng chung với desktop/iOS/web (design/tokens.json). */
@@ -67,8 +68,31 @@ final class VfTheme {
         button.setPadding(pad, dp(button.getContext(), 9), pad, dp(button.getContext(), 9));
     }
 
+    /** Nút segmented Local/Remote giống Picker iOS. */
+    static void segmentButton(Button button, boolean selected, Typeface base) {
+        button.setAllCaps(false);
+        text(button, base, 14, selected ? Color.WHITE : INK, selected);
+        button.setBackground(rounded(
+                button.getContext(),
+                selected ? ACCENT : Color.TRANSPARENT,
+                selected ? ACCENT : BORDER,
+                9,
+                1));
+        button.setMinHeight(dp(button.getContext(), 38));
+        button.setPadding(dp(button.getContext(), 12), dp(button.getContext(), 7),
+                dp(button.getContext(), 12), dp(button.getContext(), 7));
+    }
+
+    /** Card surface nhẹ, cùng radius với iOS/web. */
+    static void card(LinearLayout view) {
+        view.setBackground(rounded(view.getContext(), SURFACE, BORDER, 12, 1));
+        int pad = dp(view.getContext(), 14);
+        view.setPadding(pad, pad, pad, pad);
+    }
+
     static void input(EditText input, Typeface base) {
         text(input, base, 14, INK, false);
+        input.setHintTextColor(MUTED);
         input.setBackground(rounded(input.getContext(), SURFACE, BORDER, 9, 1));
         int pad = dp(input.getContext(), 10);
         input.setPadding(pad, dp(input.getContext(), 8), pad, dp(input.getContext(), 8));

@@ -1,5 +1,11 @@
 # N0 — release chính thức + preview Q (27/10/2026)
 
+> **LƯU TRỮ LỊCH SỬ:** toàn bộ release trong tài liệu này đã bị xoá ngày
+> 29/10/2026. Nguồn phân phối hiện tại là HuggingFace:
+> `dvchd/vifasttts-ngochuyen-small` (bundle/ONNX) và
+> `dvchd/vifasttts-ngochuyen-base` (base N0 trước Q).
+
+
 > **Trạng thái:** 2 release chính (`prod`, `research`) + **1 preview tạm** cho A/B Q-init vs
 > fine-tune + **1 release 3 WAV mẫu** cho VPS. Tất cả đều **research/non-commercial** vì
 > dataset CC-BY-NC-4.0. Release audio test cũ đã xoá.

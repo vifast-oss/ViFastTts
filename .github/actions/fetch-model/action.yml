@@ -1,5 +1,5 @@
 name: Fetch N0 model
-description: Download the pinned N0 FP32 ONNX model release into artifacts/onnx/n0_q.
+description: Download the pinned N0 FP32 ONNX model from HuggingFace into artifacts/onnx/n0_q.
 
 runs:
   using: composite
@@ -7,7 +7,7 @@ runs:
     - uses: actions/cache@v4
       with:
         path: artifacts/onnx/n0_q
-        key: n0-onnx-fp32-v1
+        key: n0-onnx-fp32-hf-v1
     - shell: bash
       run: |
         set -euo pipefail
@@ -16,14 +16,13 @@ runs:
           echo "Model đã có trong cache/workspace."
           exit 0
         fi
-        archive="${RUNNER_TEMP:-/tmp}/n0_onnx_fp32.zip"
-        curl -L --fail -o "$archive" \
-          https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-prod-v1/n0_onnx_fp32.zip
-        if command -v unzip >/dev/null; then
-          unzip -j -o "$archive" 'n0_onnx_fp32/acoustic.onnx' 'n0_onnx_fp32/vocoder.onnx' -d artifacts/onnx/n0_q
-        else
-          python -m zipfile -e "$archive" "${RUNNER_TEMP:-/tmp}/n0_onnx_fp32"
-          cp "${RUNNER_TEMP:-/tmp}/n0_onnx_fp32/n0_onnx_fp32/acoustic.onnx" artifacts/onnx/n0_q/
-          cp "${RUNNER_TEMP:-/tmp}/n0_onnx_fp32/n0_onnx_fp32/vocoder.onnx" artifacts/onnx/n0_q/
-        fi
+        base="https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/onnx"
+        curl -L --fail --retry 3 --retry-delay 2 -o artifacts/onnx/n0_q/acoustic.onnx \
+          "$base/acoustic.onnx"
+        curl -L --fail --retry 3 --retry-delay 2 -o artifacts/onnx/n0_q/vocoder.onnx \
+          "$base/vocoder.onnx"
+        printf '%s  artifacts/onnx/n0_q/acoustic.onnx\n%s  artifacts/onnx/n0_q/vocoder.onnx\n' \
+          "df61599a15984dccbf61c37d616258d22fc1af79abc681926e74142de7a376a3" \
+          "b3eb09cf5c3baac334b1c0bbea070d02e33e55572e3755865b986cd05cf6b03f" \
+          | sha256sum -c -
         ls -lh artifacts/onnx/n0_q

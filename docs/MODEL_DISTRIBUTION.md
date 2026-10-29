@@ -34,8 +34,8 @@ không trỏ `acoustic.onnx`.
 Ví dụ repo:
 
 ```text
-dvchd/vifasttts-models
-  models.json
+dvchd/vifasttts-ngochuyen-small
+  bundles/models.json
   vocoders/vocos-mel-24khz.onnx
   voices/n0-ngochuyen/
     n0-ngochuyen.vfa
@@ -52,7 +52,7 @@ api = HfApi()
 api.upload_file(
     path_or_fileobj="n0-ngochuyen.vfa",
     path_in_repo="voices/n0-ngochuyen/n0-ngochuyen.vfa",
-    repo_id="dvchd/vifasttts-models",
+    repo_id="dvchd/vifasttts-ngochuyen-small",
     repo_type="model",
 )
 ```
@@ -60,8 +60,8 @@ api.upload_file(
 Hoặc CLI:
 
 ```bash
-hf upload dvchd/vifasttts-models n0-ngochuyen.vfa \
-  voices/n0-ngochuyen/n0-ngochuyen.vfa
+hf upload dvchd/vifasttts-ngochuyen-small n0-ngochuyen.vfa \
+  bundles/n0-ngochuyen.vfa
 ```
 
 - Dùng Git LFS/Xet cho file lớn; không commit raw Git thường.
@@ -78,7 +78,7 @@ gh release upload v0.1.0 \
   --clobber
 ```
 
-- Tag là bất biến; asset gắn với release.
+- GitHub Releases cũ đã xoá 29/10/2026; nguồn chính là HuggingFace. Tag là bất biến nếu tạo release mới.
 - CI job `model-vfts` (nên đổi tên `model-bundles`) đang tạo cả `.vfts` và `.vfa`;
   release job tải lên cùng app.
 - Với model mặc định, đặt file cạnh app/package và kiểm SHA256 khi nạp.

@@ -46,7 +46,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 - Trang: nhập text **3000 ký tự** (mặc định; env `MAX_CHARS`), play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt. Có **3 mẫu nghe sẵn**
   (`/static/samples/fresh01.wav`, `fresh02`, `fresh04`) phát trực tiếp, không gọi API;
-  WAV lấy từ release `n0-demo-samples-v1`, tải bằng `scripts/fetch_demo_samples.sh` (không commit).
+  WAV lấy từ [HuggingFace demo](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo), tải bằng `scripts/fetch_demo_samples.sh` (không commit).
 - **Q (27/10/2026, đang live):** onset Q (ID cuối) cho `qu`; ONNX đang phục vụ là
   `n0_q/acoustic.onnx` (Q-init, `Q = K`, bit-exact với N0 Bắc cũ) và mang metadata
   `vocab_version` + `vocab_hash`. Model/ONNX cũ thiếu hash bị từ chối, không có adapter Q→K.
@@ -127,14 +127,13 @@ curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
 - Commit upload checkpoint/model card gốc: `6cfd13e16be700aaec68175086ee44be929bc01b`;
   commit ONNX Q: `0b08245ee96710a738d7b1e543151e026b4f6cde`.
 
-## 4. ONNX trong release
+## 4. ONNX / bundle trên HuggingFace
 
-- `n0_onnx_fp32.zip` — **Q, đang live**: 79.437.950 B, sha256 `c613b1206cb8b571…`;
-  bên trong có `n0_onnx_fp32/acoustic.onnx` (`df61599a…`) + vocoder (`b3eb09cf…`) + SHA256SUMS.
-- Asset N0 cũ không Q đã xoá khỏi release; chỉ còn bản Q.
-- Package chính vẫn chứa checkpoint + config + stats + Vocos pretrained.
-- Release `q-preview-2026-10-27` chỉ có 2 WAV nghe thử (`init.wav`, `finetune.wav`), không phải
-  asset triển khai; xoá sau khi chọn model.
+- ONNX live: `onnx/acoustic.onnx` (`df61599a…`) + `onnx/vocoder.onnx` (`b3eb09cf…`)
+  trong repo small.
+- Bundle app: `bundles/n0-ngochuyen.vfa` / `.vfts` (Q-init, đang live).
+- Base N0 gốc trước Q: repo riêng `dvchd/vifasttts-ngochuyen-base`.
+- GitHub Releases cũ đã xoá ngày 29/10/2026; nguồn phân phối chính là HuggingFace.
 
 ## 5. Giới hạn
 

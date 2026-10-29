@@ -37,7 +37,7 @@
 - **Model đang live:** N0 Ngọc Huyền **Q-init** (`Q` = `K`, bit-exact với N0 Bắc cũ);
   checkpoint nguồn `runs/acoustic_ngochuyen_q/init_q.pt`.
 - **Bản fine-tune Q 3k** (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export nhưng **chưa live**;
-  chỉ dùng để so tai qua release tạm `q-preview-2026-10-27` (2 WAV).
+  chỉ dùng để so tai; release tạm cũ đã xoá, artifact nằm trên [HuggingFace](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles).
 - **Model/ONNX cũ** thiếu `vocab_hash` không còn được hỗ trợ; **không có adapter Q→K**.
 - **Test:** 2.916 pass / 24 skip; `ruff` sạch (28/10/2026).
 - **Demo:** custom reading local-first, gửi duyệt khi bật checkbox, STEM examples,

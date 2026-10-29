@@ -38,7 +38,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 - Health: https://vifasttts.hoctuthien.com/healthz
 - Giới hạn mặc định: **3000 ký tự** · 6 request/phút/IP · không lưu text/audio;
   có thể đổi bằng env `MAX_CHARS` (UI đọc `/api/config`).
-- Web VPS có **3 mẫu nghe sẵn** (không gọi API) lấy từ release `n0-demo-samples-v1`.
+- Web VPS có **3 mẫu nghe sẵn** (không gọi API), lấy từ [HuggingFace demo](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo).
 
 ## Model
 
@@ -62,7 +62,7 @@ Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy D
 **Đang live:** **Q-init** (N0 cũ + hàng Q = K) — output bit-exact với N0 Bắc cũ; ONNX
 `n0_q/acoustic.onnx` sha256 `df61599a…`, `healthz` báo `vocab_version` + `vocab_hash`.
 Fine-tune Q 3k (`val mel 0,26320` · `rough 0,76318`) đã export nhưng **chưa chọn**;
-nghe A/B tại release `q-preview-2026-10-27`. Chi tiết: `docs/Q_ONSET.md`,
+nghe A/B; release tạm cũ đã xoá, artifact ở [HuggingFace bundles](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles). Chi tiết: `docs/Q_ONSET.md`,
 `docs/handoff/N0_DEPLOY.md`, `docs/handoff/TRANG_THAI.md`.
 
 ## Mặc định
@@ -119,11 +119,10 @@ Không hỗ trợ regex/script, chỉ thay từ nguyên vẹn; key người dùn
 - ONNX live: `artifacts/onnx/n0_q/{acoustic,vocoder}.onnx`; candidate:
   `artifacts/onnx/n0_q_ft/`; bản N0 cũ `artifacts/onnx/n0/` bị runtime mới từ chối.
 - Release:
-  - prod candidate nội bộ: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
-    (asset Q đang live: `n0_onnx_fp32.zip`, sha256 `c613b120…`)
-  - research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
-  - nghe thử Q: https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27
-  - 3 mẫu VPS: https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1
+  - bundle app hiện tại: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
+  - base N0 archive trước Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
+  - 3 mẫu VPS: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo
+  - GitHub Releases cũ đã xoá ngày 29/10/2026; nguồn phân phối chính là HuggingFace.
 
 ## Dữ liệu & huấn luyện lại
 

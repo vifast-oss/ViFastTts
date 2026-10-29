@@ -68,7 +68,14 @@ export class ModelApi {
 }
 
 export function bundleFiles(model) {
+  const seen = new Set();
   return (model?.siblings || [])
     .map((file) => file.rfilename || file.path || '')
-    .filter((path) => path.endsWith('.vfa') || path.endsWith('.vfts'));
+    .filter((path) => path.endsWith('.vfa') || path.endsWith('.vfts'))
+    .filter((path) => {
+      const name = path.split('/').pop() || path;
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
 }
