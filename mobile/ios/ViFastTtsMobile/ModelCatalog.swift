@@ -65,17 +65,78 @@ enum SharedModelCatalog {
     }
 }
 
+/// Điều khiển một lượt tải để UI có thể huỷ giữa chừng.
+/// Tách khỏi URLSession để ModelBrowserView không cần giữ task/delegate.
+final class ModelDownloadController: @unchecked Sendable {
+    private let lock = NSLock()
+    private var task: URLSessionDownloadTask?
+    private var session: URLSession?
+    private var cancelled = false
+    private var onCancel: (@Sendable () -> Void)?
+
+    var isCancelled: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelled
+    }
+
+    func setCancelHandler(_ handler: @escaping @Sendable () -> Void) {
+        lock.lock()
+        let alreadyCancelled = cancelled
+        if !alreadyCancelled { onCancel = handler }
+        lock.unlock()
+        if alreadyCancelled { handler() }
+    }
+
+    func attach(task: URLSessionDownloadTask, session: URLSession) {
+        lock.lock()
+        if cancelled {
+            lock.unlock()
+            task.cancel()
+            session.invalidateAndCancel()
+            return
+        }
+        self.task = task
+        self.session = session
+        lock.unlock()
+    }
+
+    func cancel() {
+        lock.lock()
+        guard !cancelled else { lock.unlock(); return }
+        cancelled = true
+        let handler = onCancel
+        let task = task
+        let session = session
+        lock.unlock()
+        handler?()
+        task?.cancel()
+        session?.invalidateAndCancel()
+    }
+}
+
 /// Tải model có progress; URLSessionDownloadDelegate chạy nền, UI nhận %.
 private final class ModelDownloadDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
     private let progress: (@Sendable (Double) -> Void)?
     private let continuation: CheckedContinuation<Data, Error>
+    private let controller: ModelDownloadController
     private let lock = NSLock()
     private var finished = false
     var session: URLSession?
 
-    init(progress: (@Sendable (Double) -> Void)?, continuation: CheckedContinuation<Data, Error>) {
+    init(
+        progress: (@Sendable (Double) -> Void)?,
+        controller: ModelDownloadController,
+        continuation: CheckedContinuation<Data, Error>
+    ) {
         self.progress = progress
+        self.controller = controller
         self.continuation = continuation
+    }
+
+    /// Huỷ từ UI: resume continuation ngay, không chờ callback mạng.
+    func cancel() {
+        finish(.failure(CatalogError.message("Đã huỷ tải model")))
     }
 
     private func finish(_ result: Result<Data, Error>) {
@@ -122,7 +183,11 @@ private final class ModelDownloadDelegate: NSObject, URLSessionDownloadDelegate,
         didCompleteWithError error: Error?
     ) {
         if let error {
-            finish(.failure(error))
+            if controller.isCancelled || (error as NSError).code == NSURLErrorCancelled {
+                finish(.failure(CatalogError.message("Đã huỷ tải model")))
+            } else {
+                finish(.failure(error))
+            }
         }
     }
 }
@@ -253,7 +318,8 @@ struct ModelCatalogClient {
     func download(
         repo: String,
         path: String,
-        progress: (@Sendable (Double) -> Void)? = nil
+        progress: (@Sendable (Double) -> Void)? = nil,
+        cancellation: ModelDownloadController? = nil
     ) async throws -> (Data, String) {
         let urls = try catalogURLs(repo: repo, path: path)
         guard let raw = urls["download"], let url = URL(string: raw) else {
@@ -262,20 +328,27 @@ struct ModelCatalogClient {
         let data: Data
         if let progress {
             let request = self.request(url)
+            let downloader = cancellation ?? ModelDownloadController()
+            if downloader.isCancelled { throw CatalogError.message("Đã huỷ tải model") }
             data = try await withCheckedThrowingContinuation { continuation in
                 let delegate = ModelDownloadDelegate(
                     progress: progress,
+                    controller: downloader,
                     continuation: continuation
                 )
+                downloader.setCancelHandler { [weak delegate] in delegate?.cancel() }
                 let session = URLSession(
                     configuration: .default,
                     delegate: delegate,
                     delegateQueue: nil
                 )
                 delegate.session = session
-                session.downloadTask(with: request).resume()
+                let task = session.downloadTask(with: request)
+                downloader.attach(task: task, session: session)
+                task.resume()
             }
         } else {
+            if cancellation?.isCancelled == true { throw CatalogError.message("Đã huỷ tải model") }
             data = try await get(url)
         }
         let name = path.split(separator: "/").last.map(String.init) ?? "model.vfa"

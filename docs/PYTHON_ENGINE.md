@@ -70,9 +70,12 @@ phát từng chunk, ghép WAV + SRT/VTT để tải lại sau khi xong.
 
 ## 3. Giới hạn / lưu ý
 
-- Stream và full dùng **cùng lock** một request tại một thời điểm; client ngắt
-  giữa chừng thì generator `finally` nhả lock.
-- `peak_normalize` + stream trả **422** (không thể biết đỉnh toàn file).
+- Stream và full dùng **cùng engine**; full giữ lock toàn cục để giới hạn request nặng.
+  Stream **không giữ lock** vì ORT `Run` chạy song song được và generator sync có thể bị
+  client ngắt trước khi `finally` chạy (giữ lock sẽ làm request sau treo).
+- `peak_normalize` + stream trả **422**; UI tự bỏ qua peak khi bật stream.
+- `done` của stream có thêm `processing_seconds`, `audio_seconds`, `rtf`; UI hiển thị
+  RTF và lưu lịch sử gần đây ở localStorage (không lưu audio).
 - ONNX session được nạp một lần lúc app khởi động, không nạp lại mỗi request.
 - Python engine là bản song song của Rust FFI; logic âm tiết/timing vẫn lấy từ
   frontend Python hiện tại. Nếu sửa công thức slot/timing phải sửa cả hai và

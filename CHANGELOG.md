@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-30 — v0.3.2
+
+- **Web Python + Space**: thêm lịch sử gần đây (localStorage, tối đa 8 câu, có RTF/audio),
+  nút **Dừng** cho full/stream, chia sẻ WAV bằng Web Share API, phím **Esc** để huỷ.
+- **Peak normalize + stream**: mọi UI tự bỏ qua peak khi stream (checkbox/toggle bị khoá,
+  có ghi chú); tránh lỗi 422 và làm rõ peak cần đỉnh toàn file.
+- **Python stream**: không giữ `_lock` toàn cục cho stream nữa; ORT session chạy song song
+  được, và client ngắt generator không còn làm kẹt lock khiến request sau treo.
+- **iOS**: huỷ tải model giữa chừng (nút Huỷ + tiến độ %/MB), nút tải model khi chưa có model,
+  stream tự bỏ peak normalize.
+- **TUI**: model browser dùng chung `ModelBrowserState` với desktop/CLI (bớt logic trùng).
+- Version: Rust/Android/iOS/web/extension **0.3.2**; Android `versionCode 10`, iOS build 6.
+
 ## 2026-10-27
 
 - Từ commit `60b5cf9`: thêm âm đầu **Q** cho chữ `qu` (onset thứ 25, ở cuối vocab;

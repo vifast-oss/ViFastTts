@@ -28,7 +28,7 @@ use ratatui::{Frame, Terminal};
 use vifasttts_app::{default_text, parse_dictionary};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_huggingface::{HfFile, HfModel};
-use vifasttts_model_manager::ModelManager;
+use vifasttts_model_manager::{ModelBrowserState, ModelManager};
 use vifasttts_native::{NativeEngine, SynthesisOptions, load, load_vfa, load_vfts};
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::karaoke::KaraokeDocument;
@@ -163,24 +163,21 @@ enum LocalCommand {
     Reload(PathBuf),
 }
 
-#[derive(Default)]
 struct ModelPane {
     open: bool,
-    query: String,
-    results: Vec<HfModel>,
-    files: Vec<HfFile>,
-    repo: Option<String>,
+    /// State tìm/tải dùng chung với desktop/CLI; TUI chỉ giữ index chọn dòng.
+    state: ModelBrowserState,
     selected: usize,
-    loading: bool,
-    status: String,
 }
 
 impl ModelPane {
     fn new() -> Self {
+        let mut state = ModelBrowserState::new();
+        state.status = "Enter: tìm · chọn repo: Enter · chọn file: Enter".to_string();
         Self {
-            query: "vifasttts".to_string(),
-            status: "Enter: tìm · chọn repo: Enter · chọn file: Enter".to_string(),
-            ..Self::default()
+            open: false,
+            state,
+            selected: 0,
         }
     }
 }
@@ -388,16 +385,17 @@ impl App {
     }
 
     fn model_search(&mut self) {
-        let query = self.model.query.trim().to_string();
+        let query = self.model.state.query.trim().to_string();
         let query = if query.is_empty() {
             "vifasttts".to_string()
         } else {
             query
         };
-        self.model.loading = true;
-        self.model.files.clear();
-        self.model.repo = None;
-        self.model.status = format!("Đang tìm {query}…");
+        if !self.model.state.start_search(&query) {
+            self.last_error = self.model.state.error.clone();
+            return;
+        }
+        let query = self.model.state.query.clone();
         let manager = ModelManager::new(self.model_dir.clone());
         let tx = self.forward_tx.clone();
         thread::spawn(move || match manager.search(&query, 20) {
@@ -411,14 +409,13 @@ impl App {
     }
 
     fn model_load_files(&mut self) {
-        let Some(model) = self.model.results.get(self.model.selected) else {
+        let Some(model) = self.model.state.models.get(self.model.selected) else {
             return;
         };
         let repo = model.id.clone();
-        self.model.loading = true;
-        self.model.repo = Some(repo.clone());
-        self.model.files.clear();
-        self.model.status = format!("Đang xem {repo}…");
+        if !self.model.state.start_files(&repo) {
+            return;
+        }
         let manager = ModelManager::new(self.model_dir.clone());
         let tx = self.forward_tx.clone();
         thread::spawn(move || match manager.files(&repo) {
@@ -432,15 +429,16 @@ impl App {
     }
 
     fn model_download(&mut self) {
-        let Some(repo) = self.model.repo.clone() else {
+        let Some(repo) = self.model.state.selected.clone() else {
             return;
         };
-        let Some(file) = self.model.files.get(self.model.selected) else {
+        let Some(file) = self.model.state.files.get(self.model.selected) else {
             return;
         };
         let path = file.path.clone();
-        self.model.loading = true;
-        self.model.status = format!("Đang tải {path}…");
+        if !self.model.state.start_download(&path) {
+            return;
+        }
         let manager = ModelManager::new(self.model_dir.clone());
         let tx = self.forward_tx.clone();
         thread::spawn(move || match manager.install(&repo, &path) {
@@ -512,20 +510,16 @@ impl App {
                     self.log(format!("Lỗi: {error}"));
                 }
                 TuiEvent::ModelResults(models) => {
-                    self.model.loading = false;
-                    self.model.results = models;
+                    self.model.state.finish_search(models);
                     self.model.selected = 0;
-                    self.model.status = format!("Thấy {} repo", self.model.results.len());
                 }
                 TuiEvent::ModelFiles(files) => {
-                    self.model.loading = false;
-                    self.model.files = files;
+                    let repo = self.model.state.selected.clone().unwrap_or_default();
+                    self.model.state.finish_files(&repo, files);
                     self.model.selected = 0;
-                    self.model.status = format!("Thấy {} bundle", self.model.files.len());
                 }
                 TuiEvent::ModelDownloaded(path) => {
-                    self.model.loading = false;
-                    self.model.status = format!("Đã tải {}", path.display());
+                    self.model.state.finish_download(&path);
                     self.log(format!("model: đã tải {}", path.display()));
                     if self.mode == Mode::Local
                         && let Some(tx) = &self.local_tx
@@ -534,8 +528,7 @@ impl App {
                     }
                 }
                 TuiEvent::ModelError(error) => {
-                    self.model.loading = false;
-                    self.model.status = format!("Lỗi: {error}");
+                    self.model.state.fail(error.clone());
                     self.last_error = Some(error);
                 }
             }
@@ -755,18 +748,18 @@ fn handle_model_key(app: &mut App, key: KeyEvent, ctrl: bool) {
         app.model.open = false;
         return;
     }
-    if app.model.loading {
+    if app.model.state.busy {
         return;
     }
-    let file_mode = !app.model.files.is_empty();
+    let file_mode = !app.model.state.files.is_empty();
     let list_len = if file_mode {
-        app.model.files.len()
+        app.model.state.files.len()
     } else {
-        app.model.results.len()
+        app.model.state.models.len()
     };
     match key.code {
         KeyCode::Enter => {
-            if app.model.results.is_empty() {
+            if app.model.state.models.is_empty() {
                 app.model_search();
             } else if file_mode {
                 app.model_download();
@@ -785,19 +778,20 @@ fn handle_model_key(app: &mut App, key: KeyEvent, ctrl: bool) {
             }
         }
         KeyCode::Backspace => {
-            app.model.query.pop();
-            app.model.results.clear();
-            app.model.files.clear();
-            app.model.repo = None;
+            app.model.state.query.pop();
+            app.model.state.models.clear();
+            app.model.state.files.clear();
+            app.model.state.selected = None;
             app.model.selected = 0;
+            app.model.state.status = "Enter: tìm".to_string();
         }
         KeyCode::Char(character) if !ctrl => {
-            app.model.query.push(character);
-            app.model.results.clear();
-            app.model.files.clear();
-            app.model.repo = None;
+            app.model.state.query.push(character);
+            app.model.state.models.clear();
+            app.model.state.files.clear();
+            app.model.state.selected = None;
             app.model.selected = 0;
-            app.model.status = "Enter: tìm".to_string();
+            app.model.state.status = "Enter: tìm".to_string();
         }
         _ => {}
     }
@@ -823,12 +817,12 @@ fn draw_model(frame: &mut Frame, app: &App) {
             Constraint::Length(2),
         ])
         .split(popup);
-    let title = if app.model.loading {
+    let title = if app.model.state.busy {
         "Model browser · đang chạy…"
     } else {
         "Model browser · Ctrl+O/Esc đóng"
     };
-    let query = Paragraph::new(format!("Tìm: {}", app.model.query))
+    let query = Paragraph::new(format!("Tìm: {}", app.model.state.query))
         .block(Block::default().borders(Borders::ALL).title(title));
     frame.render_widget(query, chunks[0]);
 
@@ -841,7 +835,8 @@ fn draw_model(frame: &mut Frame, app: &App) {
     };
     let result_lines: Vec<Line> = app
         .model
-        .results
+        .state
+        .models
         .iter()
         .enumerate()
         .map(|(index, model)| {
@@ -868,6 +863,7 @@ fn draw_model(frame: &mut Frame, app: &App) {
 
     let file_lines: Vec<Line> = app
         .model
+        .state
         .files
         .iter()
         .enumerate()
@@ -886,7 +882,8 @@ fn draw_model(frame: &mut Frame, app: &App) {
         .collect();
     let title = app
         .model
-        .repo
+        .state
+        .selected
         .as_ref()
         .map(|repo| format!("Bundle · {repo}"))
         .unwrap_or_else(|| "Bundle · chọn repo trước".to_string());
@@ -896,7 +893,7 @@ fn draw_model(frame: &mut Frame, app: &App) {
     frame.render_widget(files, chunks[2]);
 
     let status =
-        Paragraph::new(app.model.status.clone()).style(Style::default().fg(Color::LightBlue));
+        Paragraph::new(app.model.state.status.clone()).style(Style::default().fg(Color::LightBlue));
     frame.render_widget(status, chunks[3]);
 }
 

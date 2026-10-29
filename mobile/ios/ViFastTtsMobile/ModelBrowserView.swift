@@ -12,6 +12,9 @@ struct ModelBrowserView: View {
     @State private var status = "Để trống Server URL để tải HuggingFace trực tiếp."
     @State private var busy = false
     @State private var downloadProgress: Double?
+    @State private var downloadSize: Int64 = 0
+    @State private var downloadController: ModelDownloadController?
+    @State private var downloadTask: Task<Void, Never>?
     @State private var error: String?
 
     private var client: ModelCatalogClient {
@@ -41,10 +44,19 @@ struct ModelBrowserView: View {
                     if busy { ProgressView() }
                     if let downloadProgress {
                         ProgressView(value: downloadProgress) {
-                            Text("Đang tải model…")
-                                .font(.caption)
+                            Text(String(
+                                format: "Đang tải model… %d%% · %.1f MB",
+                                Int(downloadProgress * 100),
+                                Double(downloadSize) / 1_000_000
+                            ))
+                            .font(.caption)
                         }
                         .tint(VFTheme.accent)
+                        Button("Huỷ tải", role: .destructive) {
+                            downloadController?.cancel()
+                            downloadTask?.cancel()
+                        }
+                        .font(.caption)
                     }
                     Text(status)
                         .font(.footnote)
@@ -83,7 +95,7 @@ struct ModelBrowserView: View {
                     Section("Bundle trong \(selectedRepo)") {
                         ForEach(files) { file in
                             Button {
-                                Task { await download(file) }
+                                downloadTask = Task { await download(file) }
                             } label: {
                                 VStack(alignment: .leading) {
                                     Text(file.path).font(.callout)
@@ -105,6 +117,10 @@ struct ModelBrowserView: View {
                 if serverURL == "http://127.0.0.1:8000" || serverURL == "http://localhost:8000" {
                     serverURL = ""
                 }
+            }
+            .onDisappear {
+                downloadController?.cancel()
+                downloadTask?.cancel()
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -146,18 +162,34 @@ struct ModelBrowserView: View {
     }
 
     private func download(_ file: CatalogFile) async {
+        let controller = ModelDownloadController()
+        downloadController = controller
+        downloadSize = file.size
         busy = true
         error = nil
         downloadProgress = 0
         status = "Đang tải \(file.path)…"
+        defer {
+            downloadProgress = nil
+            downloadSize = 0
+            downloadController = nil
+            downloadTask = nil
+            busy = false
+        }
         do {
             let (data, name) = try await client.download(
                 repo: selectedRepo,
-                path: file.path
-            ) { value in
-                Task { @MainActor in
-                    downloadProgress = value
-                }
+                path: file.path,
+                progress: { value in
+                    Task { @MainActor in
+                        downloadProgress = value
+                    }
+                },
+                cancellation: controller
+            )
+            if controller.isCancelled {
+                status = "Đã huỷ tải model."
+                return
             }
             let directory = FileManager.default.urls(
                 for: .applicationSupportDirectory,
@@ -169,10 +201,12 @@ struct ModelBrowserView: View {
             try await TtsEngine.shared.loadModel(at: destination)
             status = "Đã nạp \(name) (\(data.count) B)."
         } catch {
-            self.error = error.localizedDescription
-            status = "Tải model lỗi."
+            if controller.isCancelled {
+                status = "Đã huỷ tải model."
+            } else {
+                self.error = error.localizedDescription
+                status = "Tải model lỗi."
+            }
         }
-        downloadProgress = nil
-        busy = false
     }
 }

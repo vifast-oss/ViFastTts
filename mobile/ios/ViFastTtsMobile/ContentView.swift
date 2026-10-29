@@ -60,6 +60,9 @@ struct ContentView: View {
                 if stream {
                     Toggle("Lưu WAV + phụ đề khi stream", isOn: $streamSaveWav)
                         .font(VFTheme.caption)
+                    Text("Stream không dùng peak normalize; tạm bỏ qua để phát ngay.")
+                        .font(.caption2)
+                        .foregroundStyle(VFTheme.muted)
                     if mode == "remote" {
                         Text("Remote stream cần server Rust; server cũ sẽ tự chuyển full.")
                             .font(.caption2)
@@ -152,9 +155,13 @@ struct ContentView: View {
                         .foregroundStyle(.red)
                 }
                 if mode == "local" && !ready {
-                    Text("Chưa có model trong bundle hoặc FFI/ORT chưa nạp.")
-                        .font(VFTheme.caption)
-                        .foregroundStyle(VFTheme.warning)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Chưa có model trong bundle hoặc FFI/ORT chưa nạp.")
+                            .font(VFTheme.caption)
+                            .foregroundStyle(VFTheme.warning)
+                        Button("Tải model") { showModels = true }
+                            .font(VFTheme.caption)
+                    }
                 }
                 if mode == "remote" {
                     Text("Remote gọi /api/tts; server có thể là desktop local, LAN hoặc online.")
@@ -271,6 +278,9 @@ struct ContentView: View {
         #endif
     }
 
+    /// Peak normalize cần biết đỉnh cả file; stream chỉ có từng chunk nên bỏ qua.
+    private var effectivePeakNormalize: Bool { peakNormalize && !stream }
+
     private var activeKaraokeText: String {
         let position: Int
         if let streamStartedAt {
@@ -320,7 +330,7 @@ struct ContentView: View {
                                 alpha: Float(alpha),
                                 maxChars: maxChars,
                                 fixedPauses: fixedPauses,
-                                peakNormalize: peakNormalize,
+                                peakNormalize: effectivePeakNormalize,
                                 dialect: dialect,
                                 resolveOov: resolveOov,
                                 dictionary: dictionary,
@@ -366,7 +376,7 @@ struct ContentView: View {
                         alpha: Float(alpha),
                         maxChars: maxChars,
                         fixedPauses: fixedPauses,
-                        peakNormalize: peakNormalize,
+                        peakNormalize: effectivePeakNormalize,
                         dialect: dialect,
                         resolveOov: resolveOov,
                         dictionary: dictionary,
@@ -389,7 +399,7 @@ struct ContentView: View {
                         alpha: Float(alpha),
                         maxChars: maxChars,
                         fixedPauses: fixedPauses,
-                        peakNormalize: peakNormalize,
+                        peakNormalize: effectivePeakNormalize,
                         dialect: dialect,
                         resolveOov: resolveOov,
                         dictionary: dictionary,
@@ -429,7 +439,7 @@ struct ContentView: View {
                         alpha: Float(alpha),
                         maxChars: maxChars,
                         fixedPauses: fixedPauses,
-                        peakNormalize: peakNormalize,
+                        peakNormalize: effectivePeakNormalize,
                         dialect: dialect,
                         resolveOov: resolveOov,
                         dictionary: dictionary,

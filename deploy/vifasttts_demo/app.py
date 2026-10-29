@@ -1055,12 +1055,11 @@ def tts_stream(payload: TtsRequest, request: Request) -> Response:
         peak_normalize=False,
         dialect=dialect,
     )
-    if not _lock.acquire(timeout=45):
-        raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau",
-                            headers={"Retry-After": "10"})
-
+    # Không giữ _lock cho stream: ORT session chạy Run song song được, còn
+    # generator sync có thể bị bỏ dở khi client ngắt khiến `finally` không chạy.
+    # Full vẫn giữ _lock để giới hạn request nặng.
     def events():
-        """Generator chạy trong threadpool; luôn nhả lock kể cả client ngắt."""
+        """Generator chạy trong threadpool; không giữ lock toàn cục."""
         started = time.perf_counter()
         samples = 0
         chunks = 0
@@ -1100,8 +1099,6 @@ def tts_stream(payload: TtsRequest, request: Request) -> Response:
             logger.exception("tts stream failed")
             yield (json.dumps({"type": "error", "message": "Lỗi tổng hợp; thử câu khác"},
                               ensure_ascii=False) + "\n").encode("utf-8")
-        finally:
-            _lock.release()
 
     return StreamingResponse(
         events(),

@@ -148,6 +148,7 @@ async function loadSettings() {
   updateBundleLabel();
   await loadHistory();
   setModeFields();
+  syncStreamPeak();
 }
 
 function makeAudioUrlFromBase64(base64) {
@@ -339,6 +340,7 @@ async function run() {
 
   const mode = modeEl.value;
   const streaming = streamEl.checked || text.length > 1500;
+  const peakNormalize = streaming ? false : peakNormalizeEl.checked;
   const estimate = await estimateFor(mode, text.length);
   const estimateText = estimate
     ? ` (ước tính ~${(estimate.ms / 1000).toFixed(1)} s, ${estimate.runs} lần trước)`
@@ -364,7 +366,7 @@ async function run() {
         speed: Number(speedEl.value),
         alpha: Number(alphaEl.value),
         maxChars: Number(maxCharsEl.value),
-        peakNormalize: peakNormalizeEl.checked,
+        peakNormalize,
         dialect: dialectEl.value,
         resolveOov: resolveOovEl.checked,
         fixedPauses: fixedEl.checked,
@@ -470,7 +472,12 @@ for (const element of [
 ]) {
   element.addEventListener('change', saveSettings);
 }
-streamEl.addEventListener('change', saveSettings);
+function syncStreamPeak() {
+  peakNormalizeEl.disabled = streamEl.checked;
+  const note = $('peakStreamNote');
+  if (note) note.classList.toggle('hidden', !streamEl.checked);
+}
+streamEl.addEventListener('change', () => { syncStreamPeak(); saveSettings(); });
 directModelsEl.addEventListener('change', saveSettings);
 modelSearchEl.addEventListener('click', searchModels);
 modelClearEl.addEventListener('click', clearBundle);

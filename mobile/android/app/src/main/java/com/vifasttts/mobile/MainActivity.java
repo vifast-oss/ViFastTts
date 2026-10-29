@@ -898,7 +898,7 @@ public class MainActivity extends Activity {
                 options.alpha = sharpenAlpha;
                 options.max_chars = new NativeLong(maxChars);
                 options.fixed_pauses = fixedPauses ? (byte) 1 : (byte) 0;
-                options.peak_normalize = peakNormalize ? (byte) 1 : (byte) 0;
+                options.peak_normalize = effectivePeakNormalize() ? (byte) 1 : (byte) 0;
                 byte[] wav = null;
                 String karaoke = null;
                 PointerByReference outWav = new PointerByReference();
@@ -960,7 +960,7 @@ public class MainActivity extends Activity {
                 options.alpha = sharpenAlpha;
                 options.max_chars = new NativeLong(maxChars);
                 options.fixed_pauses = fixedPauses ? (byte) 1 : (byte) 0;
-                options.peak_normalize = peakNormalize ? (byte) 1 : (byte) 0;
+                options.peak_normalize = effectivePeakNormalize() ? (byte) 1 : (byte) 0;
                 int sampleRate = 48000;
                 int channelMask = AudioFormat.CHANNEL_OUT_MONO;
                 int minBuffer = AudioTrack.getMinBufferSize(
@@ -1112,7 +1112,7 @@ public class MainActivity extends Activity {
                 body.put("alpha", sharpenAlpha);
                 body.put("max_chars", maxChars);
                 body.put("fixed_pauses", fixedPauses);
-                body.put("peak_normalize", peakNormalize);
+                body.put("peak_normalize", effectivePeakNormalize());
                 body.put("dialect", dialect);
                 body.put("resolve_oov", resolveOov);
                 body.put("dictionary", dictionaryText);
@@ -1278,7 +1278,7 @@ public class MainActivity extends Activity {
                 body.put("alpha", sharpenAlpha);
                 body.put("max_chars", maxChars);
                 body.put("fixed_pauses", fixedPauses);
-                body.put("peak_normalize", peakNormalize);
+                body.put("peak_normalize", effectivePeakNormalize());
                 body.put("dialect", dialect);
                 body.put("resolve_oov", resolveOov);
                 body.put("dictionary", dictionaryText);
@@ -1706,6 +1706,11 @@ public class MainActivity extends Activity {
         if (karaokeView != null) karaokeView.setVisibility(View.GONE);
     }
 
+    /** Peak cần đỉnh cả file; stream chỉ có từng chunk nên tạm bỏ qua. */
+    private boolean effectivePeakNormalize() {
+        return peakNormalize && !streamMode;
+    }
+
     private void showSettings() {
         Typeface font = VfTheme.typeface(this);
         LinearLayout form = new LinearLayout(this);
@@ -1771,11 +1776,14 @@ public class MainActivity extends Activity {
         CheckBox peak = new CheckBox(this);
         peak.setText("Peak normalize");
         peak.setChecked(peakNormalize);
+        peak.setEnabled(!streamMode);
         VfTheme.text(peak, font, 14, VfTheme.INK, false);
         peak.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(peak);
         TextView peakNote = new TextView(this);
-        peakNote.setText("Peak normalize: đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền. Không dùng khi stream.");
+        peakNote.setText(streamMode
+                ? "Peak normalize tạm bỏ qua khi stream vì cần biết đỉnh toàn file."
+                : "Peak normalize: đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền. Không dùng khi stream.");
         VfTheme.text(peakNote, font, 12, VfTheme.MUTED, false);
         form.addView(peakNote);
 
@@ -1793,7 +1801,13 @@ public class MainActivity extends Activity {
         VfTheme.text(streamSave, font, 14, VfTheme.INK, false);
         streamSave.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         form.addView(streamSave);
-        stream.setOnCheckedChangeListener((button, checked) -> streamSave.setEnabled(checked));
+        stream.setOnCheckedChangeListener((button, checked) -> {
+            streamSave.setEnabled(checked);
+            peak.setEnabled(!checked);
+            peakNote.setText(checked
+                    ? "Peak normalize tạm bỏ qua khi stream vì cần biết đỉnh toàn file."
+                    : "Peak normalize: đưa đỉnh WAV về −3 dBFS để tránh clip; có thể làm to cả rè/nền. Không dùng khi stream.");
+        });
 
         TextView dialectLabel = new TextView(this);
         VfTheme.text(dialectLabel, font, 13, VfTheme.INK, true);
