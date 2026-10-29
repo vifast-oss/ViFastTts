@@ -227,7 +227,7 @@ struct RemoteTtsClient {
                 units: [], duration: duration, cancelled: true
             )
         }
-        player.finish()
+        player.finish(timeout: max(8, duration + 5))
         let base = FileManager.default.temporaryDirectory
             .appendingPathComponent("vifasttts-remote-stream-\(UUID().uuidString)")
         var wavURL: URL?

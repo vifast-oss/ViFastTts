@@ -256,6 +256,7 @@ struct ContentView: View {
         if let value = environment["VIFASTT_MODE"] { mode = value }
         if let value = environment["VIFASTT_SERVER"] { serverURL = value }
         if let value = environment["VIFASTT_TOKEN"] { token = value }
+        if let value = environment["VIFASTT_TEXT"] { text = value }
         if let value = environment["VIFASTT_STREAM"] { stream = value == "1" }
         if let value = environment["VIFASTT_STREAM_SAVE"] { streamSaveWav = value == "1" }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

@@ -368,7 +368,8 @@ final class TtsEngine: @unchecked Sendable {
                     ))
                     return
                 }
-                player.finish()
+                let playbackSeconds = Double(context.receivedSamples) / 24_000.0
+                player.finish(timeout: max(8, playbackSeconds + 5))
                 var karaokeJSON: String?
                 if let karaokePointer {
                     karaokeJSON = String(cString: karaokePointer)
