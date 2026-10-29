@@ -36,13 +36,15 @@ Mở app → **Thêm giọng từ HuggingFace**:
 5. Bấm file để tải; `ModelManager` kiểm manifest/hash trước khi lưu.
 6. `.vfa` dùng vocoder bundled; `.vfts` tự chứa vocoder.
 
-Thư mục tải mặc định:
+Thư mục tải mặc định (cùng tên `vifasttts`, base dir theo OS):
 
 ```text
-~/Library/Application Support/com.vifasttts.ViFastTts/models/
+macOS:   ~/Library/Application Support/vifasttts/models/
+Linux:   ~/.local/share/vifasttts/models/
+Windows: %APPDATA%\vifasttts\data\models\
 ```
 
-Trên Windows/Linux theo `directories` của hệ điều hành.
+Settings: `desktop.json` trong config dir (`~/.config/vifasttts/` · `%APPDATA%\vifasttts\config\`).
 
 ## CLI
 

@@ -73,16 +73,16 @@ font chính trong egui, nên không còn mất dấu khi dùng font mặc địn
 
 ## Cấu hình
 
-- Settings: `~/Library/Application Support/com.vifasttts.ViFastTts/desktop.json`
-  (macOS) · `~/.config/vifasttts/desktop.json` (Linux) ·
-  `%APPDATA%\vifasttts\ViFastTts\config\desktop.json` (Windows); lưu settings +
-  history ETA + đường dẫn model/`.vfts`.
+- Settings: `~/Library/Application Support/vifasttts/desktop.json` (macOS) ·
+  `~/.config/vifasttts/desktop.json` (Linux) ·
+  `%APPDATA%\vifasttts\config\desktop.json` (Windows); lưu settings + history ETA
+  + đường dẫn model/`.vfts`.
 - Ô đường dẫn model hiển thị **file thật sẽ nạp**: path repo/bundle được resolve
   sang `<thư mục exe>/models/` (hoặc `Contents/Resources/` trong app macOS).
 - Bundle tải từ HuggingFace lưu ở `<data dir>/models/`:
-  `~/Library/Application Support/com.vifasttts.ViFastTts/models/` (macOS) ·
+  `~/Library/Application Support/vifasttts/models/` (macOS) ·
   `~/.local/share/vifasttts/models/` (Linux) ·
-  `%APPDATA%\vifasttts\ViFastTts\data\models\` (Windows).
+  `%APPDATA%\vifasttts\data\models\` (Windows).
 - Remote mặc định `http://127.0.0.1:8000`; token Bearer tuỳ chọn.
 
 ## Giới hạn hiện tại

@@ -220,14 +220,21 @@ fn default_output_dir() -> String {
         .to_string()
 }
 
+/// Tên thư mục dùng chung trên 3 nền tảng; base dir vẫn theo OS.
+const PROJECT_DIR: &str = "vifasttts";
+
+fn project_dirs() -> Option<ProjectDirs> {
+    ProjectDirs::from_path(PathBuf::from(PROJECT_DIR))
+}
+
 fn model_download_dir() -> PathBuf {
-    ProjectDirs::from("com", "vifasttts", "ViFastTts")
+    project_dirs()
         .map(|dirs| dirs.data_dir().join("models"))
         .unwrap_or_else(|| PathBuf::from("models"))
 }
 
 fn settings_path() -> PathBuf {
-    ProjectDirs::from("com", "vifasttts", "ViFastTts")
+    project_dirs()
         .map(|dirs| dirs.config_dir().join("desktop.json"))
         .unwrap_or_else(|| PathBuf::from("vifasttts-desktop.json"))
 }
@@ -1650,5 +1657,12 @@ mod tests {
         let resolved = resolve_model_path_with_exe("khong/co/acoustic.onnx", Some(&exe));
         assert_eq!(resolved, PathBuf::from("khong/co/acoustic.onnx"));
         let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn project_dirs_dung_ten_thong_nhat() {
+        if let Some(dirs) = project_dirs() {
+            assert_eq!(dirs.project_path(), Path::new("vifasttts"));
+        }
     }
 }
