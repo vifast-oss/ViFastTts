@@ -35,12 +35,15 @@ Ví dụ repo:
 
 ```text
 dvchd/vifasttts-ngochuyen-small
+  best.pt
+  config.yaml
+  resolved_config.json
+  onnx/acoustic.onnx
+  onnx/vocoder.onnx
+  bundles/n0-ngochuyen.vfa
+  bundles/n0-ngochuyen.vfts
   models.json
-  vocoders/vocos-mel-24khz.onnx
-  voices/n0-ngochuyen/
-    n0-ngochuyen.vfa
-  voices/n0-ngochuyen-full/
-    n0-ngochuyen.vfts
+  data/ngochuyen/{mel_stats,f0_stats_v2}.json
   LICENSE.md
 ```
 
@@ -51,7 +54,7 @@ from huggingface_hub import HfApi
 api = HfApi()
 api.upload_file(
     path_or_fileobj="n0-ngochuyen.vfa",
-    path_in_repo="voices/n0-ngochuyen/n0-ngochuyen.vfa",
+    path_in_repo="bundles/n0-ngochuyen.vfa",
     repo_id="dvchd/vifasttts-ngochuyen-small",
     repo_type="model",
 )
