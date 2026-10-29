@@ -19,27 +19,35 @@ import secrets
 import sqlite3
 import threading
 import time
-import wave
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from vifasttts.frontend.chunking import (
-    chunk_text,
-    pause_seconds,
-    split_clauses,
-    steady_pause_seconds,
-)
 from vifasttts.frontend.normalizer import NormalizerOptions, normalize_text
 from vifasttts.runtime.onnx_engine import OnnxAcousticModel, OnnxVocoder
-from vifasttts.runtime.postprocess import postprocess, sharpen_mel_numpy
+from vifasttts.runtime.tts_engine import (
+    OnnxTtsEngine,
+    TtsSettings,
+    karaoke_lines,
+    srt_from_units,
+    vtt_from_units,
+)
+from vifasttts.runtime.tts_engine import (
+    pcm16 as engine_pcm16,
+)
 
 ROOT = Path(__file__).resolve().parent
 MODEL_DIR = Path(os.environ.get("MODEL_DIR", ROOT / "models"))
@@ -61,7 +69,7 @@ SYNTH_CHUNK_CHARS = _env_int("SYNTH_CHUNK_CHARS", 300, 100, MAX_CHARS)
 RATE_LIMIT = 6
 RATE_WINDOW = 60.0
 ALPHA = float(os.environ.get("VIFASTT_SHARPEN_ALPHA", "1.5"))
-OVERRIDES_PATH = Path(os.environ.get("OVERRIDES_PATH", ROOT / "configs" / "overrides_tech_vi.json"))
+OVERRIDES_PATH = Path(os.environ.get("OVERRIDES_PATH", ROOT / "configs" / "overrides_vi.json"))
 MAX_OVERRIDES = 50
 MAX_FEEDBACK_CHARS = 1000
 MAX_CONTACT_CHARS = 120
@@ -619,15 +627,22 @@ if not ACOUSTIC.exists() or not VOCODER.exists():
 acoustic = OnnxAcousticModel(ACOUSTIC, provider="cpu")
 vocoder = OnnxVocoder(VOCODER, provider="cpu")
 SAMPLE_RATE = vocoder.sample_rate or int(acoustic.metadata.get("sample_rate", 24000))
+TTS_ENGINE = OnnxTtsEngine(acoustic, vocoder)
 
 
 class TtsRequest(BaseModel):
     text: str
     speed: float = 1.0
+    alpha: float = ALPHA
+    max_chars: int = SYNTH_CHUNK_CHARS
     fixed_pauses: bool = False
+    peak_normalize: bool = False
+    dialect: str = "north"
+    karaoke: bool = False
     visitor_id: str | None = None
     source: str = "api"
     overrides: dict[str, str] | None = None
+    dictionary: str | None = None
 
 
 class VisitRequest(BaseModel):
@@ -649,17 +664,6 @@ class FeedbackRequest(BaseModel):
     website: str | None = None
 
 
-def _wav_bytes(waveform: np.ndarray, sample_rate: int) -> bytes:
-    pcm = (np.clip(np.asarray(waveform, dtype=np.float32), -1.0, 1.0) * 32767.0).round().astype("<i2")
-    buffer = io.BytesIO()
-    with wave.open(buffer, "wb") as handle:
-        handle.setnchannels(1)
-        handle.setsampwidth(2)
-        handle.setframerate(sample_rate)
-        handle.writeframes(pcm.tobytes())
-    return buffer.getvalue()
-
-
 def _rate_ok(client: str) -> bool:
     now = time.monotonic()
     bucket = _hits[client]
@@ -671,15 +675,25 @@ def _rate_ok(client: str) -> bool:
     return True
 
 
-def _synthesize(text: str, speed: float, fixed_pauses: bool,
-                overrides: dict[str, str]) -> tuple[bytes, float, float]:
-    started = time.perf_counter()
+def _parse_dictionary_text(text: str | None) -> dict[str, str]:
+    """Parser tối giản `key = cách đọc`, đồng bộ hợp đồng dictionary của Rust."""
+    rules: dict[str, str] = {}
+    for line in str(text or "").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key, value = key.strip(), value.strip()
+        if key and value:
+            rules[key] = value
+    return _clean_overrides(rules)
+
+
+def _normalizer_options(dialect: str, overrides: dict[str, str]) -> tuple[str, NormalizerOptions]:
+    """Merge từ điển builtin/approved/user đúng như full + stream."""
     user_lower = {key.lower(): value for key, value in overrides.items() if key.isascii()}
     approved = _approved_overrides()
     approved_lower = {key.lower(): value for key, value in approved.items() if key.isascii()}
-    # Key có dấu chấm/khoảng trắng (TP.HCM, v.v., hugging face) phải vào
-    # exact_overrides để _apply_phrase_overrides chạy trước tokenizer. Nếu chỉ
-    # đặt trong english_overrides, các key nhiều token sẽ không bao giờ khớp.
     builtin_phrases = {
         key: value for key, value in BUILTIN_OVERRIDES.items()
         if not re.fullmatch(r"[A-Za-zÀ-ỹĐđ]+", key)
@@ -688,30 +702,33 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
         key: value for key, value in approved.items()
         if not re.fullmatch(r"[A-Za-zÀ-ỹĐđ]+", key)
     }
-    options = NormalizerOptions(
-        dialect="north",
+    dialect = dialect if dialect in ("north", "central", "south") else "north"
+    return dialect, NormalizerOptions(
+        dialect=dialect,
         exact_overrides={**builtin_phrases, **approved_phrases, **overrides},
         english_overrides={**BUILTIN_OVERRIDES, **approved_lower, **user_lower},
     )
-    chunks = (split_clauses(text, max_chars=SYNTH_CHUNK_CHARS) if fixed_pauses
-              else chunk_text(text, max_chars=SYNTH_CHUNK_CHARS))
-    if not chunks:
-        raise HTTPException(status_code=422, detail="Không có nội dung để đọc")
-    pieces: list[np.ndarray] = []
-    for index, chunk in enumerate(chunks):
-        features = acoustic.features_from_text(chunk, options=options)
-        outputs = acoustic.run(features, speed=speed, gate_threshold=1.01 if fixed_pauses else 0.5)
-        mel = np.asarray(outputs["mel"], dtype=np.float32)
-        mel = sharpen_mel_numpy(mel, ALPHA)
-        pieces.append(np.asarray(vocoder.waveform(mel), dtype=np.float32))
-        if index < len(chunks) - 1:
-            seconds = (steady_pause_seconds(chunk) if fixed_pauses else pause_seconds(chunk))
-            pause = int(SAMPLE_RATE * seconds)
-            if pause:
-                pieces.append(np.zeros(pause, dtype=np.float32))
-    waveform = postprocess(np.concatenate(pieces), SAMPLE_RATE)
-    return _wav_bytes(waveform, SAMPLE_RATE), time.perf_counter() - started, waveform.size / SAMPLE_RATE
 
+
+def _synthesize(text: str, speed: float, fixed_pauses: bool,
+                overrides: dict[str, str], alpha: float = ALPHA,
+                chunk_chars: int = SYNTH_CHUNK_CHARS,
+                peak_normalize: bool = False,
+                dialect: str = "north") -> tuple[bytes, float, float, list[dict]]:
+    """Full synthesis qua engine Python dùng chung; giữ merge từ điển của demo."""
+    dialect, options = _normalizer_options(dialect, overrides)
+    chunk_chars = max(50, min(int(chunk_chars or SYNTH_CHUNK_CHARS), MAX_CHARS))
+    alpha = max(0.5, min(float(alpha), 3.0))
+    settings = TtsSettings(
+        speed=speed,
+        alpha=alpha,
+        max_chars=chunk_chars,
+        fixed_pauses=bool(fixed_pauses),
+        peak_normalize=bool(peak_normalize),
+        dialect=dialect,
+    )
+    result = TTS_ENGINE.synthesize(text, settings, normalizer=options)
+    return result.wav, result.elapsed, result.audio_seconds, result.units
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> HTMLResponse:
@@ -722,7 +739,37 @@ def index() -> HTMLResponse:
 @app.get("/api/config")
 def public_config() -> dict:
     """Cấu hình công khai để UI hiển thị đúng giới hạn (không lộ secret)."""
-    return {"max_chars": MAX_CHARS, "rate_limit": RATE_LIMIT, "rate_window": RATE_WINDOW}
+    defaults = TtsSettings()
+    return {
+        "max_chars": MAX_CHARS,
+        "rate_limit": RATE_LIMIT,
+        "rate_window": RATE_WINDOW,
+        "contract_version": 1,
+        "sample_rate": SAMPLE_RATE,
+        "defaults": {
+            "speed": defaults.speed,
+            "alpha": defaults.alpha,
+            "max_chars": SYNTH_CHUNK_CHARS,
+            "fixed_pauses": defaults.fixed_pauses,
+            "peak_normalize": defaults.peak_normalize,
+            "dialect": defaults.dialect,
+            "resolve_oov": defaults.resolve_oov,
+        },
+        "capabilities": {
+            "stream": True,
+            "karaoke": True,
+            "srt": True,
+            "vtt": True,
+            "dictionary": True,
+            "custom_reading": True,
+            "peak_normalize_stream": False,
+        },
+        "endpoints": {
+            "tts": "/api/tts",
+            "stream": "/api/tts/stream",
+            "config": "/api/config",
+        },
+    }
 
 
 @app.post("/api/visit")
@@ -897,7 +944,7 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         raise HTTPException(status_code=422, detail=f"Tối đa {MAX_CHARS} ký tự")
     if not any(char.isalpha() for char in text):
         raise HTTPException(status_code=422, detail="Cần ít nhất một chữ cái")
-    speed = min(1.2, max(0.8, float(payload.speed)))
+    speed = min(2.0, max(0.5, float(payload.speed)))
     try:
         visitor = _visitor_hash(request, payload.visitor_id)
     except Exception:
@@ -907,10 +954,15 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút", headers={"Retry-After": "60"})
     source = payload.source if payload.source in ("web", "space", "api") else "api"
     overrides = _clean_overrides(payload.overrides)
+    overrides.update(_parse_dictionary_text(payload.dictionary))
     if not _lock.acquire(timeout=45):
         raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau", headers={"Retry-After": "10"})
     try:
-        audio, elapsed, audio_seconds = _synthesize(text, speed, bool(payload.fixed_pauses), overrides)
+        audio, elapsed, audio_seconds, units = _synthesize(
+            text, speed, bool(payload.fixed_pauses), overrides,
+            alpha=payload.alpha, chunk_chars=payload.max_chars,
+            peak_normalize=bool(payload.peak_normalize), dialect=payload.dialect,
+        )
     except HTTPException:
         raise
     except Exception as exc:
@@ -924,6 +976,21 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         logger.exception("tts stats failed")
     logger.info("tts ok %.2fs chars=%d fixed=%s", elapsed, len(text), payload.fixed_pauses)
     rtf = elapsed / audio_seconds if audio_seconds > 0 else 0.0
+    if payload.karaoke:
+        return JSONResponse({
+            "sample_rate": SAMPLE_RATE,
+            "duration_ms": round(audio_seconds * 1000),
+            "audio_base64": base64.b64encode(audio).decode("ascii"),
+            "karaoke": {
+                "units": units,
+                "lines": [{"units": line} for line in karaoke_lines(units)],
+                "duration_ms": round(audio_seconds * 1000),
+                "sample_rate": SAMPLE_RATE,
+            },
+            "srt": srt_from_units(units),
+            "vtt": vtt_from_units(units),
+            "vtt_karaoke": vtt_from_units(units),
+        })
     return Response(content=audio, media_type="audio/wav", headers={
         "Content-Disposition": 'inline; filename="vifasttts-demo.wav"',
         "Cache-Control": "no-store",
@@ -933,3 +1000,90 @@ def tts(payload: TtsRequest, request: Request) -> Response:
         "X-RTF": f"{rtf:.4f}",
         "X-Characters": str(len(text)),
     })
+
+
+@app.post("/api/tts/stream")
+def tts_stream(payload: TtsRequest, request: Request) -> Response:
+    """NDJSON stream: units → audio từng chunk → done; dùng cùng engine full.
+
+    `peak_normalize` bị từ chối vì cần biết đỉnh toàn file (giống Rust).
+    """
+    text = " ".join(str(payload.text).replace("\x00", " ").split()).strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="Nhập câu cần đọc")
+    if len(text) > MAX_CHARS:
+        raise HTTPException(status_code=422, detail=f"Tối đa {MAX_CHARS} ký tự")
+    if not any(char.isalpha() for char in text):
+        raise HTTPException(status_code=422, detail="Cần ít nhất một chữ cái")
+    if payload.peak_normalize:
+        raise HTTPException(status_code=422, detail="peak_normalize chưa hỗ trợ stream")
+    speed = min(2.0, max(0.5, float(payload.speed)))
+    try:
+        visitor = _visitor_hash(request, payload.visitor_id)
+    except Exception:
+        logger.exception("visitor stats failed")
+        visitor = "unknown"
+    if not _rate_ok(visitor):
+        raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu; thử lại sau 1 phút",
+                            headers={"Retry-After": "60"})
+    source = payload.source if payload.source in ("web", "space", "api") else "api"
+    overrides = _clean_overrides(payload.overrides)
+    overrides.update(_parse_dictionary_text(payload.dictionary))
+    dialect, options = _normalizer_options(payload.dialect, overrides)
+    settings = TtsSettings(
+        speed=speed,
+        alpha=payload.alpha,
+        max_chars=max(50, min(int(payload.max_chars or SYNTH_CHUNK_CHARS), MAX_CHARS)),
+        fixed_pauses=bool(payload.fixed_pauses),
+        peak_normalize=False,
+        dialect=dialect,
+    )
+    if not _lock.acquire(timeout=45):
+        raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau",
+                            headers={"Retry-After": "10"})
+
+    def events():
+        """Generator chạy trong threadpool; luôn nhả lock kể cả client ngắt."""
+        started = time.perf_counter()
+        samples = 0
+        chunks = 0
+        try:
+            for chunk in TTS_ENGINE.iter_chunks(text, settings, normalizer=options):
+                if chunk.units:
+                    yield (json.dumps({"type": "units", "units": chunk.units},
+                                      ensure_ascii=False) + "\n").encode("utf-8")
+                if chunk.samples.size:
+                    yield (json.dumps({
+                        "type": "audio",
+                        "sample_rate": chunk.sample_rate,
+                        "pcm_base64": base64.b64encode(engine_pcm16(chunk.samples)).decode("ascii"),
+                    }, ensure_ascii=False) + "\n").encode("utf-8")
+                    samples += int(chunk.samples.size)
+                chunks += 1
+            audio_seconds = samples / TTS_ENGINE.sample_rate if TTS_ENGINE.sample_rate else 0.0
+            elapsed = time.perf_counter() - started
+            try:
+                _record_tts(visitor, len(text), audio_seconds, elapsed,
+                            bool(payload.fixed_pauses), speed, source)
+            except Exception:
+                logger.exception("tts stream stats failed")
+            logger.info("tts stream ok %.2fs chars=%d chunks=%d", elapsed, len(text), chunks)
+            yield (json.dumps({
+                "type": "done",
+                "samples": samples,
+                "chunks": chunks,
+                "sample_rate": TTS_ENGINE.sample_rate,
+                "cancelled": False,
+            }) + "\n").encode("utf-8")
+        except Exception:
+            logger.exception("tts stream failed")
+            yield (json.dumps({"type": "error", "message": "Lỗi tổng hợp; thử câu khác"},
+                              ensure_ascii=False) + "\n").encode("utf-8")
+        finally:
+            _lock.release()
+
+    return StreamingResponse(
+        events(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )

@@ -26,6 +26,7 @@
 | Kiểm tra parity tính năng các UI | `docs/UI_PARITY.md` |
 | Rà soát tái sử dụng UI/logic & hợp đồng chung | `docs/UI_REUSE_AUDIT.md` |
 | Hợp đồng HTTP/model API dùng chung | `docs/API_CONTRACT.md` |
+| Dùng engine ONNX + stream từ Python | `docs/PYTHON_ENGINE.md` |
 | Định dạng model `.vfts` | `docs/VFTS_FORMAT.md` |
 | Kênh phân phối/đóng gói | `docs/DISTRIBUTION.md` |
 | Mobile: model bundle/tải nhiều giọng | `docs/MOBILE_MODELS.md` |
@@ -43,7 +44,7 @@
 - **Bản fine-tune Q 3k** (`runs/acoustic_ngochuyen_q/best.pt`) đã train/export nhưng **chưa live**;
   chỉ dùng để so tai; release tạm cũ đã xoá, artifact nằm trên [HuggingFace](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles).
 - **Model/ONNX cũ** thiếu `vocab_hash` không còn được hỗ trợ; **không có adapter Q→K**.
-- **Test:** 2.916 pass / 24 skip; `ruff` sạch (28/10/2026).
+- **Test:** xem `docs/handoff/TRANG_THAI.md`; `ruff` sạch (30/10/2026).
 - **Demo:** custom reading local-first, gửi duyệt khi bật checkbox, STEM examples,
   feedback/báo lỗi, admin thống kê; nội dung feedback chờ `ADMIN_PASSWORD`.
 

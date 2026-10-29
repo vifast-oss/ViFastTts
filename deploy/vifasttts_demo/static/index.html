@@ -201,7 +201,18 @@
     <div class="meta"><span id="count">0/3000</span><span id="limitLabel">Tối đa 3000 ký tự</span></div>
 
     <div class="speed-row">
-      <label>Tốc độ <input id="speed" type="range" min="0.85" max="1.15" step="0.05" value="1"> <output id="speedOut">1.00×</output></label>
+      <label>Tốc độ <input id="speed" type="range" min="0.5" max="2.0" step="0.05" value="1"> <output id="speedOut">1.00×</output></label>
+      <label>Alpha <input id="alpha" type="range" min="0.5" max="3.0" step="0.05" value="1.5"> <output id="alphaOut">1.50</output></label>
+    </div>
+    <div class="speed-row">
+      <label>Phương ngữ
+        <select id="dialect">
+          <option value="north">Bắc</option>
+          <option value="central">Trung</option>
+          <option value="south">Nam</option>
+        </select>
+      </label>
+      <label>Max ký tự/chunk <input id="chunkChars" type="number" min="50" max="3000" step="50" value="300" style="width:76px"></label>
     </div>
 
     <div class="row">
@@ -212,7 +223,11 @@
 
     <div id="player">
       <audio id="audio" controls preload="none"></audio>
-      <div class="row"><a id="download" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.wav">Tải WAV</a></div>
+      <div class="row">
+        <a id="download" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.wav">Tải WAV</a>
+        <a id="downloadSrt" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.srt" hidden>Tải SRT</a>
+        <a id="downloadVtt" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.vtt" hidden>Tải VTT</a>
+      </div>
       <div id="metrics" class="metrics" hidden></div>
     </div>
 
@@ -235,6 +250,8 @@
       <div class="panel-head"><h2>Tùy chọn nâng cao</h2><span class="pill">Đọc &amp; nghỉ</span></div>
       <div class="option-row">
         <label class="checkline" for="fixed"><input id="fixed" type="checkbox"> Nghỉ cố định</label>
+        <label class="checkline" for="peakNormalize"><input id="peakNormalize" type="checkbox"> Peak normalize</label>
+        <label class="checkline" for="streamMode"><input id="streamMode" type="checkbox"> Stream (phát ngay)</label>
         <span class="info" tabindex="0" role="img" aria-label="Giải thích nghỉ cố định">i
           <span class="tip" role="tooltip">Nghỉ cố định: chèn khoảng lặng theo dấu câu (0,25 giây sau phẩy; 0,55 giây sau chấm/hỏi/than) thay vì để model tự dự đoán. Mặc định tắt vì model tự ngắt nghỉ tự nhiên hơn; bật khi cần nhịp đọc đều, dễ đoán.</span>
         </span>
@@ -317,6 +334,7 @@ let currentUrl = null;
 let generateTimer = null;
 const VISIT_URL = "/api/visit";
 const API_URL = "/api/tts";
+const STREAM_URL = "/api/tts/stream";
 const FEEDBACK_URL = "/api/feedback";
 const SOURCE = "web";
 const CONFIG_URL = "/api/config";
@@ -525,6 +543,19 @@ fetch(CONFIG_URL).then((response) => response.ok ? response.json() : null).then(
     const label = $("limitLabel"); if (label) label.textContent = `Tối đa ${limit} ký tự`;
     updateCount();
   }
+  const defaults = data && data.defaults;
+  if (defaults) {
+    if (Number.isFinite(Number(defaults.speed)) && $("speed")) { $("speed").value = defaults.speed; if ($("speedOut")) $("speedOut").textContent = Number(defaults.speed).toFixed(2) + "×"; }
+    if (Number.isFinite(Number(defaults.alpha)) && $("alpha")) { $("alpha").value = defaults.alpha; if ($("alphaOut")) $("alphaOut").textContent = Number(defaults.alpha).toFixed(2); }
+    if (Number.isFinite(Number(defaults.max_chars)) && $("chunkChars")) $("chunkChars").value = defaults.max_chars;
+    if (defaults.dialect && $("dialect")) $("dialect").value = defaults.dialect;
+    if ($("fixed")) $("fixed").checked = Boolean(defaults.fixed_pauses);
+    if ($("peakNormalize")) $("peakNormalize").checked = Boolean(defaults.peak_normalize);
+  }
+  const streamMode = $("streamMode");
+  if (streamMode && data && data.capabilities && data.capabilities.stream === false) {
+    streamMode.parentElement.hidden = true;
+  }
 }).catch(() => {});
 function formatAudio(seconds) {
   if (!Number.isFinite(seconds)) return "";
@@ -533,6 +564,7 @@ function formatAudio(seconds) {
 }
 text.addEventListener("input", updateCount);
 $("speed").addEventListener("input", (e) => { $("speedOut").textContent = Number(e.target.value).toFixed(2) + "×"; });
+$("alpha").addEventListener("input", (e) => { $("alphaOut").textContent = Number(e.target.value).toFixed(2); });
 document.querySelectorAll("[data-text]").forEach((b) => b.addEventListener("click", () => {
   text.value = b.dataset.text; updateCount(); text.focus();
 }));
@@ -540,7 +572,144 @@ $("clear").addEventListener("click", () => {
   text.value = ""; updateCount(); setStatus(""); player.style.display = "none";
   const metrics = $("metrics"); if (metrics) metrics.hidden = true;
   if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
+  if (streamAbort) { streamAbort.abort(); streamAbort = null; }
+  if (streamAudioContext) { streamAudioContext.close().catch(() => {}); streamAudioContext = null; }
+  $("downloadSrt").hidden = true;
+  $("downloadVtt").hidden = true;
 });
+let streamAbort = null;
+let streamAudioContext = null;
+
+function streamTime(ms, vtt = false) {
+  const total = Math.max(0, Math.round(ms));
+  const hours = Math.floor(total / 3600000);
+  const minutes = Math.floor((total % 3600000) / 60000);
+  const seconds = Math.floor((total % 60000) / 1000);
+  const millis = total % 1000;
+  return `${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}${vtt ? "." : ","}${String(millis).padStart(3,"0")}`;
+}
+function streamLines(units) {
+  const lines = []; let current = [];
+  for (const unit of units || []) {
+    current.push(unit);
+    const length = current.reduce((sum, item) => sum + String(item.text || "").length + 1, 0);
+    if (unit.sentence_end || length >= 80) { lines.push(current); current = []; }
+  }
+  if (current.length) lines.push(current);
+  return lines;
+}
+function streamSrt(units) {
+  return streamLines(units).map((line, index) => {
+    const text = line.map((unit) => `${unit.text || ""}${unit.punctuation || ""}`).join(" ");
+    return `${index + 1}\n${streamTime(line[0].start_ms)} --> ${streamTime(line[line.length - 1].end_ms)}\n${text}`;
+  }).join("\n\n") + (units && units.length ? "\n" : "");
+}
+function streamVtt(units) {
+  const lines = ["WEBVTT", ""];
+  for (const line of streamLines(units)) {
+    lines.push(`${streamTime(line[0].start_ms, true)} --> ${streamTime(line[line.length - 1].end_ms, true)}`);
+    for (const unit of line) lines.push(`<${streamTime(unit.start_ms, true)}>${unit.text || ""}${unit.punctuation || ""}`);
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+function streamWav(pcm, sampleRate) {
+  const buffer = new ArrayBuffer(44 + pcm.length);
+  const view = new DataView(buffer);
+  const text = (offset, value) => { for (let i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i)); };
+  text(0, "RIFF"); view.setUint32(4, 36 + pcm.length, true); text(8, "WAVEfmt ");
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true); text(36, "data");
+  view.setUint32(40, pcm.length, true); new Uint8Array(buffer, 44).set(pcm);
+  return new Blob([buffer], { type: "audio/wav" });
+}
+function streamNum(id, fallback) { const el = $(id); const value = el ? Number(el.value) : NaN; return Number.isFinite(value) ? value : fallback; }
+function streamVal(id, fallback) { const el = $(id); return el && el.value ? el.value : fallback; }
+function streamChecked(id, fallback = false) { const el = $(id); return el ? el.checked : fallback; }
+async function streamGenerate(value, started) {
+  if (streamAbort) streamAbort.abort();
+  if (streamAudioContext) { try { await streamAudioContext.close(); } catch (_) {} }
+  const controller = new AbortController();
+  streamAbort = controller;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  streamAudioContext = ctx;
+  try { await ctx.resume(); } catch (_) {}
+  let nextTime = ctx.currentTime + 0.08;
+  const pcmParts = []; const units = []; let samples = 0;
+  try {
+    const response = await fetch(STREAM_URL, {
+      method: "POST", headers: {"Content-Type": "application/json"}, signal: controller.signal,
+      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: $("peakNormalize").checked, dialect: $("dialect").value, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()}),
+    });
+    if (!response.ok) {
+      let detail = "Không stream được âm thanh.";
+      try { const j = await response.json(); if (j.detail) detail = j.detail; } catch (_) {}
+      throw new Error(detail);
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = "";
+    const handle = (event) => {
+      if (event.type === "units" && Array.isArray(event.units)) units.push(...event.units);
+      if (event.type === "error") throw new Error(event.message || "Server stream lỗi");
+      if (event.type === "audio" && event.pcm_base64) {
+        const binary = atob(event.pcm_base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        pcmParts.push(bytes);
+        const floats = new Float32Array(bytes.length / 2);
+        for (let i = 0; i < floats.length; i += 1) {
+          const low = bytes[i * 2], high = bytes[i * 2 + 1];
+          let value16 = (high << 8) | low;
+          if (value16 >= 0x8000) value16 -= 0x10000;
+          floats[i] = value16 / 32768;
+        }
+        if (floats.length) {
+          const buffer = ctx.createBuffer(1, floats.length, event.sample_rate || 24000);
+          buffer.copyToChannel(floats, 0);
+          const source = ctx.createBufferSource();
+          source.buffer = buffer; source.connect(ctx.destination);
+          const at = Math.max(nextTime, ctx.currentTime + 0.02);
+          source.start(at); nextTime = at + buffer.duration;
+          samples += floats.length;
+        }
+      }
+    };
+    for (;;) {
+      const { value: chunk, done } = await reader.read();
+      if (done) break;
+      pending += decoder.decode(chunk, { stream: true });
+      const lines = pending.split("\n"); pending = lines.pop() || "";
+      for (const line of lines) if (line.trim()) handle(JSON.parse(line));
+    }
+    pending += decoder.decode();
+    if (pending.trim()) handle(JSON.parse(pending));
+    if (!samples) throw new Error("Server không trả audio.");
+    const total = pcmParts.reduce((sum, part) => sum + part.length, 0);
+    const pcm = new Uint8Array(total); let cursor = 0;
+    for (const part of pcmParts) { pcm.set(part, cursor); cursor += part.length; }
+    if (currentUrl) URL.revokeObjectURL(currentUrl);
+    currentUrl = URL.createObjectURL(streamWav(pcm, 24000));
+    $("audio").src = currentUrl; $("download").href = currentUrl;
+    const srt = streamSrt(units); const vtt = streamVtt(units);
+    for (const [id, text, type] of [["downloadSrt", srt, "text/plain"], ["downloadVtt", vtt, "text/vtt"]]) {
+      const link = $(id); if (!link) continue;
+      if (text) { link.href = URL.createObjectURL(new Blob([text], {type})); link.hidden = false; } else link.hidden = true;
+    }
+    player.style.display = "block";
+    const audioSeconds = samples / 24000;
+    const processing = (performance.now() - started) / 1000;
+    const metrics = $("metrics");
+    if (metrics) { metrics.textContent = `Stream ${audioSeconds.toFixed(1)}s · xử lý ${processing.toFixed(2)}s`; metrics.title = "Audio đã phát ngay khi từng chunk về; WAV tải xuống được ghép từ PCM."; metrics.hidden = false; }
+    setStatus("Xong stream. Bấm play để nghe lại.");
+    const waitMs = Math.max(0, (nextTime - ctx.currentTime) * 1000) + 500;
+    setTimeout(() => { if (streamAudioContext === ctx) { ctx.close().catch(() => {}); streamAudioContext = null; } }, waitMs);
+  } finally {
+    if (streamAbort === controller) streamAbort = null;
+  }
+}
+
 async function generate() {
   const value = text.value.trim();
   if (!value) { setStatus("Nhập câu cần đọc trước.", true); return; }
@@ -553,9 +722,13 @@ async function generate() {
   const pendingMetrics = $("metrics"); if (pendingMetrics) pendingMetrics.hidden = true;
   if (shareBox.checked) void syncSharedRules();
   try {
+    if ($("streamMode").checked) {
+      await streamGenerate(value, started);
+      return;
+    }
     const response = await fetch(API_URL, {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text: value, speed: Number($("speed").value), fixed_pauses: $("fixed").checked, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()})
+      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: $("peakNormalize").checked, dialect: $("dialect").value, karaoke: true, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()})
     });
     if (!response.ok) {
       let detail = "Không tạo được âm thanh.";
@@ -565,11 +738,26 @@ async function generate() {
     const processing = parseFloat(response.headers.get("X-Processing-Seconds") || "");
     const audioSeconds = parseFloat(response.headers.get("X-Audio-Seconds") || "");
     const rtf = parseFloat(response.headers.get("X-RTF") || "");
-    const blob = await response.blob();
+    const payload = await response.json();
+    if (!payload.audio_base64) throw new Error("Server không trả audio_base64.");
+    const binary = atob(payload.audio_base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], {type: "audio/wav"});
     if (currentUrl) URL.revokeObjectURL(currentUrl);
     currentUrl = URL.createObjectURL(blob);
     $("audio").src = currentUrl;
     $("download").href = currentUrl;
+    for (const [id, text, type] of [["downloadSrt", payload.srt, "text/plain"], ["downloadVtt", payload.vtt || payload.vtt_karaoke, "text/vtt"]]) {
+      const link = $(id);
+      if (!link) continue;
+      if (text) {
+        link.href = URL.createObjectURL(new Blob([text], {type}));
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+      }
+    }
     player.style.display = "block";
     const metrics = $("metrics");
     if (metrics) {

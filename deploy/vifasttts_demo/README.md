@@ -3,6 +3,9 @@
 ONNX-only demo (không cần torch):
 - `app.py` — FastAPI, ONNX acoustic + Vocos, alpha 1.5, model tự nghỉ mặc định;
   giới hạn mặc định 3000 ký tự (`MAX_CHARS`), chunk nội bộ 300 ký tự.
+  Full và stream dùng chung `vifasttts.runtime.tts_engine.OnnxTtsEngine`.
+- `GET /api/config` trả defaults/capabilities/endpoints; `POST /api/tts/stream`
+  trả NDJSON PCM16 (UI checkbox **Stream** phát bằng WebAudio).
 - `static/index.html` — trang nhập câu, play/tải WAV, 3 mẫu nghe sẵn.
 - `static/samples/` — 3 WAV mẫu (không commit; tải bằng `scripts/fetch_demo_samples.sh`).
 - `static/brand/` — icon, lockup, favicon, OG image, manifest (nguồn: `resources/brand/`).

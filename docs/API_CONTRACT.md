@@ -80,6 +80,8 @@ Contract version hiện tại: **1** (`vifasttts_api_contract_json`); schema đ�
 - `units` có `TimedUnit`; dùng để dựng SRT/VTT sau stream.
 - Client tự chọn có ghi WAV hay không; server không quyết định.
 - Huỷ stream: đóng kết nối/không đọc tiếp; server dừng ở chunk kế.
+- Web Python demo cũng implement endpoint này bằng `OnnxTtsEngine`; xem
+  `docs/PYTHON_ENGINE.md`.
 
 ## 5. Model endpoints
 
@@ -120,3 +122,5 @@ Nhờ vậy Android/iOS/java/Swift chỉ còn phần HTTP + UI; luật catalog n
 3. Client cũ gửi thiếu field → server dùng default canonical.
 4. `resolve_oov` default **true** cho UI mới; server vẫn chấp nhận false.
 5. `max_chars=0` chỉ là legacy; normalize thành 300.
+6. `/api/config` trả `defaults`, `capabilities`, `endpoints`; UI mới đọc các field
+   này thay vì hard-code. Server Rust và web Python cùng shape tối thiểu.
