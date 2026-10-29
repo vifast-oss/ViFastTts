@@ -30,6 +30,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.99.1
         with:
           components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
       - name: Linux desktop deps
         if: runner.os == 'Linux'
         run: |
@@ -73,16 +77,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
       - uses: ./.github/actions/fetch-model
-      - name: wasm tooling
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - name: wasm target
+        run: rustup target add wasm32-unknown-unknown
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen-cli@0.2.129
       - name: npm ci
         working-directory: web
         run: npm ci
@@ -127,6 +136,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
+      - uses: actions/cache@v4
+        if: runner.os != 'macOS'
+        with:
+          path: desktop/dist/cache
+          key: ort-1.31.1-${{ runner.os }}
       - name: Linux desktop deps
         if: runner.os == 'Linux'
         run: |
@@ -187,6 +205,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
       - name: Linux desktop deps
         if: runner.os == 'Linux'
         run: |
@@ -228,6 +250,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
       - uses: ./.github/actions/fetch-model
       - name: pack bundle
         run: |
@@ -254,9 +280,32 @@ jobs:
     name: android apk
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_SDK_ROOT }}/ndk/28.2.13676358
+          key: ndk-28.2.13676358
+      - uses: actions/cache@v4
+        with:
+          path: artifacts/onnx/onnxruntime-android-1.31.1.aar
+          key: ort-android-aar-1.31.1
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -274,11 +323,12 @@ jobs:
           echo "$SDK/platform-tools" >> "$GITHUB_PATH"
           export PATH="$SDK/cmdline-tools/latest/bin:$SDK/platform-tools:$PATH"
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
-            "ndk;28.2.13676358"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          if [ ! -d "$SDK/ndk/28.2.13676358" ]; then
+            sdkmanager "ndk;28.2.13676358"
+          fi
           echo "ANDROID_NDK_HOME=$SDK/ndk/28.2.13676358" >> "$GITHUB_ENV"
           rustup target add x86_64-linux-android aarch64-linux-android
-          cargo install cargo-ndk --locked
       - name: build apk
         run: |
           chmod +x mobile/android/build.sh
@@ -300,15 +350,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          cache-on-failure: true
       - uses: ./.github/actions/fetch-model
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/vifasttts-ort-ios.zip
+          key: ort-ios-1.30.0
       - name: Xcode tooling
         run: |
           xcodebuild -version
           brew install xcodegen
           rustup target add aarch64-apple-ios-sim aarch64-apple-ios
-          curl -L --fail -o /tmp/ort-ios.zip \
-            https://download.onnxruntime.ai/pod-archive-onnxruntime-c-1.30.0.zip
-          unzip -q /tmp/ort-ios.zip -d /tmp/ort-ios
+          ORT_ZIP="$HOME/Library/Caches/vifasttts-ort-ios.zip"
+          if [ ! -f "$ORT_ZIP" ]; then
+            curl -L --fail -o "$ORT_ZIP" \
+              https://download.onnxruntime.ai/pod-archive-onnxruntime-c-1.30.0.zip
+          fi
+          unzip -q "$ORT_ZIP" -d /tmp/ort-ios
       - name: build simulator app
         run: |
           chmod +x mobile/ios/build-ios.sh

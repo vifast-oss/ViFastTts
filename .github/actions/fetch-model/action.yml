@@ -4,6 +4,10 @@ description: Download the pinned N0 FP32 ONNX model release into artifacts/onnx/
 runs:
   using: composite
   steps:
+    - uses: actions/cache@v4
+      with:
+        path: artifacts/onnx/n0_q
+        key: n0-onnx-fp32-v1
     - shell: bash
       run: |
         set -euo pipefail
