@@ -1311,14 +1311,30 @@ impl DesktopApp {
                     }
                 }
             });
-        if ui
-            .checkbox(&mut self.settings.app.resolve_oov, "Resolve OOV")
-            .on_hover_text(
-                "OOV là token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). \
-                 Bật để tra từ điển/đánh vần tên chữ cái; tắt để giữ fallback.",
+        let mut oov_changed = false;
+        ui.horizontal(|ui| {
+            if ui
+                .checkbox(&mut self.settings.app.resolve_oov, "Resolve OOV")
+                .on_hover_text(
+                    "OOV là token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). \
+                     Bật để tra từ điển/đánh vần tên chữ cái; tắt để giữ fallback.",
+                )
+                .changed()
+            {
+                oov_changed = true;
+            }
+            ui.label(
+                egui::RichText::new("ⓘ")
+                    .color(egui::Color32::from_rgb(0x8A, 0x6A, 0x4F))
+                    .size(14.0),
             )
-            .changed()
-        {
+            .on_hover_text(
+                "OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). \
+                 Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); \
+                 tắt để giữ fallback, không tự đoán.",
+            );
+        });
+        if oov_changed {
             self.settings_dirty = true;
         }
         ui.small("OOV: bật để tự xử lý từ lạ; nếu đọc sai, thêm quy tắc vào Từ điển bên dưới.");

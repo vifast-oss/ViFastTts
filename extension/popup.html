@@ -203,6 +203,9 @@
         font-weight: 500;
       }
       .hint { color: var(--muted); font-size: 10px; margin: 5px 0 0; }
+      .infoIcon { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px;
+                  margin-left:4px; border:1px solid var(--line); border-radius:50%;
+                  color:var(--muted); font:700 11px/1 Arial; cursor:help; vertical-align:middle; }
       code { background: var(--soft); padding: 1px 4px; border-radius: 4px; }
       #status {
         min-height: 2.3em;
@@ -298,6 +301,7 @@
           <span id="alphaValue">1.50</span>
           <label class="check"><input id="peakNormalize" type="checkbox" /> peak</label>
           <label class="check"><input id="resolveOov" type="checkbox" checked /> OOV</label>
+          <span class="infoIcon" role="img" aria-label="Giải thích Resolve OOV" title="OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.">i</span>
         </div>
         <p id="peakStreamNote" class="hint hidden">Stream không dùng peak normalize vì cần biết đỉnh toàn file.</p>
         <div class="speedRow">

@@ -1830,7 +1830,21 @@ public class MainActivity extends Activity {
         oov.setChecked(resolveOov);
         VfTheme.text(oov, font, 14, VfTheme.INK, false);
         oov.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
-        form.addView(oov);
+        LinearLayout oovRow = new LinearLayout(this);
+        oovRow.setOrientation(LinearLayout.HORIZONTAL);
+        oovRow.setGravity(Gravity.CENTER_VERTICAL);
+        oovRow.addView(oov, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView oovInfo = new TextView(this);
+        oovInfo.setText("ⓘ");
+        oovInfo.setContentDescription("Giải thích Resolve OOV");
+        VfTheme.text(oovInfo, font, 18, VfTheme.ACCENT, true);
+        oovInfo.setPadding(VfTheme.dp(this, 8), VfTheme.dp(this, 4),
+                VfTheme.dp(this, 8), VfTheme.dp(this, 4));
+        oovInfo.setOnClickListener(view -> showOovHelp());
+        oovRow.addView(oovInfo, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        form.addView(oovRow);
         TextView oovNote = new TextView(this);
         oovNote.setText("OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.");
         VfTheme.text(oovNote, font, 12, VfTheme.MUTED, false);
@@ -1991,6 +2005,17 @@ public class MainActivity extends Activity {
                 });
         });
         dialog.show();
+    }
+
+    private void showOovHelp() {
+        new AlertDialog.Builder(this)
+                .setTitle("Resolve OOV là gì?")
+                .setMessage("OOV = out-of-vocabulary: token lạ chưa có trong từ điển hoặc không parse được thành âm tiết Việt, ví dụ tên riêng, viết tắt, từ tiếng Anh, mã sản phẩm.\n\n"
+                        + "Bật: thử tra từ điển viết tắt/tên sản phẩm/English, rồi đánh vần tên chữ cái (VNG → “vê en giê”); nếu vẫn không được thì dùng fallback an toàn.\n\n"
+                        + "Tắt: giữ fallback, không tự đoán.\n\n"
+                        + "Nếu đọc vẫn sai, thêm quy tắc vào Từ điển hoặc Cách đọc token-level.")
+                .setPositiveButton("Đóng", null)
+                .show();
     }
 
     private void showSettingsHelp() {

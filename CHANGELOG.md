@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-30 — v0.3.4
+
+- Thêm **icon ⓘ giải thích Resolve OOV** ở mọi UI: web Python, Space, web Vite,
+  extension, Android (mở dialog), iOS (info.circle + alert), desktop (hover), TUI (`ⓘ`).
+- Giữ nguyên help panel "Giải thích các cài đặt" của v0.3.3.
+- Version: **0.3.4**; Android `versionCode 12`, iOS build 8.
+
 ## 2026-10-30 — v0.3.3
 
 - **Giải thích cài đặt trong mọi UI**: web Python, HF Space, web Vite, extension,

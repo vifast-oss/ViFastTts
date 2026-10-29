@@ -1023,7 +1023,7 @@ fn draw_settings(frame: &mut Frame, app: &App) {
             if app.peak_normalize { "bật" } else { "tắt" }
         )),
         Line::from(format!(
-            "Resolve OOV     {}      o",
+            "Resolve OOV ⓘ   {}      o",
             if app.resolve_oov { "bật" } else { "tắt" }
         )),
         Line::from(format!("Phương ngữ      {}      d", app.dialect)),

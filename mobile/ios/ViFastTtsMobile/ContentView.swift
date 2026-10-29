@@ -490,6 +490,7 @@ private struct SettingsView: View {
     @Binding var resolveOov: Bool
     @Binding var dictionary: String
     @Binding var customReading: String
+    @State private var showOovHelp = false
 
     var body: some View {
         NavigationStack {
@@ -537,8 +538,24 @@ private struct SettingsView: View {
                     Text("Model N0 hiện là giọng Bắc; đổi mục này chủ yếu đổi một số cách đọc, muốn đổi giọng nền cần model vùng đó.")
                         .font(VFTheme.caption)
                         .foregroundStyle(VFTheme.muted)
-                    Toggle("Resolve OOV", isOn: $resolveOov)
-                        .tint(VFTheme.accent)
+                    HStack(alignment: .firstTextBaseline) {
+                        Toggle("Resolve OOV", isOn: $resolveOov)
+                            .tint(VFTheme.accent)
+                        Spacer()
+                        Button {
+                            showOovHelp = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundStyle(VFTheme.accent)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Giải thích Resolve OOV")
+                    }
+                    .alert("Resolve OOV là gì?", isPresented: $showOovHelp) {
+                        Button("Đóng", role: .cancel) {}
+                    } message: {
+                        Text("OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán. Nếu đọc vẫn sai, thêm quy tắc vào Từ điển.")
+                    }
                     Text("OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.")
                         .font(VFTheme.caption)
                         .foregroundStyle(VFTheme.muted)
