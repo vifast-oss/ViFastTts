@@ -66,13 +66,16 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends Activity {
@@ -137,6 +140,7 @@ public class MainActivity extends Activity {
     private static final String KEY_RESOLVE_OOV = "resolve_oov";
     private static final String KEY_DICTIONARY = "dictionary";
     private static final String KEY_STREAM = "stream";
+    private static final String KEY_HISTORY = "history";
     private static final int REQUEST_BUNDLE = 2001;
     private static final int REQUEST_ACOUSTIC = 2002;
     private static final int REQUEST_VOCODER = 2003;
@@ -163,12 +167,16 @@ public class MainActivity extends Activity {
     private Button modelButton;
     private Button settingsButton;
     private Button saveButton;
+    private Button shareButton;
+    private Button historyButton;
     private ProgressBar progress;
     private MediaPlayer player;
     private AudioTrack audioTrack;
     private Thread audioThread;
     private volatile boolean audioStopped = false;
     private HttpURLConnection streamConnection;
+    private org.json.JSONArray history = new org.json.JSONArray();
+    private Uri lastSavedWavUri;
     private int audioSampleRate = 24000;
     private int audioChannels = 1;
     private File lastAudioFile;
@@ -280,6 +288,129 @@ public class MainActivity extends Activity {
             ffi.vifasttts_engine_free(engine);
             engine = null;
         }
+    }
+
+    private void loadHistory() {
+        try {
+            history = new org.json.JSONArray(prefs.getString(KEY_HISTORY, "[]"));
+        } catch (Throwable ignored) {
+            history = new org.json.JSONArray();
+        }
+    }
+
+    private void recordRun(String mode, String text, long elapsedMs, double audioSeconds) {
+        try {
+            JSONObject row = new JSONObject();
+            row.put("mode", mode);
+            row.put("chars", text.length());
+            row.put("elapsed_ms", elapsedMs);
+            row.put("audio_seconds", audioSeconds);
+            row.put("at", System.currentTimeMillis());
+            row.put("text", text.length() > 500 ? text.substring(0, 500) : text);
+            history.put(row);
+            while (history.length() > 20) history.remove(0);
+            prefs.edit().putString(KEY_HISTORY, history.toString()).apply();
+        } catch (Throwable ignored) {
+            // Lịch sử chỉ là tối ưu UX.
+        }
+    }
+
+    private long estimateMs(String mode, int chars) {
+        if (chars <= 0) return 0;
+        try {
+            java.util.ArrayList<Double> samples = new java.util.ArrayList<>();
+            for (int index = Math.max(0, history.length() - 12); index < history.length(); index += 1) {
+                JSONObject row = history.optJSONObject(index);
+                if (row == null) continue;
+                String rowMode = row.optString("mode", "");
+                if (!rowMode.equals(mode) && !rowMode.startsWith(mode + "-")) continue;
+                double rowChars = row.optDouble("chars", 0);
+                double elapsed = row.optDouble("elapsed_ms", 0);
+                if (rowChars > 0 && elapsed > 0) samples.add(elapsed / rowChars);
+            }
+            if (samples.isEmpty()) return 0;
+            java.util.Collections.sort(samples);
+            double median = samples.get(samples.size() / 2);
+            return Math.max(1, Math.round(median * chars));
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private String estimateSuffix(String mode, String text) {
+        long estimate = estimateMs(mode, text.length());
+        return estimate > 0
+                ? String.format(Locale.US, " · ước tính ~%.1fs", estimate / 1000.0)
+                : "";
+    }
+
+    private void showHistory() {
+        loadHistory();
+        if (history.length() == 0) {
+            setStatus("Chưa có lịch sử đọc.");
+            return;
+        }
+        java.util.ArrayList<String> labels = new java.util.ArrayList<>();
+        java.util.ArrayList<JSONObject> rows = new java.util.ArrayList<>();
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        for (int index = history.length() - 1; index >= 0; index -= 1) {
+            JSONObject row = history.optJSONObject(index);
+            if (row == null) continue;
+            rows.add(row);
+            Date date = new Date(row.optLong("at", System.currentTimeMillis()));
+            labels.add(String.format(Locale.getDefault(), "%s · %s · %d ký tự · %.1fs",
+                    format.format(date), row.optString("mode", "local"),
+                    row.optInt("chars", 0), row.optDouble("audio_seconds", 0)));
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Lịch sử đọc")
+                .setItems(labels.toArray(new String[0]), (dialog, which) -> {
+                    String value = rows.get(which).optString("text", "");
+                    if (!value.isEmpty()) {
+                        text.setText(value);
+                        text.setSelection(text.length());
+                    }
+                })
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
+    private void checkServer() {
+        final String base = baseUrl();
+        if (base.isEmpty()) {
+            setStatus("Nhập Server URL trước.");
+            return;
+        }
+        setStatus("Đang kiểm tra server…");
+        new Thread(() -> {
+            try {
+                JSONObject health = new JSONObject(new String(
+                        getBytes(base + "/healthz"), StandardCharsets.UTF_8));
+                setStatus(String.format(Locale.US, "Server OK · %d Hz · %s · %s",
+                        health.optInt("sample_rate", 24000),
+                        health.optString("arch", "?"),
+                        health.optString("vocab_version", "?")));
+            } catch (Throwable error) {
+                setStatus("Server lỗi: " + error.getMessage());
+            }
+        }, "vifasttts-health").start();
+    }
+
+    private void shareWav() {
+        if (lastAudioFile == null || !lastAudioFile.isFile()) {
+            setStatus("Chưa có WAV để chia sẻ.");
+            return;
+        }
+        if (lastSavedWavUri == null) saveWav();
+        if (lastSavedWavUri == null) {
+            setStatus("Đã lưu; mở Downloads để chia sẻ trên Android cũ.");
+            return;
+        }
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("audio/wav");
+        send.putExtra(Intent.EXTRA_STREAM, lastSavedWavUri);
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(send, "Chia sẻ WAV"));
     }
 
     private void updateSettingsSummary() {
@@ -445,6 +576,41 @@ public class MainActivity extends Activity {
         }
     }
 
+    private byte[] getBytesProgress(String url, String label) throws Exception {
+        HttpURLConnection connection = open(url);
+        try {
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) {
+                String error = new String(readError(connection), StandardCharsets.UTF_8);
+                throw new IllegalStateException("HTTP " + code + ": " + error);
+            }
+            int total = connection.getContentLength();
+            try (InputStream input = connection.getInputStream();
+                 ByteArrayOutputStream output = new ByteArrayOutputStream(
+                         total > 0 ? total : 8192)) {
+                byte[] buffer = new byte[1024 * 256];
+                int read;
+                int written = 0;
+                int lastPercent = -1;
+                while ((read = input.read(buffer)) > 0) {
+                    output.write(buffer, 0, read);
+                    written += read;
+                    if (total > 0) {
+                        int percent = written * 100 / total;
+                        if (percent != lastPercent) {
+                            lastPercent = percent;
+                            setStatus(String.format(Locale.US, "%s · %d%% (%.1f MB)",
+                                    label, percent, written / 1e6));
+                        }
+                    }
+                }
+                return output.toByteArray();
+            }
+        } finally {
+            connection.disconnect();
+        }
+    }
+
     private static String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
@@ -469,7 +635,8 @@ public class MainActivity extends Activity {
             return;
         }
         setBusy(true);
-        setStatus("Đang tổng hợp local…");
+        setStatus("Đang tổng hợp local…" + estimateSuffix("local", input));
+        final long runStarted = System.currentTimeMillis();
         new Thread(() -> {
             try {
                 ensureEngine();
@@ -515,6 +682,8 @@ public class MainActivity extends Activity {
                 lastSrt = karaokeText(karaoke, true);
                 lastVtt = karaokeText(karaoke, false);
                 String suffix = lastSrt.isEmpty() ? "" : " · có phụ đề";
+                recordRun("local", input, System.currentTimeMillis() - runStarted,
+                        wav.length / 2.0 / 24000.0);
                 play(out, "Xong: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
             } catch (Throwable error) {
                 setStatus("Lỗi: " + error.getMessage());
@@ -526,7 +695,8 @@ public class MainActivity extends Activity {
 
     private void synthesizeLocalStream(String input) {
         setBusy(true);
-        setStatus("Đang stream local…");
+        setStatus("Đang stream local…" + estimateSuffix("local-stream", input));
+        final long runStarted = System.currentTimeMillis();
         new Thread(() -> {
             AudioTrack track = null;
             AudioTrack streamTrack = null;
@@ -567,6 +737,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> {
                     stopButton.setEnabled(true);
                     if (saveButton != null) saveButton.setEnabled(false);
+                    if (shareButton != null) shareButton.setEnabled(false);
                     stopKaraoke();
                 });
                 final long[] framesWritten = {0};
@@ -588,6 +759,8 @@ public class MainActivity extends Activity {
                         dictionaryText, callback, null);
                 if (code < 0) throw new IllegalStateException(lastError());
                 if (code == 0) waitForPlayback(streamTrack, framesWritten[0], 8000);
+                recordRun("local-stream", input, System.currentTimeMillis() - runStarted,
+                        framesWritten[0] / 24000.0);
                 setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local");
             } catch (Throwable error) {
                 setStatus("Lỗi stream: " + error.getMessage());
@@ -612,7 +785,8 @@ public class MainActivity extends Activity {
     private void synthesizeRemoteStream(String input) {
         final String base = baseUrl();
         setBusy(true);
-        setStatus("Đang stream remote…");
+        setStatus("Đang stream remote…" + estimateSuffix("remote-stream", input));
+        final long runStarted = System.currentTimeMillis();
         new Thread(() -> {
             AudioTrack track = null;
             HttpURLConnection connection = null;
@@ -674,6 +848,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> {
                     stopButton.setEnabled(true);
                     if (saveButton != null) saveButton.setEnabled(false);
+                    if (shareButton != null) shareButton.setEnabled(false);
                     stopKaraoke();
                 });
                 long framesWritten = 0;
@@ -703,6 +878,8 @@ public class MainActivity extends Activity {
                     }
                 }
                 if (!audioStopped) waitForPlayback(streamTrack, framesWritten, 8000);
+                recordRun("remote-stream", input, System.currentTimeMillis() - runStarted,
+                        framesWritten / 24000.0);
                 setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote");
             } catch (Throwable error) {
                 setStatus("Lỗi stream remote: " + error.getMessage());
@@ -729,7 +906,8 @@ public class MainActivity extends Activity {
     private void synthesizeRemote(String input) {
         final String base = baseUrl();
         setBusy(true);
-        setStatus("Đang gọi server…");
+        setStatus("Đang gọi server…" + estimateSuffix("remote", input));
+        final long runStarted = System.currentTimeMillis();
         new Thread(() -> {
             HttpURLConnection connection = null;
             try {
@@ -778,6 +956,8 @@ public class MainActivity extends Activity {
                 File out = new File(getCacheDir(), "vifasttts-remote.wav");
                 Files.write(out.toPath(), wav);
                 String suffix = lastSrt.isEmpty() ? "" : " · có phụ đề";
+                recordRun("remote", input, System.currentTimeMillis() - runStarted,
+                        wav.length / 2.0 / 24000.0);
                 play(out, "Xong remote: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
             } catch (Throwable error) {
                 setStatus("Lỗi remote: " + error.getMessage());
@@ -883,6 +1063,7 @@ public class MainActivity extends Activity {
             audioThread.start();
             lastAudioFile = out;
             if (saveButton != null) saveButton.setEnabled(true);
+            if (shareButton != null) shareButton.setEnabled(lastAudioFile != null);
             stopButton.setEnabled(true);
             startKaraoke();
         } catch (Throwable error) {
@@ -995,6 +1176,7 @@ public class MainActivity extends Activity {
             player.start();
             lastAudioFile = out;
             if (saveButton != null) saveButton.setEnabled(true);
+            if (shareButton != null) shareButton.setEnabled(lastAudioFile != null);
             stopButton.setEnabled(true);
             startKaraoke();
         } catch (Throwable error) {
@@ -1306,6 +1488,7 @@ public class MainActivity extends Activity {
                 "Chọn file .vfa/.vfts",
                 "Chọn acoustic.onnx",
                 "Chọn vocoder.onnx",
+                "Xoá model đang dùng",
         };
         new AlertDialog.Builder(this)
                 .setTitle("Model · " + active)
@@ -1317,6 +1500,7 @@ public class MainActivity extends Activity {
                         case 3 -> chooseModelFile(REQUEST_BUNDLE);
                         case 4 -> chooseModelFile(REQUEST_ACOUSTIC);
                         case 5 -> chooseModelFile(REQUEST_VOCODER);
+                        case 6 -> deleteActiveModel();
                         default -> { }
                     }
                 })
@@ -1375,6 +1559,20 @@ public class MainActivity extends Activity {
         resetEngine();
         updateModelLabel();
         setStatus("Đang dùng " + file.getName() + "; lần đọc tới sẽ nạp model này.");
+    }
+
+    private void deleteActiveModel() {
+        if (activeModelPath.isEmpty()) {
+            setStatus("Đang dùng model bundled; không có file để xoá.");
+            return;
+        }
+        File file = new File(activeModelPath);
+        if (file.isFile() && file.delete()) {
+            setStatus("Đã xoá " + file.getName() + "; chuyển về model bundled.");
+        } else {
+            setStatus("Không xoá được " + file.getName());
+        }
+        selectBundledModel();
     }
 
     private void chooseModelFile(int requestCode) {
@@ -1536,7 +1734,7 @@ public class MainActivity extends Activity {
         status.setText("Đang tải " + path + "…");
         new Thread(() -> {
             try {
-                byte[] bytes = getBytes(modelDownloadUrl(repo, path));
+                byte[] bytes = getBytesProgress(modelDownloadUrl(repo, path), "Đang tải " + path);
                 String name = path.substring(path.lastIndexOf('/') + 1).replaceAll("[^A-Za-z0-9._-]", "_");
                 if (!name.endsWith(".vfa") && !name.endsWith(".vfts")) {
                     throw new IllegalStateException("Nguồn trả file không phải .vfa/.vfts");
@@ -1592,10 +1790,12 @@ public class MainActivity extends Activity {
             return;
         }
         String base = "vifasttts-" + System.currentTimeMillis();
+        lastSavedWavUri = null;
         try {
             String location = saveBytes(base + ".wav",
                     Files.readAllBytes(lastAudioFile.toPath()), "audio/wav");
             int extra = 0;
+            if (shareButton != null) shareButton.setEnabled(lastSavedWavUri != null);
             if (!lastSrt.isEmpty()) {
                 saveBytes(base + ".srt", lastSrt.getBytes(StandardCharsets.UTF_8), "application/x-subrip");
                 extra += 1;
@@ -1628,6 +1828,7 @@ public class MainActivity extends Activity {
                 if (out == null) throw new IllegalStateException("Không mở được Downloads");
                 out.write(bytes);
             }
+            if ("audio/wav".equals(mime)) lastSavedWavUri = uri;
             return "Downloads/" + name;
         }
         File dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
@@ -1660,6 +1861,7 @@ public class MainActivity extends Activity {
         resolveOov = prefs.getBoolean(KEY_RESOLVE_OOV, true);
         dictionaryText = prefs.getString(KEY_DICTIONARY, "");
         streamMode = prefs.getBoolean(KEY_STREAM, false);
+        loadHistory();
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);
@@ -1794,6 +1996,14 @@ public class MainActivity extends Activity {
         VfTheme.input(token, font);
         remoteFields.addView(token, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        Button testServer = new Button(this);
+        testServer.setText("Kiểm tra server");
+        VfTheme.secondaryButton(testServer, font);
+        testServer.setOnClickListener(view -> checkServer());
+        LinearLayout.LayoutParams testParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        testParams.topMargin = VfTheme.dp(this, 8);
+        remoteFields.addView(testServer, testParams);
         LinearLayout.LayoutParams remoteParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         remoteParams.topMargin = VfTheme.dp(this, 10);
@@ -1981,6 +2191,28 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         saveParams.topMargin = VfTheme.dp(this, 10);
         playbackCard.addView(saveButton, saveParams);
+
+        LinearLayout exportRow = new LinearLayout(this);
+        exportRow.setOrientation(LinearLayout.HORIZONTAL);
+        shareButton = new Button(this);
+        shareButton.setText("Chia sẻ WAV");
+        VfTheme.secondaryButton(shareButton, font);
+        shareButton.setEnabled(false);
+        shareButton.setOnClickListener(view -> shareWav());
+        exportRow.addView(shareButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        historyButton = new Button(this);
+        historyButton.setText("Lịch sử");
+        VfTheme.secondaryButton(historyButton, font);
+        historyButton.setOnClickListener(view -> showHistory());
+        LinearLayout.LayoutParams historyParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        historyParams.leftMargin = VfTheme.dp(this, 8);
+        exportRow.addView(historyButton, historyParams);
+        LinearLayout.LayoutParams exportParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        exportParams.topMargin = VfTheme.dp(this, 8);
+        playbackCard.addView(exportRow, exportParams);
         LinearLayout.LayoutParams playbackParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         playbackParams.topMargin = VfTheme.dp(this, 12);
