@@ -25,7 +25,7 @@ không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 | Web Vite | Có | HF trực tiếp hoặc server, file `.vfa/.vfts` | Đầy đủ | Có, WAV/SRT/VTT | Chạy được trong trình duyệt |
 | Chrome extension | Có | HF trực tiếp hoặc server, bundled | Đầy đủ | Có, WAV/SRT/VTT | Thêm stream/history/ETA |
 | Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + custom reading + auto-play + output folder + stream local/remote + history/ETA + share + health | Karaoke; WAV/SRT/VTT/JSON; stream có WAV + phụ đề (tùy chọn lưu) | Câu mặc định có chữ “Android”; sample/ETA/từ điển dùng contract Rust |
-| iOS | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS”; chưa có history/ETA |
+| iOS | Có | HF trực tiếp/server, bundle | Đầy đủ + history/ETA | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS”; sample/ETA qua contract Rust |
 
 ## Android — kiểm tra parity (29/10)
 
@@ -45,7 +45,7 @@ WAV/SRT/VTT/JSON; stream có thể lưu WAV + phụ đề nếu bật; audio foc
 4. Chọn thư mục xuất phụ thuộc Storage Access Framework; Android 11 không cho
    chọn thẳng root `Download`, cần chọn/tạo thư mục con.
 5. Test thiết bị thật: emulator vẫn log lỗi HAL audio; chưa kết luận chất lượng.
-6. iOS chưa có history/ETA và tiến trình tải model.
+6. iOS đã có history/ETA; chưa có tiến trình tải model/stream.
 
 Phần dùng chung đã tách (settings/sample/ETA/từ điển) nằm ở
 `docs/UI_REUSE_AUDIT.md`.
