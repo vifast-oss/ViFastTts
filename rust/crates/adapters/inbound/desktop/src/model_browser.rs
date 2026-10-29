@@ -8,7 +8,8 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use eframe::egui;
-use vifasttts_huggingface::{HfFile, HfModel, bundle_files, download, search};
+use vifasttts_huggingface::{HfFile, HfModel};
+use vifasttts_model_manager::ModelManager;
 
 enum Event {
     Models(Vec<HfModel>),
@@ -27,11 +28,13 @@ pub struct ModelBrowser {
     tx: Sender<Event>,
     rx: Receiver<Event>,
     download_dir: PathBuf,
+    manager: ModelManager,
 }
 
 impl ModelBrowser {
     pub fn new(download_dir: PathBuf) -> Self {
         let (tx, rx) = mpsc::channel();
+        let manager = ModelManager::new(download_dir.clone());
         Self {
             query: "vifasttts".to_string(),
             results: Vec::new(),
@@ -42,6 +45,7 @@ impl ModelBrowser {
             tx,
             rx,
             download_dir,
+            manager,
         }
     }
 
@@ -59,7 +63,8 @@ impl ModelBrowser {
         self.selected = None;
         self.status = format!("Đang tìm `{query}`…");
         let tx = self.tx.clone();
-        thread::spawn(move || match search(&query, 20) {
+        let manager = self.manager.clone();
+        thread::spawn(move || match manager.search(&query, 20) {
             Ok(models) => {
                 let _ = tx.send(Event::Models(models));
             }
@@ -78,7 +83,8 @@ impl ModelBrowser {
         self.busy = true;
         self.status = format!("Đang xem file của {repo}…");
         let tx = self.tx.clone();
-        thread::spawn(move || match bundle_files(&repo) {
+        let manager = self.manager.clone();
+        thread::spawn(move || match manager.files(&repo) {
             Ok(files) => {
                 let _ = tx.send(Event::Files(repo, files));
             }
@@ -98,10 +104,10 @@ impl ModelBrowser {
         self.busy = true;
         self.status = format!("Đang tải {path}…");
         let tx = self.tx.clone();
-        let directory = self.download_dir.clone();
-        thread::spawn(move || match download(&repo, &path, &directory) {
-            Ok(path) => {
-                let _ = tx.send(Event::Downloaded(path));
+        let manager = self.manager.clone();
+        thread::spawn(move || match manager.install(&repo, &path) {
+            Ok(model) => {
+                let _ = tx.send(Event::Downloaded(model.path));
             }
             Err(error) => {
                 let _ = tx.send(Event::Error(error));

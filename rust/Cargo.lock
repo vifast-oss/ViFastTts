@@ -5090,6 +5090,7 @@ dependencies = [
  "vifasttts-engine",
  "vifasttts-http-client",
  "vifasttts-huggingface",
+ "vifasttts-model-manager",
  "vifasttts-native",
  "vifasttts-text",
 ]
