@@ -742,6 +742,7 @@ public class MainActivity extends Activity {
                     stopKaraoke();
                 });
                 final long[] framesWritten = {0};
+                final ByteArrayOutputStream pcmBuffer = new ByteArrayOutputStream();
                 StreamCallback callback = (samples, length, sampleRateValue, userData) -> {
                     if (audioStopped) return 1;
                     int count = (int) length.longValue();
@@ -751,6 +752,12 @@ public class MainActivity extends Activity {
                         pcm[index] = (short) Math.max(-32768, Math.min(32767,
                                 Math.round(value * 32767f)));
                     }
+                    byte[] pcmBytes = new byte[count * 2];
+                    for (int index = 0; index < count; index += 1) {
+                        pcmBytes[index * 2] = (byte) (pcm[index] & 0xff);
+                        pcmBytes[index * 2 + 1] = (byte) ((pcm[index] >> 8) & 0xff);
+                    }
+                    pcmBuffer.write(pcmBytes, 0, pcmBytes.length);
                     short[] upsampled = resamplePcm(pcm, 24000, 48000, 1);
                     int written = callbackTrack.write(upsampled, 0, upsampled.length,
                             AudioTrack.WRITE_BLOCKING);
@@ -762,9 +769,22 @@ public class MainActivity extends Activity {
                         dictionaryText, callback, null);
                 if (code < 0) throw new IllegalStateException(lastError());
                 if (code == 0) waitForPlayback(streamTrack, framesWritten[0], 8000);
+                byte[] pcm = pcmBuffer.toByteArray();
+                if (pcm.length > 0) {
+                    File streamFile = new File(getCacheDir(), "vifasttts-stream.wav");
+                    writeWavFile(streamFile, pcm, 24000, 1);
+                    lastAudioFile = streamFile;
+                    lastSrt = "";
+                    lastVtt = "";
+                    lastKaraokeJson = "";
+                    runOnUiThread(() -> {
+                        if (saveButton != null) saveButton.setEnabled(true);
+                        if (shareButton != null) shareButton.setEnabled(false);
+                    });
+                }
                 recordRun("local-stream", input, System.currentTimeMillis() - runStarted,
                         framesWritten[0] / 48000.0);
-                setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local");
+                setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local · đã có WAV");
             } catch (Throwable error) {
                 setStatus("Lỗi stream: " + error.getMessage());
                 setError(error.getMessage());
@@ -855,6 +875,7 @@ public class MainActivity extends Activity {
                     stopKaraoke();
                 });
                 long framesWritten = 0;
+                ByteArrayOutputStream pcmBuffer = new ByteArrayOutputStream();
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                         connection.getInputStream(), StandardCharsets.UTF_8))) {
                     String line;
@@ -865,6 +886,7 @@ public class MainActivity extends Activity {
                         if ("audio".equals(type)) {
                             byte[] raw = Base64.decode(event.optString("pcm_base64", ""),
                                     Base64.DEFAULT);
+                            pcmBuffer.write(raw, 0, raw.length);
                             short[] pcm = new short[raw.length / 2];
                             for (int index = 0; index < pcm.length; index += 1) {
                                 int low = raw[index * 2] & 0xff;
@@ -882,9 +904,22 @@ public class MainActivity extends Activity {
                     }
                 }
                 if (!audioStopped) waitForPlayback(streamTrack, framesWritten, 8000);
+                byte[] pcm = pcmBuffer.toByteArray();
+                if (pcm.length > 0) {
+                    File streamFile = new File(getCacheDir(), "vifasttts-remote-stream.wav");
+                    writeWavFile(streamFile, pcm, 24000, 1);
+                    lastAudioFile = streamFile;
+                    lastSrt = "";
+                    lastVtt = "";
+                    lastKaraokeJson = "";
+                    runOnUiThread(() -> {
+                        if (saveButton != null) saveButton.setEnabled(true);
+                        if (shareButton != null) shareButton.setEnabled(false);
+                    });
+                }
                 recordRun("remote-stream", input, System.currentTimeMillis() - runStarted,
                         framesWritten / 48000.0);
-                setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote");
+                setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote · đã có WAV");
             } catch (Throwable error) {
                 setStatus("Lỗi stream remote: " + error.getMessage());
                 setError(error.getMessage());
@@ -1256,6 +1291,27 @@ public class MainActivity extends Activity {
         buffer.position(dataOffset);
         buffer.asShortBuffer().get(samples);
         return new PcmClip(samples, sampleRate, channels);
+    }
+
+    private static void writeWavFile(File file, byte[] pcm, int sampleRate, int channels)
+            throws Exception {
+        int dataSize = pcm.length;
+        ByteBuffer buffer = ByteBuffer.allocate(44 + dataSize).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.put("RIFF".getBytes(StandardCharsets.US_ASCII));
+        buffer.putInt(36 + dataSize);
+        buffer.put("WAVE".getBytes(StandardCharsets.US_ASCII));
+        buffer.put("fmt ".getBytes(StandardCharsets.US_ASCII));
+        buffer.putInt(16);
+        buffer.putShort((short) 1);
+        buffer.putShort((short) channels);
+        buffer.putInt(sampleRate);
+        buffer.putInt(sampleRate * channels * 2);
+        buffer.putShort((short) (channels * 2));
+        buffer.putShort((short) 16);
+        buffer.put("data".getBytes(StandardCharsets.US_ASCII));
+        buffer.putInt(dataSize);
+        buffer.put(pcm);
+        Files.write(file.toPath(), buffer.array());
     }
 
     private void waitForPlayback(AudioTrack track, long frames, long timeoutMs) {
