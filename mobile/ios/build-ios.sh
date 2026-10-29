@@ -35,9 +35,11 @@ else
   exit 2
 fi
 
-rustup target add "$SIM_TARGET" aarch64-apple-ios >/dev/null 2>&1 || true
-(cd "$ROOT/rust" && cargo build --release -p vifasttts-ffi --target "$SIM_TARGET")
-(cd "$ROOT/rust" && cargo build --release -p vifasttts-ffi --target aarch64-apple-ios)
+rustup target add --toolchain 1.99.1 aarch64-apple-ios-sim aarch64-apple-ios >/dev/null 2>&1 || true
+# ORT iOS là framework static: chỉ build staticlib, Xcode app link framework.
+export ORT_IOS_XCFWK_PATH="${ORT_IOS_XCFWK_PATH:-$ORT_XCFRAMEWORK}"
+(cd "$ROOT/rust" && cargo rustc --release -p vifasttts-ffi --target "$SIM_TARGET" --crate-type staticlib)
+(cd "$ROOT/rust" && cargo rustc --release -p vifasttts-ffi --target aarch64-apple-ios --crate-type staticlib)
 
 mkdir -p "$FFI_DIR/lib" "$HERE/Resources"
 cp "$ROOT/rust/target/$SIM_TARGET/release/libvifasttts_ffi.a" "$FFI_DIR/lib/libvifasttts_ffi.a"

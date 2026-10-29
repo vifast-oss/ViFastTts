@@ -285,9 +285,8 @@ jobs:
           if-no-files-found: error
 
   ios:
-    name: ios simulator (best effort)
+    name: ios simulator
     runs-on: macos-15
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1

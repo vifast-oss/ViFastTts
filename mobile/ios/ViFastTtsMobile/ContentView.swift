@@ -111,7 +111,21 @@ struct ContentView: View {
             .onChange(of: mode) { value in
                 status = value == "remote" ? "Remote: nhập server URL" : "Local: sẵn sàng"
             }
+            .onAppear(perform: runAutoTestIfNeeded)
         }
+    }
+
+    private func runAutoTestIfNeeded() {
+        #if DEBUG
+        let environment = ProcessInfo.processInfo.environment
+        guard environment["VIFASTT_AUTOTEST"] == "1" else { return }
+        if let value = environment["VIFASTT_MODE"] { mode = value }
+        if let value = environment["VIFASTT_SERVER"] { serverURL = value }
+        if let value = environment["VIFASTT_TOKEN"] { token = value }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            synthesize()
+        }
+        #endif
     }
 
     private func synthesize() {

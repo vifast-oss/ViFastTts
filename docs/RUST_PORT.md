@@ -1014,7 +1014,7 @@ dưới đây; **phải spike build/link thật**, không coi là đã chạy.
 | Desktop macOS arm64 | Có | CLI + app egui `.app` đã build/chạy smoke | ký/notarize, Windows/Linux bundle |
 | Desktop Windows x64/arm64 | Có | Chưa test | CI + bundle DLL |
 | Desktop Linux x64/arm64 | Có | Chưa test | CI + AppImage/deb |
-| iOS arm64/sim | Có | **CI macOS build simulator OK** (ORT pod 1.30.0, model bundle); máy dev không có Xcode | test runtime/thiết bị thật, ký |
+| iOS arm64/sim | Có | **đã build + chạy simulator iOS 27.0** (Xcode 27.1, ORT static 1.30.0): local 2.77 s + remote 2.77 s | thiết bị thật, ký Apple Developer |
 | Android arm64/x86_64 | Có | **đã build APK + chạy emulator Android 16**; jniLibs/NDK + ORT 1.31.1 | test thiết bị thật, audio, UI production |
 | Web browser wasm32 | **ORT Web (JS)** | `browser` frontend + ORT Web demo | Đo tốc độ/RAM; model 86 MB; chưa production |
 | Intel Mac, armv7 Android, Linux musl | **Không** | — | Build source/`load-dynamic` nếu cần |
@@ -1138,12 +1138,13 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
   kiểm tai; cần emulator/thiết bị có audio.
 - Script tái lập: `mobile/android/build.sh`.
 
-**iOS (bị chặn môi trường):**
+**iOS (đã chạy simulator 29/10/2026):**
 
-- `mobile/ios` có SwiftUI scaffold + C bridge + XcodeGen project + build script.
-- Không build được: `xcodebuild` cần Xcode đầy đủ; máy chỉ có Command Line
-  Tools, không có iOS SDK. Không thể tự cài Xcode vì cần Apple ID/2FA.
-- Thiếu ORT iOS `.a`/XCFramework và ký Apple Developer; chưa có bằng chứng chạy.
+- `mobile/ios` có SwiftUI + C bridge + XcodeGen project + build script.
+- Xcode 27.1; simulator iOS 27.0; ORT static 1.30.0 (`api-30`).
+- Local FFI: `Xong local · 2.77 s`; Remote `/api/tts`: `Xong remote · 2.77 s`.
+- `.vfa/.vfts` + model browser + remote Server URL/token.
+- Thiết bị thật vẫn cần ký Apple Developer + ORT device slice.
 
 ### 15.8c CI/CD đa nền tảng (29/10/2026)
 
@@ -1163,8 +1164,8 @@ Workflow `.github/workflows/ci.yml` (push main/PR/tag, dispatch):
 - Model CI lấy từ release `n0-ngochuyen-prod-v1/n0_onnx_fp32.zip` (pin), ORT
   desktop/Android tải bản 1.31.1; iOS dùng pod archive 1.30.0 vì CocoaPods chưa
   có 1.31.1.
-- iOS job có `continue-on-error` vì ORT iOS 1.30.0 chưa được test runtime với
-  Rust `load-dynamic` 1.31.1; artifact simulator vẫn được phát hành nếu build được.
+- iOS job build simulator với ORT static 1.30.0; local/remote đã test trên máy
+  dev. Artifact simulator được phát hành; thiết bị thật cần ký developer.
 - Linux/Windows desktop package đã có script; CI là nơi build/kiểm tra thật,
   máy dev hiện chỉ test macOS.
 

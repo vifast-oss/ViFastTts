@@ -82,6 +82,7 @@ final class TtsEngine: @unchecked Sendable {
                     continuation.resume()
                 } catch {
                     self.loadError = error.localizedDescription
+                    print("ViFastTts: đổi model lỗi: \(self.loadError)")
                     continuation.resume(throwing: error)
                 }
             }
@@ -95,11 +96,13 @@ final class TtsEngine: @unchecked Sendable {
             let vocoder = Bundle.main.url(forResource: "vocoder", withExtension: "onnx")
         else {
             loadError = "Thiếu acoustic.onnx/vocoder.onnx trong app bundle"
+            print("ViFastTts: \(loadError)")
             return
         }
         engine = vifasttts_engine_new(acoustic.path, vocoder.path)
         if engine == nil {
             loadError = lastError()
+            print("ViFastTts: nạp model lỗi: \(loadError)")
         } else {
             isReady = true
             activeModel = "Bundled acoustic/vocoder"

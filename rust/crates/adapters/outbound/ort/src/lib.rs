@@ -107,6 +107,7 @@ fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
+#[cfg(not(target_os = "ios"))]
 fn ort_library_candidates() -> Vec<PathBuf> {
     let names = [
         "libonnxruntime.dylib",
@@ -139,6 +140,7 @@ fn ort_library_candidates() -> Vec<PathBuf> {
 /// nếu không, đổi model lần hai sẽ lỗi "only one environment is allowed".
 static ENVIRONMENT: Mutex<Option<Environment>> = Mutex::new(None);
 
+#[cfg(not(target_os = "ios"))]
 fn build_environment() -> Result<Environment, String> {
     for key in ["VIFASTT_ORT_DYLIB", "ORT_DYLIB_PATH"] {
         if let Ok(value) = std::env::var(key) {
@@ -166,6 +168,15 @@ fn build_environment() -> Result<Environment, String> {
          libonnxruntime vào rust/lib/ (đã tìm: {:?})",
         ort_library_candidates()
     ))
+}
+
+#[cfg(target_os = "ios")]
+fn build_environment() -> Result<Environment, String> {
+    // iOS không có DLL: ORT đã được link static qua onnxruntime.framework.
+    ort::init()
+        .with_name("vifasttts")
+        .build()
+        .map_err(|err| format!("khởi tạo ORT iOS: {err}"))
 }
 
 fn init_environment() -> Result<Environment, String> {

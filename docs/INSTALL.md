@@ -150,9 +150,9 @@ App có **Local** và **Remote**:
   token, gọi `/api/tts`.
 - HTTP dev dùng ATS exception + mô tả Local Network; production nên HTTPS.
 
-Phần iOS mới là source scaffold, chưa chạy thật vì máy build không có
-Xcode/iOS SDK. Cài Xcode cần Apple ID/2FA (App Store hoặc Apple Developer),
-không thể chỉ bằng mật khẩu sudo.
+Đã build/chạy simulator iOS 27.0 (Xcode 27.1): local FFI và remote đều trả WAV
+thành công. Thiết bị thật vẫn cần ký Apple Developer + ORT device slice. Cài
+Xcode cần Apple ID/2FA (App Store hoặc Apple Developer), không chỉ mật khẩu sudo.
 
 ## Từ source
 

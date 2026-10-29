@@ -45,5 +45,7 @@ targets:
           - "-lvifasttts_ffi"
           - "-framework"
           - "onnxruntime"
+          - "-framework"
+          - "Network"
           - "-lc++"
         ENABLE_BITCODE: NO

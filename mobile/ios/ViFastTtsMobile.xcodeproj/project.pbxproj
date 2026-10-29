@@ -301,6 +301,8 @@
 					"-lvifasttts_ffi",
 					"-framework",
 					onnxruntime,
+					"-framework",
+					Network,
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.vifasttts.mobile;
@@ -331,6 +333,8 @@
 					"-lvifasttts_ffi",
 					"-framework",
 					onnxruntime,
+					"-framework",
+					Network,
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.vifasttts.mobile;

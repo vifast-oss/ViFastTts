@@ -8,16 +8,16 @@ Client SwiftUI **local-first + remote HTTP**:
 
 ## Trạng thái (29/10/2026)
 
-**Chưa build/chạy được trên máy này** vì không có Xcode/iOS SDK:
+**Đã build và chạy trên iOS Simulator 27.0** với Xcode 27.1:
 
 ```text
-xcodebuild: error: tool 'xcodebuild' requires Xcode, but active developer
-directory '/Library/Developer/CommandLineTools' is a command line tools instance
-xcrun: error: SDK "iphonesimulator" cannot be located
+Local FFI:  Xong local  · 2.77 s
+Remote:     Xong remote · 2.77 s
+Model:      Bundled acoustic/vocoder
 ```
 
-Vì vậy đây là **scaffold source + script**, không phải bằng chứng chạy iOS.
-Không thể tự cài Xcode: cần Apple ID/2FA và App Store/Apple Developer.
+Xcode cài đặt cần Apple ID/2FA (App Store/Apple Developer), không chỉ mật khẩu
+sudo. Thiết bị thật vẫn cần ký Apple Developer và ORT device slice.
 
 ## Có gì
 
@@ -42,26 +42,26 @@ Không thể tự cài Xcode: cần Apple ID/2FA và App Store/Apple Developer.
 sudo xcode-select -s /Applications/Xcode.app
 xcodebuild -version
 
-# 2) ORT iOS: tải pod archive onnxruntime-c (bản mới nhất có sẵn; hiện 1.30.0)
+# 2) ORT iOS: tải pod archive onnxruntime-c 1.30.0
 #    https://download.onnxruntime.ai/pod-archive-onnxruntime-c-1.30.0.zip
 #    rồi trỏ tới xcframework đã giải nén:
 ONNXRUNTIME_XCFRAMEWORK=/path/to/onnxruntime.xcframework \
   mobile/ios/build-ios.sh
 ```
 
-`project.yml` dùng `OTHER_LDFLAGS="-lvifasttts_ffi -framework onnxruntime -lc++"`,
+`project.yml` dùng `OTHER_LDFLAGS="-lvifasttts_ffi -framework onnxruntime -framework Network -lc++"`,
 `LIBRARY_SEARCH_PATHS=ViFastTtsFFI/lib` và `FRAMEWORK_SEARCH_PATHS=ViFastTtsFFI/Frameworks`;
 script đổ Rust `.a` + framework + model vào đó.
 
 ## Chưa có
 
-- Chạy trên simulator/thiết bị thật, ký Apple Developer, XCFramework/bitcode.
-- Source đã thêm remote; chưa build bằng Xcode/iOS SDK trên máy này.
-- HTTP remote cần `NSAppTransportSecurity` cho dev; production nên HTTPS.
+- Thiết bị thật: ký Apple Developer, ORT device slice/chứng chỉ.
+- HTTP remote dùng ATS exception cho dev; production nên HTTPS.
 - Audio session/background playback, streaming PCM, settings/history/dictionary.
 - UniFFI/Swift binding tự sinh; hiện gọi C ABI trực tiếp.
-- ORT iOS adapter hoàn chỉnh: pod archive mới nhất là **1.30.0** (chưa có 1.31.1
-  trên CocoaPods); Rust dùng load-dynamic 1.31.1 nên cần test runtime tương thích.
+- ORT iOS dùng framework **static 1.30.0** (`api-30`); desktop/Android vẫn dùng
+  load-dynamic 1.31.1. Build iOS dùng `cargo rustc --crate-type staticlib`, Xcode
+  link `onnxruntime.framework`.
 - Artifact CI chỉ build simulator arm64; thiết bị thật cần slice device + ký.
 - License CC-BY-NC trước khi phát hành App Store.
 
