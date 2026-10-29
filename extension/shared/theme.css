@@ -1,0 +1,26 @@
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("/fonts/BeVietnamPro-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --vf-bg: #fbf6ee;
+  --vf-surface: #ffffff;
+  --vf-cream: #fff8ec;
+  --vf-soft: #fbf0ec;
+  --vf-ink: #1f2430;
+  --vf-muted: #6b7280;
+  --vf-accent: #c6281e;
+  --vf-accent-dark: #991b1b;
+  --vf-gold: #b77900;
+  --vf-border: #e8ddd0;
+  --vf-success: #15803d;
+  --vf-warning: #b45309;
+  --vf-error: #b91c1c;
+  --vf-radius: 12px;
+  --vf-space: 8px;
+  --vf-font: "Be Vietnam Pro", system-ui, Arial, sans-serif;
+}

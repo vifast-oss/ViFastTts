@@ -57,6 +57,16 @@ cp "$ORT_LIB" "$APP/Contents/MacOS/libonnxruntime.dylib"
 cp "$MODEL_DIR/acoustic.onnx" "$APP/Contents/Resources/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$APP/Contents/Resources/vocoder.onnx"
 cp "$ROOT/resources/fonts/BeVietnamPro-OFL.txt" "$APP/Contents/Resources/licenses/"
+# App icon từ brand dùng chung (512 → iconset/.icns).
+ICONSET="$CACHE/AppIcon.iconset"
+rm -rf "$ICONSET"
+mkdir -p "$ICONSET"
+for pair in 16:icon_16x16 32:icon_16x16@2x 32:icon_32x32 64:icon_32x32@2x 128:icon_128x128 256:icon_128x128@2x 256:icon_256x256 512:icon_256x256@2x 512:icon_512x512 1024:icon_512x512@2x; do
+  size="${pair%%:*}"; name="${pair##*:}"
+  sips -z "$size" "$size" "$ROOT/resources/brand/vifasttts-icon-512.png" --out "$ICONSET/$name.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+rm -rf "$ICONSET"
 
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -66,6 +76,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>vifasttts-desktop</string>
   <key>CFBundleIdentifier</key><string>com.vifasttts.desktop</string>
   <key>CFBundleName</key><string>ViFastTts</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleDisplayName</key><string>ViFastTts</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1.0</string>

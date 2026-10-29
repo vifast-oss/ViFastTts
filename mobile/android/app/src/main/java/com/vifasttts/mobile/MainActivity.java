@@ -7,6 +7,7 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -411,29 +412,36 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         activeModelPath = prefs.getString(KEY_ACTIVE_MODEL, "");
+        VfTheme.applyWindow(this);
+        Typeface font = VfTheme.typeface(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 48, 32, 32);
+        root.setPadding(
+                VfTheme.dp(this, 24), VfTheme.dp(this, 56),
+                VfTheme.dp(this, 24), VfTheme.dp(this, 24));
         root.setGravity(Gravity.TOP);
+        root.setBackgroundColor(VfTheme.BG);
 
         TextView title = new TextView(this);
         title.setText("ViFastTts Mobile");
-        title.setTextSize(24);
+        VfTheme.text(title, font, 26, VfTheme.INK, true);
         root.addView(title);
 
         modelLabel = new TextView(this);
-        modelLabel.setTextSize(13);
+        VfTheme.text(modelLabel, font, 12, VfTheme.MUTED, false);
         root.addView(modelLabel);
         updateModelLabel();
 
         Button model = new Button(this);
         model.setText("Tải model .vfa/.vfts");
+        VfTheme.secondaryButton(model, font);
         model.setOnClickListener(view -> showModelSearch());
         root.addView(model);
 
         text = new EditText(this);
         text.setText("Xin chào các bạn, hôm nay trời đẹp.");
+        VfTheme.input(text, font);
         text.setMinLines(3);
         text.setGravity(Gravity.TOP);
         root.addView(text, new LinearLayout.LayoutParams(
@@ -441,25 +449,30 @@ public class MainActivity extends Activity {
 
         remote = new CheckBox(this);
         remote.setText("Dùng server remote");
+        VfTheme.text(remote, font, 14, VfTheme.INK, false);
+        remote.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
         root.addView(remote);
 
         serverUrl = new EditText(this);
         serverUrl.setText("http://10.0.2.2:8000");
         serverUrl.setHint("Server URL");
+        VfTheme.input(serverUrl, font);
         root.addView(serverUrl);
 
         token = new EditText(this);
         token.setHint("Bearer token (tuỳ chọn)");
+        VfTheme.input(token, font);
         root.addView(token);
 
         Button run = new Button(this);
         run.setText("Đọc");
+        VfTheme.primaryButton(run, font);
         run.setOnClickListener(view -> synthesize());
         root.addView(run);
 
         status = new TextView(this);
         status.setText("Sẵn sàng");
-        status.setTextSize(16);
+        VfTheme.text(status, font, 15, VfTheme.INK, false);
         root.addView(status);
 
         setContentView(root);

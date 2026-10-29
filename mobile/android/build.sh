@@ -35,6 +35,8 @@ export JAVA_HOME
 
 APP="$ROOT/mobile/android/app/src/main"
 mkdir -p "$APP/assets" "$APP/jniLibs/x86_64" "$APP/jniLibs/arm64-v8a"
+cp "$ROOT/resources/fonts/BeVietnamPro-Regular.ttf" "$APP/assets/"
+cp "$ROOT/resources/fonts/BeVietnamPro-OFL.txt" "$APP/assets/"
 
 # Rust cdylib cho hai ABI; cargo-ndk đặt đúng thư mục jniLibs/<abi>.
 cd "$ROOT/rust"

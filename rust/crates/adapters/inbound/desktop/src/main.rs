@@ -41,11 +41,17 @@ fn main() -> eframe::Result {
         return run_smoke();
     }
     let settings = load_settings();
+    let mut viewport = egui::ViewportBuilder::default()
+        .with_inner_size([1080.0, 760.0])
+        .with_min_inner_size([760.0, 560.0])
+        .with_title("ViFastTts Desktop");
+    if let Ok(icon) = eframe::icon_data::from_png_bytes(include_bytes!(
+        "../../../../../../resources/brand/vifasttts-icon-512.png"
+    )) {
+        viewport = viewport.with_icon(icon);
+    }
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1080.0, 760.0])
-            .with_min_inner_size([760.0, 560.0])
-            .with_title("ViFastTts Desktop"),
+        viewport,
         ..Default::default()
     };
     eframe::run_native(
@@ -553,7 +559,8 @@ struct DesktopApp {
 }
 
 impl DesktopApp {
-    fn new(_cc: &eframe::CreationContext<'_>, mut settings: DesktopSettings) -> Self {
+    fn new(cc: &eframe::CreationContext<'_>, mut settings: DesktopSettings) -> Self {
+        apply_theme(&cc.egui_ctx);
         settings.history.truncate(HISTORY_LIMIT);
         let eta = EtaEstimator::from_samples(settings.history.clone(), HISTORY_LIMIT);
         let (event_tx, events) = mpsc::channel();
@@ -1034,7 +1041,7 @@ impl DesktopApp {
         }
         if self.settings.server_lan {
             ui.colored_label(
-                egui::Color32::YELLOW,
+                egui::Color32::from_rgb(0xB4, 0x53, 0x09),
                 "LAN: chỉ dùng mạng tin cậy; nên đặt token và firewall. Server không có TLS.",
             );
         }
@@ -1340,7 +1347,9 @@ impl DesktopApp {
             }
             self.refresh_dictionary();
             for warning in self.dictionary.warnings.iter().take(6) {
-                ui.small(egui::RichText::new(warning).color(egui::Color32::YELLOW));
+                ui.small(
+                    egui::RichText::new(warning).color(egui::Color32::from_rgb(0xB4, 0x53, 0x09)),
+                );
             }
             if self.dictionary.warnings.len() > 6 {
                 ui.small(format!(
@@ -1453,7 +1462,13 @@ impl DesktopApp {
             };
             let enabled =
                 !self.busy && (self.settings.app.mode == SynthesisMode::Remote || self.model_ready);
-            if ui.add_enabled(enabled, egui::Button::new(label)).clicked() {
+            let primary = egui::Button::new(
+                egui::RichText::new(label)
+                    .color(egui::Color32::WHITE)
+                    .strong(),
+            )
+            .fill(egui::Color32::from_rgb(0xC6, 0x28, 0x1E));
+            if ui.add_enabled(enabled, primary).clicked() {
                 self.synthesize();
             }
             if ui
@@ -1471,13 +1486,13 @@ impl DesktopApp {
 
         ui.add_space(4.0);
         let color = if self.error.is_some() {
-            egui::Color32::LIGHT_RED
+            egui::Color32::from_rgb(0xB9, 0x1C, 0x1C)
         } else {
             ui.visuals().text_color()
         };
         ui.colored_label(color, &self.status);
         if let Some(error) = &self.error {
-            ui.colored_label(egui::Color32::LIGHT_RED, error);
+            ui.colored_label(egui::Color32::from_rgb(0xB9, 0x1C, 0x1C), error);
         }
 
         self.result_panel(ui);
@@ -1508,6 +1523,59 @@ impl DesktopApp {
     }
 }
 
+/// Palette sáng dùng chung với web/mobile (design/tokens.json).
+fn apply_theme(ctx: &egui::Context) {
+    let background = egui::Color32::from_rgb(0xFB, 0xF6, 0xEE);
+    let surface = egui::Color32::from_rgb(0xFF, 0xFF, 0xFF);
+    let ink = egui::Color32::from_rgb(0x1F, 0x24, 0x30);
+    let muted = egui::Color32::from_rgb(0x6B, 0x72, 0x80);
+    let accent = egui::Color32::from_rgb(0xC6, 0x28, 0x1E);
+    let accent_dark = egui::Color32::from_rgb(0x99, 0x1B, 0x1B);
+    let border = egui::Color32::from_rgb(0xE8, 0xDD, 0xD0);
+    let soft = egui::Color32::from_rgb(0xFB, 0xF0, 0xEC);
+
+    let mut visuals = egui::Visuals::light();
+    visuals.panel_fill = background;
+    visuals.window_fill = surface;
+    visuals.extreme_bg_color = surface;
+    visuals.text_edit_bg_color = Some(surface);
+    visuals.faint_bg_color = soft;
+    visuals.override_text_color = Some(ink);
+    visuals.weak_text_color = Some(muted);
+    visuals.hyperlink_color = accent;
+    visuals.selection.bg_fill = accent;
+    visuals.selection.stroke = egui::Stroke::new(1.0_f32, accent_dark);
+    visuals.window_stroke = egui::Stroke::new(1.0_f32, border);
+    visuals.window_corner_radius = egui::CornerRadius::same(12);
+    visuals.menu_corner_radius = egui::CornerRadius::same(10);
+    for widget in [
+        &mut visuals.widgets.noninteractive,
+        &mut visuals.widgets.inactive,
+        &mut visuals.widgets.hovered,
+        &mut visuals.widgets.active,
+        &mut visuals.widgets.open,
+    ] {
+        widget.corner_radius = egui::CornerRadius::same(8);
+    }
+    visuals.widgets.noninteractive.bg_fill = surface;
+    visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0_f32, border);
+    visuals.widgets.inactive.bg_fill = soft;
+    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0_f32, border);
+    visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0_f32, ink);
+    visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(0xF7, 0xE3, 0xDD);
+    visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0_f32, accent);
+    visuals.widgets.active.bg_fill = accent;
+    visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0_f32, accent_dark);
+    visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::WHITE);
+
+    let mut style = (*ctx.style()).clone();
+    style.visuals = visuals;
+    style.spacing.item_spacing = egui::vec2(8.0, 8.0);
+    style.spacing.button_padding = egui::vec2(12.0, 8.0);
+    style.spacing.interact_size.y = 30.0;
+    ctx.set_style(style);
+}
+
 impl eframe::App for DesktopApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_events();
@@ -1526,9 +1594,15 @@ impl eframe::App for DesktopApp {
             self.audio.stop();
         }
 
-        ctx.set_visuals(egui::Visuals::dark());
+        // Theme sáng dùng chung với web/mobile; không ghi đè mỗi frame.
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             ui.horizontal(|ui| {
+                ui.add(
+                    egui::Image::new(egui::include_image!(
+                        "../../../../../../resources/brand/vifasttts-icon-192.png"
+                    ))
+                    .fit_to_exact_size(egui::vec2(28.0, 28.0)),
+                );
                 ui.heading("ViFastTts Desktop");
                 ui.separator();
                 ui.label(match self.settings.app.mode {
@@ -1540,11 +1614,14 @@ impl eframe::App for DesktopApp {
                         self.show_browser = true;
                     }
                     if self.model_ready {
-                        ui.colored_label(egui::Color32::LIGHT_GREEN, "● model ready");
+                        ui.colored_label(
+                            egui::Color32::from_rgb(0x15, 0x80, 0x3D),
+                            "● model ready",
+                        );
                     } else if self.settings.app.mode == SynthesisMode::Remote {
-                        ui.colored_label(egui::Color32::LIGHT_BLUE, "● remote");
+                        ui.colored_label(egui::Color32::from_rgb(0x1D, 0x4E, 0xD8), "● remote");
                     } else {
-                        ui.colored_label(egui::Color32::YELLOW, "● loading");
+                        ui.colored_label(egui::Color32::from_rgb(0xB4, 0x53, 0x09), "● loading");
                     }
                     if self.audio.is_playing() {
                         ui.small("🔊 playing");

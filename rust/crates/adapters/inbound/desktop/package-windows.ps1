@@ -61,6 +61,7 @@ if ($WebDir -and (Test-Path $WebDir)) {
 Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
+Copy-Item (Join-Path $Root "resources/brand/vifasttts-icon-512.png") (Join-Path $Out "icon.png")
 Copy-Item (Join-Path $Root "resources/fonts/BeVietnamPro-OFL.txt") (Join-Path $Out "licenses/BeVietnamPro-OFL.txt")
 @"
 ViFastTts Desktop + unified CLI/TUI/server sidecar (Windows x64)

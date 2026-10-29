@@ -4,15 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ViFastTts — local browser</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="./shared/theme.css" />
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      body { font-family: var(--vf-font); background: var(--vf-bg); color: var(--vf-ink); max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      textarea, input, select { font-family: var(--vf-font); background: var(--vf-surface); color: var(--vf-ink); border: 1px solid var(--vf-border); border-radius: 8px; padding: .45rem .6rem; }
       textarea { width: 100%; min-height: 8rem; font: inherit; }
-      button { padding: .5rem 1rem; font: inherit; }
-      #status { white-space: pre-wrap; color: #555; }
+      button { padding: .5rem 1rem; font: inherit; border: 1px solid var(--vf-border); border-radius: 8px; color: var(--vf-ink); background: var(--vf-soft); cursor: pointer; }
+      button.primary, #run { background: var(--vf-accent); color: #fff; border-color: var(--vf-accent); font-weight: 700; }
+      button:hover { border-color: var(--vf-accent); }
+      #status { white-space: pre-wrap; color: var(--vf-muted); }
       #karaoke { line-height: 1.8; font-size: 1.2rem; }
       #karaoke span { padding: .1rem .15rem; border-radius: .2rem; }
       #karaoke span.active { background: #ffe08a; }
-      pre { background: #f6f6f6; padding: 1rem; overflow: auto; }
+      pre { background: var(--vf-surface); border: 1px solid var(--vf-border); border-radius: 8px; padding: 1rem; overflow: auto; }
     .hidden { display: none; }
     input, select { font: inherit; }
     #modelList, #modelFiles { max-height: 12rem; overflow: auto; }
@@ -20,7 +25,13 @@
     </style>
   </head>
   <body>
-    <h1>ViFastTts — chạy local trong trình duyệt</h1>
+    <header style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <img src="/icon-192.png" alt="" width="48" height="48" style="border-radius:12px" />
+      <div>
+        <h1 style="margin:0">ViFastTts</h1>
+        <div style="color:var(--vf-muted);font-size:.9rem">Chạy local trong trình duyệt</div>
+      </div>
+    </header>
     <p id="status">Đang nạp wasm/model…</p>
     <textarea id="text">Xin chào các bạn, hôm nay trời đẹp.</textarea>
     <p>
@@ -51,7 +62,7 @@
         <input id="modelFile" type="file" accept=".vfa,.vfts" />
       </label>
     </p>
-    <p><button id="run">Đọc</button></p>
+    <p><button id="run" class="primary">Đọc</button></p>
     <audio id="audio" controls></audio>
     <div id="karaoke"></div>
     <pre id="srt"></pre>

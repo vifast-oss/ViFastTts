@@ -33,6 +33,8 @@ targets:
         NSLocalNetworkUsageDescription: "ViFastTts cần kết nối tới server TTS trong mạng LAN."
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
+        UIAppFonts:
+          - BeVietnamPro-Regular.ttf
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vifasttts.mobile
@@ -48,4 +50,5 @@ targets:
           - "-framework"
           - "Network"
           - "-lc++"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_BITCODE: NO

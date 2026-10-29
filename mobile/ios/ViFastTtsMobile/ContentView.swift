@@ -18,19 +18,22 @@ struct ContentView: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 14) {
                 Text("ViFastTts Mobile")
-                    .font(.largeTitle.bold())
+                    .font(VFTheme.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(VFTheme.ink)
                 Text(mode == "remote" ? "Remote HTTP · server API" : "Local ONNX · Rust C ABI")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text(activeModel.isEmpty ? "Chưa có model" : "Model: \(activeModel)")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(VFTheme.caption)
+                    .foregroundStyle(VFTheme.muted)
 
                 Picker("Chế độ", selection: $mode) {
                     Text("Local").tag("local")
                     Text("Remote").tag("remote")
                 }
                 .pickerStyle(.segmented)
+                .tint(VFTheme.accent)
 
                 if mode == "remote" {
                     TextField("Server URL", text: $serverURL)
@@ -42,11 +45,16 @@ struct ContentView: View {
                 }
 
                 TextEditor(text: $text)
+                    .font(VFTheme.body)
+                    .foregroundStyle(VFTheme.ink)
+                    .scrollContentBackground(.hidden)
                     .frame(minHeight: 180)
                     .padding(8)
+                    .background(VFTheme.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(.secondary.opacity(0.3))
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(VFTheme.border)
                     )
 
                 HStack {
@@ -56,6 +64,7 @@ struct ContentView: View {
                         Label("Đọc", systemImage: "play.fill")
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(VFTheme.accent)
                     .disabled(busy || (mode == "local" && !ready))
 
                     Button {
@@ -79,7 +88,8 @@ struct ContentView: View {
                 }
 
                 Text(status)
-                    .font(.callout)
+                    .font(VFTheme.body)
+                    .foregroundStyle(VFTheme.ink)
                 if let error {
                     Text(error)
                         .font(.callout)
@@ -87,8 +97,8 @@ struct ContentView: View {
                 }
                 if mode == "local" && !ready {
                     Text("Chưa có model trong bundle hoặc FFI/ORT chưa nạp.")
-                        .font(.footnote)
-                        .foregroundStyle(.orange)
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.warning)
                 }
                 if mode == "remote" {
                     Text("Remote gọi /api/tts; server có thể là desktop local, LAN hoặc online.")
@@ -98,6 +108,9 @@ struct ContentView: View {
                 Spacer()
             }
             .padding()
+            .background(VFTheme.background.ignoresSafeArea())
+            .tint(VFTheme.accent)
+            .font(VFTheme.body)
             .navigationTitle("ViFastTts")
             .sheet(isPresented: $showModels, onDismiss: {
                 ready = TtsEngine.shared.isReady

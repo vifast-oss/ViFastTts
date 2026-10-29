@@ -87,6 +87,10 @@ struct ModelBrowserView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(VFTheme.background.ignoresSafeArea())
+            .tint(VFTheme.accent)
+            .font(VFTheme.body)
             .navigationTitle("Model")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

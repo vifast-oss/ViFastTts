@@ -66,10 +66,12 @@ GUI
 không mở TUI; TUI chỉ chạy khi gọi từ terminal. CI build cả ba nền tảng; macOS/Linux đã test
 smoke, Windows do CI test.
 
-## Font tiếng Việt
+## Font + theme
 
 Desktop bundle font **Be Vietnam Pro** (OFL, `resources/fonts/`) và đăng ký làm
-font chính trong egui, nên không còn mất dấu khi dùng font mặc định.
+font chính trong egui. Theme dùng chung `design/tokens.json`: nền kem, accent đỏ,
+radius/spacing thống nhất với web/mobile. Icon cửa sổ và `AppIcon.icns` lấy từ
+`resources/brand/vifasttts-icon-512.png`.
 
 ## Cấu hình
 

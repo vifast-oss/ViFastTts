@@ -86,6 +86,8 @@ adb shell am start -n com.vifasttts.mobile/.MainActivity
   - remote mode vẫn độc lập, không cần tải model.
 - UI vẫn là smoke client (programmatic view), chưa Compose; catalog nằm ở
   server, không lặp logic HuggingFace trong Java.
+- Theme/icon dùng chung: `VfTheme.java`, font Be Vietnam Pro, launcher icon
+  lấy từ `resources/brand/vifasttts-icon-512.png`.
 - Chưa có: Compose UI, audio focus/foreground service, streaming PCM xuống
   AAudio, history/settings, UniFFI/Kotlin binding, quản lý nhiều model/active
   model bằng UI (hiện chỉ một active model).

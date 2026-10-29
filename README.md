@@ -14,18 +14,20 @@ pre-release, chưa ký):
 
 1. **Windows x64:** `vifasttts-desktop-windows-x64.zip` → giải nén → chạy
    `vifasttts-desktop.exe` (SmartScreen: More info → Run anyway).
-2. **macOS arm64:** `ViFastTts-macos-arm64.zip` → kéo `ViFastTts.app` vào
+2. **macOS arm64:** `vifasttts-desktop-macos-arm64.zip` → kéo `ViFastTts.app` vào
    Applications → chuột phải **Open**. Nếu Gatekeeper chặn:
    `xattr -dr com.apple.quarantine /Applications/ViFastTts.app`.
 3. **Linux x64:** `vifasttts-desktop-linux-x64.tar.gz` → giải nén → `./run.sh`.
 4. Desktop có sẵn **server nội bộ** + **model browser HuggingFace**; extension
    remote trỏ tới `http://127.0.0.1:8000`. Unified binary `vifasttts` (CLI/TUI/
    server) nằm cạnh app; TUI chỉ chạy từ terminal, GUI không mở TUI.
-5. Android: `app-debug.apk` (có tải `.vfa/.vfts` qua server); iOS: simulator-only
+5. Android: `vifasttts-mobile-android.apk` (có tải `.vfa/.vfts` qua server); iOS: simulator-only
    `.zip`; extension: `extension.zip`; web: `web-dist.tar.gz`.
 6. Catalog dùng chung: native `vifasttts-model-manager`; web/extension
    `web/shared/model-api.js`; Android/iOS gọi `/api/models/*`. Xem
    `docs/MODEL_SEARCH.md`.
+7. Design tokens dùng chung ở `design/tokens.json`; desktop/iOS/Android/web/
+   extension dùng cùng palette kem–đỏ, font Be Vietnam Pro và icon thương hiệu.
 
 Hướng dẫn đầy đủ, gồm build từ source và xử lý lỗi:
 **`docs/INSTALL.md`**.

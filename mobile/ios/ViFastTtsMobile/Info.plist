@@ -20,6 +20,17 @@
 	<string>0.1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ViFastTts cần kết nối tới server TTS trong mạng LAN.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>BeVietnamPro-Regular.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -27,12 +38,5 @@
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>ViFastTts cần kết nối tới server TTS trong mạng LAN.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 </dict>
 </plist>

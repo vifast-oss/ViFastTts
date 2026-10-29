@@ -48,6 +48,7 @@ fi
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"
+cp "$ROOT/resources/brand/vifasttts-icon-512.png" "$OUT/icon.png"
 cp "$ROOT/resources/fonts/BeVietnamPro-OFL.txt" "$OUT/licenses/"
 cat > "$OUT/run.sh" <<'SH'
 #!/usr/bin/env bash

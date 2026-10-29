@@ -23,6 +23,7 @@ sudo. Thiết bị thật vẫn cần ký Apple Developer và ORT device slice.
 
 - `App.swift`, `ContentView.swift`: UI SwiftUI tối thiểu (text, local/remote,
   server URL/token, đọc, dừng, trạng thái, sheet Model).
+- `Theme.swift`: palette/font dùng chung; icon app lấy từ `resources/brand/`.
 - `TtsEngine.swift`: cầu nối C ABI, serial queue, synth async, ghi WAV tạm,
   `AVAudioPlayer`; nạp `.vfa/.vfts` và ghi nhớ active model.
 - `RemoteTts.swift`: gọi `/api/tts`, nhận WAV hoặc JSON `audio_base64`,
