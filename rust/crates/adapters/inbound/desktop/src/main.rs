@@ -177,6 +177,12 @@ impl Default for DesktopSettings {
 
 /// Tìm model trong app bundle nếu path tương đối không tồn tại.
 fn resolve_model_path(value: &str) -> PathBuf {
+    let executable = std::env::current_exe().ok();
+    resolve_model_path_with_exe(value, executable.as_deref())
+}
+
+/// Tách riêng để test được fallback bundle mà không cần đổi current_exe.
+fn resolve_model_path_with_exe(value: &str, executable: Option<&Path>) -> PathBuf {
     let path = PathBuf::from(value);
     if path.exists() {
         return path;
@@ -184,19 +190,18 @@ fn resolve_model_path(value: &str) -> PathBuf {
     let Some(name) = path.file_name() else {
         return path;
     };
-    if let Ok(executable) = std::env::current_exe()
-        && let Some(exe_dir) = executable.parent()
-    {
-        if let Some(contents) = exe_dir.parent() {
-            let candidate = contents.join("Resources").join(name);
-            if candidate.exists() {
-                return candidate;
-            }
+    let Some(exe_dir) = executable.and_then(Path::parent) else {
+        return path;
+    };
+    if let Some(contents) = exe_dir.parent() {
+        let candidate = contents.join("Resources").join(name);
+        if candidate.exists() {
+            return candidate;
         }
-        for candidate in [exe_dir.join("models").join(name), exe_dir.join(name)] {
-            if candidate.exists() {
-                return candidate;
-            }
+    }
+    for candidate in [exe_dir.join("models").join(name), exe_dir.join(name)] {
+        if candidate.exists() {
+            return candidate;
         }
     }
     path
@@ -229,10 +234,18 @@ fn settings_path() -> PathBuf {
 
 fn load_settings() -> DesktopSettings {
     let path = settings_path();
-    fs::read_to_string(&path)
+    let mut settings: DesktopSettings = fs::read_to_string(&path)
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    // Hiện đúng file sẽ nạp: path repo/bundle được đổi sang vị trí thật trên máy.
+    settings.acoustic_path = resolve_model_path(&settings.acoustic_path)
+        .display()
+        .to_string();
+    settings.vocoder_path = resolve_model_path(&settings.vocoder_path)
+        .display()
+        .to_string();
+    settings
 }
 
 fn save_settings(settings: &DesktopSettings) {
@@ -1571,5 +1584,71 @@ impl Drop for DesktopApp {
     fn drop(&mut self) {
         self.stop_server();
         self.save_if_dirty();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "vifasttts-desktop-{name}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn resolve_giu_path_ton_tai() {
+        let dir = temp_dir("exists");
+        let file = dir.join("acoustic.onnx");
+        fs::write(&file, b"x").unwrap();
+        let exe = dir.join("bin/vifasttts-desktop");
+        let resolved = resolve_model_path_with_exe(file.to_str().unwrap(), Some(&exe));
+        assert_eq!(resolved, file);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn resolve_fallback_models_canh_exe() {
+        let dir = temp_dir("models");
+        let exe_dir = dir.join("bin");
+        let models = exe_dir.join("models");
+        fs::create_dir_all(&models).unwrap();
+        fs::write(models.join("acoustic.onnx"), b"x").unwrap();
+        let exe = exe_dir.join("vifasttts-desktop");
+        let resolved = resolve_model_path_with_exe("artifacts/onnx/n0_q/acoustic.onnx", Some(&exe));
+        assert_eq!(resolved, models.join("acoustic.onnx"));
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn resolve_fallback_resources_macos() {
+        let dir = temp_dir("resources");
+        let exe_dir = dir.join("Contents/MacOS");
+        let resources = dir.join("Contents/Resources");
+        fs::create_dir_all(&exe_dir).unwrap();
+        fs::create_dir_all(&resources).unwrap();
+        fs::write(resources.join("vocoder.onnx"), b"x").unwrap();
+        let exe = exe_dir.join("vifasttts-desktop");
+        let resolved = resolve_model_path_with_exe("artifacts/onnx/n0_q/vocoder.onnx", Some(&exe));
+        assert_eq!(resolved, resources.join("vocoder.onnx"));
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn resolve_tra_ve_nguyen_ban_neu_khong_thay() {
+        let dir = temp_dir("missing");
+        let exe = dir.join("bin/vifasttts-desktop");
+        fs::create_dir_all(exe.parent().unwrap()).unwrap();
+        let resolved = resolve_model_path_with_exe("khong/co/acoustic.onnx", Some(&exe));
+        assert_eq!(resolved, PathBuf::from("khong/co/acoustic.onnx"));
+        let _ = fs::remove_dir_all(dir);
     }
 }

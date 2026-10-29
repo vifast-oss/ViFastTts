@@ -36,7 +36,7 @@ rust/target/release/vifasttts-desktop --smoke
 ```bash
 rust/crates/adapters/inbound/desktop/package-macos.sh --run
 # APP: .../desktop/dist/ViFastTts.app
-# ZIP: .../desktop/dist/ViFastTts-macos-<arch>.zip
+# ZIP: .../desktop/dist/vifasttts-desktop-macos-<arch>.zip
 ```
 
 App tự tìm model trong `Contents/Resources/` và ORT trong `Contents/MacOS/`
@@ -73,9 +73,16 @@ font chính trong egui, nên không còn mất dấu khi dùng font mặc địn
 
 ## Cấu hình
 
-- `~/Library/Application Support/com.vifasttts.ViFastTts/desktop.json` (theo
-  `directories`); lưu settings + history ETA + đường dẫn model/`.vfts`.
-- Model mặc định tương đối `artifacts/onnx/n0_q/` khi chạy từ repo.
+- Settings: `~/Library/Application Support/com.vifasttts.ViFastTts/desktop.json`
+  (macOS) · `~/.config/vifasttts/desktop.json` (Linux) ·
+  `%APPDATA%\vifasttts\ViFastTts\config\desktop.json` (Windows); lưu settings +
+  history ETA + đường dẫn model/`.vfts`.
+- Ô đường dẫn model hiển thị **file thật sẽ nạp**: path repo/bundle được resolve
+  sang `<thư mục exe>/models/` (hoặc `Contents/Resources/` trong app macOS).
+- Bundle tải từ HuggingFace lưu ở `<data dir>/models/`:
+  `~/Library/Application Support/com.vifasttts.ViFastTts/models/` (macOS) ·
+  `~/.local/share/vifasttts/models/` (Linux) ·
+  `%APPDATA%\vifasttts\ViFastTts\data\models\` (Windows).
 - Remote mặc định `http://127.0.0.1:8000`; token Bearer tuỳ chọn.
 
 ## Giới hạn hiện tại
