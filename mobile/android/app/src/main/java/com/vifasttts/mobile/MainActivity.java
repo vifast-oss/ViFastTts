@@ -42,6 +42,7 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -708,7 +709,7 @@ public class MainActivity extends Activity {
                 options.max_chars = new NativeLong(maxChars);
                 options.fixed_pauses = fixedPauses ? (byte) 1 : (byte) 0;
                 options.peak_normalize = peakNormalize ? (byte) 1 : (byte) 0;
-                int sampleRate = 24000;
+                int sampleRate = 48000;
                 int channelMask = AudioFormat.CHANNEL_OUT_MONO;
                 int minBuffer = AudioTrack.getMinBufferSize(
                         sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT);
@@ -750,7 +751,9 @@ public class MainActivity extends Activity {
                         pcm[index] = (short) Math.max(-32768, Math.min(32767,
                                 Math.round(value * 32767f)));
                     }
-                    int written = callbackTrack.write(pcm, 0, count, AudioTrack.WRITE_BLOCKING);
+                    short[] upsampled = resamplePcm(pcm, 24000, 48000, 1);
+                    int written = callbackTrack.write(upsampled, 0, upsampled.length,
+                            AudioTrack.WRITE_BLOCKING);
                     if (written > 0) framesWritten[0] += written;
                     return written < 0 ? 1 : 0;
                 };
@@ -760,7 +763,7 @@ public class MainActivity extends Activity {
                 if (code < 0) throw new IllegalStateException(lastError());
                 if (code == 0) waitForPlayback(streamTrack, framesWritten[0], 8000);
                 recordRun("local-stream", input, System.currentTimeMillis() - runStarted,
-                        framesWritten[0] / 24000.0);
+                        framesWritten[0] / 48000.0);
                 setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local");
             } catch (Throwable error) {
                 setStatus("Lỗi stream: " + error.getMessage());
@@ -820,7 +823,7 @@ public class MainActivity extends Activity {
                     String error = new String(readError(connection), StandardCharsets.UTF_8);
                     throw new IllegalStateException("HTTP " + code + ": " + error);
                 }
-                int sampleRate = 24000;
+                int sampleRate = 48000;
                 int channelMask = AudioFormat.CHANNEL_OUT_MONO;
                 int minBuffer = AudioTrack.getMinBufferSize(
                         sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT);
@@ -868,7 +871,8 @@ public class MainActivity extends Activity {
                                 int high = raw[index * 2 + 1] << 8;
                                 pcm[index] = (short) (low | high);
                             }
-                            int written = streamTrack.write(pcm, 0, pcm.length,
+                            short[] upsampled = resamplePcm(pcm, 24000, 48000, 1);
+                            int written = streamTrack.write(upsampled, 0, upsampled.length,
                                     AudioTrack.WRITE_BLOCKING);
                             if (written < 0) throw new IllegalStateException("AudioTrack write lỗi");
                             framesWritten += written;
@@ -879,7 +883,7 @@ public class MainActivity extends Activity {
                 }
                 if (!audioStopped) waitForPlayback(streamTrack, framesWritten, 8000);
                 recordRun("remote-stream", input, System.currentTimeMillis() - runStarted,
-                        framesWritten / 24000.0);
+                        framesWritten / 48000.0);
                 setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote");
             } catch (Throwable error) {
                 setStatus("Lỗi stream remote: " + error.getMessage());
@@ -1541,6 +1545,7 @@ public class MainActivity extends Activity {
         resetEngine();
         updateModelLabel();
         setStatus("Đã chọn model bundled ONNX (acoustic + vocoder).");
+        Toast.makeText(this, "Đang dùng model bundled ONNX", Toast.LENGTH_LONG).show();
     }
 
     private void selectBundleModel(File file) {
@@ -1559,6 +1564,7 @@ public class MainActivity extends Activity {
         resetEngine();
         updateModelLabel();
         setStatus("Đang dùng " + file.getName() + "; lần đọc tới sẽ nạp model này.");
+        Toast.makeText(this, "Đã chọn model: " + file.getName(), Toast.LENGTH_LONG).show();
     }
 
     private void deleteActiveModel() {
@@ -1764,6 +1770,7 @@ public class MainActivity extends Activity {
                     resetEngine();
                     updateModelLabel();
                     setStatus("Đã tải " + name + " (" + bytes.length + " B); đọc local sẽ dùng bundle.");
+                    Toast.makeText(this, "Đã tải model: " + name, Toast.LENGTH_LONG).show();
                 });
             } catch (Throwable error) {
                 setStatus("Lỗi tải model: " + error.getMessage());
