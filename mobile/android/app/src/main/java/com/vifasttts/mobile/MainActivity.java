@@ -55,7 +55,9 @@ import com.sun.jna.Structure;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -160,6 +162,7 @@ public class MainActivity extends Activity {
     private AudioTrack audioTrack;
     private Thread audioThread;
     private volatile boolean audioStopped = false;
+    private HttpURLConnection streamConnection;
     private int audioSampleRate = 24000;
     private int audioChannels = 1;
     private File lastAudioFile;
@@ -429,7 +432,8 @@ public class MainActivity extends Activity {
         setError("");
         if (remoteMode) {
             if (!requireServer()) return;
-            synthesizeRemote(input);
+            if (streamMode) synthesizeRemoteStream(input);
+            else synthesizeRemote(input);
             return;
         }
         if (streamMode) {
@@ -572,6 +576,120 @@ public class MainActivity extends Activity {
                 setBusy(false);
             }
         }, "vifasttts-stream").start();
+    }
+
+    private void synthesizeRemoteStream(String input) {
+        final String base = baseUrl();
+        setBusy(true);
+        setStatus("Đang stream remote…");
+        new Thread(() -> {
+            AudioTrack track = null;
+            HttpURLConnection connection = null;
+            try {
+                String url = base.endsWith("/api/tts/stream")
+                        ? base
+                        : base.endsWith("/api/tts")
+                        ? base + "/stream"
+                        : base + "/api/tts/stream";
+                connection = open(url);
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                JSONObject body = new JSONObject();
+                body.put("text", input);
+                body.put("speed", speechSpeed);
+                body.put("alpha", sharpenAlpha);
+                body.put("max_chars", maxChars);
+                body.put("fixed_pauses", fixedPauses);
+                body.put("peak_normalize", peakNormalize);
+                body.put("dialect", dialect);
+                body.put("resolve_oov", resolveOov);
+                body.put("dictionary", dictionaryText);
+                byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
+                connection.setFixedLengthStreamingMode(payload.length);
+                try (OutputStream out = connection.getOutputStream()) {
+                    out.write(payload);
+                }
+                int code = connection.getResponseCode();
+                if (code < 200 || code >= 300) {
+                    String error = new String(readError(connection), StandardCharsets.UTF_8);
+                    throw new IllegalStateException("HTTP " + code + ": " + error);
+                }
+                int sampleRate = 24000;
+                int channelMask = AudioFormat.CHANNEL_OUT_MONO;
+                int minBuffer = AudioTrack.getMinBufferSize(
+                        sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT);
+                track = new AudioTrack.Builder()
+                        .setAudioAttributes(speechAudioAttributes())
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setSampleRate(sampleRate)
+                                .setChannelMask(channelMask)
+                                .build())
+                        .setTransferMode(AudioTrack.MODE_STREAM)
+                        .setBufferSizeInBytes(Math.max(minBuffer * 4, sampleRate * 2 * 2))
+                        .build();
+                if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+                    throw new IllegalStateException("AudioTrack stream chưa khởi tạo");
+                }
+                track.play();
+                final AudioTrack streamTrack = track;
+                audioStopped = false;
+                audioTrack = track;
+                audioSampleRate = sampleRate;
+                audioChannels = 1;
+                streamConnection = connection;
+                requestAudioFocus();
+                runOnUiThread(() -> {
+                    stopButton.setEnabled(true);
+                    if (saveButton != null) saveButton.setEnabled(false);
+                    stopKaraoke();
+                });
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        connection.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while (!audioStopped && (line = reader.readLine()) != null) {
+                        if (line.trim().isEmpty()) continue;
+                        JSONObject event = new JSONObject(line);
+                        String type = event.optString("type", "");
+                        if ("audio".equals(type)) {
+                            byte[] raw = Base64.decode(event.optString("pcm_base64", ""),
+                                    Base64.DEFAULT);
+                            short[] pcm = new short[raw.length / 2];
+                            for (int index = 0; index < pcm.length; index += 1) {
+                                int low = raw[index * 2] & 0xff;
+                                int high = raw[index * 2 + 1] << 8;
+                                pcm[index] = (short) (low | high);
+                            }
+                            int written = streamTrack.write(pcm, 0, pcm.length,
+                                    AudioTrack.WRITE_BLOCKING);
+                            if (written < 0) throw new IllegalStateException("AudioTrack write lỗi");
+                        } else if ("error".equals(type)) {
+                            throw new IllegalStateException(event.optString("message", "server stream lỗi"));
+                        }
+                    }
+                }
+                setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote");
+            } catch (Throwable error) {
+                setStatus("Lỗi stream remote: " + error.getMessage());
+                setError(error.getMessage());
+            } finally {
+                if (track != null) {
+                    if (audioTrack == track) audioTrack = null;
+                    try {
+                        track.stop();
+                    } catch (Throwable ignored) {
+                        // Có thể đã stop từ UI.
+                    }
+                    track.release();
+                }
+                if (connection != null) connection.disconnect();
+                streamConnection = null;
+                runOnUiThread(() -> stopButton.setEnabled(false));
+                abandonAudioFocus();
+                setBusy(false);
+            }
+        }, "vifasttts-remote-stream").start();
     }
 
     private void synthesizeRemote(String input) {
@@ -777,6 +895,14 @@ public class MainActivity extends Activity {
 
     private void stopAudioPath() {
         audioStopped = true;
+        if (streamConnection != null) {
+            try {
+                streamConnection.disconnect();
+            } catch (Throwable ignored) {
+                // Kết nối có thể đã đóng.
+            }
+            streamConnection = null;
+        }
         if (audioTrack != null) {
             try {
                 audioTrack.pause();
