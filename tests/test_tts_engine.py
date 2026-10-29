@@ -72,6 +72,11 @@ def test_full_synthesis_returns_wav_and_units() -> None:
     assert result.audio_seconds > 0
 
 
+def test_full_peak_normalize_is_supported() -> None:
+    result = engine().synthesize("Chào bạn", TtsSettings(peak_normalize=True))
+    assert result.wav[:4] == b"RIFF"
+
+
 def test_stream_rejects_peak_normalize() -> None:
     with pytest.raises(ValueError, match="peak_normalize"):
         list(engine().iter_chunks("Chào bạn", TtsSettings(peak_normalize=True)))

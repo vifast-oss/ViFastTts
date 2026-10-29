@@ -21,7 +21,7 @@ import io
 import time
 import wave
 from collections.abc import Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import numpy as np
@@ -297,7 +297,9 @@ class OnnxTtsEngine:
         started = time.perf_counter()
         pieces: list[np.ndarray] = []
         units: list[dict] = []
-        for chunk in self.iter_chunks(text, settings, normalizer=normalizer):
+        # Stream không peak-normalize; full áp postprocess sau khi ghép toàn file.
+        chunk_settings = replace(settings, peak_normalize=False)
+        for chunk in self.iter_chunks(text, chunk_settings, normalizer=normalizer):
             if chunk.samples.size:
                 pieces.append(chunk.samples)
             units.extend(chunk.units)
