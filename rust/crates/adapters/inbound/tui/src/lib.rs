@@ -925,7 +925,11 @@ fn draw(frame: &mut Frame, app: &App) {
             app.mode,
             app.speed,
             app.alpha,
-            if app.fixed_pauses { "fixed" } else { "model pause" },
+            if app.fixed_pauses {
+                "fixed"
+            } else {
+                "model pause"
+            },
             app.dialect,
             app.input.chars().count()
         )),
@@ -1013,12 +1017,19 @@ fn draw_settings(frame: &mut Frame, app: &App) {
             if app.resolve_oov { "bật" } else { "tắt" }
         )),
         Line::from(format!("Phương ngữ      {}      d", app.dialect)),
-        Line::from(format!("Từ điển         {} quy tắc (--dictionary)", app.dictionary.len())),
+        Line::from(format!(
+            "Từ điển         {} quy tắc (--dictionary)",
+            app.dictionary.len()
+        )),
         Line::from(""),
         Line::from("Esc/Ctrl+P đóng · Ctrl+S đọc với cấu hình này"),
     ];
     let block = Paragraph::new(lines)
-        .block(Block::default().borders(Borders::ALL).title("Cài đặt âm thanh · Ctrl+P"))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Cài đặt âm thanh · Ctrl+P"),
+        )
         .wrap(Wrap { trim: true });
     frame.render_widget(block, popup);
 }
