@@ -4,9 +4,10 @@
 > extension, Android, iOS và Python demo; tách khỏi UI để lần sau thêm tính năng
 > không phải sửa 6–8 nơi.
 >
-> Trạng thái: **audit + phase 1**. Phase 1 đã tách hợp đồng settings/ETA/từ điển/
-> sample text vào `vifasttts-app`, expose qua FFI/WASM; Android đã dùng lại ETA,
-> từ điển và sample thay vì tự tính/khai báo.
+> Trạng thái: **audit + phase 1 + phase 2**. Phase 1 tách hợp đồng settings/ETA/
+> từ điển/sample vào `vifasttts-app`, expose qua FFI/WASM. Phase 2 nối các UI
+> web/extension/iOS/desktop/Android/TUI vào cùng defaults/sample/ETA; phase 5
+> tách helper DOM/karaoke dùng chung.
 
 ## 0. Kết luận ngắn
 
@@ -153,6 +154,22 @@ Tất cả trả JSON UTF-8; giải phóng bằng `vifasttts_string_free`; lỗi
   `settings_defaults_json` và normalize trước khi lưu.
 - Model catalog/DTO/stream WAV chưa tách.
 
+### 4.5. Phase 2 — nối UI vào hợp đồng
+
+- **iOS**: `SharedContract.swift` đọc `sample_texts_json("ios")`, ETA qua
+  `vifasttts_eta_estimate_json`, lịch sử lưu `UserDefaults`; `ContentView` có
+  nút lịch sử, status ETA và record sau mỗi lần đọc.
+- **Desktop**: bỏ dùng field rời `dialect/peak_normalize/resolve_oov`; UI và
+  synth đọc `settings.app.*`; `load_settings` migrate field cũ.
+- **Android**: defaults đọc từ `vifasttts_settings_defaults_json`; sample/ETA/
+  từ điển vẫn qua FFI.
+- **Web/extension**: `web/shared/settings.js` là nguồn default/normalize chung;
+  extension build copy; web `localStorage` dùng normalize.
+- **TUI/CLI/desktop**: default sample lấy `default_text(platform)`; CLI synth
+  resolve OOV default true.
+- **JS UI core**: `web/shared/ui-core.js` gom render karaoke, highlight,
+  base64, download text; web + extension dùng chung.
+
 ## 5. Thiết kế đích
 
 ### 5.1. Ranh giới
@@ -218,11 +235,11 @@ Hợp đồng HTTP nên có JSON schema/OpenAPI:
 | Phase | Việc | Cổng kiểm |
 |---|---|---|
 | **1 (xong)** | `contracts.rs`, FFI/WASM JSON, Android ETA/dictionary/sample | `cargo test -p vifasttts-app -p vifasttts-ffi -p vifasttts-browser`; Android build + màn hình |
-| **2** | iOS/web/extension đọc defaults/sample; Android đọc defaults; thống nhất `resolve_oov`/`max_chars` | test contract; so screenshot/behavior 3 UI; không đổi audio |
+| **2 (xong)** | iOS/web/extension đọc defaults/sample; Android đọc defaults; desktop dùng `AppSettings`; TUI/CLI sample/default | `cargo test`; web/extension build; iOS build; Android build |
 | **3** | Model catalog qua Rust/FFI; bỏ URL builder Java/Swift; JS dùng chung `ModelApi` | search/files/download trên HF thật; lỗi mạng; hash bundle |
 | **4** | `StreamSession` + WAV writer; Android/iOS/CLI/TUI dùng; stream SRT nếu có timing | test file WAV header/duration; tail drain; so full vs stream |
-| **5** | JS `ui-core` (settings/history/model browser/karaoke); desktop/TUI `ModelBrowserState` | web/extension parity; TUI/desktop model flow |
-| **6** | FFI `custom_reading`; generated DTO/schema; string/theme tokens | Android/iOS custom reading; OpenAPI diff |
+| **5 (một phần)** | JS `settings.js` + `ui-core.js` (karaoke/export/base64) dùng chung web/extension; model browser state để sau | web/extension build; Node parse; UI smoke |
+| **6 (một phần)** | FFI `custom_reading` đã có; `docs/API_CONTRACT.md`; string/theme tokens để sau | Android/iOS custom reading; contract doc |
 
 ### Điều kiện dừng/ba nhánh cho mỗi phase
 

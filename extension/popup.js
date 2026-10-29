@@ -1,25 +1,15 @@
 // Popup UI: đọc text, đọc cả trang, cấu hình local/remote/cách bôi đen.
 import { ModelApi, bundleFiles, normalizeServerBase } from './shared/model-api.js';
+import { DEFAULT_SETTINGS, HISTORY_KEY, normalizeSettings } from './shared/settings.js';
+import {
+  appendKaraokeUnits,
+  base64ToBytes,
+  downloadText,
+  renderKaraoke,
+  updateKaraokeHighlight,
+} from './shared/ui-core.js';
 
-const DEFAULTS = {
-  mode: 'local',
-  serverUrl: 'http://127.0.0.1:8000',
-  token: '',
-  modelBaseUrl: '',
-  bundleKey: '',
-  bundleName: '',
-  selectionAction: 'hidden',
-  dictionary: '',
-  stream: false,
-  directModels: false,
-  alpha: 1.5,
-  maxChars: 300,
-  peakNormalize: false,
-  dialect: 'north',
-  resolveOov: true,
-};
-
-const HISTORY_KEY = 'vifasttts_history_v1';
+const DEFAULTS = DEFAULT_SETTINGS;
 
 const $ = (id) => document.getElementById(id);
 const modeEl = $('mode');
@@ -109,7 +99,7 @@ async function estimateFor(mode, chars) {
 }
 
 function saveSettings() {
-  chrome.storage.local.set({
+  chrome.storage.local.set(normalizeSettings({
     mode: modeEl.value,
     serverUrl: serverUrlEl.value.trim(),
     token: tokenEl.value,
@@ -127,11 +117,11 @@ function saveSettings() {
     peakNormalize: peakNormalizeEl.checked,
     dialect: dialectEl.value,
     resolveOov: resolveOovEl.checked,
-  });
+  }));
 }
 
 async function loadSettings() {
-  const settings = await chrome.storage.local.get(DEFAULTS);
+  const settings = normalizeSettings(await chrome.storage.local.get(DEFAULTS));
   modeEl.value = settings.mode === 'remote' ? 'remote' : 'local';
   serverUrlEl.value = settings.serverUrl || DEFAULTS.serverUrl;
   tokenEl.value = settings.token || '';
@@ -160,17 +150,8 @@ async function loadSettings() {
   setModeFields();
 }
 
-function base64ToArrayBuffer(base64) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes.buffer;
-}
-
 function makeAudioUrlFromBase64(base64) {
-  return URL.createObjectURL(new Blob([base64ToArrayBuffer(base64)], { type: 'audio/wav' }));
+  return URL.createObjectURL(new Blob([base64ToBytes(base64)], { type: 'audio/wav' }));
 }
 
 function revokeOldUrl() {
@@ -321,39 +302,6 @@ async function resetLocal() {
   }
 }
 
-function renderKaraoke(document_) {
-  karaokeEl.textContent = '';
-  if (!document_?.lines?.length) return;
-  for (const line of document_.lines) {
-    const lineEl = document.createElement('div');
-    for (const unit of line.units) {
-      const span = document.createElement('span');
-      span.textContent = `${unit.text}${unit.punctuation || ''} `;
-      span.dataset.start = unit.start_ms;
-      span.dataset.end = unit.end_ms;
-      lineEl.appendChild(span);
-    }
-    karaokeEl.appendChild(lineEl);
-  }
-}
-
-function setSubtitle(result) {
-  currentSrt = result.srt || '';
-  currentVtt = result.vtt || result.vtt_karaoke || '';
-  srtEl.textContent = currentSrt;
-}
-
-function appendStreamUnits(units) {
-  if (!Array.isArray(units)) return;
-  for (const unit of units) {
-    const span = document.createElement('span');
-    span.textContent = `${unit.text}${unit.punctuation || ''} `;
-    span.dataset.start = unit.start_ms;
-    span.dataset.end = unit.end_ms;
-    karaokeEl.appendChild(span);
-  }
-}
-
 async function playResult(result) {
   revokeOldUrl();
   currentAudioUrl = result.audio_url || null;
@@ -431,7 +379,7 @@ async function run() {
       throw new Error(response?.error || 'Không tổng hợp được');
     }
     const result = response.result;
-    renderKaraoke(result.karaoke);
+    renderKaraoke(karaokeEl, result.karaoke);
     setSubtitle(result);
     if (streaming) {
       playerEl.classList.remove('hidden');
@@ -490,16 +438,6 @@ async function readPage() {
   }
 }
 
-function downloadText(text, filename, mime) {
-  if (!text) return;
-  const url = URL.createObjectURL(new Blob([text], { type: mime }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 async function takePendingText() {
   const pending = await chrome.storage.session.get({
     pendingText: '',
@@ -511,12 +449,7 @@ async function takePendingText() {
 }
 
 audioEl.addEventListener('timeupdate', () => {
-  const ms = audioEl.currentTime * 1000;
-  for (const span of karaokeEl.querySelectorAll('span')) {
-    const start = Number(span.dataset.start);
-    const end = Number(span.dataset.end);
-    span.classList.toggle('active', ms >= start && ms < end);
-  }
+  updateKaraokeHighlight(karaokeEl, audioEl.currentTime * 1000);
 });
 
 modeEl.addEventListener('change', () => {
@@ -609,7 +542,7 @@ chrome.runtime.onMessage.addListener((message) => {
     const kind = /lỗi/i.test(text) ? 'err' : /xong|đã đọc/i.test(text) ? 'ok' : 'busy';
     setStatus(text, kind);
   } else if (message.type === 'stream-units') {
-    appendStreamUnits(message.units);
+    appendKaraokeUnits(karaokeEl, message.units);
   } else if (message.type === 'stream-progress' && runEl.disabled) {
     setStatus(`Đang phát ${Number(message.audio_seconds || 0).toFixed(1)} s…`, 'busy');
   }

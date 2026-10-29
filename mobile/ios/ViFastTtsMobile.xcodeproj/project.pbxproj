@@ -15,6 +15,7 @@
 		597479704D42FC34E20B9DDD /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1B046763A40988F96E4876 /* ModelCatalog.swift */; };
 		62178DBF47BDCBB06FC42CF9 /* BeVietnamPro-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 134D786267A4EEF22C1F81CD /* BeVietnamPro-OFL.txt */; };
 		6ED99C445267E60E6E7027CA /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB54F86F96D14E02C1ECE066 /* Theme.swift */; };
+		7CB64DB548D46C2CF39F6122 /* SharedContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DBCE9BC962348C0D8E9BA97 /* SharedContract.swift */; };
 		834CC4F359BB7B5D42D35E7A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B760FF6380734375480A1CF6 /* ContentView.swift */; };
 		8393CAB714E4479A3166BE57 /* BeVietnamPro-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C7B21F84A687AF5A373FB6C9 /* BeVietnamPro-Regular.ttf */; };
 		933D5181840B94DF8ACE3AA5 /* acoustic.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 882F8B80EEA3585A91ADC603 /* acoustic.onnx */; };
@@ -26,6 +27,7 @@
 		0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ViFastTtsMobile-Bridging-Header.h"; sourceTree = "<group>"; };
 		134D786267A4EEF22C1F81CD /* BeVietnamPro-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "BeVietnamPro-OFL.txt"; sourceTree = "<group>"; };
 		1C1B046763A40988F96E4876 /* ModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalog.swift; sourceTree = "<group>"; };
+		4DBCE9BC962348C0D8E9BA97 /* SharedContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedContract.swift; sourceTree = "<group>"; };
 		70D80C404B0E4CF0F475A7C5 /* vocoder.onnx */ = {isa = PBXFileReference; path = vocoder.onnx; sourceTree = "<group>"; };
 		72172E92AB370DE14DC3C667 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		84444AA436CA56193774EDC5 /* ModelBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelBrowserView.swift; sourceTree = "<group>"; };
@@ -61,6 +63,7 @@
 				84444AA436CA56193774EDC5 /* ModelBrowserView.swift */,
 				1C1B046763A40988F96E4876 /* ModelCatalog.swift */,
 				C98C311ED8675C1F3CCB39F3 /* RemoteTts.swift */,
+				4DBCE9BC962348C0D8E9BA97 /* SharedContract.swift */,
 				EB54F86F96D14E02C1ECE066 /* Theme.swift */,
 				B5430608CBB478CB7841A3CD /* TtsEngine.swift */,
 				0B36A3719F1924F6E563C96F /* ViFastTtsMobile-Bridging-Header.h */,
@@ -165,6 +168,7 @@
 				0F060A7455876E9320A97CF9 /* ModelBrowserView.swift in Sources */,
 				597479704D42FC34E20B9DDD /* ModelCatalog.swift in Sources */,
 				54533A854341B273073DF57F /* RemoteTts.swift in Sources */,
+				7CB64DB548D46C2CF39F6122 /* SharedContract.swift in Sources */,
 				6ED99C445267E60E6E7027CA /* Theme.swift in Sources */,
 				58BEFC72D97646F04C0A2DE3 /* TtsEngine.swift in Sources */,
 			);

@@ -127,6 +127,7 @@ public class MainActivity extends Activity {
                                             int maxSamples);
         Pointer vifasttts_dictionary_json(String dictionary);
         Pointer vifasttts_sample_texts_json(String platform);
+        Pointer vifasttts_settings_defaults_json();
         void vifasttts_string_free(Pointer value);
         void vifasttts_buffer_free(Pointer ptr, NativeLong len);
         String vifasttts_last_error();
@@ -464,6 +465,20 @@ public class MainActivity extends Activity {
             stopButton.setEnabled(false);
             stopKaraoke();
         });
+    }
+
+    private JSONObject loadSharedDefaults() {
+        if (ffi == null) return new JSONObject();
+        Pointer value = null;
+        try {
+            value = ffi.vifasttts_settings_defaults_json();
+            if (value == null) return new JSONObject();
+            return new JSONObject(value.getString(0, "UTF-8"));
+        } catch (Throwable ignored) {
+            return new JSONObject();
+        } finally {
+            if (value != null) ffi.vifasttts_string_free(value);
+        }
     }
 
     private void loadSharedSamples(String platform) {
@@ -2338,30 +2353,40 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        activeModelPath = prefs.getString(KEY_ACTIVE_MODEL, "");
-        activeAcousticPath = prefs.getString(KEY_ACTIVE_ACOUSTIC, "");
-        activeVocoderPath = prefs.getString(KEY_ACTIVE_VOCODER, "");
-        mode = prefs.getString(KEY_MODE, "local");
-        speechSpeed = prefs.getFloat(KEY_SPEED, 1.0f);
-        sharpenAlpha = prefs.getFloat(KEY_ALPHA, 1.5f);
-        maxChars = prefs.getInt(KEY_MAX_CHARS, 300);
-        fixedPauses = prefs.getBoolean(KEY_FIXED_PAUSES, false);
-        peakNormalize = prefs.getBoolean(KEY_PEAK_NORMALIZE, false);
-        dialect = prefs.getString(KEY_DIALECT, "north");
-        resolveOov = prefs.getBoolean(KEY_RESOLVE_OOV, true);
-        dictionaryText = prefs.getString(KEY_DICTIONARY, "");
-        customReadingText = prefs.getString(KEY_CUSTOM_READING, "");
-        autoPlay = prefs.getBoolean(KEY_AUTO_PLAY, true);
-        outputTreeUri = prefs.getString(KEY_OUTPUT_TREE, "");
-        streamMode = prefs.getBoolean(KEY_STREAM, false);
-        streamSaveWav = prefs.getBoolean(KEY_STREAM_SAVE_WAV, true);
-        loadHistory();
         try {
             ensureFfi();
             loadSharedSamples("android");
         } catch (Throwable ignored) {
             // Model/synth sẽ báo lỗi rõ hơn khi thực sự chạy.
         }
+        JSONObject sharedDefaults = loadSharedDefaults();
+        activeModelPath = prefs.getString(KEY_ACTIVE_MODEL, "");
+        activeAcousticPath = prefs.getString(KEY_ACTIVE_ACOUSTIC, "");
+        activeVocoderPath = prefs.getString(KEY_ACTIVE_VOCODER, "");
+        mode = prefs.getString(KEY_MODE, "local");
+        speechSpeed = prefs.getFloat(KEY_SPEED,
+                (float) sharedDefaults.optDouble("speed", 1.0));
+        sharpenAlpha = prefs.getFloat(KEY_ALPHA,
+                (float) sharedDefaults.optDouble("alpha", 1.5));
+        maxChars = prefs.getInt(KEY_MAX_CHARS,
+                sharedDefaults.optInt("max_chars", 300));
+        fixedPauses = prefs.getBoolean(KEY_FIXED_PAUSES,
+                sharedDefaults.optBoolean("fixed_pauses", false));
+        peakNormalize = prefs.getBoolean(KEY_PEAK_NORMALIZE,
+                sharedDefaults.optBoolean("peak_normalize", false));
+        dialect = prefs.getString(KEY_DIALECT,
+                sharedDefaults.optString("dialect", "north"));
+        resolveOov = prefs.getBoolean(KEY_RESOLVE_OOV,
+                sharedDefaults.optBoolean("resolve_oov", true));
+        dictionaryText = prefs.getString(KEY_DICTIONARY,
+                sharedDefaults.optString("dictionary", ""));
+        customReadingText = prefs.getString(KEY_CUSTOM_READING, "");
+        autoPlay = prefs.getBoolean(KEY_AUTO_PLAY, true);
+        outputTreeUri = prefs.getString(KEY_OUTPUT_TREE, "");
+        streamMode = prefs.getBoolean(KEY_STREAM,
+                sharedDefaults.optBoolean("stream", false));
+        streamSaveWav = prefs.getBoolean(KEY_STREAM_SAVE_WAV, true);
+        loadHistory();
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);

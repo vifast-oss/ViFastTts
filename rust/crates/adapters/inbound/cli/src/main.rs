@@ -139,7 +139,7 @@ enum Command {
         fixed_pauses: bool,
         #[arg(long)]
         peak_normalize: bool,
-        #[arg(long)]
+        #[arg(long, default_value_t = true)]
         resolve_oov: bool,
         #[arg(long, default_value = "north")]
         dialect: String,

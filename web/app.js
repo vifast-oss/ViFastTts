@@ -4,6 +4,8 @@ import init, { dictionary_json, synthesize_full, karaoke_to_srt, karaoke_to_vtt 
 import { unzipSync, strFromU8 } from 'fflate';
 import { sha256 } from 'js-sha256';
 import { ModelApi, bundleFiles, normalizeServerBase } from './shared/model-api.js';
+import { SETTINGS_KEY, normalizeSettings } from './shared/settings.js';
+import { base64ToBytes, renderKaraoke, updateKaraokeHighlight } from './shared/ui-core.js';
 
 const statusEl = document.getElementById('status');
 const runEl = document.getElementById('run');
@@ -87,13 +89,6 @@ function setDownload(link, text, type) {
 
 function setModeFields() {
   remoteFields.classList.toggle('hidden', modeEl.value !== 'remote');
-}
-
-function base64ToBytes(base64) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes;
 }
 
 function playBytes(bytes) {
@@ -223,7 +218,7 @@ async function runLocal(text) {
   const result = await synthesize_full(text, JSON.stringify(options), acoustic, vocoder);
   await playBytes(new Uint8Array(result.wav));
   document_ = result.karaoke;
-  renderKaraoke(document_);
+  renderKaraoke(karaokeEl, document_);
   const srt = document_ ? await karaoke_to_srt(document_) : '';
   const vtt = document_ ? await karaoke_to_vtt(document_) : '';
   srtEl.textContent = srt;
@@ -256,7 +251,7 @@ async function runRemote(text) {
   if (!result.audio_base64) throw new Error('Server không trả audio_base64');
   await playBytes(base64ToBytes(result.audio_base64));
   document_ = result.karaoke;
-  renderKaraoke(document_);
+  renderKaraoke(karaokeEl, document_);
   const srt = result.srt || (document_ ? await karaoke_to_srt(document_) : '');
   const vtt = result.vtt || result.vtt_karaoke || '';
   srtEl.textContent = srt;
@@ -343,30 +338,9 @@ async function run() {
   }
 }
 
-function renderKaraoke(doc) {
-  karaokeEl.innerHTML = '';
-  if (!doc?.lines?.length) return;
-  for (const line of doc.lines) {
-    const lineEl = document.createElement('div');
-    for (const unit of line.units) {
-      const span = document.createElement('span');
-      span.textContent = `${unit.text}${unit.punctuation || ''} `;
-      span.dataset.start = unit.start_ms;
-      span.dataset.end = unit.end_ms;
-      lineEl.appendChild(span);
-    }
-    karaokeEl.appendChild(lineEl);
-  }
-}
-
 audioEl.addEventListener('timeupdate', () => {
   if (!document_) return;
-  const ms = audioEl.currentTime * 1000;
-  for (const span of karaokeEl.querySelectorAll('span')) {
-    const start = Number(span.dataset.start);
-    const end = Number(span.dataset.end);
-    span.classList.toggle('active', ms >= start && ms < end);
-  }
+  updateKaraokeHighlight(karaokeEl, audioEl.currentTime * 1000);
 });
 
 speedEl.addEventListener('input', () => {
@@ -392,21 +366,41 @@ modelFileEl.addEventListener('change', async () => {
   }
 });
 runEl.addEventListener('click', run);
-const saved = JSON.parse(localStorage.getItem('vifasttts.web.settings') || '{}');
-for (const [id, value] of Object.entries(saved)) {
-  const element = document.getElementById(id);
-  if (!element) continue;
-  if (element.type === 'checkbox') element.checked = Boolean(value);
-  else element.value = value;
-}
+const savedRaw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+const saved = normalizeSettings({
+  ...savedRaw,
+  fixedPauses: savedRaw.fixedPauses ?? savedRaw.fixed,
+  peakNormalize: savedRaw.peakNormalize ?? savedRaw.peak,
+});
+modeEl.value = saved.mode;
+serverUrlEl.value = saved.serverUrl;
+tokenEl.value = saved.token;
+speedEl.value = saved.speed;
+alphaEl.value = saved.alpha;
+maxCharsEl.value = saved.maxChars;
+fixedEl.checked = saved.fixedPauses;
+peakEl.checked = saved.peakNormalize;
+resolveOovEl.checked = saved.resolveOov;
+dialectEl.value = saved.dialect;
+dictionaryEl.value = saved.dictionary;
+if (directModelsEl) directModelsEl.checked = saved.directModels;
 for (const element of [speedEl, alphaEl, fixedEl, peakEl, resolveOovEl, dialectEl, maxCharsEl, dictionaryEl]) {
   element.addEventListener('change', () => {
-    const values = {};
-    for (const id of ['speed', 'alpha', 'fixed', 'peak', 'resolveOov', 'dialect', 'maxChars', 'dictionary', 'directModels']) {
-      const item = document.getElementById(id);
-      values[id] = item.type === 'checkbox' ? item.checked : item.value;
-    }
-    localStorage.setItem('vifasttts.web.settings', JSON.stringify(values));
+    const values = normalizeSettings({
+      mode: modeEl.value,
+      serverUrl: serverUrlEl.value,
+      token: tokenEl.value,
+      speed: Number(speedEl.value),
+      alpha: Number(alphaEl.value),
+      maxChars: Number(maxCharsEl.value),
+      fixedPauses: fixedEl.checked,
+      peakNormalize: peakEl.checked,
+      resolveOov: resolveOovEl.checked,
+      dialect: dialectEl.value,
+      dictionary: dictionaryEl.value,
+      directModels: Boolean(directModelsEl?.checked),
+    });
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(values));
   });
 }
 speedValueEl.textContent = `${Number(speedEl.value).toFixed(2)}×`;

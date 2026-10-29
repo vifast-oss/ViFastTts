@@ -2,7 +2,7 @@ import AVFoundation
 import SwiftUI
 
 struct ContentView: View {
-    @State private var text = "Xin chào, đây là bản iOS của ViFastTts."
+    @State private var text = SharedContract.defaultText(platform: "ios")
     @State private var status = "Sẵn sàng"
     @State private var busy = false
     @State private var error: String?
@@ -28,15 +28,13 @@ struct ContentView: View {
     @AppStorage("vifasttts.dialect") private var dialect = "north"
     @AppStorage("vifasttts.resolveOov") private var resolveOov = true
     @AppStorage("vifasttts.dictionary") private var dictionary = ""
+    @State private var history = SharedContract.loadHistory()
+    @State private var showHistory = false
     @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 14) {
-                Text("ViFastTts Mobile")
-                    .font(VFTheme.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(VFTheme.ink)
                 Text(mode == "remote" ? "Remote HTTP · server API" : "Local ONNX · Rust C ABI")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -65,7 +63,7 @@ struct ContentView: View {
                     .font(VFTheme.body)
                     .foregroundStyle(VFTheme.ink)
                     .scrollContentBackground(.hidden)
-                    .frame(minHeight: 180)
+                    .frame(minHeight: 180, maxHeight: 280)
                     .padding(8)
                     .background(VFTheme.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -149,6 +147,14 @@ struct ContentView: View {
             .padding()
             .background(VFTheme.background.ignoresSafeArea())
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .disabled(history.isEmpty)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if let lastAudioURL {
                         Menu {
@@ -200,6 +206,14 @@ struct ContentView: View {
                     dictionary: $dictionary
                 )
             }
+            .sheet(isPresented: $showHistory) {
+                HistoryView(history: history) { sample in
+                    if let value = sample.text, !value.isEmpty {
+                        text = value
+                    }
+                    showHistory = false
+                }
+            }
             .onChange(of: mode) { value in
                 status = value == "remote" ? "Remote: nhập server URL" : "Local: sẵn sàng"
             }
@@ -208,6 +222,7 @@ struct ContentView: View {
                 if serverURL == "http://127.0.0.1:8000" || serverURL == "http://localhost:8000" {
                     serverURL = ""
                 }
+                history = SharedContract.loadHistory()
                 runAutoTestIfNeeded()
             }
         }
@@ -247,7 +262,10 @@ struct ContentView: View {
         error = nil
         karaokeUnits = []
         timingSummary = ""
-        status = mode == "remote" ? "Đang gọi server…" : "Đang tổng hợp local…"
+        let estimate = SharedContract.eta(history: history, mode: mode, chars: input.count)
+        let estimateText = estimate.map { String(format: " · ước tính ~%.1fs", Double($0) / 1000.0) } ?? ""
+        status = (mode == "remote" ? "Đang gọi server…" : "Đang tổng hợp local…") + estimateText
+        let startedAt = Date()
         Task {
             do {
                 let result: TtsResult
@@ -301,6 +319,12 @@ struct ContentView: View {
                     ? "Không có timing/karaoke"
                     : "Có phụ đề SRT + VTT"
                 status = String(format: mode == "remote" ? "Xong remote · %.2f s" : "Xong local · %.2f s", audio.duration)
+                history = SharedContract.record(
+                    mode: mode,
+                    chars: input.count,
+                    elapsedMs: Int(Date().timeIntervalSince(startedAt) * 1000),
+                    text: input
+                )
             } catch {
                 self.error = error.localizedDescription
                 status = "Tổng hợp lỗi"
@@ -377,6 +401,47 @@ private struct SettingsView: View {
             .tint(VFTheme.accent)
             .font(VFTheme.body)
             .navigationTitle("Cấu hình")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Xong") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+
+private struct HistoryView: View {
+    let history: [EtaSample]
+    let onSelect: (EtaSample) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(Array(history.reversed().enumerated()), id: \.offset) { _, sample in
+                    Button {
+                        onSelect(sample)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(sample.text?.isEmpty == false ? sample.text! : "\(sample.chars) ký tự")
+                                .lineLimit(2)
+                                .foregroundStyle(VFTheme.ink)
+                            Text(String(
+                                format: "%@ · %d ký tự · %.1fs",
+                                sample.mode,
+                                sample.chars,
+                                Double(sample.elapsed_ms) / 1000
+                            ))
+                            .font(.caption)
+                            .foregroundStyle(VFTheme.muted)
+                        }
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(VFTheme.background.ignoresSafeArea())
+            .navigationTitle("Lịch sử đọc")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Xong") { dismiss() }

@@ -19,7 +19,7 @@ use rodio::{Decoder, OutputStream, OutputStreamBuilder, Sink};
 use serde::{Deserialize, Serialize};
 
 use vifasttts_app::{
-    AppSettings, Dictionary, EtaEstimator, EtaSample, SynthesisMode, parse_dictionary,
+    AppSettings, Dictionary, EtaEstimator, EtaSample, SynthesisMode, default_text, parse_dictionary,
 };
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_native::{
@@ -160,17 +160,14 @@ struct DesktopSettings {
 impl Default for DesktopSettings {
     fn default() -> Self {
         Self {
-            app: AppSettings {
-                max_chars: 300,
-                ..AppSettings::default()
-            },
+            app: AppSettings::default(),
             acoustic_path: DEFAULT_ACOUSTIC.to_string(),
             vocoder_path: DEFAULT_VOCODER.to_string(),
             vfts_path: String::new(),
             vfa_path: String::new(),
             dialect: "north".to_string(),
             peak_normalize: false,
-            resolve_oov: false,
+            resolve_oov: true,
             auto_play: true,
             output_dir: default_output_dir(),
             server_port: 8000,
@@ -251,6 +248,17 @@ fn load_settings() -> DesktopSettings {
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok())
         .unwrap_or_default();
+    // Migrate field cũ (dialect/peak/resolve nằm ngoài `app`) sang AppSettings.
+    if settings.app.dialect == "north" && settings.dialect != "north" {
+        settings.app.dialect = settings.dialect.clone();
+    }
+    if !settings.app.peak_normalize && settings.peak_normalize {
+        settings.app.peak_normalize = true;
+    }
+    if settings.app.resolve_oov && !settings.resolve_oov {
+        settings.app.resolve_oov = false;
+    }
+    settings.app = settings.app.normalized();
     // Hiện đúng file sẽ nạp: path repo/bundle được đổi sang vị trí thật trên máy.
     settings.acoustic_path = resolve_model_path(&settings.acoustic_path)
         .display()
@@ -262,6 +270,11 @@ fn load_settings() -> DesktopSettings {
 }
 
 fn save_settings(settings: &DesktopSettings) {
+    let mut settings = settings.clone();
+    settings.dialect = settings.app.dialect.clone();
+    settings.peak_normalize = settings.app.peak_normalize;
+    settings.resolve_oov = settings.app.resolve_oov;
+    let settings = &settings;
     let path = settings_path();
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -595,7 +608,7 @@ impl DesktopApp {
         let dictionary = parse_dictionary(&dictionary_source);
 
         Self {
-            input: "Xin chào, đây là bản desktop local-first của ViFastTts.".to_string(),
+            input: default_text("desktop"),
             status: "Đang nạp model local…".to_string(),
             error: None,
             busy: false,
@@ -699,11 +712,11 @@ impl DesktopApp {
 
     fn make_options(&self) -> Result<SynthesisOptions, String> {
         self.settings.app.validate()?;
-        let dialect = Dialect::from_name(&self.settings.dialect)?;
+        let dialect = Dialect::from_name(&self.settings.app.dialect)?;
         let dictionary = parse_dictionary(&self.settings.app.dictionary);
         let overrides: HashMap<String, String> = dictionary.overrides().into_iter().collect();
         let mut parse = live_parse_options(dialect, Some(&overrides), None);
-        parse.resolve_oov = self.settings.resolve_oov;
+        parse.resolve_oov = self.settings.app.resolve_oov;
         let max_chars = if self.settings.app.max_chars == 0 {
             300
         } else {
@@ -714,7 +727,7 @@ impl DesktopApp {
             fixed_pauses: self.settings.app.fixed_pauses,
             alpha: self.settings.app.alpha,
             max_chars,
-            peak_normalize: self.settings.peak_normalize,
+            peak_normalize: self.settings.app.peak_normalize,
             parse,
             ..SynthesisOptions::default()
         };
@@ -1262,7 +1275,7 @@ impl DesktopApp {
             self.settings_dirty = true;
         }
         if ui
-            .checkbox(&mut self.settings.peak_normalize, "Peak normalize")
+            .checkbox(&mut self.settings.app.peak_normalize, "Peak normalize")
             .changed()
         {
             self.settings_dirty = true;
@@ -1283,7 +1296,7 @@ impl DesktopApp {
             }
         });
         egui::ComboBox::from_label("Phương ngữ")
-            .selected_text(match self.settings.dialect.as_str() {
+            .selected_text(match self.settings.app.dialect.as_str() {
                 "central" => "Trung",
                 "south" => "Nam",
                 _ => "Bắc",
@@ -1291,7 +1304,7 @@ impl DesktopApp {
             .show_ui(ui, |ui| {
                 for (value, label) in [("north", "Bắc"), ("central", "Trung"), ("south", "Nam")] {
                     if ui
-                        .selectable_value(&mut self.settings.dialect, value.to_string(), label)
+                        .selectable_value(&mut self.settings.app.dialect, value.to_string(), label)
                         .changed()
                     {
                         self.settings_dirty = true;
@@ -1299,7 +1312,7 @@ impl DesktopApp {
                 }
             });
         if ui
-            .checkbox(&mut self.settings.resolve_oov, "Resolve OOV")
+            .checkbox(&mut self.settings.app.resolve_oov, "Resolve OOV")
             .changed()
         {
             self.settings_dirty = true;

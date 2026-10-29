@@ -25,7 +25,7 @@ use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 use ratatui::{Frame, Terminal};
 
-use vifasttts_app::parse_dictionary;
+use vifasttts_app::{default_text, parse_dictionary};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
 use vifasttts_huggingface::{HfFile, HfModel};
 use vifasttts_model_manager::ModelManager;
@@ -109,7 +109,7 @@ fn load_bundle(path: &std::path::Path, vocoder: &std::path::Path) -> Result<Nati
 impl Default for TuiArgs {
     fn default() -> Self {
         Self {
-            text: "Xin chào, đây là bản TUI của ViFastTts.".to_string(),
+            text: default_text("tui"),
             output: PathBuf::from("out-tui.wav"),
             acoustic: default_model("acoustic.onnx"),
             vocoder: default_model("vocoder.onnx"),
