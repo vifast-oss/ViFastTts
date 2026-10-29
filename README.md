@@ -37,6 +37,28 @@ nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 Tất cả nằm trong [release v0.1.1](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.1).
 Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
 
+### Cài Chrome extension (Windows/macOS/Linux)
+
+Extension dùng model bundled nên **không cần Python/server** để đọc local.
+
+1. Tải [`vifasttts-extension.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-extension.zip)
+   (~80 MB) từ release `v0.1.1`.
+2. Chuột phải ZIP → **Extract All** để có một thư mục chứa `manifest.json`.
+3. Chrome: mở `chrome://extensions` → bật **Developer mode** → **Load unpacked**
+   → chọn thư mục vừa giải nén.
+4. Edge: mở `edge://extensions` → bật **Developer mode** → **Load unpacked**
+   → chọn cùng thư mục.
+5. Ghim icon ViFastTts lên thanh công cụ → bấm icon → nhập text → **Đọc**.
+
+Lưu ý:
+
+- Hiện extension **chưa có trên Chrome Web Store/Edge Add-ons**, nên phải
+  `Load unpacked`; khi store duyệt xong sẽ có link cài trực tiếp.
+- Chỉ tải ZIP từ GitHub Release chính thức; đừng tải từ nguồn lạ.
+- Local mode đọc bằng model bundled. Tìm/tải model HuggingFace trong extension
+  vẫn cần server `/api/models/*` (tùy chọn).
+- Hướng dẫn nộp store/kiểm tra quyền: `docs/EXTENSION_STORE.md`.
+
 ## Tìm model từ HuggingFace: bản nào cần server?
 
 | Ứng dụng | Cách tìm model | Cần bật server? |
