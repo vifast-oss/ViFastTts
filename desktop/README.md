@@ -60,7 +60,9 @@ rust/crates/adapters/inbound/desktop/package-windows.ps1
 
 Cả hai package chứa `models/acoustic.onnx`, `models/vocoder.onnx`,
 `libonnxruntime`/`onnxruntime.dll`, kèm `vifasttts` **unified CLI/TUI/server
-sidecar** và `web/` (từ `web/dist`); app tự tìm theo thư mục executable. GUI
+sidecar** và `web/` (từ `web/dist`); app tự tìm theo thư mục executable. Web
+local dùng chung model với desktop qua `/models/*`, không copy `web/models/`.
+GUI
 không mở TUI; TUI chỉ chạy khi gọi từ terminal. CI build cả ba nền tảng; macOS/Linux đã test
 smoke, Windows do CI test.
 

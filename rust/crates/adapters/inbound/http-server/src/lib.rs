@@ -471,6 +471,27 @@ impl TapAudio for Response {
     }
 }
 
+/// Phục vụ đúng acoustic/vocoder mà server đang dùng cho web local.
+/// Package chỉ giữ một bản model; web không cần copy `web/models/`.
+async fn model_asset(path: PathBuf) -> Response {
+    match tokio::fs::read(&path).await {
+        Ok(bytes) => (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "application/octet-stream"),
+                (header::CACHE_CONTROL, "public, max-age=3600"),
+            ],
+            bytes,
+        )
+            .into_response(),
+        Err(error) => (
+            StatusCode::NOT_FOUND,
+            format!("model {}: {error}", path.display()),
+        )
+            .into_response(),
+    }
+}
+
 /// Tìm web UI cạnh binary hoặc trong cwd khi không truyền `--web-dir`.
 /// Nhờ vậy package chỉ cần chép thư mục `web/` cạnh binary; chạy từ cwd khác
 /// vẫn phục vụ được.
@@ -490,6 +511,8 @@ fn default_web_dir() -> Option<PathBuf> {
 }
 
 pub async fn serve(args: Args) -> Result<(), String> {
+    let acoustic_asset = args.acoustic.clone();
+    let vocoder_asset = args.vocoder.clone();
     let engine = if let Some(path) = args.vfa {
         if args.vocoder.exists() {
             load_vfa(path, &args.vocoder)?
@@ -525,7 +548,18 @@ pub async fn serve(args: Args) -> Result<(), String> {
         && let Some(web_dir) = args.web_dir.or_else(default_web_dir)
     {
         if web_dir.is_dir() {
-            app = app.fallback_service(ServeDir::new(web_dir));
+            let acoustic = acoustic_asset.clone();
+            let vocoder = vocoder_asset.clone();
+            app = app
+                .route(
+                    "/models/acoustic.onnx",
+                    get(move || model_asset(acoustic.clone())),
+                )
+                .route(
+                    "/models/vocoder.onnx",
+                    get(move || model_asset(vocoder.clone())),
+                )
+                .fallback_service(ServeDir::new(web_dir));
         } else {
             return Err(format!("web-dir không tồn tại: {}", web_dir.display()));
         }

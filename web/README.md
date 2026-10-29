@@ -37,6 +37,11 @@ cp artifacts/onnx/n0_q/vocoder.onnx web/public/models/
 Model ~86 MB; lần đầu tải lâu. Không commit `web/public/models/`, `web/pkg/`,
 `web/node_modules/`, `web/public/ort/`.
 
+Khi web được server phục vụ, không cần `web/models/`: server trả
+`/models/acoustic.onnx` + `/models/vocoder.onnx` từ model đang nạp, nên package
+desktop/CLI chỉ giữ một bản model. `web-dist.tar.gz` standalone vẫn kèm
+`models/` để chạy static.
+
 ## Chế độ
 
 - **Local WASM**: mặc định, chạy model trong browser.

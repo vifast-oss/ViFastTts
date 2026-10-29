@@ -48,7 +48,11 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$APP/Contents/MacOS/vifasttts-desktop"
 cp "$ROOT/rust/target/release/vifasttts" "$APP/Contents/MacOS/vifasttts"
-if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then cp -R "$WEB_DIR" "$APP/Contents/MacOS/web"; fi
+if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then
+  cp -R "$WEB_DIR" "$APP/Contents/MacOS/web"
+  # Model đã nằm trong Resources; server phục vụ /models/*, không copy trùng.
+  rm -rf "$APP/Contents/MacOS/web/models"
+fi
 cp "$ORT_LIB" "$APP/Contents/MacOS/libonnxruntime.dylib"
 cp "$MODEL_DIR/acoustic.onnx" "$APP/Contents/Resources/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$APP/Contents/Resources/vocoder.onnx"

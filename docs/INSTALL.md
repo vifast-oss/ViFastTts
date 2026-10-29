@@ -73,6 +73,13 @@ Nếu chạy headless: `./vifasttts-desktop --smoke`.
 - Chạy server: `vifasttts server`; API-only: `--api-only`.
 - Package CLI/desktop đã kèm thư mục `web/`; server tự tìm `web/` cạnh binary
   (hoặc `web/dist` trong cwd) — không cần tải web riêng.
+- Package chỉ giữ **một bản model**: desktop dùng `Resources/`/`models/`, web
+  local lấy cùng file qua route `/models/acoustic.onnx` và `/models/vocoder.onnx`.
+  Bản `web-dist.tar.gz` standalone vẫn tự kèm `models/` để chạy static.
+- Model bundled trong app/APK vẫn là **raw ONNX** để tránh giải nén mỗi lần
+  khởi động. `.vfa`/`.vfts` là container để tải/chia sẻ/kiểm hash; server vẫn
+  hỗ trợ `--vfa/--vfts`, model browser tải bundle. Raw bundled không phải file
+  catalog người dùng tải.
 
 ```bash
 ./run.sh --host 127.0.0.1 --port 8000

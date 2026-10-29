@@ -40,7 +40,11 @@ rm -rf "$OUT"
 mkdir -p "$OUT/models"
 cp "$ROOT/rust/target/release/vifasttts-desktop" "$OUT/vifasttts-desktop"
 cp "$ROOT/rust/target/release/vifasttts" "$OUT/vifasttts"
-if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then cp -R "$WEB_DIR" "$OUT/web"; fi
+if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then
+  cp -R "$WEB_DIR" "$OUT/web"
+  # Model đã có trong $OUT/models; server phục vụ /models/*, không copy trùng.
+  rm -rf "$OUT/web/models"
+fi
 cp -L "$ORT_LIB" "$OUT/libonnxruntime.so"
 cp "$MODEL_DIR/acoustic.onnx" "$OUT/models/acoustic.onnx"
 cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"

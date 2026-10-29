@@ -11,8 +11,10 @@ Server axum tối giản dùng chung `vifasttts-native`/`vifasttts-app`:
 - `GET /api/models/download?repo=...&path=...` (đã kiểm manifest/hash)
 - nhận `dictionary` dạng text hoặc `overrides` JSON; parse bằng
   `vifasttts-app::parse_dictionary`;
-- `--web-dir web/dist` phục vụ web UI (SPA + model/ORT) tại `/`; nếu không
-  truyền, server tự tìm `web/` cạnh binary hoặc `web/dist`/`web` trong cwd;
+- `--web-dir web/dist` phục vụ web UI (SPA + ORT) tại `/`; nếu không truyền,
+  server tự tìm `web/` cạnh binary hoặc `web/dist`/`web` trong cwd;
+- server phục vụ `/models/acoustic.onnx` + `/models/vocoder.onnx` từ model đang
+  nạp, để web local dùng chung model với desktop/CLI (package không copy trùng);
 - `--cors` cho web UI ở origin khác gọi API (chỉ bật khi cần);
 - `--api-only` bỏ web UI, chỉ chạy API dù có thư mục web;
 - `--token` (hoặc env `VIFASTTS_TOKEN`) bảo vệ `/api/*` bằng Bearer;

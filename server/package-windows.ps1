@@ -40,6 +40,7 @@ Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
 if ($WebDir -and (Test-Path $WebDir)) {
     Copy-Item -Recurse -Force $WebDir (Join-Path $Out "web")
+    Remove-Item -Recurse -Force (Join-Path $Out "web/models") -ErrorAction SilentlyContinue
 }
 @"
 ViFastTts CLI/TUI/server (Windows x64)

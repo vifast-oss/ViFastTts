@@ -45,6 +45,8 @@ cp "$MODEL_DIR/vocoder.onnx" "$OUT/models/vocoder.onnx"
 if [ -n "${WEB_DIR:-}" ] && [ -d "$WEB_DIR" ]; then
   rm -rf "$OUT/web"
   cp -R "$WEB_DIR" "$OUT/web"
+  # Model đã có trong $OUT/models; server phục vụ /models/*.
+  rm -rf "$OUT/web/models"
 fi
 cat > "$OUT/run.sh" <<'SH'
 #!/usr/bin/env bash

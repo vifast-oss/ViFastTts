@@ -4,6 +4,11 @@
 > bundle là optional, loader ONNX hiện tại vẫn là canonical. Trước đây repo chỉ có
 > manifest JSON + 2 file ONNX; không có spec `.vfts` cũ để tương thích.
 
+> **Package app mặc định vẫn chứa raw `acoustic.onnx` + `vocoder.onnx`** để load
+> trực tiếp, không phải giải nén ZIP mỗi lần khởi động. `.vfa`/`.vfts` là
+> **container phân phối/tải về**; runtime luôn đọc ONNX bên trong. Raw trong
+> package là model bundled nội bộ, không phải file người dùng tải từ catalog.
+
 ## Mục tiêu
 
 Một file bundle để phát hành/kiểm tra model, không thay ONNX runtime:
