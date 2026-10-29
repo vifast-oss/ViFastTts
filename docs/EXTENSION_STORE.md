@@ -1,6 +1,6 @@
 # Đưa extension lên Chrome Web Store và Microsoft Edge Add-ons
 
-Trạng thái hiện tại: extension MV3 `0.3.3`; các thay đổi UI 29/10 (alpha/peak/
+Trạng thái hiện tại: extension MV3 `0.3.4`; các thay đổi UI 29/10 (alpha/peak/
 max, HuggingFace trực tiếp, OOV, karaoke) nằm trên `main` và cần build package
 mới trước khi nộp store.
 
@@ -11,7 +11,7 @@ Không upload thư mục `extension/`; phải upload file ZIP có `manifest.json
 
 ```text
 https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-extension.zip
-sha256 a447183b736f8bf5a45e12b716e4b32098fff41a68efd152e6d45447d33f98a6
+sha256 5ded1ce7d45479fa12df2d9e592ec260f96f60612d835573029f48f261017933
 ```
 
 Kiểm tra nhanh:
@@ -96,7 +96,7 @@ hiện dùng `chrome.*`, `offscreen`, `contextMenus`, `activeTab`, `scripting`.
 ## 4. Trước khi bấm Submit — checklist
 
 - [ ] `manifest.json` nằm ở root ZIP.
-- [ ] `version` là `0.3.3` (hoặc bump version nếu sửa package).
+- [ ] `version` là `0.3.4` (hoặc bump version nếu sửa package).
 - [ ] Không có token, `.env`, file local, `node_modules`, `target`.
 - [ ] Test **Load unpacked** trên Chrome sạch; bấm icon → Đọc không cần server.
 - [ ] Test đọc trang/bôi đen, Remote mode với server local, và **HuggingFace trực tiếp**.
