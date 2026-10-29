@@ -87,12 +87,13 @@
   .fine { color:var(--muted); font-size:.76rem; margin:12px 0 0; }
   .fine a { color:var(--accent); }
   .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
-  .download-strip { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:4px; max-width:780px; }
-  .download-strip .download-label { color:var(--muted); font-size:.76rem; font-weight:650; margin-right:2px; }
-  .download-strip a { display:inline-block; padding:3px 7px; border:1px solid #F0D2CA; border-radius:999px;
-                      background:#FFFCF7; color:#9B2C20; font-size:.7rem; font-weight:650; text-decoration:none; }
-  .download-strip a:hover { border-color:var(--accent); background:#FFF7F0; }
-  .download-strip .download-version { color:var(--muted); font-size:.68rem; margin-left:2px; }
+  .download-strip { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:6px; max-width:840px; }
+  .download-strip .download-label { color:var(--muted); font-size:.82rem; font-weight:700; margin-right:2px; }
+  .download-strip a { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:9px 14px;
+                      border:1px solid #E9C3B7; border-radius:10px; background:#FFF8F3; color:#8F241B;
+                      font-size:.85rem; font-weight:750; line-height:1.15; text-align:center; text-decoration:none; }
+  .download-strip a:hover { border-color:var(--accent); background:#FFF0E9; color:var(--accent-dark); }
+  .download-strip .download-version { color:var(--muted); font-size:.74rem; margin-left:3px; }
   code { background:#FBF0EC; padding:1px 4px; border-radius:4px; }
   .option-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:2px 0 8px;
                 color:var(--muted); font-size:.82rem; }
@@ -131,6 +132,12 @@
                  grid-template-areas:"main adv" "feedback feedback"; }
     .feedback-grid { grid-template-columns:1fr 1fr; }
   }
+  @media (max-width:900px) {
+    .brandbar { flex-wrap:wrap; gap:8px; }
+    .header-right { width:100%; align-items:flex-start; }
+    .links { width:100%; justify-content:flex-start; }
+    .download-strip { justify-content:flex-start; max-width:none; }
+  }
   @media (max-width:760px) {
     .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv" "feedback"; }
   }
@@ -140,7 +147,11 @@
     .brand-lockup { width:min(300px,84vw); }
     .header-right { width:100%; align-items:flex-start; }
     .links { width:100%; justify-content:flex-start; }
-    .download-strip { justify-content:flex-start; max-width:none; }
+    .download-strip { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); justify-content:stretch;
+                      width:100%; max-width:none; align-items:stretch; }
+    .download-strip .download-label, .download-strip .download-version { grid-column:1/-1; }
+    .download-strip .download-label { margin:2px 0 0; }
+    .download-strip a { min-height:46px; padding:10px 8px; font-size:.84rem; }
     .hero { margin-bottom:12px; }
     .card, .panel { padding:12px; }
     .speed-row input[type=range] { width:160px; }
@@ -166,7 +177,7 @@
       <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-desktop-macos-arm64.zip" target="_blank" rel="noopener" title="macOS Apple Silicon">macOS</a>
       <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-desktop-linux-x64.tar.gz" target="_blank" rel="noopener" title="Linux x64">Linux</a>
       <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-mobile-android.apk" target="_blank" rel="noopener" title="Android APK">Android</a>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener" title="iOS Simulator">iOS</a>
+      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener" title="iOS Simulator — cần Xcode, không phải app App Store">iOS Simulator</a>
       <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/extension.zip" target="_blank" rel="noopener" title="Chrome Extension">Extension</a>
       <span class="download-version">v0.1.1</span>
     </nav>
