@@ -611,13 +611,14 @@ public class MainActivity extends Activity {
             audioChannels = clip.channels;
             audioStopped = false;
             track.play();
+            short[] samples = playbackSamples;
+            audioThread = new Thread(() -> writeAudio(track, samples, clip.channels),
+                    "vifasttts-audio");
+            audioThread.start();
             lastAudioFile = out;
             if (saveButton != null) saveButton.setEnabled(true);
             stopButton.setEnabled(true);
             startKaraoke();
-            short[] samples = playbackSamples;
-            audioThread = new Thread(() -> writeAudio(track, samples, clip.channels), "vifasttts-audio");
-            audioThread.start();
         } catch (Throwable error) {
             setError("AudioTrack lỗi: " + error.getMessage() + "; thử MediaPlayer");
             playWithMediaPlayer(out, message);
