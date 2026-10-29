@@ -3,8 +3,8 @@
 Ưu tiên **Windows** và **macOS**; Linux, Android, iOS, server, extension và TUI ở
 các mục sau.
 
-> Release portable nằm ở <https://github.com/dvchd/ViFastTts/releases>. Bản
-> `-rc*` là **pre-release**, chưa ký số, model FP32 ~86 MB.
+> Release portable mới nhất: <https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0>.
+> Bản desktop chưa ký số; model FP32 nằm sẵn trong gói.
 
 ## Windows 10/11 (x64) — ưu tiên
 
@@ -27,6 +27,21 @@ Trong desktop:
 
 Không cần cài Python/Node/Visual C++ redistributable (bản release đã gom runtime
 Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
+
+### Tìm model HuggingFace — cần server nào?
+
+| Ứng dụng | Tìm HF | Cần server? |
+|---|---|---|
+| Desktop | Trực tiếp trong app | **Không** |
+| CLI/TUI | Trực tiếp | **Không** |
+| Extension | `/api/models/*` | Có, mặc định `http://127.0.0.1:8000` |
+| Android/iOS | `/api/models/*` | Có, nhập IP LAN của desktop |
+| Web qua server | `/api/models/*` | Có |
+| Web tĩnh | Không tìm, nạp file thủ công | Không |
+
+Nút **Bật server** trên desktop chỉ dành cho extension/mobile/web; desktop vẫn tìm
+HuggingFace bình thường khi server tắt. Điện thoại không dùng được `127.0.0.1`;
+nhập `http://IP-LAN:8000` và bật **Cho phép LAN** trên desktop.
 
 ## macOS 13+ (Apple Silicon) — ưu tiên
 
@@ -146,8 +161,9 @@ Support và tự nạp lại C ABI.
 App có **Local** và **Remote**:
 
 - Local: FFI + ONNX Runtime iOS, model bundled/`.vfa/.vfts`.
-- Remote: nhập Server URL (`http://127.0.0.1:8000`, LAN hoặc online) + Bearer
-  token, gọi `/api/tts`.
+- Remote: nhập Server URL (`http://192.168.1.100:8000` — IP LAN của máy chạy
+  server, hoặc URL online) + Bearer token, gọi `/api/tts`. Không dùng
+  `127.0.0.1` trên điện thoại.
 - HTTP dev dùng ATS exception + mô tả Local Network; production nên HTTPS.
 
 Đã build/chạy simulator iOS 27.0 (Xcode 27.1): local FFI và remote đều trả WAV

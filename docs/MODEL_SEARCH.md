@@ -9,6 +9,10 @@ Mọi UI dùng **cùng một catalog** và **chỉ tải bundle**:
 - Android/iOS: gọi HTTP API `/api/models/*` của server.
 - Server: `vifasttts-model-manager` kiểm manifest/hash trước khi trả file.
 
+**Desktop/CLI/TUI tìm HuggingFace trực tiếp**, không cần server. **Extension,
+Android, iOS và web chạy qua server** dùng `/api/models/*`; server phải chạy và
+điện thoại phải nhập IP LAN (không dùng `127.0.0.1`).
+
 Raw `acoustic.onnx`/`vocoder.onnx` là file nội bộ/dev, không hiện trong catalog
 người dùng.
 

@@ -24,6 +24,9 @@ HF chỉ đếm lượt tải qua **query file** mặc định (`config.json`, `
   nên `downloads` của repo sẽ thấp hơn lượt dùng thật.
 - `downloads` trên API là số tổng hợp, có thể cập nhật chậm; không dùng nó để kết luận
   ngay sau một lần tải thử.
+- Đã gửi PR [`huggingface.js#2747`](https://github.com/huggingface/huggingface.js/pull/2747)
+  thêm `countDownloads` cho `vifasttts` với `.vfa`, `.vfts`, `.onnx`; sau khi merge,
+  các file này mới được HF tính vào download.
 - Muốn số chính xác theo người dùng/file: dùng **Publisher Analytics** (log request-level,
   unique downloaders) hoặc thêm analytics phía server/app. Không tạo request giả để tăng số.
 

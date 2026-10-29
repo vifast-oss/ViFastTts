@@ -6,32 +6,66 @@
 
 [![ci](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml/badge.svg)](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml)
 
-## Cài đặt nhanh
+## Tải và dùng trên Windows (không cần build)
 
-Thứ tự ưu tiên: **Windows → macOS → Linux**. Tải release portable tại
-[Releases](https://github.com/dvchd/ViFastTts/releases) (bản `-rc*` là
-pre-release, chưa ký):
+**Cách nhanh nhất:** tải ZIP → giải nén → chạy `vifasttts-desktop.exe`.
 
-1. **Windows x64:** `vifasttts-desktop-windows-x64.zip` → giải nén → chạy
-   `vifasttts-desktop.exe` (SmartScreen: More info → Run anyway).
-2. **macOS arm64:** `vifasttts-desktop-macos-arm64.zip` → kéo `ViFastTts.app` vào
-   Applications → chuột phải **Open**. Nếu Gatekeeper chặn:
-   `xattr -dr com.apple.quarantine /Applications/ViFastTts.app`.
-3. **Linux x64:** `vifasttts-desktop-linux-x64.tar.gz` → giải nén → `./run.sh`.
-4. Desktop có sẵn **server nội bộ** + **model browser HuggingFace**; extension
-   remote trỏ tới `http://127.0.0.1:8000`. Unified binary `vifasttts` (CLI/TUI/
-   server) nằm cạnh app; TUI chỉ chạy từ terminal, GUI không mở TUI.
-5. Android: `vifasttts-mobile-android.apk` (có tải `.vfa/.vfts` qua server); iOS: simulator-only
-   `.zip`; extension: `extension.zip`; web: `web-dist.tar.gz`.
-6. Catalog dùng chung: native `vifasttts-model-manager`; web/extension
-   `web/shared/model-api.js`; Android/iOS gọi `/api/models/*`. Xem
-   `docs/MODEL_SEARCH.md`.
-7. Design tokens dùng chung ở `design/tokens.json`; desktop/iOS/Android/web/
-   extension dùng cùng palette kem–đỏ, font Be Vietnam Pro và icon thương hiệu.
+1. Vào [Releases v0.1.0](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0) và tải
+   [`vifasttts-desktop-windows-x64.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.1.0/vifasttts-desktop-windows-x64.zip)
+   (~92 MB).
+2. Chuột phải file ZIP → **Extract All** (đừng chạy trực tiếp trong file ZIP).
+3. Mở thư mục vừa giải nén → chạy `vifasttts-desktop.exe`.
+4. Nếu SmartScreen cảnh báo: **More info → Run anyway** (bản chưa ký số).
+5. Gõ tiếng Việt → bấm **Đọc**. Model, vocoder, ONNX Runtime và web đã nằm trong gói.
 
-Hướng dẫn đầy đủ, gồm build từ source và xử lý lỗi:
-**`docs/INSTALL.md`**.
+Không cần Python, Node, GPU, tài khoản HuggingFace hay mạng. Cần Windows 10/11 x64;
+nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 
+### Chọn file theo nhu cầu
+
+| Nhu cầu | File tải |
+|---|---|
+| **Windows, dùng ngay** | `vifasttts-desktop-windows-x64.zip` |
+| macOS Apple Silicon | `vifasttts-desktop-macos-arm64.zip` |
+| Linux x64 | `vifasttts-desktop-linux-x64.tar.gz` |
+| Android | `vifasttts-mobile-android.apk` |
+| iOS Simulator | `vifasttts-mobile-ios-simulator.zip` |
+| Chrome extension | `extension.zip` |
+| CLI/TUI/server | `vifasttts-cli-windows-x64.zip` (hoặc macOS/Linux tương ứng) |
+| Web tĩnh riêng | `web-dist.tar.gz` (nâng cao) |
+
+Tất cả nằm trong [release v0.1.0](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0).
+Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
+
+## Tìm model từ HuggingFace: bản nào cần server?
+
+| Ứng dụng | Cách tìm model | Cần bật server? |
+|---|---|---|
+| **Desktop** | Gọi HuggingFace API trực tiếp trong app | **Không** |
+| CLI / TUI | Gọi HuggingFace API trực tiếp | **Không** |
+| Web mở qua server | Gọi `/api/models/*` của server | Có (server đang phục vụ web) |
+| Chrome extension | Gọi `/api/models/*` của server | Có (mặc định `http://127.0.0.1:8000`) |
+| Android / iOS | Gọi `/api/models/*` của server LAN | Có (nhập IP LAN của máy chạy server) |
+| Web tĩnh (file HTML) | Không tìm; nạp `.vfa/.vfts` thủ công | Không |
+
+- **Desktop** dùng `vifasttts-model-manager` + HuggingFace adapter trực tiếp. Nút
+  **Bật server** trong desktop chỉ để phục vụ web/extension/điện thoại; nó **không**
+  cần thiết cho việc tìm model của chính desktop.
+- **Extension** không gọi HuggingFace trực tiếp. Nó gọi server để tránh CORS và để
+  server kiểm hash; nếu server tắt, extension vẫn đọc được model bundled nhưng
+  không tìm/tải model mới.
+- **Android/iOS** cũng gọi server. Server URL mặc định để **trống**; nhập kiểu
+  `http://192.168.1.100:8000` (cùng Wi-Fi/LAN), bật **Cho phép LAN** trên desktop
+  và mở firewall. Điện thoại không dùng được `127.0.0.1` của máy tính.
+- **Web** khi được server phục vụ dùng API server; bản web tĩnh chỉ nạp bundle thủ công.
+- Model browser chỉ hiện file `.vfa`/`.vfts`; raw `acoustic.onnx` là file nội bộ/dev.
+
+## Dành cho developer
+
+Phần còn lại của README dành cho build/train/kiến trúc. Nếu chỉ muốn dùng app, bạn có thể
+dừng ở mục Windows phía trên.
+
+---
 
 **TTS tiếng Việt mã nguồn mở: nhỏ, nhanh, tự train được.** Toolkit nghiên cứu + triển khai
 TTS **một giọng**, hiểu văn bản tiếng Việt, sinh giọng 24 kHz và xuất ONNX chạy CPU.
@@ -44,7 +78,7 @@ hay audio mẫu.
 [![Model research](https://img.shields.io/badge/model-research%20%2F%20non--commercial-b45309)](docs/NGOC_HUYEN.md)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow)](https://huggingface.co/dvchd/vifasttts-ngochuyen-small)
 
-## 0. Chạy demo Ngọc Huyền trong 2 phút
+## 0. Chạy demo bằng Python (tuỳ chọn, cho developer)
 
 ```bash
 git clone https://github.com/dvchd/ViFastTts.git
@@ -57,6 +91,7 @@ cd ViFastTts
 
 Script tự tải ONNX FP32 **Q-init** từ HuggingFace (có kiểm sha256), tạo `.venv-demo`,
 cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
+Người dùng Windows bình thường nên dùng bản desktop ở trên; mục này chỉ dành cho dev/CLI.
 
 - **Demo online:** https://vifasttts.hoctuthien.com/
 - **Hugging Face model:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
