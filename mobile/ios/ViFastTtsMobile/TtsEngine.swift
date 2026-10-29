@@ -63,7 +63,8 @@ final class TtsEngine: @unchecked Sendable {
         peakNormalize: Bool = false,
         dialect: String = "north",
         resolveOov: Bool = true,
-        dictionary: String = ""
+        dictionary: String = "",
+        customReading: String = ""
     ) async throws -> TtsResult {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
@@ -81,21 +82,25 @@ final class TtsEngine: @unchecked Sendable {
                 var wavPointer: UnsafeMutablePointer<UInt8>?
                 var wavLength = 0
                 var karaokePointer: UnsafeMutablePointer<CChar>?
-                // Gọi bản `_ex` để có đủ phương ngữ/OOV/từ điển và timing.
+                let customJSON = self.customReadingJSON(customReading)
+                // Gọi bản `_ex2` để có custom reading + timing.
                 let code = text.withCString { cText in
                     dialect.withCString { cDialect in
                         dictionary.withCString { cDictionary in
-                            vifasttts_synthesize_karaoke_ex(
-                                engine,
-                                cText,
-                                &options,
-                                cDialect,
-                                resolveOov ? 1 : 0,
-                                cDictionary,
-                                &wavPointer,
-                                &wavLength,
-                                &karaokePointer
-                            )
+                            customJSON.withCString { cCustom in
+                                vifasttts_synthesize_karaoke_ex2(
+                                    engine,
+                                    cText,
+                                    &options,
+                                    cDialect,
+                                    resolveOov ? 1 : 0,
+                                    cDictionary,
+                                    cCustom,
+                                    &wavPointer,
+                                    &wavLength,
+                                    &karaokePointer
+                                )
+                            }
                         }
                     }
                 }
@@ -118,15 +123,18 @@ final class TtsEngine: @unchecked Sendable {
                     let plain = text.withCString { cText in
                         dialect.withCString { cDialect in
                             dictionary.withCString { cDictionary in
-                                vifasttts_synthesize_ex(
-                                    engine,
-                                    cText,
-                                    &options,
-                                    cDialect,
-                                    resolveOov ? 1 : 0,
-                                    cDictionary,
-                                    &plainLength
-                                )
+                                customJSON.withCString { cCustom in
+                                    vifasttts_synthesize_ex2(
+                                        engine,
+                                        cText,
+                                        &options,
+                                        cDialect,
+                                        resolveOov ? 1 : 0,
+                                        cDictionary,
+                                        cCustom,
+                                        &plainLength
+                                    )
+                                }
                             }
                         }
                     }
@@ -176,6 +184,27 @@ final class TtsEngine: @unchecked Sendable {
                 }
             }
         }
+    }
+
+    /// Parse `cụm = cách đọc` thành JSON map cho C ABI.
+    private func customReadingJSON(_ text: String) -> String {
+        var map: [String: String] = [:]
+        for rawLine in text.split(separator: "\n") {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty || line.hasPrefix("#") { continue }
+            guard let separator = line.firstIndex(of: "=") else { continue }
+            let key = line[..<separator].trimmingCharacters(in: .whitespaces)
+            let value = line[line.index(after: separator)...]
+                .trimmingCharacters(in: .whitespaces)
+            if !key.isEmpty && !value.isEmpty {
+                map[key] = value
+            }
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: map),
+              let json = String(data: data, encoding: .utf8) else {
+            return "{}"
+        }
+        return json
     }
 
     private func writeSubtitle(

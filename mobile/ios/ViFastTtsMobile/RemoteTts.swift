@@ -38,7 +38,8 @@ struct RemoteTtsClient {
         peakNormalize: Bool = false,
         dialect: String = "north",
         resolveOov: Bool = true,
-        dictionary: String = ""
+        dictionary: String = "",
+        customReading: String = ""
     ) async throws -> RemoteTtsResult {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
@@ -57,6 +58,7 @@ struct RemoteTtsClient {
             "dialect": dialect,
             "resolve_oov": resolveOov,
             "dictionary": dictionary,
+            "custom_reading": parseCustomReading(customReading),
             "karaoke": true,
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -114,6 +116,19 @@ struct RemoteTtsClient {
         let wavURL = base.appendingPathExtension("wav")
         try data.write(to: wavURL, options: .atomic)
         return RemoteTtsResult(wavURL: wavURL, srtURL: nil, vttURL: nil, units: [])
+    }
+    private func parseCustomReading(_ text: String) -> [String: String] {
+        var map: [String: String] = [:]
+        for rawLine in text.split(separator: "\n") {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty || line.hasPrefix("#") { continue }
+            guard let separator = line.firstIndex(of: "=") else { continue }
+            let key = line[..<separator].trimmingCharacters(in: .whitespaces)
+            let value = line[line.index(after: separator)...]
+                .trimmingCharacters(in: .whitespaces)
+            if !key.isEmpty && !value.isEmpty { map[key] = value }
+        }
+        return map
     }
 }
 

@@ -647,7 +647,6 @@ fn main() -> Result<()> {
                 dictionary,
                 srt,
                 vtt,
-                ..vifasttts_tui::TuiArgs::default()
             };
             vifasttts_tui::run(args).map_err(anyhow::Error::msg)?
         }

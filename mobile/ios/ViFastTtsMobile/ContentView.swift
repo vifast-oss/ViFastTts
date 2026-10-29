@@ -28,6 +28,7 @@ struct ContentView: View {
     @AppStorage("vifasttts.dialect") private var dialect = "north"
     @AppStorage("vifasttts.resolveOov") private var resolveOov = true
     @AppStorage("vifasttts.dictionary") private var dictionary = ""
+    @AppStorage("vifasttts.customReading") private var customReading = ""
     @State private var history = SharedContract.loadHistory()
     @State private var showHistory = false
     @State private var showSettings = false
@@ -203,7 +204,8 @@ struct ContentView: View {
                     maxChars: $maxChars,
                     dialect: $dialect,
                     resolveOov: $resolveOov,
-                    dictionary: $dictionary
+                    dictionary: $dictionary,
+                    customReading: $customReading
                 )
             }
             .sheet(isPresented: $showHistory) {
@@ -280,7 +282,8 @@ struct ContentView: View {
                         peakNormalize: peakNormalize,
                         dialect: dialect,
                         resolveOov: resolveOov,
-                        dictionary: dictionary
+                        dictionary: dictionary,
+                        customReading: customReading
                     )
                     result = TtsResult(
                         wavURL: remote.wavURL,
@@ -299,7 +302,8 @@ struct ContentView: View {
                         peakNormalize: peakNormalize,
                         dialect: dialect,
                         resolveOov: resolveOov,
-                        dictionary: dictionary
+                        dictionary: dictionary,
+                        customReading: customReading
                     )
                 }
                 player?.stop()
@@ -345,6 +349,7 @@ private struct SettingsView: View {
     @Binding var dialect: String
     @Binding var resolveOov: Bool
     @Binding var dictionary: String
+    @Binding var customReading: String
 
     var body: some View {
         NavigationStack {
@@ -384,6 +389,16 @@ private struct SettingsView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                     Text("Mỗi dòng `từ = cách đọc`. Local và remote đều nhận từ điển.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
+                }
+                Section("Cách đọc token-level") {
+                    TextEditor(text: $customReading)
+                        .font(.system(.caption, design: .monospaced))
+                        .frame(minHeight: 100)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Text("Mỗi dòng `cụm = cách đọc`, ví dụ `TP.HCM = thành phố hồ chí minh`.")
                         .font(VFTheme.caption)
                         .foregroundStyle(VFTheme.muted)
                 }
