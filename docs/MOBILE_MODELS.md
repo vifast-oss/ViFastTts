@@ -77,6 +77,11 @@ Nên dùng **catalog** thay vì hard-code URL:
 - Android/iOS có cấu hình local: tốc độ, alpha, pause cố định, peak normalize,
   max ký tự/chunk, phương ngữ, resolve OOV và từ điển `key = cách đọc`.
 - Có karaoke theo âm tiết trên màn hình; lưu/chia sẻ WAV + SRT + VTT + JSON.
+- Android phát bằng `AudioTrack` 48 kHz, buffer 2 giây, resample 24→48 kHz
+  trong app; không dùng `MediaPlayer` cho WAV TTS. Karaoke lấy vị trí từ
+  `AudioTrack.getPlaybackHeadPosition()`.
+- Nếu emulator vẫn vấp sau bản này, kiểm tra `dumpsys media.audio_flinger`
+  (underrun/jitter) và test trên thiết bị thật trước khi kết luận model.
 - Câu mặc định Android có chữ **Android**, iOS có chữ **iOS** để phân biệt bản
   test; core đọc `iOS` = **ai âu ét**, `Android` = **an đờ roi**.
 - Model base 60k nặng hơn small nên máy yếu nên dùng small.

@@ -8,7 +8,9 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
+import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -54,6 +56,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -136,6 +140,11 @@ public class MainActivity extends Activity {
     private Button saveButton;
     private ProgressBar progress;
     private MediaPlayer player;
+    private AudioTrack audioTrack;
+    private Thread audioThread;
+    private volatile boolean audioStopped = false;
+    private int audioSampleRate = 24000;
+    private int audioChannels = 1;
     private File lastAudioFile;
     private String lastSrt = "";
     private String lastVtt = "";
@@ -160,8 +169,8 @@ public class MainActivity extends Activity {
     private final Runnable karaokeTick = new Runnable() {
         @Override
         public void run() {
-            if (karaokeView == null || karaokeUnits == null || player == null) return;
-            int position = player.getCurrentPosition();
+            if (karaokeView == null || karaokeUnits == null) return;
+            int position = currentPlaybackPosition();
             String active = "";
             for (int index = 0; index < karaokeUnits.length(); index += 1) {
                 JSONObject unit = karaokeUnits.optJSONObject(index);
@@ -549,53 +558,248 @@ public class MainActivity extends Activity {
     }
 
     private void play(File out, String message) {
-        runOnUiThread(() -> {
-            status.setText(message);
-            setBusy(false);
+        new Thread(() -> {
             try {
-                if (player != null) {
-                    player.release();
-                    player = null;
-                }
-                requestAudioFocus();
-                player = new MediaPlayer();
-                player.setAudioAttributes(speechAudioAttributes());
-                player.setDataSource(out.getAbsolutePath());
-                player.setOnCompletionListener(done -> {
-                    stopButton.setEnabled(false);
-                    stopKaraoke();
-                    abandonAudioFocus();
+                PcmClip clip = readWav(out);
+                runOnUiThread(() -> startAudioTrack(out, clip, message));
+            } catch (Throwable error) {
+                runOnUiThread(() -> {
+                    status.setText("Đã tạo WAV, lỗi đọc WAV: " + error.getMessage());
+                    setError(error.getMessage());
+                    setBusy(false);
                 });
-                player.setOnErrorListener((mp, what, extra) -> {
-                    setError("MediaPlayer lỗi " + what + "/" + extra);
-                    abandonAudioFocus();
-                    return false;
-                });
-                player.prepare();
-                player.start();
-                startKaraoke();
-                lastAudioFile = out;
-                if (saveButton != null) saveButton.setEnabled(true);
-                stopButton.setEnabled(true);
-            } catch (Exception error) {
-                status.setText("Đã tạo WAV, lỗi phát: " + error.getMessage());
-                setError(error.getMessage());
-                abandonAudioFocus();
             }
-        });
+        }, "vifasttts-wav-read").start();
     }
 
-    private void stopPlayback() {
+    private void startAudioTrack(File out, PcmClip clip, String message) {
+        stopAudioPath();
+        status.setText(message);
+        setBusy(false);
+        requestAudioFocus();
+        try {
+            int channelMask = clip.channels == 2
+                    ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO;
+            // Đưa PCM lên 48 kHz ngay trong app: mixer/HAL của emulator và nhiều
+            // thiết bị Android chạy 48 kHz, tránh resample 24k -> 48k gây vấp.
+            int outputRate = 48000;
+            short[] playbackSamples = clip.sampleRate == outputRate
+                    ? clip.samples
+                    : resamplePcm(clip.samples, clip.sampleRate, outputRate, clip.channels);
+            int minBuffer = AudioTrack.getMinBufferSize(
+                    outputRate, channelMask, AudioFormat.ENCODING_PCM_16BIT);
+            if (minBuffer <= 0) minBuffer = outputRate * clip.channels * 2;
+            // Buffer 2 giây: đủ lớn để emulator/thiết bị yếu không bị underrun.
+            int bufferSize = Math.max(minBuffer * 4,
+                    outputRate * clip.channels * 2 * 2);
+            AudioTrack track = new AudioTrack.Builder()
+                    .setAudioAttributes(speechAudioAttributes())
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(outputRate)
+                            .setChannelMask(channelMask)
+                            .build())
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .setBufferSizeInBytes(bufferSize)
+                    .build();
+            if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+                track.release();
+                throw new IllegalStateException("AudioTrack chưa khởi tạo");
+            }
+            audioTrack = track;
+            audioSampleRate = outputRate;
+            audioChannels = clip.channels;
+            audioStopped = false;
+            track.play();
+            lastAudioFile = out;
+            if (saveButton != null) saveButton.setEnabled(true);
+            stopButton.setEnabled(true);
+            startKaraoke();
+            short[] samples = playbackSamples;
+            audioThread = new Thread(() -> writeAudio(track, samples, clip.channels), "vifasttts-audio");
+            audioThread.start();
+        } catch (Throwable error) {
+            setError("AudioTrack lỗi: " + error.getMessage() + "; thử MediaPlayer");
+            playWithMediaPlayer(out, message);
+        }
+    }
+
+    private void writeAudio(AudioTrack track, short[] samples, int channels) {
+        int offset = 0;
+        try {
+            while (!audioStopped && offset < samples.length) {
+                int count = Math.min(4096, samples.length - offset);
+                int written = track.write(samples, offset, count, AudioTrack.WRITE_BLOCKING);
+                if (written <= 0) break;
+                offset += written;
+            }
+            int frames = samples.length / Math.max(1, channels);
+            long deadline = System.currentTimeMillis() + 5000;
+            while (!audioStopped && track.getPlaybackHeadPosition() < frames
+                    && System.currentTimeMillis() < deadline) {
+                Thread.sleep(20);
+            }
+        } catch (Throwable ignored) {
+            // Stop/release từ UI cũng làm write ném; không phải lỗi phát.
+        }
+        runOnUiThread(() -> finishAudioTrack(track));
+    }
+
+    private void finishAudioTrack(AudioTrack track) {
+        if (audioTrack != track) return;
+        audioStopped = true;
+        audioTrack = null;
+        try {
+            track.stop();
+        } catch (Throwable ignored) {
+            // Có thể đã stop từ UI.
+        }
+        track.release();
+        stopButton.setEnabled(false);
         stopKaraoke();
+        abandonAudioFocus();
+    }
+
+    private void stopAudioPath() {
+        audioStopped = true;
+        if (audioTrack != null) {
+            try {
+                audioTrack.pause();
+                audioTrack.flush();
+                audioTrack.stop();
+            } catch (Throwable ignored) {
+                // Track có thể chưa play.
+            }
+            audioTrack.release();
+            audioTrack = null;
+        }
+        if (audioThread != null) {
+            audioThread.interrupt();
+            audioThread = null;
+        }
         if (player != null) {
             try {
                 player.stop();
             } catch (Throwable ignored) {
-                // MediaPlayer chưa start vẫn có thể ném; vẫn release bên dưới.
+                // MediaPlayer chưa start vẫn có thể ném.
             }
             player.release();
             player = null;
         }
+    }
+
+    private int currentPlaybackPosition() {
+        if (audioTrack != null) {
+            int frames = audioTrack.getPlaybackHeadPosition();
+            return (int) (frames * 1000L / Math.max(1, audioSampleRate));
+        }
+        if (player != null) return player.getCurrentPosition();
+        return 0;
+    }
+
+    private void playWithMediaPlayer(File out, String message) {
+        status.setText(message);
+        setBusy(false);
+        try {
+            stopAudioPath();
+            requestAudioFocus();
+            player = new MediaPlayer();
+            player.setAudioAttributes(speechAudioAttributes());
+            player.setDataSource(out.getAbsolutePath());
+            player.setOnCompletionListener(done -> {
+                stopButton.setEnabled(false);
+                stopKaraoke();
+                abandonAudioFocus();
+            });
+            player.setOnErrorListener((mp, what, extra) -> {
+                setError("MediaPlayer lỗi " + what + "/" + extra);
+                abandonAudioFocus();
+                return false;
+            });
+            player.prepare();
+            player.start();
+            lastAudioFile = out;
+            if (saveButton != null) saveButton.setEnabled(true);
+            stopButton.setEnabled(true);
+            startKaraoke();
+        } catch (Throwable error) {
+            status.setText("Đã tạo WAV, lỗi phát: " + error.getMessage());
+            setError(error.getMessage());
+            abandonAudioFocus();
+        }
+    }
+
+    private static short[] resamplePcm(short[] input, int sourceRate, int targetRate, int channels) {
+        int sourceFrames = input.length / Math.max(1, channels);
+        int targetFrames = Math.max(1, Math.round(sourceFrames * (float) targetRate / sourceRate));
+        short[] output = new short[targetFrames * channels];
+        double step = (double) sourceRate / targetRate;
+        for (int frame = 0; frame < targetFrames; frame += 1) {
+            double source = frame * step;
+            int left = Math.min(sourceFrames - 1, (int) source);
+            int right = Math.min(sourceFrames - 1, left + 1);
+            float fraction = (float) (source - left);
+            for (int channel = 0; channel < channels; channel += 1) {
+                int a = input[left * channels + channel];
+                int b = input[right * channels + channel];
+                output[frame * channels + channel] = (short) Math.round(a + (b - a) * fraction);
+            }
+        }
+        return output;
+    }
+
+    private static final class PcmClip {
+        final short[] samples;
+        final int sampleRate;
+        final int channels;
+
+        PcmClip(short[] samples, int sampleRate, int channels) {
+            this.samples = samples;
+            this.sampleRate = sampleRate;
+            this.channels = channels;
+        }
+    }
+
+    private static PcmClip readWav(File file) throws Exception {
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        if (bytes.length < 44 || bytes[0] != 'R' || bytes[1] != 'I'
+                || bytes[2] != 'F' || bytes[3] != 'F') {
+            throw new IllegalArgumentException("không phải WAV RIFF");
+        }
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        int sampleRate = 0;
+        int channels = 0;
+        int bits = 0;
+        int dataOffset = -1;
+        int dataSize = 0;
+        int position = 12;
+        while (position + 8 <= bytes.length) {
+            int id = buffer.getInt(position);
+            int size = buffer.getInt(position + 4);
+            int content = position + 8;
+            if (id == 0x20746d66) { // "fmt " little-endian
+                channels = buffer.getShort(content + 2) & 0xffff;
+                sampleRate = buffer.getInt(content + 4);
+                bits = buffer.getShort(content + 14) & 0xffff;
+            } else if (id == 0x61746164) { // "data" little-endian
+                dataOffset = content;
+                dataSize = Math.min(size, bytes.length - content);
+                break;
+            }
+            position = content + size + (size & 1);
+        }
+        if (sampleRate <= 0 || channels <= 0 || bits != 16 || dataOffset < 0 || dataSize < 2) {
+            throw new IllegalArgumentException("WAV không phải PCM16 mono/stereo hợp lệ");
+        }
+        short[] samples = new short[dataSize / 2];
+        buffer.position(dataOffset);
+        buffer.asShortBuffer().get(samples);
+        return new PcmClip(samples, sampleRate, channels);
+    }
+
+    private void stopPlayback() {
+        stopAudioPath();
+        stopKaraoke();
         stopButton.setEnabled(false);
         abandonAudioFocus();
         setStatus("Đã dừng phát");
