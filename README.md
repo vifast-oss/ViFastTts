@@ -40,7 +40,8 @@ Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.m
 > **Lưu ý bản build:** các thay đổi UI 29/10 (alpha/peak/max, HuggingFace trực
 > tiếp, từ điển mobile, karaoke/SRT/VTT, cách đọc `iOS = ai âu ét`,
 > `Android = an đờ roi`) đang ở `main` và **chưa có trong asset v0.1.1**. Muốn
-> dùng ngay, build từ source hoặc chờ release v0.1.2; xem `docs/UI_PARITY.md`.
+> dùng ngay, build từ source hoặc dùng APK Android **0.1.3** đang test; xem
+> `docs/UI_PARITY.md` và `mobile/android/README.md`.
 
 ### Cài Chrome extension (Windows/macOS/Linux)
 

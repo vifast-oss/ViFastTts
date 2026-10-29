@@ -52,6 +52,10 @@ uint8_t *vifasttts_synthesize_ex(VifasttEngine engine, const char *text,
                                  const VifasttOptions *options, const char *dialect,
                                  uint8_t resolve_oov, const char *dictionary,
                                  size_t *out_len);
+uint8_t *vifasttts_synthesize_ex2(VifasttEngine engine, const char *text,
+                                  const VifasttOptions *options, const char *dialect,
+                                  uint8_t resolve_oov, const char *dictionary,
+                                  const char *custom_reading_json, size_t *out_len);
 int vifasttts_synthesize_karaoke(VifasttEngine engine, const char *text,
                                  const VifasttOptions *options,
                                  uint8_t **out_wav, size_t *out_wav_len,
@@ -61,6 +65,12 @@ int vifasttts_synthesize_karaoke_ex(VifasttEngine engine, const char *text,
                                     uint8_t resolve_oov, const char *dictionary,
                                     uint8_t **out_wav, size_t *out_wav_len,
                                     char **out_karaoke_json);
+int vifasttts_synthesize_karaoke_ex2(VifasttEngine engine, const char *text,
+                                     const VifasttOptions *options, const char *dialect,
+                                     uint8_t resolve_oov, const char *dictionary,
+                                     const char *custom_reading_json,
+                                     uint8_t **out_wav, size_t *out_wav_len,
+                                     char **out_karaoke_json);
 char *vifasttts_karaoke_to_srt(const char *karaoke_json);
 char *vifasttts_karaoke_to_vtt(const char *karaoke_json);
 int vifasttts_synthesize_stream(VifasttEngine engine, const char *text,
@@ -72,6 +82,21 @@ int vifasttts_synthesize_stream_ex(VifasttEngine engine, const char *text,
                                    const char *dialect, uint8_t resolve_oov,
                                    const char *dictionary,
                                    VifasttChunkCallback callback, void *user_data);
+int vifasttts_synthesize_stream_ex2(VifasttEngine engine, const char *text,
+                                    const VifasttOptions *options,
+                                    const char *dialect, uint8_t resolve_oov,
+                                    const char *dictionary,
+                                    const char *custom_reading_json,
+                                    VifasttChunkCallback callback, void *user_data);
+int vifasttts_synthesize_stream_karaoke_ex2(VifasttEngine engine, const char *text,
+                                            const VifasttOptions *options,
+                                            const char *dialect, uint8_t resolve_oov,
+                                            const char *dictionary,
+                                            const char *custom_reading_json,
+                                            VifasttChunkCallback callback, void *user_data,
+                                            char **out_karaoke_json);
+char *vifasttts_karaoke_from_units_json(const char *units_json, uint32_t sample_rate,
+                                        uint64_t duration_ms, uint32_t max_line_chars);
 void vifasttts_buffer_free(uint8_t *ptr, size_t len);
 void vifasttts_string_free(char *value);
 

@@ -136,6 +136,17 @@ fn synth_options_ex(
     resolve_oov: bool,
     dictionary: *const c_char,
 ) -> Result<SynthesisOptions, String> {
+    synth_options_ex2(options, dialect, resolve_oov, dictionary, ptr::null())
+}
+
+/// Như `synth_options_ex` nhưng nhận custom reading token-level dạng JSON map.
+fn synth_options_ex2(
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: bool,
+    dictionary: *const c_char,
+    custom_reading_json: *const c_char,
+) -> Result<SynthesisOptions, String> {
     let mut result = synth_options(options);
     let dialect_name = c_text_optional(dialect)?.unwrap_or_else(|| "north".to_string());
     let dialect = Dialect::from_name(&dialect_name)?;
@@ -146,6 +157,13 @@ fn synth_options_ex(
     }
     let mut parse = live_parse_options(dialect, Some(&merged), None);
     parse.resolve_oov = resolve_oov;
+    if let Some(text) = c_text_optional(custom_reading_json)? {
+        let custom: std::collections::HashMap<String, String> =
+            serde_json::from_str(&text).map_err(|error| format!("custom reading JSON: {error}"))?;
+        if !custom.is_empty() {
+            parse.custom_reading = Some(custom);
+        }
+    }
     result.parse = parse;
     Ok(result)
 }
@@ -418,6 +436,41 @@ pub extern "C" fn vifasttts_synthesize_ex(
     })
 }
 
+/// Như `vifasttts_synthesize_ex` nhưng thêm custom reading token-level JSON.
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_ex2(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    custom_reading_json: *const c_char,
+    out_len: *mut usize,
+) -> *mut u8 {
+    guard(ptr::null_mut(), || {
+        if engine.is_null() || out_len.is_null() {
+            return Err("engine/out_len null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex2(
+            options,
+            dialect,
+            resolve_oov != 0,
+            dictionary,
+            custom_reading_json,
+        )?;
+        let engine = unsafe { &mut *engine };
+        let result = engine.synthesize(&text, &options)?;
+        let bytes: Box<[u8]> = result.wav.into_boxed_slice();
+        let len = bytes.len();
+        let ptr = Box::into_raw(bytes) as *mut u8;
+        unsafe { *out_len = len };
+        Ok(ptr)
+    })
+}
+
 /// Như `vifasttts_synthesize_karaoke` nhưng nhận dialect/OOV/từ điển text.
 #[unsafe(no_mangle)]
 pub extern "C" fn vifasttts_synthesize_karaoke_ex(
@@ -437,6 +490,52 @@ pub extern "C" fn vifasttts_synthesize_karaoke_ex(
         }
         let text = c_text(text)?;
         let options = synth_options_ex(options, dialect, resolve_oov != 0, dictionary)?;
+        let engine = unsafe { &mut *engine };
+        let result = engine.synthesize(&text, &options)?;
+        let document = result
+            .karaoke
+            .ok_or_else(|| "model không xuất timing (slot_durations)".to_string())?;
+        let json =
+            serde_json::to_string(&document).map_err(|err| format!("serialize karaoke: {err}"))?;
+        let json = CString::new(json).map_err(|_| "karaoke JSON chứa NUL".to_string())?;
+        let bytes: Box<[u8]> = result.wav.into_boxed_slice();
+        let len = bytes.len();
+        unsafe {
+            *out_wav = Box::into_raw(bytes) as *mut u8;
+            *out_wav_len = len;
+            *out_karaoke = json.into_raw();
+        }
+        Ok(0)
+    })
+}
+
+/// Như `vifasttts_synthesize_karaoke_ex` nhưng thêm custom reading token-level.
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_karaoke_ex2(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    custom_reading_json: *const c_char,
+    out_wav: *mut *mut u8,
+    out_wav_len: *mut usize,
+    out_karaoke: *mut *mut c_char,
+) -> i32 {
+    guard(-1, || {
+        if engine.is_null() || out_wav.is_null() || out_wav_len.is_null() || out_karaoke.is_null() {
+            return Err("engine/out null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex2(
+            options,
+            dialect,
+            resolve_oov != 0,
+            dictionary,
+            custom_reading_json,
+        )?;
         let engine = unsafe { &mut *engine };
         let result = engine.synthesize(&text, &options)?;
         let document = result
@@ -562,6 +661,131 @@ pub extern "C" fn vifasttts_synthesize_stream_ex(
     })
 }
 
+/// Streaming PCM + custom reading token-level.
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_stream_ex2(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    custom_reading_json: *const c_char,
+    callback: Option<VifasttChunkCallback>,
+    user_data: *mut c_void,
+) -> i32 {
+    guard(-1, || {
+        let Some(callback) = callback else {
+            return Err("callback null".to_string());
+        };
+        if engine.is_null() {
+            return Err("engine null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex2(
+            options,
+            dialect,
+            resolve_oov != 0,
+            dictionary,
+            custom_reading_json,
+        )?;
+        let engine = unsafe { &mut *engine };
+        let summary = engine.synthesize_stream(&text, &options, |samples, sample_rate| {
+            let code = callback(samples.as_ptr(), samples.len(), sample_rate, user_data);
+            if code == 0 {
+                StreamControl::Continue
+            } else {
+                StreamControl::Cancel
+            }
+        })?;
+        Ok(if summary.cancelled { 1 } else { 0 })
+    })
+}
+
+/// Streaming PCM + custom reading + karaoke JSON sau khi stream xong.
+///
+/// `out_karaoke` chỉ được ghi khi trả 0; caller giải phóng bằng
+/// `vifasttts_string_free`. Nếu bị huỷ, trả 1 và không ghi karaoke.
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_synthesize_stream_karaoke_ex2(
+    engine: *mut NativeEngine,
+    text: *const c_char,
+    options: *const VifasttOptions,
+    dialect: *const c_char,
+    resolve_oov: u8,
+    dictionary: *const c_char,
+    custom_reading_json: *const c_char,
+    callback: Option<VifasttChunkCallback>,
+    user_data: *mut c_void,
+    out_karaoke: *mut *mut c_char,
+) -> i32 {
+    guard(-1, || {
+        let Some(callback) = callback else {
+            return Err("callback null".to_string());
+        };
+        if engine.is_null() || out_karaoke.is_null() {
+            return Err("engine/out_karaoke null".to_string());
+        }
+        let text = c_text(text)?;
+        let options = synth_options_ex2(
+            options,
+            dialect,
+            resolve_oov != 0,
+            dictionary,
+            custom_reading_json,
+        )?;
+        let engine = unsafe { &mut *engine };
+        let mut units = Vec::new();
+        let summary = engine.synthesize_stream_with_units(
+            &text,
+            &options,
+            |samples, sample_rate| {
+                let code = callback(samples.as_ptr(), samples.len(), sample_rate, user_data);
+                if code == 0 {
+                    StreamControl::Continue
+                } else {
+                    StreamControl::Cancel
+                }
+            },
+            |new_units| units.extend_from_slice(new_units),
+        )?;
+        if summary.cancelled {
+            return Ok(1);
+        }
+        let duration_ms = summary.samples as u64 * 1000 / summary.sample_rate.max(1) as u64;
+        let document = KaraokeDocument::from_units(units, summary.sample_rate, duration_ms, 80);
+        let json = serde_json::to_string(&document)
+            .map_err(|error| format!("serialize karaoke: {error}"))?;
+        let json = CString::new(json).map_err(|_| "karaoke JSON chứa NUL".to_string())?;
+        unsafe { *out_karaoke = json.into_raw() };
+        Ok(0)
+    })
+}
+
+/// Dựng KaraokeDocument từ JSON mảng `TimedUnit` (stream remote).
+#[unsafe(no_mangle)]
+pub extern "C" fn vifasttts_karaoke_from_units_json(
+    units_json: *const c_char,
+    sample_rate: u32,
+    duration_ms: u64,
+    max_line_chars: u32,
+) -> *mut c_char {
+    json_c_string((|| {
+        let text = c_text(units_json)?;
+        let units: Vec<vifasttts_text::karaoke::TimedUnit> =
+            serde_json::from_str(&text).map_err(|error| format!("units JSON: {error}"))?;
+        let document = KaraokeDocument::from_units(
+            units,
+            sample_rate.max(1),
+            duration_ms,
+            max_line_chars.max(1) as usize,
+        );
+        serde_json::to_string(&document).map_err(|error| format!("karaoke JSON: {error}"))
+    })())
+}
+
 /// Giải phóng buffer WAV do `vifasttts_synthesize` trả về.
 #[unsafe(no_mangle)]
 pub extern "C" fn vifasttts_buffer_free(ptr: *mut u8, len: usize) {
@@ -613,5 +837,22 @@ mod tests {
         let parsed = take(vifasttts_dictionary_json(dictionary.as_ptr()));
         assert!(parsed.contains("\"rules\""));
         assert!(!take(vifasttts_api_contract_json()).is_empty());
+    }
+
+    #[test]
+    fn custom_reading_reaches_parse_options() {
+        let custom = CString::new(r#"{"TP.HCM":"thành phố hồ chí minh"}"#).unwrap();
+        let options =
+            synth_options_ex2(ptr::null(), ptr::null(), true, ptr::null(), custom.as_ptr())
+                .unwrap();
+        assert_eq!(
+            options
+                .parse
+                .custom_reading
+                .as_ref()
+                .and_then(|map| map.get("TP.HCM"))
+                .map(String::as_str),
+            Some("thành phố hồ chí minh")
+        );
     }
 }

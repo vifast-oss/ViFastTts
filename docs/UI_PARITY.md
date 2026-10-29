@@ -24,26 +24,27 @@ không lặp lại tình trạng Android/iOS chỉ có “Đọc / Dừng”.
 | Web Python (server) | Remote | Model server cố định | Speed/alpha/fixed/peak/max/dialect | WAV/SRT/VTT | Demo server, không có local WASM |
 | Web Vite | Có | HF trực tiếp hoặc server, file `.vfa/.vfts` | Đầy đủ | Có, WAV/SRT/VTT | Chạy được trong trình duyệt |
 | Chrome extension | Có | HF trực tiếp hoặc server, bundled | Đầy đủ | Có, WAV/SRT/VTT | Thêm stream/history/ETA |
-| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + stream local/remote + history/ETA + share + health | Karaoke trên màn hình; WAV/SRT/VTT/JSON vào Downloads; stream có WAV | Câu mặc định có chữ “Android”; sample/ETA/từ điển dùng contract Rust |
+| Android | Có | Bundled ONNX, `.vfa/.vfts`, ONNX pair, HF trực tiếp/server | Đầy đủ + custom reading + auto-play + output folder + stream local/remote + history/ETA + share + health | Karaoke; WAV/SRT/VTT/JSON; stream có WAV + phụ đề (local/remote) | Câu mặc định có chữ “Android”; sample/ETA/từ điển dùng contract Rust |
 | iOS | Có | HF trực tiếp/server, bundle | Đầy đủ | Karaoke trên màn hình; ShareLink WAV/SRT/VTT/JSON | Câu mặc định có chữ “iOS”; chưa có history/ETA |
 
 ## Android — kiểm tra parity (29/10)
 
 **Đã có:** local/remote, model bundled ONNX, danh sách `.vfa/.vfts` đã cài, tải
 HuggingFace trực tiếp/server, chọn file bundle, chọn cặp `acoustic.onnx` +
-`vocoder.onnx`; speed/alpha/pause/peak/max/dialect/OOV/từ điển; stream local/remote;
-history + ETA; share WAV; kiểm tra `/healthz`; tiến trình tải và xoá model;
-karaoke; WAV/SRT/VTT/JSON vào Downloads; stream lưu WAV; audio focus.
+`vocoder.onnx`; speed/alpha/pause/peak/max/dialect/OOV/từ điển + custom reading;
+auto-play; chọn thư mục xuất; stream local/remote; history + ETA; share WAV +
+SRT/VTT/JSON; kiểm tra `/healthz`; tiến trình tải, đổi tên và xoá model; karaoke;
+WAV/SRT/VTT/JSON; stream lưu WAV + phụ đề; audio focus.
 
-**Chưa có so với desktop/extension:**
+**Chưa có / còn kiểm:**
 
-1. Custom reading token-level (Android chỉ có dictionary `key = cách đọc`).
-2. Toggle auto-play (Android luôn tự phát).
-3. Chọn thư mục xuất (hiện lưu Downloads/MediaStore).
-4. Stream SRT/VTT: stream chỉ có WAV vì API stream không trả timing karaoke.
-5. Huỷ/đổi tên model, metadata/hash trên UI (đã có tiến trình + xoá).
-6. Remote stream cần test end-to-end trên máy thật.
-7. iOS chưa có history/ETA và tiến trình tải model.
+1. Huỷ tải model giữa chừng (đã có tiến trình, chưa có nút huỷ).
+2. Metadata/hash model trên UI (hiện tên + size).
+3. Auto-play chỉ áp dụng cho full; stream luôn phát ngay.
+4. Chọn thư mục xuất phụ thuộc Storage Access Framework; Android 11 không cho
+   chọn thẳng root `Download`, cần chọn/tạo thư mục con.
+5. Test thiết bị thật: emulator vẫn log lỗi HAL audio; chưa kết luận chất lượng.
+6. iOS chưa có history/ETA và tiến trình tải model.
 
 Phần dùng chung đã tách (settings/sample/ETA/từ điển) nằm ở
 `docs/UI_REUSE_AUDIT.md`.

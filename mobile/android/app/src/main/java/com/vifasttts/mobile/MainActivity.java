@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.text.Editable;
@@ -94,13 +95,32 @@ public class MainActivity extends Activity {
         Pointer vifasttts_synthesize_ex(Pointer engine, String text, Options options,
                                         String dialect, byte resolveOov, String dictionary,
                                         NativeLongByReference outLen);
+        Pointer vifasttts_synthesize_ex2(Pointer engine, String text, Options options,
+                                         String dialect, byte resolveOov, String dictionary,
+                                         String customReadingJson, NativeLongByReference outLen);
         int vifasttts_synthesize_karaoke_ex(Pointer engine, String text, Options options,
                                             String dialect, byte resolveOov, String dictionary,
                                             PointerByReference outWav, NativeLongByReference outLen,
                                             PointerByReference outKaraoke);
+        int vifasttts_synthesize_karaoke_ex2(Pointer engine, String text, Options options,
+                                             String dialect, byte resolveOov, String dictionary,
+                                             String customReadingJson,
+                                             PointerByReference outWav, NativeLongByReference outLen,
+                                             PointerByReference outKaraoke);
         int vifasttts_synthesize_stream_ex(Pointer engine, String text, Options options,
                                            String dialect, byte resolveOov, String dictionary,
                                            StreamCallback callback, Pointer userData);
+        int vifasttts_synthesize_stream_ex2(Pointer engine, String text, Options options,
+                                            String dialect, byte resolveOov, String dictionary,
+                                            String customReadingJson,
+                                            StreamCallback callback, Pointer userData);
+        int vifasttts_synthesize_stream_karaoke_ex2(Pointer engine, String text, Options options,
+                                                    String dialect, byte resolveOov,
+                                                    String dictionary, String customReadingJson,
+                                                    StreamCallback callback, Pointer userData,
+                                                    PointerByReference outKaraoke);
+        Pointer vifasttts_karaoke_from_units_json(String unitsJson, int sampleRate,
+                                                  long durationMs, int maxLineChars);
         Pointer vifasttts_karaoke_to_srt(String karaokeJson);
         Pointer vifasttts_karaoke_to_vtt(String karaokeJson);
         Pointer vifasttts_eta_estimate_json(String historyJson, String mode, int chars,
@@ -144,17 +164,22 @@ public class MainActivity extends Activity {
     private static final String KEY_DIALECT = "dialect";
     private static final String KEY_RESOLVE_OOV = "resolve_oov";
     private static final String KEY_DICTIONARY = "dictionary";
+    private static final String KEY_CUSTOM_READING = "custom_reading";
+    private static final String KEY_AUTO_PLAY = "auto_play";
+    private static final String KEY_OUTPUT_TREE = "output_tree";
     private static final String KEY_STREAM = "stream";
     private static final String KEY_HISTORY = "history";
     private static final int REQUEST_BUNDLE = 2001;
     private static final int REQUEST_ACOUSTIC = 2002;
     private static final int REQUEST_VOCODER = 2003;
+    private static final int REQUEST_OUTPUT_TREE = 2004;
 
     private Ffi ffi;
     private Pointer engine;
     private TextView status;
     private TextView modelLabel;
     private TextView settingsSummary;
+    private TextView outputFolderLabel;
     private TextView charCountLabel;
     private CheckBox streamQuick;
     private TextView subtitle;
@@ -184,6 +209,9 @@ public class MainActivity extends Activity {
     private org.json.JSONArray sharedSamples;
     private String sharedDefaultText = "Xin chào các bạn, đây là bản Android của ViFastTts.";
     private Uri lastSavedWavUri;
+    private Uri lastSavedSrtUri;
+    private Uri lastSavedVttUri;
+    private Uri lastSavedJsonUri;
     private int audioSampleRate = 24000;
     private int audioChannels = 1;
     private File lastAudioFile;
@@ -207,7 +235,10 @@ public class MainActivity extends Activity {
     private String dialect = "north";
     private boolean resolveOov = true;
     private boolean streamMode = false;
+    private boolean autoPlay = true;
     private String dictionaryText = "";
+    private String customReadingText = "";
+    private String outputTreeUri = "";
     private JSONArray karaokeUnits;
     private final Handler karaokeHandler = new Handler(Looper.getMainLooper());
     private final Runnable karaokeTick = new Runnable() {
@@ -388,6 +419,50 @@ public class MainActivity extends Activity {
         }
     }
 
+    private String customReadingJson() {
+        JSONObject map = new JSONObject();
+        for (String rawLine : customReadingText.split("\n")) {
+            String line = rawLine.trim();
+            if (line.isEmpty() || line.startsWith("#")) continue;
+            int separator = line.indexOf('=');
+            if (separator <= 0) continue;
+            String key = line.substring(0, separator).trim();
+            String value = line.substring(separator + 1).trim();
+            if (key.isEmpty() || value.isEmpty()) continue;
+            try {
+                map.put(key, value);
+            } catch (Throwable ignored) {
+                // Dòng lỗi bị bỏ; parser Rust vẫn nhận các dòng còn lại.
+            }
+        }
+        return map.toString();
+    }
+
+    private int customReadingCount() {
+        try {
+            return new JSONObject(customReadingJson()).length();
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private void present(File out, String message) {
+        if (autoPlay) {
+            play(out, message);
+            return;
+        }
+        runOnUiThread(() -> {
+            stopAudioPath();
+            lastAudioFile = out;
+            status.setText(message + " · tự phát tắt");
+            setBusy(false);
+            if (saveButton != null) saveButton.setEnabled(true);
+            if (shareButton != null) shareButton.setEnabled(false);
+            stopButton.setEnabled(false);
+            stopKaraoke();
+        });
+    }
+
     private void loadSharedSamples(String platform) {
         if (ffi == null) return;
         Pointer value = null;
@@ -467,19 +542,31 @@ public class MainActivity extends Activity {
             setStatus("Đã lưu; mở Downloads để chia sẻ trên Android cũ.");
             return;
         }
-        Intent send = new Intent(Intent.ACTION_SEND);
-        send.setType("audio/wav");
-        send.putExtra(Intent.EXTRA_STREAM, lastSavedWavUri);
+        java.util.ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(lastSavedWavUri);
+        if (lastSavedSrtUri != null) uris.add(lastSavedSrtUri);
+        if (lastSavedVttUri != null) uris.add(lastSavedVttUri);
+        if (lastSavedJsonUri != null) uris.add(lastSavedJsonUri);
+        Intent send;
+        if (uris.size() == 1) {
+            send = new Intent(Intent.ACTION_SEND);
+            send.setType("audio/wav");
+            send.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+        } else {
+            send = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            send.setType("*/*");
+            send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        }
         send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(send, "Chia sẻ WAV"));
+        startActivity(Intent.createChooser(send, "Chia sẻ WAV + phụ đề"));
     }
 
     private void updateSettingsSummary() {
         if (settingsSummary == null) return;
         String dialectLabel = dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc";
         settingsSummary.setText(String.format(java.util.Locale.US,
-                "%.2f× · alpha %.2f · %s%s", speechSpeed, sharpenAlpha, dialectLabel,
-                streamMode ? " · stream" : ""));
+                "%.2f× · alpha %.2f · %s%s%s", speechSpeed, sharpenAlpha, dialectLabel,
+                streamMode ? " · stream" : "", autoPlay ? "" : " · không tự phát"));
     }
 
     private void updateModelLabel() {
@@ -712,9 +799,9 @@ public class MainActivity extends Activity {
                 PointerByReference outWav = new PointerByReference();
                 PointerByReference outKaraoke = new PointerByReference();
                 NativeLongByReference len = new NativeLongByReference();
-                int code = ffi.vifasttts_synthesize_karaoke_ex(
+                int code = ffi.vifasttts_synthesize_karaoke_ex2(
                         engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
-                        dictionaryText, outWav, len, outKaraoke);
+                        dictionaryText, customReadingJson(), outWav, len, outKaraoke);
                 if (code == 0) {
                     Pointer data = outWav.getValue();
                     if (data == null) throw new IllegalStateException(lastError());
@@ -729,9 +816,9 @@ public class MainActivity extends Activity {
                 } else {
                     // Model không xuất timing: vẫn đọc được, chỉ không có phụ đề.
                     NativeLongByReference plainLen = new NativeLongByReference();
-                    Pointer data = ffi.vifasttts_synthesize_ex(
+                    Pointer data = ffi.vifasttts_synthesize_ex2(
                             engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
-                            dictionaryText, plainLen);
+                            dictionaryText, customReadingJson(), plainLen);
                     if (data == null) throw new IllegalStateException(lastError());
                     long size = plainLen.getValue().longValue();
                     wav = data.getByteArray(0, (int) size);
@@ -745,7 +832,7 @@ public class MainActivity extends Activity {
                 String suffix = lastSrt.isEmpty() ? "" : " · có phụ đề";
                 recordRun("local", input, System.currentTimeMillis() - runStarted,
                         wav.length / 2.0 / 24000.0);
-                play(out, "Xong: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
+                present(out, "Xong: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
             } catch (Throwable error) {
                 setStatus("Lỗi: " + error.getMessage());
                 setError(error.getMessage());
@@ -824,19 +911,29 @@ public class MainActivity extends Activity {
                     if (written > 0) framesWritten[0] += written;
                     return written < 0 ? 1 : 0;
                 };
-                int code = ffi.vifasttts_synthesize_stream_ex(
+                PointerByReference outKaraoke = new PointerByReference();
+                int code = ffi.vifasttts_synthesize_stream_karaoke_ex2(
                         engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
-                        dictionaryText, callback, null);
+                        dictionaryText, customReadingJson(), callback, null, outKaraoke);
                 if (code < 0) throw new IllegalStateException(lastError());
                 if (code == 0) waitForPlayback(streamTrack, framesWritten[0], 8000);
+                String streamKaraoke = "";
+                Pointer karaokePointer = outKaraoke.getValue();
+                if (karaokePointer != null) {
+                    try {
+                        streamKaraoke = karaokePointer.getString(0, "UTF-8");
+                    } finally {
+                        ffi.vifasttts_string_free(karaokePointer);
+                    }
+                }
                 byte[] pcm = pcmBuffer.toByteArray();
                 if (pcm.length > 0) {
                     File streamFile = new File(getCacheDir(), "vifasttts-stream.wav");
                     writeWavFile(streamFile, pcm, 24000, 1);
                     lastAudioFile = streamFile;
-                    lastSrt = "";
-                    lastVtt = "";
-                    lastKaraokeJson = "";
+                    lastKaraokeJson = streamKaraoke;
+                    lastSrt = karaokeText(streamKaraoke, true);
+                    lastVtt = karaokeText(streamKaraoke, false);
                     runOnUiThread(() -> {
                         if (saveButton != null) saveButton.setEnabled(true);
                         if (shareButton != null) shareButton.setEnabled(false);
@@ -844,7 +941,9 @@ public class MainActivity extends Activity {
                 }
                 recordRun("local-stream", input, System.currentTimeMillis() - runStarted,
                         framesWritten[0] / 48000.0);
-                setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local · đã có WAV");
+                setStatus(code == 1 ? "Đã dừng stream"
+                        : lastSrt.isEmpty() ? "Xong stream local · đã có WAV"
+                        : "Xong stream local · đã có WAV + phụ đề");
             } catch (Throwable error) {
                 setStatus("Lỗi stream: " + error.getMessage());
                 setError(error.getMessage());
@@ -893,6 +992,7 @@ public class MainActivity extends Activity {
                 body.put("dialect", dialect);
                 body.put("resolve_oov", resolveOov);
                 body.put("dictionary", dictionaryText);
+                body.put("custom_reading", new JSONObject(customReadingJson()));
                 byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(payload.length);
                 try (OutputStream out = connection.getOutputStream()) {
@@ -936,6 +1036,7 @@ public class MainActivity extends Activity {
                 });
                 long framesWritten = 0;
                 ByteArrayOutputStream pcmBuffer = new ByteArrayOutputStream();
+                JSONArray streamUnits = new JSONArray();
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                         connection.getInputStream(), StandardCharsets.UTF_8))) {
                     String line;
@@ -958,20 +1059,40 @@ public class MainActivity extends Activity {
                                     AudioTrack.WRITE_BLOCKING);
                             if (written < 0) throw new IllegalStateException("AudioTrack write lỗi");
                             framesWritten += written;
+                        } else if ("units".equals(type)) {
+                            JSONArray units = event.optJSONArray("units");
+                            if (units != null) {
+                                for (int index = 0; index < units.length(); index += 1) {
+                                    streamUnits.put(units.get(index));
+                                }
+                            }
                         } else if ("error".equals(type)) {
                             throw new IllegalStateException(event.optString("message", "server stream lỗi"));
                         }
                     }
                 }
                 if (!audioStopped) waitForPlayback(streamTrack, framesWritten, 8000);
+                String streamKaraoke = "";
+                if (streamUnits.length() > 0) {
+                    Pointer karaokePointer = ffi.vifasttts_karaoke_from_units_json(
+                            streamUnits.toString(), 24000,
+                            Math.round(framesWritten * 1000.0 / 48000.0), 80);
+                    if (karaokePointer != null) {
+                        try {
+                            streamKaraoke = karaokePointer.getString(0, "UTF-8");
+                        } finally {
+                            ffi.vifasttts_string_free(karaokePointer);
+                        }
+                    }
+                }
                 byte[] pcm = pcmBuffer.toByteArray();
                 if (pcm.length > 0) {
                     File streamFile = new File(getCacheDir(), "vifasttts-remote-stream.wav");
                     writeWavFile(streamFile, pcm, 24000, 1);
                     lastAudioFile = streamFile;
-                    lastSrt = "";
-                    lastVtt = "";
-                    lastKaraokeJson = "";
+                    lastKaraokeJson = streamKaraoke;
+                    lastSrt = karaokeText(streamKaraoke, true);
+                    lastVtt = karaokeText(streamKaraoke, false);
                     runOnUiThread(() -> {
                         if (saveButton != null) saveButton.setEnabled(true);
                         if (shareButton != null) shareButton.setEnabled(false);
@@ -979,7 +1100,9 @@ public class MainActivity extends Activity {
                 }
                 recordRun("remote-stream", input, System.currentTimeMillis() - runStarted,
                         framesWritten / 48000.0);
-                setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote · đã có WAV");
+                setStatus(audioStopped ? "Đã dừng stream remote"
+                        : lastSrt.isEmpty() ? "Xong stream remote · đã có WAV"
+                        : "Xong stream remote · đã có WAV + phụ đề");
             } catch (Throwable error) {
                 setStatus("Lỗi stream remote: " + error.getMessage());
                 setError(error.getMessage());
@@ -1025,6 +1148,7 @@ public class MainActivity extends Activity {
                 body.put("dialect", dialect);
                 body.put("resolve_oov", resolveOov);
                 body.put("dictionary", dictionaryText);
+                body.put("custom_reading", new JSONObject(customReadingJson()));
                 body.put("karaoke", true);
                 byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(payload.length);
@@ -1057,7 +1181,7 @@ public class MainActivity extends Activity {
                 String suffix = lastSrt.isEmpty() ? "" : " · có phụ đề";
                 recordRun("remote", input, System.currentTimeMillis() - runStarted,
                         wav.length / 2.0 / 24000.0);
-                play(out, "Xong remote: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
+                present(out, "Xong remote: " + String.format("%.2f s", wav.length / 2.0 / 24000.0) + suffix);
             } catch (Throwable error) {
                 setStatus("Lỗi remote: " + error.getMessage());
                 setError(error.getMessage());
@@ -1539,6 +1663,61 @@ public class MainActivity extends Activity {
         VfTheme.input(dictionaryInput, font);
         form.addView(dictionaryInput);
 
+        TextView customLabel = new TextView(this);
+        VfTheme.text(customLabel, font, 13, VfTheme.INK, true);
+        LinearLayout.LayoutParams customLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        customLabelParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(customLabel, customLabelParams);
+        customLabel.setText("Cách đọc token-level (mỗi dòng `cụm = cách đọc`)");
+        EditText customInput = new EditText(this);
+        customInput.setText(customReadingText);
+        customInput.setHint("TP.HCM = thành phố hồ chí minh\nViFastTts = vi phát tê tê ét");
+        customInput.setMinLines(3);
+        customInput.setGravity(Gravity.TOP | Gravity.START);
+        customInput.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        VfTheme.input(customInput, font);
+        form.addView(customInput);
+
+        CheckBox auto = new CheckBox(this);
+        auto.setText("Tự phát sau khi tổng hợp xong (full)");
+        auto.setChecked(autoPlay);
+        VfTheme.text(auto, font, 14, VfTheme.INK, false);
+        auto.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        LinearLayout.LayoutParams autoParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        autoParams.topMargin = VfTheme.dp(this, 8);
+        form.addView(auto, autoParams);
+
+        outputFolderLabel = new TextView(this);
+        VfTheme.text(outputFolderLabel, font, 12, VfTheme.MUTED, false);
+        refreshOutputFolderLabel();
+        LinearLayout.LayoutParams outputLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        outputLabelParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(outputFolderLabel, outputLabelParams);
+        LinearLayout outputRow = new LinearLayout(this);
+        outputRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button chooseFolder = new Button(this);
+        chooseFolder.setText("Chọn thư mục xuất");
+        VfTheme.secondaryButton(chooseFolder, font);
+        chooseFolder.setOnClickListener(view -> chooseOutputFolder());
+        outputRow.addView(chooseFolder, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        Button downloadsFolder = new Button(this);
+        downloadsFolder.setText("Về Downloads");
+        VfTheme.secondaryButton(downloadsFolder, font);
+        downloadsFolder.setOnClickListener(view -> useDownloadsFolder());
+        LinearLayout.LayoutParams downloadsParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        downloadsParams.leftMargin = VfTheme.dp(this, 8);
+        outputRow.addView(downloadsFolder, downloadsParams);
+        LinearLayout.LayoutParams outputRowParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        outputRowParams.topMargin = VfTheme.dp(this, 4);
+        form.addView(outputRow, outputRowParams);
+
         TextView note = new TextView(this);
         VfTheme.text(note, font, 12, VfTheme.MUTED, false);
         note.setText("Local áp dụng đầy đủ: tốc độ, alpha, max, pause, peak, phương ngữ, OOV và từ điển. Remote gửi cùng bộ tùy chọn; server cũ có thể bỏ qua. Model base 60k nặng hơn small; máy yếu nên dùng small.");
@@ -1572,6 +1751,8 @@ public class MainActivity extends Activity {
                     dialect = dialectIndex == 1 ? "central" : dialectIndex == 2 ? "south" : "north";
                     resolveOov = oov.isChecked();
                     dictionaryText = dictionaryInput.getText().toString().trim();
+                    customReadingText = customInput.getText().toString().trim();
+                    autoPlay = auto.isChecked();
                     maxInput.setText(String.valueOf(maxChars));
                     prefs.edit()
                             .putFloat(KEY_SPEED, speechSpeed)
@@ -1583,13 +1764,16 @@ public class MainActivity extends Activity {
                             .putString(KEY_DIALECT, dialect)
                             .putBoolean(KEY_RESOLVE_OOV, resolveOov)
                             .putString(KEY_DICTIONARY, dictionaryText)
+                            .putString(KEY_CUSTOM_READING, customReadingText)
+                            .putBoolean(KEY_AUTO_PLAY, autoPlay)
                             .apply();
                     setStatus(String.format(
                             "Đã lưu cấu hình · %.2f× · alpha %.2f · %s · OOV %s · stream %s · tối đa %d ký tự · %s",
                             speechSpeed, sharpenAlpha,
                             dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc",
                             resolveOov ? "bật" : "tắt", streamMode ? "bật" : "tắt", maxChars,
-                            dictionarySummary(dictionaryText)));
+                            dictionarySummary(dictionaryText)
+                                    + " · " + customReadingCount() + " custom"));
                     if (streamQuick != null) streamQuick.setChecked(streamMode);
                     updateSettingsSummary();
                     dialog.dismiss();
@@ -1608,6 +1792,7 @@ public class MainActivity extends Activity {
                 "Chọn file .vfa/.vfts",
                 "Chọn acoustic.onnx",
                 "Chọn vocoder.onnx",
+                "Đổi tên model đang dùng",
                 "Xoá model đang dùng",
         };
         new AlertDialog.Builder(this)
@@ -1620,7 +1805,8 @@ public class MainActivity extends Activity {
                         case 3 -> chooseModelFile(REQUEST_BUNDLE);
                         case 4 -> chooseModelFile(REQUEST_ACOUSTIC);
                         case 5 -> chooseModelFile(REQUEST_VOCODER);
-                        case 6 -> deleteActiveModel();
+                        case 6 -> renameActiveModel();
+                        case 7 -> deleteActiveModel();
                         default -> { }
                     }
                 })
@@ -1683,6 +1869,49 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Đã chọn model: " + file.getName(), Toast.LENGTH_LONG).show();
     }
 
+    private void renameActiveModel() {
+        if (activeModelPath.isEmpty()) {
+            setStatus("Đang dùng model bundled/ONNX; không có bundle để đổi tên.");
+            return;
+        }
+        File source = new File(activeModelPath);
+        if (!source.isFile()) {
+            setStatus("Không thấy model: " + source);
+            return;
+        }
+        EditText input = new EditText(this);
+        input.setText(source.getName());
+        input.setSelection(input.length());
+        new AlertDialog.Builder(this)
+                .setTitle("Đổi tên model")
+                .setView(input)
+                .setPositiveButton("Đổi", (dialog, which) -> {
+                    String raw = input.getText().toString().trim()
+                            .replaceAll("[^A-Za-z0-9._-]", "_");
+                    if (!raw.endsWith(".vfa") && !raw.endsWith(".vfts")) {
+                        setStatus("Tên phải kết thúc bằng .vfa hoặc .vfts");
+                        return;
+                    }
+                    File destination = new File(source.getParentFile(), raw);
+                    if (destination.exists() && !destination.equals(source)) {
+                        setStatus("Đã có file " + raw);
+                        return;
+                    }
+                    if (!source.renameTo(destination)) {
+                        setStatus("Không đổi tên được " + source.getName());
+                        return;
+                    }
+                    activeModelPath = destination.getAbsolutePath();
+                    prefs.edit().putString(KEY_ACTIVE_MODEL, activeModelPath).apply();
+                    resetEngine();
+                    updateModelLabel();
+                    setStatus("Đã đổi tên thành " + raw);
+                    Toast.makeText(this, "Đã đổi tên model: " + raw, Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton("Huỷ", null)
+                .show();
+    }
+
     private void deleteActiveModel() {
         if (activeModelPath.isEmpty()) {
             setStatus("Đang dùng model bundled; không có file để xoá.");
@@ -1707,6 +1936,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_OUTPUT_TREE) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                applyOutputTree(data.getData());
+            }
+            return;
+        }
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
         new Thread(() -> {
@@ -1907,6 +2142,59 @@ public class MainActivity extends Activity {
         }
     }
 
+    private String outputFolderName() {
+        if (outputTreeUri == null || outputTreeUri.isEmpty()) return "Downloads";
+        try {
+            Uri tree = Uri.parse(outputTreeUri);
+            String id = DocumentsContract.getTreeDocumentId(tree);
+            String name = id == null ? "" : id.substring(id.lastIndexOf(':') + 1);
+            return name.isEmpty() ? "Thư mục đã chọn" : name;
+        } catch (Throwable ignored) {
+            return "Thư mục đã chọn";
+        }
+    }
+
+    private void refreshOutputFolderLabel() {
+        if (outputFolderLabel != null) {
+            outputFolderLabel.setText("Nơi lưu: " + outputFolderName());
+        }
+    }
+
+    private void chooseOutputFolder() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, REQUEST_OUTPUT_TREE);
+    }
+
+    private void useDownloadsFolder() {
+        outputTreeUri = "";
+        prefs.edit().remove(KEY_OUTPUT_TREE).apply();
+        refreshOutputFolderLabel();
+        setStatus("Đã chọn lưu vào Downloads.");
+    }
+
+    private void applyOutputTree(Uri tree) {
+        try {
+            getContentResolver().takePersistableUriPermission(tree,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        } catch (Throwable ignored) {
+            // Một số provider không cấp persistable; vẫn dùng được trong phiên.
+        }
+        outputTreeUri = tree.toString();
+        prefs.edit().putString(KEY_OUTPUT_TREE, outputTreeUri).apply();
+        refreshOutputFolderLabel();
+        setStatus("Nơi lưu: " + outputFolderName());
+    }
+
+    private void rememberSavedUri(String mime, Uri uri) {
+        if ("audio/wav".equals(mime)) lastSavedWavUri = uri;
+        else if ("application/x-subrip".equals(mime)) lastSavedSrtUri = uri;
+        else if ("text/vtt".equals(mime)) lastSavedVttUri = uri;
+        else if ("application/json".equals(mime)) lastSavedJsonUri = uri;
+    }
+
     private void saveWav() {
         if (lastAudioFile == null || !lastAudioFile.isFile()) {
             setStatus("Chưa có WAV để lưu");
@@ -1914,6 +2202,9 @@ public class MainActivity extends Activity {
         }
         String base = "vifasttts-" + System.currentTimeMillis();
         lastSavedWavUri = null;
+        lastSavedSrtUri = null;
+        lastSavedVttUri = null;
+        lastSavedJsonUri = null;
         try {
             String location = saveBytes(base + ".wav",
                     Files.readAllBytes(lastAudioFile.toPath()), "audio/wav");
@@ -1940,6 +2231,20 @@ public class MainActivity extends Activity {
     }
 
     private String saveBytes(String name, byte[] bytes, String mime) throws Exception {
+        if (outputTreeUri != null && !outputTreeUri.isEmpty()) {
+            Uri tree = Uri.parse(outputTreeUri);
+            String documentId = DocumentsContract.getTreeDocumentId(tree);
+            Uri parent = DocumentsContract.buildDocumentUriUsingTree(tree, documentId);
+            Uri uri = DocumentsContract.createDocument(
+                    getContentResolver(), parent, mime, name);
+            if (uri == null) throw new IllegalStateException("Không tạo được file trong thư mục đã chọn");
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                if (out == null) throw new IllegalStateException("Không mở được thư mục đã chọn");
+                out.write(bytes);
+            }
+            rememberSavedUri(mime, uri);
+            return outputFolderName() + "/" + name;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
@@ -1951,7 +2256,7 @@ public class MainActivity extends Activity {
                 if (out == null) throw new IllegalStateException("Không mở được Downloads");
                 out.write(bytes);
             }
-            if ("audio/wav".equals(mime)) lastSavedWavUri = uri;
+            rememberSavedUri(mime, uri);
             return "Downloads/" + name;
         }
         File dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
@@ -1983,6 +2288,9 @@ public class MainActivity extends Activity {
         dialect = prefs.getString(KEY_DIALECT, "north");
         resolveOov = prefs.getBoolean(KEY_RESOLVE_OOV, true);
         dictionaryText = prefs.getString(KEY_DICTIONARY, "");
+        customReadingText = prefs.getString(KEY_CUSTOM_READING, "");
+        autoPlay = prefs.getBoolean(KEY_AUTO_PLAY, true);
+        outputTreeUri = prefs.getString(KEY_OUTPUT_TREE, "");
         streamMode = prefs.getBoolean(KEY_STREAM, false);
         loadHistory();
         try {
@@ -2337,7 +2645,7 @@ public class MainActivity extends Activity {
         LinearLayout exportRow = new LinearLayout(this);
         exportRow.setOrientation(LinearLayout.HORIZONTAL);
         shareButton = new Button(this);
-        shareButton.setText("Chia sẻ WAV");
+        shareButton.setText("Chia sẻ WAV + phụ đề");
         VfTheme.secondaryButton(shareButton, font);
         shareButton.setEnabled(false);
         shareButton.setOnClickListener(view -> shareWav());

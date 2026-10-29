@@ -4,14 +4,19 @@ Client Android **local-first + remote**: text → Rust C ABI (`vifasttts-ffi`) �
 Runtime Android → WAV → `MediaPlayer`, hoặc gọi server `/api/tts` (URL + Bearer
 token). Không cần Python/server khi đã có APK local.
 
-Đây là **smoke client** để chứng minh đường mobile chạy thật, không phải bản UI
-production. UI SwiftUI/Compose/Flutter cuối cùng vẫn chưa chốt.
+Đây là client native đã dùng được hằng ngày (View + JNA), không còn chỉ là smoke
+test. UI Compose/Flutter vẫn là lựa chọn tương lai, chưa thay bản hiện tại.
 
 ## Đã chạy được (29/10/2026)
 
-- Máy: Mac mini M6, Android Emulator **16 (API 36, arm64-v8a)**, không audio.
-- APK: `app-debug.apk` ~110 MB (model FP32 86 MB + ORT 33 MB + Rust 5 MB);
-  release asset đổi tên thành `vifasttts-mobile-android.apk`.
+- Bản **0.1.3** (`versionCode 4`), APK ~110 MB (model FP32 86 MB + ORT 33 MB +
+  Rust 6 MB).
+- Local/remote; model bundled, `.vfa/.vfts`, cặp ONNX, HuggingFace trực tiếp/server.
+- Stream local/remote có **WAV + SRT/VTT/JSON**, drain hết buffer, phát 48 kHz.
+- Custom reading token-level, history/ETA, auto-play, chọn thư mục xuất, share
+  WAV + phụ đề, kiểm tra `/healthz`, tải/đổi tên/xoá model, karaoke.
+- Máy: Mac mini M6, Android Emulator **16 (API 36, arm64-v8a)**; emulator có lỗi
+  HAL audio nên chất lượng tai chỉ chốt trên thiết bị thật.
 - Bấm **Đọc** local với câu mặc định → status `Xong: 4.41 s`; WAV thật trong
   `cache/vifasttts.wav` dài **4,412 s / 24 kHz / mono / PCM16**.
 - Remote mode (**Remote** + URL server LAN; URL mặc định để trống) đã test:
@@ -87,11 +92,13 @@ adb shell am start -n com.vifasttts.mobile/.MainActivity
   - `.vfts` nạp bằng `vifasttts_engine_new_vfts`;
   - `.vfa` nạp bằng `vifasttts_engine_new_vfa` + `vocoder.onnx` bundled;
   - remote mode vẫn độc lập, không cần tải model.
-- UI vẫn là smoke client (programmatic view), chưa Compose; catalog nằm ở
-  server; vẫn có fallback gọi HuggingFace trực tiếp khi URL trống.
+- UI native dạng programmatic view, chưa Compose; model browser dùng server
+  `/api/models/*` hoặc gọi HuggingFace trực tiếp khi URL trống.
 - Theme/icon dùng chung: `VfTheme.java`, font Be Vietnam Pro, launcher icon
   lấy từ `resources/brand/vifasttts-icon-512.png`.
-- Chưa có: Compose UI, audio focus/foreground service, streaming PCM xuống
-  AAudio, history/settings, UniFFI/Kotlin binding, quản lý nhiều model/active
-  model bằng UI (hiện chỉ một active model).
+- Chưa có: Compose UI, foreground service (chủ động không chạy server nền),
+  huỷ tải model giữa chừng, metadata/hash model trên UI, UniFFI/Kotlin binding.
+- Output folder dùng Storage Access Framework; Android 11 không cho chọn thẳng
+  root `Download`, cần chọn/tạo thư mục con.
+- `custom_reading` và ETA/từ điển/sample lấy từ contract Rust (`vifasttts-app`).
 - License dataset CC-BY-NC: không phát hành store trước khi xử lý pháp lý.
