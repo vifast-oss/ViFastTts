@@ -51,10 +51,10 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 3. Release & Hugging Face
 
-- **GitHub Releases:** bản mới nhất **v0.3.0** (30/10/2026) — Android 0.3.0,
+- **GitHub Releases:** bản mới nhất **v0.3.1** (30/10/2026) — Android 0.3.0,
   iOS simulator stream local/remote, desktop/CLI 3 nền tảng, extension, web,
   `.vfa/.vfts`; kèm `SHA256SUMS.txt`. Bản **v0.2.0** vẫn giữ để đối chiếu.
-  Web Python + HF Space đã cập nhật link v0.3.0.
+  Web Python + HF Space đã cập nhật link v0.3.1 (v0.3.1 sửa stream iOS dài).
 - Hugging Face small: https://huggingface.co/dvchd/vifasttts-ngochuyen-small (ONNX Q, `.vfa`/`.vfts`).
 - Bundle: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles
 - Base 60k sau Q: https://huggingface.co/dvchd/vifasttts-ngochuyen-base
