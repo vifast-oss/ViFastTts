@@ -17,7 +17,7 @@
 4. Demo có **cách đọc tự thêm**, từ điển **229 quy tắc tinh gọn** + fallback tiếng Anh,
    ví dụ STEM (hoá học/toán/vật lý/LaTeX),
    góp ý/báo lỗi và thống kê; nội dung góp ý còn khoá vì chưa đặt `ADMIN_PASSWORD`.
-5. Test **2.936 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
+5. Test **2.941 pass / 24 skip**, `ruff` sạch; tài liệu cũ đã gom vào `docs/archive/`.
 
 ## 1. Đang chạy production
 
@@ -79,6 +79,9 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
   VieNeu v3 Turbo đã chấm; chi tiết + license/online policy ở `docs/BENCHMARK_N0.md`.
 - `GET /api/overrides` trả `builtin`, `approved`, `stem` (H2O/CO2/H2SO4, 1/2, m/s, km/h,
   `\frac{a}{b}`); đọc thực tế do normalizer sinh.
+- **Web Python stream:** `POST /api/tts/stream` (NDJSON PCM16) dùng chung
+  `vifasttts.runtime.tts_engine.OnnxTtsEngine`; `/api/config` trả defaults/capabilities;
+  UI web/Space có checkbox **Stream**. Chi tiết `docs/PYTHON_ENGINE.md`.
 - Feedback/báo lỗi có trong web và Space; admin `/admin` xem thống kê + hàng chờ.
   **Chưa đặt `ADMIN_PASSWORD`** ⇒ nội dung feedback và nút duyệt còn khoá.
 - Giới hạn: **3000 ký tự** (env `MAX_CHARS`), 6 request/phút/IP, một request đồng thời;
@@ -89,7 +92,7 @@ người dùng nghe và chọn; nếu đổi phải cập nhật ONNX/release/HF
 
 ## 5. Test / tài liệu
 
-- `pytest -q`: **2.936 passed, 24 skipped** (~40 s).
+- `pytest -q`: **2.941 passed, 24 skipped** (~40 s).
 - `ruff check .`: sạch.
 - Parser audit: **49.104 tổ hợp, 0 vấn đề**; wordlist 39K: 6.617/6.633 parse OK.
 - Tài liệu hiện hành: `docs/README.md`; lịch sử: `docs/archive/README.md`.
