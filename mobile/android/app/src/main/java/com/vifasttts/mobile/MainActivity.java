@@ -22,10 +22,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -142,6 +145,9 @@ public class MainActivity extends Activity {
     private Pointer engine;
     private TextView status;
     private TextView modelLabel;
+    private TextView settingsSummary;
+    private TextView charCountLabel;
+    private CheckBox streamQuick;
     private TextView subtitle;
     private TextView errorLabel;
     private TextView hintLabel;
@@ -276,6 +282,14 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void updateSettingsSummary() {
+        if (settingsSummary == null) return;
+        String dialectLabel = dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc";
+        settingsSummary.setText(String.format(java.util.Locale.US,
+                "%.2f× · alpha %.2f · %s%s", speechSpeed, sharpenAlpha, dialectLabel,
+                streamMode ? " · stream" : ""));
+    }
+
     private void updateModelLabel() {
         String name;
         if (!activeAcousticPath.isEmpty() && !activeVocoderPath.isEmpty()) {
@@ -350,7 +364,20 @@ public class MainActivity extends Activity {
                 + "&path=" + encode(path);
     }
 
+    private void hideKeyboard() {
+        try {
+            InputMethodManager manager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (manager != null && text != null) {
+                manager.hideSoftInputFromWindow(text.getWindowToken(), 0);
+            }
+            if (text != null) text.clearFocus();
+        } catch (Throwable ignored) {
+            // Bàn phím không bắt buộc phải đóng.
+        }
+    }
+
     private void setMode(String next) {
+        hideKeyboard();
         mode = "remote".equals(next) ? "remote" : "local";
         remoteMode = "remote".equals(mode);
         prefs.edit().putString(KEY_MODE, mode).apply();
@@ -423,6 +450,7 @@ public class MainActivity extends Activity {
     }
 
     private void synthesize() {
+        hideKeyboard();
         final String input = text.getText().toString().trim();
         if (input.isEmpty()) {
             setStatus("Nhập text");
@@ -541,6 +569,7 @@ public class MainActivity extends Activity {
                     if (saveButton != null) saveButton.setEnabled(false);
                     stopKaraoke();
                 });
+                final long[] framesWritten = {0};
                 StreamCallback callback = (samples, length, sampleRateValue, userData) -> {
                     if (audioStopped) return 1;
                     int count = (int) length.longValue();
@@ -551,12 +580,14 @@ public class MainActivity extends Activity {
                                 Math.round(value * 32767f)));
                     }
                     int written = callbackTrack.write(pcm, 0, count, AudioTrack.WRITE_BLOCKING);
+                    if (written > 0) framesWritten[0] += written;
                     return written < 0 ? 1 : 0;
                 };
                 int code = ffi.vifasttts_synthesize_stream_ex(
                         engine, input, options, dialect, resolveOov ? (byte) 1 : (byte) 0,
                         dictionaryText, callback, null);
                 if (code < 0) throw new IllegalStateException(lastError());
+                if (code == 0) waitForPlayback(streamTrack, framesWritten[0], 8000);
                 setStatus(code == 1 ? "Đã dừng stream" : "Xong stream local");
             } catch (Throwable error) {
                 setStatus("Lỗi stream: " + error.getMessage());
@@ -645,6 +676,7 @@ public class MainActivity extends Activity {
                     if (saveButton != null) saveButton.setEnabled(false);
                     stopKaraoke();
                 });
+                long framesWritten = 0;
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                         connection.getInputStream(), StandardCharsets.UTF_8))) {
                     String line;
@@ -664,11 +696,13 @@ public class MainActivity extends Activity {
                             int written = streamTrack.write(pcm, 0, pcm.length,
                                     AudioTrack.WRITE_BLOCKING);
                             if (written < 0) throw new IllegalStateException("AudioTrack write lỗi");
+                            framesWritten += written;
                         } else if ("error".equals(type)) {
                             throw new IllegalStateException(event.optString("message", "server stream lỗi"));
                         }
                     }
                 }
+                if (!audioStopped) waitForPlayback(streamTrack, framesWritten, 8000);
                 setStatus(audioStopped ? "Đã dừng stream remote" : "Xong stream remote");
             } catch (Throwable error) {
                 setStatus("Lỗi stream remote: " + error.getMessage());
@@ -1038,6 +1072,21 @@ public class MainActivity extends Activity {
         return new PcmClip(samples, sampleRate, channels);
     }
 
+    private void waitForPlayback(AudioTrack track, long frames, long timeoutMs) {
+        if (track == null || frames <= 0) return;
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        try {
+            while (!audioStopped && track.getPlaybackHeadPosition() < frames
+                    && System.currentTimeMillis() < deadline) {
+                Thread.sleep(20);
+            }
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        } catch (Throwable ignored) {
+            // Track có thể đã bị stop từ UI.
+        }
+    }
+
     private void stopPlayback() {
         stopAudioPath();
         stopKaraoke();
@@ -1239,6 +1288,8 @@ public class MainActivity extends Activity {
                             dialect.equals("central") ? "Trung" : dialect.equals("south") ? "Nam" : "Bắc",
                             resolveOov ? "bật" : "tắt", streamMode ? "bật" : "tắt", maxChars,
                             dictionaryText.isEmpty() ? 0 : dictionaryText.split("\n").length));
+                    if (streamQuick != null) streamQuick.setChecked(streamMode);
+                    updateSettingsSummary();
                     dialog.dismiss();
                 }));
         dialog.show();
@@ -1615,14 +1666,14 @@ public class MainActivity extends Activity {
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
-        scroll.setBackgroundColor(VfTheme.BG);
+        scroll.setBackground(VfTheme.background(this));
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        int pad = VfTheme.dp(this, 20);
-        int baseBottom = VfTheme.dp(this, 28);
-        root.setPadding(pad, pad, pad, baseBottom);
+        int pad = VfTheme.dp(this, 18);
+        int baseBottom = VfTheme.dp(this, 32);
+        root.setPadding(pad, VfTheme.dp(this, 10), pad, baseBottom);
         final int baseLeft = pad;
-        final int baseTop = pad;
+        final int baseTop = VfTheme.dp(this, 10);
         final int baseRight = pad;
         root.setOnApplyWindowInsetsListener((view, insets) -> {
             view.setPadding(
@@ -1635,14 +1686,14 @@ public class MainActivity extends Activity {
         scroll.addView(root, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // Header: icon + tên app, nút Model ở bên phải (giống toolbar iOS).
+        // Header gọn: nhận diện thương hiệu + truy cập model.
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
         ImageView icon = new ImageView(this);
         icon.setImageResource(R.mipmap.ic_launcher);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
-                VfTheme.dp(this, 42), VfTheme.dp(this, 42));
+                VfTheme.dp(this, 46), VfTheme.dp(this, 46));
         iconParams.rightMargin = VfTheme.dp(this, 12);
         header.addView(icon, iconParams);
 
@@ -1650,32 +1701,49 @@ public class MainActivity extends Activity {
         titleBlock.setOrientation(LinearLayout.VERTICAL);
         TextView title = new TextView(this);
         title.setText("ViFastTts");
-        VfTheme.text(title, font, 27, VfTheme.INK, true);
+        VfTheme.text(title, font, 26, VfTheme.INK, true);
         titleBlock.addView(title);
         subtitle = new TextView(this);
-        VfTheme.text(subtitle, font, 13, VfTheme.MUTED, false);
+        VfTheme.text(subtitle, font, 12, VfTheme.MUTED, false);
         titleBlock.addView(subtitle);
         header.addView(titleBlock, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         modelButton = new Button(this);
         modelButton.setText("Model");
-        VfTheme.secondaryButton(modelButton, font);
+        VfTheme.chipButton(modelButton, font);
         modelButton.setOnClickListener(view -> showModelManager());
         header.addView(modelButton, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        LinearLayout modelRow = new LinearLayout(this);
+        modelRow.setOrientation(LinearLayout.HORIZONTAL);
+        modelRow.setGravity(Gravity.CENTER_VERTICAL);
         modelLabel = new TextView(this);
         VfTheme.text(modelLabel, font, 12, VfTheme.MUTED, false);
-        updateModelLabel();
-        LinearLayout.LayoutParams modelParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        modelParams.topMargin = VfTheme.dp(this, 2);
-        root.addView(modelLabel, modelParams);
+        modelLabel.setPadding(0, VfTheme.dp(this, 6), 0, 0);
+        modelLabel.setOnClickListener(view -> showModelManager());
+        modelRow.addView(modelLabel, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        settingsSummary = new TextView(this);
+        VfTheme.text(settingsSummary, font, 11, VfTheme.MUTED, false);
+        settingsSummary.setGravity(Gravity.END);
+        modelRow.addView(settingsSummary, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.addView(modelRow, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // Segmented Local/Remote giống Picker(.segmented) iOS.
+        // Card chế độ: segmented + cấu hình remote cùng một khối.
+        LinearLayout modeCard = new LinearLayout(this);
+        modeCard.setOrientation(LinearLayout.VERTICAL);
+        VfTheme.card(modeCard);
+        TextView modeTitle = new TextView(this);
+        modeTitle.setText("Chế độ đọc");
+        VfTheme.text(modeTitle, font, 12, VfTheme.MUTED, true);
+        modeCard.addView(modeTitle);
+
         LinearLayout segments = new LinearLayout(this);
         segments.setOrientation(LinearLayout.HORIZONTAL);
         segments.setBackground(VfTheme.rounded(this, VfTheme.SOFT, VfTheme.BORDER, 12, 1));
@@ -1695,14 +1763,14 @@ public class MainActivity extends Activity {
         segments.addView(remoteTab, tabParams);
         LinearLayout.LayoutParams segmentParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        segmentParams.topMargin = VfTheme.dp(this, 14);
-        root.addView(segments, segmentParams);
+        segmentParams.topMargin = VfTheme.dp(this, 8);
+        modeCard.addView(segments, segmentParams);
 
         remoteFields = new LinearLayout(this);
         remoteFields.setOrientation(LinearLayout.VERTICAL);
         TextView serverLabel = new TextView(this);
         serverLabel.setText("Server URL");
-        VfTheme.text(serverLabel, font, 12, VfTheme.MUTED, false);
+        VfTheme.text(serverLabel, font, 11, VfTheme.MUTED, false);
         remoteFields.addView(serverLabel);
         serverUrl = new EditText(this);
         serverUrl.setHint("http://192.168.1.100:8000");
@@ -1714,7 +1782,7 @@ public class MainActivity extends Activity {
 
         TextView tokenLabel = new TextView(this);
         tokenLabel.setText("Bearer token (tuỳ chọn)");
-        VfTheme.text(tokenLabel, font, 12, VfTheme.MUTED, false);
+        VfTheme.text(tokenLabel, font, 11, VfTheme.MUTED, false);
         LinearLayout.LayoutParams tokenLabelParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tokenLabelParams.topMargin = VfTheme.dp(this, 8);
@@ -1726,32 +1794,111 @@ public class MainActivity extends Activity {
         VfTheme.input(token, font);
         remoteFields.addView(token, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
         LinearLayout.LayoutParams remoteParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        remoteParams.topMargin = VfTheme.dp(this, 12);
-        root.addView(remoteFields, remoteParams);
+        remoteParams.topMargin = VfTheme.dp(this, 10);
+        modeCard.addView(remoteFields, remoteParams);
+        LinearLayout.LayoutParams modeParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        modeParams.topMargin = VfTheme.dp(this, 14);
+        root.addView(modeCard, modeParams);
 
-        // Text editor card.
+        // Card nhập liệu: trọng tâm màn hình.
         LinearLayout textCard = new LinearLayout(this);
         textCard.setOrientation(LinearLayout.VERTICAL);
         VfTheme.card(textCard);
+        LinearLayout textHead = new LinearLayout(this);
+        textHead.setOrientation(LinearLayout.HORIZONTAL);
+        textHead.setGravity(Gravity.CENTER_VERTICAL);
+        TextView textTitle = new TextView(this);
+        textTitle.setText("Câu cần đọc");
+        VfTheme.text(textTitle, font, 15, VfTheme.INK, true);
+        textHead.addView(textTitle, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        charCountLabel = new TextView(this);
+        VfTheme.text(charCountLabel, font, 11, VfTheme.MUTED, false);
+        textHead.addView(charCountLabel);
+        TextView clearText = new TextView(this);
+        clearText.setText("Xoá");
+        VfTheme.text(clearText, font, 12, VfTheme.ACCENT_DARK, true);
+        clearText.setPadding(VfTheme.dp(this, 12), VfTheme.dp(this, 4),
+                VfTheme.dp(this, 2), VfTheme.dp(this, 4));
+        clearText.setOnClickListener(view -> text.setText(""));
+        textHead.addView(clearText);
+        textCard.addView(textHead);
+
         text = new EditText(this);
         text.setText("Xin chào các bạn, đây là bản Android của ViFastTts.");
+        text.setHint("Nhập hoặc dán câu tiếng Việt…");
         VfTheme.text(text, font, 15, VfTheme.INK, false);
         text.setBackgroundColor(Color.TRANSPARENT);
         text.setGravity(Gravity.TOP | Gravity.START);
-        text.setMinLines(7);
+        text.setMinLines(6);
+        text.setLineSpacing(VfTheme.dp(this, 2), 1f);
         text.setInputType(InputType.TYPE_CLASS_TEXT
                 | InputType.TYPE_TEXT_FLAG_MULTI_LINE
                 | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        textCard.addView(text, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, VfTheme.dp(this, 190)));
+        LinearLayout.LayoutParams editorParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, VfTheme.dp(this, 170));
+        editorParams.topMargin = VfTheme.dp(this, 6);
+        textCard.addView(text, editorParams);
+        text.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (charCountLabel != null) {
+                    charCountLabel.setText(s.length() + " ký tự");
+                }
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+        charCountLabel.setText(text.length() + " ký tự");
+
+        LinearLayout samples = new LinearLayout(this);
+        samples.setOrientation(LinearLayout.HORIZONTAL);
+        samples.setGravity(Gravity.CENTER_VERTICAL);
+        TextView sampleLabel = new TextView(this);
+        sampleLabel.setText("Mẫu");
+        VfTheme.text(sampleLabel, font, 11, VfTheme.MUTED, false);
+        samples.addView(sampleLabel);
+        for (String[] sample : new String[][]{
+                {"Chào", "Xin chào các bạn, hôm nay trời đẹp."},
+                {"Android", "Xin chào các bạn, đây là bản Android của ViFastTts."},
+                {"iOS", "Xin chào, đây là bản iOS của ViFastTts."},
+        }) {
+            Button chip = new Button(this);
+            chip.setText(sample[0]);
+            VfTheme.chipButton(chip, font);
+            chip.setOnClickListener(view -> text.setText(sample[1]));
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            chipParams.leftMargin = VfTheme.dp(this, 6);
+            samples.addView(chip, chipParams);
+        }
+        LinearLayout.LayoutParams samplesParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        samplesParams.topMargin = VfTheme.dp(this, 6);
+        textCard.addView(samples, samplesParams);
+
+        streamQuick = new CheckBox(this);
+        streamQuick.setText("Stream khi đọc (phát ngay, không lưu WAV)");
+        streamQuick.setChecked(streamMode);
+        VfTheme.text(streamQuick, font, 12, VfTheme.MUTED, false);
+        streamQuick.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        streamQuick.setOnCheckedChangeListener((button, checked) -> {
+            streamMode = checked;
+            prefs.edit().putBoolean(KEY_STREAM, streamMode).apply();
+            updateSettingsSummary();
+        });
+        LinearLayout.LayoutParams streamQuickParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        streamQuickParams.topMargin = VfTheme.dp(this, 6);
+        textCard.addView(streamQuick, streamQuickParams);
         LinearLayout.LayoutParams textCardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         textCardParams.topMargin = VfTheme.dp(this, 14);
         root.addView(textCard, textCardParams);
 
+        // Hành động chính: một nút Đọc lớn, Dừng và Cấu hình ngang hàng.
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setGravity(Gravity.CENTER_VERTICAL);
@@ -1760,7 +1907,7 @@ public class MainActivity extends Activity {
         VfTheme.primaryButton(runButton, font);
         runButton.setOnClickListener(view -> synthesize());
         actions.addView(runButton, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                0, VfTheme.dp(this, 52), 1f));
 
         stopButton = new Button(this);
         stopButton.setText("Dừng");
@@ -1768,7 +1915,7 @@ public class MainActivity extends Activity {
         stopButton.setEnabled(false);
         stopButton.setOnClickListener(view -> stopPlayback());
         LinearLayout.LayoutParams stopParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                VfTheme.dp(this, 82), VfTheme.dp(this, 52));
         stopParams.leftMargin = VfTheme.dp(this, 8);
         actions.addView(stopButton, stopParams);
 
@@ -1777,66 +1924,74 @@ public class MainActivity extends Activity {
         VfTheme.secondaryButton(settingsButton, font);
         settingsButton.setOnClickListener(view -> showSettings());
         LinearLayout.LayoutParams settingsParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                VfTheme.dp(this, 102), VfTheme.dp(this, 52));
         settingsParams.leftMargin = VfTheme.dp(this, 8);
         actions.addView(settingsButton, settingsParams);
-
-        progress = new ProgressBar(this);
-        progress.setIndeterminate(true);
-        progress.setVisibility(View.GONE);
-        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
-                VfTheme.dp(this, 24), VfTheme.dp(this, 24));
-        progressParams.leftMargin = VfTheme.dp(this, 8);
-        actions.addView(progress, progressParams);
-
         LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         actionParams.topMargin = VfTheme.dp(this, 14);
         root.addView(actions, actionParams);
+
+        // Card phát: trạng thái, karaoke và lưu file.
+        LinearLayout playbackCard = new LinearLayout(this);
+        playbackCard.setOrientation(LinearLayout.VERTICAL);
+        VfTheme.card(playbackCard);
+        LinearLayout statusRow = new LinearLayout(this);
+        statusRow.setOrientation(LinearLayout.HORIZONTAL);
+        statusRow.setGravity(Gravity.CENTER_VERTICAL);
+        View statusDot = new View(this);
+        statusDot.setBackground(VfTheme.dot(this, VfTheme.SUCCESS));
+        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(
+                VfTheme.dp(this, 8), VfTheme.dp(this, 8));
+        dotParams.rightMargin = VfTheme.dp(this, 8);
+        statusRow.addView(statusDot, dotParams);
+        status = new TextView(this);
+        status.setText("Sẵn sàng");
+        VfTheme.text(status, font, 14, VfTheme.INK, false);
+        statusRow.addView(status, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        progress = new ProgressBar(this);
+        progress.setIndeterminate(true);
+        progress.setVisibility(View.GONE);
+        statusRow.addView(progress, new LinearLayout.LayoutParams(
+                VfTheme.dp(this, 22), VfTheme.dp(this, 22)));
+        playbackCard.addView(statusRow);
+
+        karaokeView = new TextView(this);
+        VfTheme.text(karaokeView, font, 24, VfTheme.ACCENT, true);
+        karaokeView.setGravity(Gravity.CENTER);
+        karaokeView.setPadding(0, VfTheme.dp(this, 10), 0, VfTheme.dp(this, 6));
+        karaokeView.setMinHeight(VfTheme.dp(this, 38));
+        karaokeView.setVisibility(View.GONE);
+        playbackCard.addView(karaokeView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        errorLabel = new TextView(this);
+        VfTheme.text(errorLabel, font, 13, VfTheme.ERROR, false);
+        errorLabel.setVisibility(View.GONE);
+        playbackCard.addView(errorLabel, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         saveButton = new Button(this);
         saveButton.setText("Lưu WAV + phụ đề");
         VfTheme.secondaryButton(saveButton, font);
         saveButton.setEnabled(false);
         saveButton.setOnClickListener(view -> saveWav());
-        LinearLayout utility = new LinearLayout(this);
-        utility.setOrientation(LinearLayout.HORIZONTAL);
-        utility.addView(saveButton, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        LinearLayout.LayoutParams utilityParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        utilityParams.topMargin = VfTheme.dp(this, 8);
-        root.addView(utility, utilityParams);
-
-        status = new TextView(this);
-        status.setText("Sẵn sàng");
-        VfTheme.text(status, font, 15, VfTheme.INK, false);
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+        saveParams.topMargin = VfTheme.dp(this, 10);
+        playbackCard.addView(saveButton, saveParams);
+        LinearLayout.LayoutParams playbackParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        statusParams.topMargin = VfTheme.dp(this, 14);
-        root.addView(status, statusParams);
-
-        karaokeView = new TextView(this);
-        VfTheme.text(karaokeView, font, 22, VfTheme.ACCENT, true);
-        karaokeView.setGravity(Gravity.CENTER);
-        karaokeView.setPadding(0, VfTheme.dp(this, 8), 0, VfTheme.dp(this, 8));
-        karaokeView.setVisibility(View.GONE);
-        root.addView(karaokeView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        errorLabel = new TextView(this);
-        VfTheme.text(errorLabel, font, 13, VfTheme.ERROR, false);
-        errorLabel.setVisibility(View.GONE);
-        LinearLayout.LayoutParams errorParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        errorParams.topMargin = VfTheme.dp(this, 4);
-        root.addView(errorLabel, errorParams);
+        playbackParams.topMargin = VfTheme.dp(this, 12);
+        root.addView(playbackCard, playbackParams);
 
         hintLabel = new TextView(this);
         VfTheme.text(hintLabel, font, 12, VfTheme.MUTED, false);
+        hintLabel.setLineSpacing(VfTheme.dp(this, 2), 1f);
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        hintParams.topMargin = VfTheme.dp(this, 8);
+        hintParams.topMargin = VfTheme.dp(this, 10);
         root.addView(hintLabel, hintParams);
 
         String savedServer = prefs.getString(KEY_SERVER, "");
@@ -1845,6 +2000,8 @@ public class MainActivity extends Activity {
         }
         serverUrl.setText(savedServer);
         token.setText(prefs.getString(KEY_TOKEN, ""));
+        updateModelLabel();
+        updateSettingsSummary();
         setMode(mode);
 
         setContentView(scroll);

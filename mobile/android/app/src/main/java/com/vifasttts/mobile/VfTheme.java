@@ -57,18 +57,37 @@ final class VfTheme {
 
     static void primaryButton(Button button, Typeface base) {
         button.setAllCaps(false);
-        text(button, base, 15, Color.WHITE, true);
-        button.setBackground(rounded(button.getContext(), ACCENT, ACCENT, 10, 1));
-        int pad = dp(button.getContext(), 14);
-        button.setPadding(pad, dp(button.getContext(), 10), pad, dp(button.getContext(), 10));
+        text(button, base, 16, Color.WHITE, true);
+        button.setBackground(rounded(button.getContext(), ACCENT, ACCENT, 12, 1));
+        int pad = dp(button.getContext(), 16);
+        button.setPadding(pad, dp(button.getContext(), 12), pad, dp(button.getContext(), 12));
+        button.setMinHeight(dp(button.getContext(), 48));
     }
 
     static void secondaryButton(Button button, Typeface base) {
         button.setAllCaps(false);
         text(button, base, 14, ACCENT_DARK, false);
-        button.setBackground(rounded(button.getContext(), SOFT, BORDER, 10, 1));
+        button.setBackground(rounded(button.getContext(), SOFT, BORDER, 12, 1));
         int pad = dp(button.getContext(), 12);
-        button.setPadding(pad, dp(button.getContext(), 9), pad, dp(button.getContext(), 9));
+        button.setPadding(pad, dp(button.getContext(), 10), pad, dp(button.getContext(), 10));
+        button.setMinHeight(dp(button.getContext(), 44));
+    }
+
+    /** Nút chip nhỏ cho ví dụ nhanh. */
+    static void chipButton(Button button, Typeface base) {
+        button.setAllCaps(false);
+        text(button, base, 12, INK, false);
+        button.setBackground(rounded(button.getContext(), SURFACE, BORDER, 999, 1));
+        int pad = dp(button.getContext(), 10);
+        button.setPadding(pad, dp(button.getContext(), 5), pad, dp(button.getContext(), 5));
+        button.setMinHeight(dp(button.getContext(), 32));
+    }
+
+    static GradientDrawable background(Context context) {
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{BG, Color.rgb(0xFF, 0xF8, 0xF0)});
+        return drawable;
     }
 
     /** Nút segmented Local/Remote giống Picker iOS. */
@@ -88,9 +107,18 @@ final class VfTheme {
 
     /** Card surface nhẹ, cùng radius với iOS/web. */
     static void card(LinearLayout view) {
-        view.setBackground(rounded(view.getContext(), SURFACE, BORDER, 12, 1));
-        int pad = dp(view.getContext(), 14);
+        view.setBackground(rounded(view.getContext(), SURFACE, BORDER, 16, 1));
+        int pad = dp(view.getContext(), 16);
         view.setPadding(pad, pad, pad, pad);
+    }
+
+    static GradientDrawable dot(Context context, int color) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.OVAL);
+        drawable.setColor(color);
+        int size = dp(context, 8);
+        drawable.setSize(size, size);
+        return drawable;
     }
 
     static void input(EditText input, Typeface base) {
