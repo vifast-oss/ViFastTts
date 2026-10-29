@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use axum::body::Body;
-use axum::extract::{DefaultBodyLimit, State};
+use axum::extract::{DefaultBodyLimit, Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -20,6 +20,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use vifasttts_app::parse_dictionary;
+use vifasttts_model_manager::ModelManager;
 use vifasttts_native::{
     KaraokeDocument, NativeEngine, StreamControl, SynthesisOptions, load, load_verified, load_vfa,
     load_vfa_auto, load_vfts,
@@ -59,6 +60,9 @@ pub struct Args {
     /// Chỉ chạy API, không phục vụ web dù có `--web-dir`/`web`.
     #[arg(long)]
     pub api_only: bool,
+    /// Thư mục cache bundle model `.vfa/.vfts` cho `/api/models/*`.
+    #[arg(long, default_value = "models")]
+    pub model_dir: PathBuf,
 }
 
 struct AppState {
@@ -66,6 +70,7 @@ struct AppState {
     pub max_chars: usize,
     alpha: f32,
     pub token: Option<String>,
+    models: ModelManager,
 }
 
 fn authorized(headers: &HeaderMap, token: Option<&str>) -> bool {
@@ -193,6 +198,85 @@ fn pcm16_base64(samples: &[f32]) -> String {
         bytes.extend_from_slice(&pcm.to_le_bytes());
     }
     BASE64.encode(bytes)
+}
+
+#[derive(Debug, Deserialize)]
+struct ModelSearchQuery {
+    q: String,
+    #[serde(default = "model_limit")]
+    limit: usize,
+}
+
+fn model_limit() -> usize {
+    20
+}
+
+#[derive(Debug, Deserialize)]
+struct ModelFilesQuery {
+    repo: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ModelDownloadQuery {
+    repo: String,
+    path: String,
+}
+
+async fn models_search(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Query(query): Query<ModelSearchQuery>,
+) -> Response {
+    if !authorized(&headers, state.token.as_deref()) {
+        return (StatusCode::UNAUTHORIZED, "Bearer token không hợp lệ").into_response();
+    }
+    let manager = state.models.clone();
+    match tokio::task::spawn_blocking(move || manager.search(&query.q, query.limit)).await {
+        Ok(Ok(models)) => Json(models).into_response(),
+        Ok(Err(error)) => (StatusCode::BAD_GATEWAY, error).into_response(),
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
+    }
+}
+
+async fn models_files(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Query(query): Query<ModelFilesQuery>,
+) -> Response {
+    if !authorized(&headers, state.token.as_deref()) {
+        return (StatusCode::UNAUTHORIZED, "Bearer token không hợp lệ").into_response();
+    }
+    let manager = state.models.clone();
+    match tokio::task::spawn_blocking(move || manager.files(&query.repo)).await {
+        Ok(Ok(files)) => Json(files).into_response(),
+        Ok(Err(error)) => (StatusCode::BAD_GATEWAY, error).into_response(),
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
+    }
+}
+
+async fn models_download(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Query(query): Query<ModelDownloadQuery>,
+) -> Response {
+    if !authorized(&headers, state.token.as_deref()) {
+        return (StatusCode::UNAUTHORIZED, "Bearer token không hợp lệ").into_response();
+    }
+    let manager = state.models.clone();
+    match tokio::task::spawn_blocking(move || manager.install_bytes(&query.repo, &query.path)).await
+    {
+        Ok(Ok(bytes)) => (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "application/octet-stream"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            bytes,
+        )
+            .into_response(),
+        Ok(Err(error)) => (StatusCode::BAD_GATEWAY, error).into_response(),
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
+    }
 }
 
 /// NDJSON streaming: audio chunk (PCM16 base64), units, done.
@@ -406,12 +490,16 @@ pub async fn serve(args: Args) -> Result<(), String> {
         max_chars: args.max_chars,
         alpha: 1.5,
         token: args.token.filter(|value| !value.trim().is_empty()),
+        models: ModelManager::new(&args.model_dir),
     });
     let mut app = Router::new()
         .route("/healthz", get(health))
         .route("/api/config", get(config))
         .route("/api/tts", post(tts))
         .route("/api/tts/stream", post(tts_stream))
+        .route("/api/models/search", get(models_search))
+        .route("/api/models/files", get(models_files))
+        .route("/api/models/download", get(models_download))
         .layer(DefaultBodyLimit::max(64 * 1024))
         .with_state(state);
     if !args.api_only
@@ -449,6 +537,7 @@ impl Default for Args {
             vfa: None,
             cors: false,
             api_only: false,
+            model_dir: PathBuf::from("models"),
         }
     }
 }

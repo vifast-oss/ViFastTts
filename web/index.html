@@ -15,6 +15,8 @@
       pre { background: #f6f6f6; padding: 1rem; overflow: auto; }
     .hidden { display: none; }
     input, select { font: inherit; }
+    #modelList, #modelFiles { max-height: 12rem; overflow: auto; }
+    #modelList button, #modelFiles button { display: block; margin: .15rem 0; width: 100%; text-align: left; }
     </style>
   </head>
   <body>
@@ -34,6 +36,16 @@
       <label>Server URL <input id="serverUrl" size="34" value="http://127.0.0.1:8000" /></label>
       <label>Token <input id="token" type="password" size="20" /></label>
     </p>
+    <details id="modelBrowser">
+      <summary>Thêm giọng từ HuggingFace (qua server)</summary>
+      <p>
+        <input id="modelQuery" value="vifasttts" />
+        <button id="modelSearch" type="button">Tìm</button>
+        <span id="modelStatus"></span>
+      </p>
+      <div id="modelList"></div>
+      <div id="modelFiles"></div>
+    </details>
     <p>
       <label>Nạp model .vfa/.vfts
         <input id="modelFile" type="file" accept=".vfa,.vfts" />

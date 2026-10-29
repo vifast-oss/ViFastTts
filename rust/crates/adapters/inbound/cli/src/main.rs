@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
-use vifasttts_huggingface::{bundle_files, bundles_from_siblings, download, search};
+use vifasttts_huggingface::bundles_from_siblings;
+use vifasttts_model_manager::ModelManager;
 use vifasttts_native::{
     KaraokeDocument, PackOptions, StreamControl, SynthesisOptions, TimedUnit, VfaBundle,
     VfaOptions, VftsBundle, from_bytes, load, load_verified, load_vfa, load_vfa_auto, load_vfts,
@@ -32,6 +33,11 @@ enum ModelsAction {
         path: String,
         #[arg(long, default_value = "models")]
         output: PathBuf,
+    },
+    /// Liệt kê bundle đã tải trong thư mục local.
+    Installed {
+        #[arg(long, default_value = "models")]
+        directory: PathBuf,
     },
 }
 
@@ -240,6 +246,8 @@ enum Command {
         /// Chỉ chạy API, không phục vụ web.
         #[arg(long)]
         api_only: bool,
+        #[arg(long, default_value = "models")]
+        model_dir: PathBuf,
     },
     /// Benchmark trong một process (load một lần, chạy nhiều lần).
     Bench {
@@ -558,6 +566,7 @@ fn main() -> Result<()> {
             web_dir,
             cors,
             api_only,
+            model_dir,
         } => {
             let web_dir = web_dir.or_else(|| {
                 let dist = PathBuf::from("web/dist");
@@ -596,6 +605,7 @@ fn main() -> Result<()> {
                 web_dir,
                 cors,
                 api_only,
+                model_dir,
             };
             let runtime = tokio::runtime::Runtime::new().map_err(anyhow::Error::msg)?;
             runtime
@@ -604,7 +614,9 @@ fn main() -> Result<()> {
         }
         Command::Models { action } => match action {
             ModelsAction::Search { query, limit } => {
-                let models = search(&query, limit).map_err(anyhow::Error::msg)?;
+                let models = ModelManager::new("models")
+                    .search(&query, limit)
+                    .map_err(anyhow::Error::msg)?;
                 for model in models {
                     let bundles = bundles_from_siblings(&model);
                     println!(
@@ -621,14 +633,23 @@ fn main() -> Result<()> {
                 }
             }
             ModelsAction::Files { repo } => {
-                let files = bundle_files(&repo).map_err(anyhow::Error::msg)?;
+                let files = ModelManager::new("models")
+                    .files(&repo)
+                    .map_err(anyhow::Error::msg)?;
                 for file in files {
                     println!("{}	{} B", file.path, file.size);
                 }
             }
             ModelsAction::Download { repo, path, output } => {
-                let file = download(&repo, &path, &output).map_err(anyhow::Error::msg)?;
-                println!("wrote {}", file.display());
+                let file = ModelManager::new(output)
+                    .install(&repo, &path)
+                    .map_err(anyhow::Error::msg)?;
+                println!("wrote {} ({} B)", file.path.display(), file.size);
+            }
+            ModelsAction::Installed { directory } => {
+                for model in ModelManager::new(directory).installed() {
+                    println!("{}	{}	{} B", model.kind, model.path.display(), model.size);
+                }
             }
         },
         Command::Vfa { action } => match action {

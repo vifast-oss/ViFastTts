@@ -102,6 +102,8 @@ cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép L
   remote same-origin; mở static/file thì mặc định local WASM.
 - Web có input nạp `.vfa`/`.vfts`: `.vfa` dùng `/models/vocoder.onnx`, `.vfts`
   tự chứa vocoder; kiểm SHA256 trước khi tạo session.
+- Khi server đang chạy, web có mục **Thêm giọng từ HuggingFace** gọi
+  `/api/models/*`; không cần tải file thủ công.
 
 ## Android
 

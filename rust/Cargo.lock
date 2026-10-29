@@ -5069,6 +5069,7 @@ dependencies = [
  "vifasttts-http-client",
  "vifasttts-http-server",
  "vifasttts-huggingface",
+ "vifasttts-model-manager",
  "vifasttts-native",
  "vifasttts-text",
  "vifasttts-tui",
@@ -5134,6 +5135,7 @@ dependencies = [
  "tokio-stream",
  "tower-http",
  "vifasttts-app",
+ "vifasttts-model-manager",
  "vifasttts-native",
  "vifasttts-text",
 ]
@@ -5155,6 +5157,15 @@ dependencies = [
  "vifasttts-audio-sink",
  "vifasttts-model-source",
  "vifasttts-native",
+]
+
+[[package]]
+name = "vifasttts-model-manager"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "vifasttts-huggingface",
+ "vifasttts-vfts",
 ]
 
 [[package]]

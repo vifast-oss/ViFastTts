@@ -6,6 +6,7 @@ members = [
     "crates/core/domain/vfts",
     "crates/core/application/engine",
     "crates/core/application/app",
+    "crates/core/application/model-manager",
     "crates/core/ports/backend",
     "crates/core/ports/audio-sink",
     "crates/core/ports/transport",

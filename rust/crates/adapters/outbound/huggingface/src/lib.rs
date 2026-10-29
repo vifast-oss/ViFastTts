@@ -6,12 +6,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const API: &str = "https://huggingface.co";
 const MAX_DOWNLOAD: u64 = 512 * 1024 * 1024;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HfModel {
     pub id: String,
     #[serde(default)]
@@ -26,12 +26,12 @@ pub struct HfModel {
     pub pipeline_tag: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HfSibling {
     pub rfilename: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HfFile {
     pub path: String,
     #[serde(default)]
@@ -111,19 +111,11 @@ fn encode_path(path: &str) -> String {
         .join("/")
 }
 
-/// Tải một bundle vào thư mục đích; trả đường dẫn file.
-pub fn download(repo: &str, path: &str, directory: impl AsRef<Path>) -> Result<PathBuf, String> {
+/// Tải bundle vào bộ nhớ (dùng cho server proxy/UI remote).
+pub fn download_bytes(repo: &str, path: &str) -> Result<Vec<u8>, String> {
     if !(path.ends_with(".vfa") || path.ends_with(".vfts")) {
         return Err("chỉ tải .vfa/.vfts".to_string());
     }
-    let directory = directory.as_ref();
-    fs::create_dir_all(directory)
-        .map_err(|error| format!("tạo {}: {error}", directory.display()))?;
-    let name = Path::new(path)
-        .file_name()
-        .and_then(|value| value.to_str())
-        .ok_or_else(|| "tên file không hợp lệ".to_string())?;
-    let destination = directory.join(name);
     let url = format!(
         "{API}/{}/resolve/main/{}",
         repo.trim_matches('/'),
@@ -149,6 +141,20 @@ pub fn download(repo: &str, path: &str, directory: impl AsRef<Path>) -> Result<P
     if bytes.len() as u64 > MAX_DOWNLOAD {
         return Err("model vượt giới hạn tải".to_string());
     }
+    Ok(bytes)
+}
+
+/// Tải một bundle vào thư mục đích; trả đường dẫn file.
+pub fn download(repo: &str, path: &str, directory: impl AsRef<Path>) -> Result<PathBuf, String> {
+    let bytes = download_bytes(repo, path)?;
+    let directory = directory.as_ref();
+    fs::create_dir_all(directory)
+        .map_err(|error| format!("tạo {}: {error}", directory.display()))?;
+    let name = Path::new(path)
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "tên file không hợp lệ".to_string())?;
+    let destination = directory.join(name);
     fs::write(&destination, &bytes)
         .map_err(|error| format!("ghi {}: {error}", destination.display()))?;
     Ok(destination)

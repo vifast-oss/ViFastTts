@@ -13,6 +13,11 @@ const serverUrlEl = document.getElementById('serverUrl');
 const tokenEl = document.getElementById('token');
 const remoteFields = document.getElementById('remoteFields');
 const modelFileEl = document.getElementById('modelFile');
+const modelQueryEl = document.getElementById('modelQuery');
+const modelSearchEl = document.getElementById('modelSearch');
+const modelStatusEl = document.getElementById('modelStatus');
+const modelListEl = document.getElementById('modelList');
+const modelFilesEl = document.getElementById('modelFiles');
 const audioEl = document.getElementById('audio');
 const karaokeEl = document.getElementById('karaoke');
 const srtEl = document.getElementById('srt');
@@ -193,6 +198,90 @@ async function runRemote(text) {
   setStatus(`Xong remote: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_?.units?.length || 0} âm tiết.`);
 }
 
+function serverBase() {
+  return (serverUrlEl.value.trim() || window.location.origin).replace(/\/+$/, '');
+}
+
+function authHeaders() {
+  const headers = {};
+  if (tokenEl.value.trim()) headers.authorization = `Bearer ${tokenEl.value.trim()}`;
+  return headers;
+}
+
+async function searchModels() {
+  const query = modelQueryEl.value.trim() || 'vifasttts';
+  modelListEl.innerHTML = '';
+  modelFilesEl.innerHTML = '';
+  modelStatusEl.textContent = 'Đang tìm…';
+  try {
+    const response = await fetch(
+      `${serverBase()}/api/models/search?q=${encodeURIComponent(query)}&limit=20`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    const models = await response.json();
+    modelStatusEl.textContent = `${models.length} repo`;
+    for (const model of models) {
+      const bundles = (model.siblings || [])
+        .map((file) => file.rfilename)
+        .filter((path) => path.endsWith('.vfa') || path.endsWith('.vfts'));
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${model.id} (${bundles.length} bundle)`;
+      button.addEventListener('click', () => loadModelFiles(model.id));
+      modelListEl.appendChild(button);
+    }
+  } catch (error) {
+    modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
+  }
+}
+
+async function loadModelFiles(repo) {
+  modelFilesEl.innerHTML = '';
+  modelStatusEl.textContent = `Đang xem ${repo}…`;
+  try {
+    const response = await fetch(
+      `${serverBase()}/api/models/files?repo=${encodeURIComponent(repo)}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    const files = await response.json();
+    if (!files.length) {
+      modelStatusEl.textContent = 'Repo chưa có .vfa/.vfts.';
+      return;
+    }
+    modelStatusEl.textContent = `${files.length} bundle`;
+    for (const file of files) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${file.path} — ${(file.size / 1e6).toFixed(1)} MB`;
+      button.addEventListener('click', () => downloadModel(repo, file.path));
+      modelFilesEl.appendChild(button);
+    }
+  } catch (error) {
+    modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
+  }
+}
+
+async function downloadModel(repo, path) {
+  modelStatusEl.textContent = `Đang tải ${path}…`;
+  try {
+    const response = await fetch(
+      `${serverBase()}/api/models/download?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    const blob = await response.blob();
+    const name = path.split('/').pop();
+    modeEl.value = 'local';
+    setModeFields();
+    await loadBundle(new File([blob], name));
+    modelStatusEl.textContent = `Đã nạp ${name}`;
+  } catch (error) {
+    modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
+  }
+}
+
 async function run() {
   runEl.disabled = true;
   try {
@@ -238,6 +327,7 @@ modeEl.addEventListener('change', () => {
   setModeFields();
   setStatus(modeEl.value === 'remote' ? 'Remote: nhập server URL.' : 'Local: bấm Đọc để nạp model.');
 });
+modelSearchEl.addEventListener('click', searchModels);
 modelFileEl.addEventListener('change', async () => {
   const file = modelFileEl.files?.[0];
   if (!file) return;
