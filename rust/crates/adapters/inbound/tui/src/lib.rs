@@ -22,11 +22,13 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 use ratatui::{Frame, Terminal};
 
 use vifasttts_app::parse_dictionary;
 use vifasttts_http_client::{HttpTtsClient, HttpTtsRequest};
+use vifasttts_huggingface::{HfFile, HfModel};
+use vifasttts_model_manager::ModelManager;
 use vifasttts_native::{NativeEngine, SynthesisOptions, load, load_vfa, load_vfts};
 use vifasttts_text::dialect::Dialect;
 use vifasttts_text::pipeline::live_parse_options;
@@ -35,31 +37,34 @@ use vifasttts_text::pipeline::live_parse_options;
 #[command(name = "vifasttts-tui", version, about = "Terminal UI cho ViFastTts")]
 pub struct TuiArgs {
     #[arg(long, default_value = "Xin chào, đây là bản TUI của ViFastTts.")]
-    text: String,
+    pub text: String,
     #[arg(long, default_value = "out-tui.wav")]
-    output: PathBuf,
+    pub output: PathBuf,
     #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
-    acoustic: PathBuf,
+    pub acoustic: PathBuf,
     #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
-    vocoder: PathBuf,
+    pub vocoder: PathBuf,
     /// Dùng server HTTP thay vì nạp model local.
     #[arg(long)]
-    server: Option<String>,
+    pub server: Option<String>,
     #[arg(long)]
-    token: Option<String>,
+    pub token: Option<String>,
     #[arg(long, default_value_t = 1.0)]
-    speed: f32,
+    pub speed: f32,
     #[arg(long)]
-    fixed_pauses: bool,
+    pub fixed_pauses: bool,
     /// File từ điển `key = cách đọc` (tuỳ chọn).
     #[arg(long)]
-    dictionary: Option<PathBuf>,
+    pub dictionary: Option<PathBuf>,
     /// Nạp model từ bundle `.vfts`.
     #[arg(long)]
-    vfts: Option<PathBuf>,
+    pub vfts: Option<PathBuf>,
     /// Nạp acoustic-only `.vfa` (dùng `--vocoder`).
     #[arg(long)]
-    vfa: Option<PathBuf>,
+    pub vfa: Option<PathBuf>,
+    /// Thư mục model dùng cho model browser (Ctrl+O).
+    #[arg(long, default_value = "models")]
+    pub model_dir: PathBuf,
 }
 
 fn default_model(name: &str) -> PathBuf {
@@ -68,6 +73,19 @@ fn default_model(name: &str) -> PathBuf {
         packaged
     } else {
         PathBuf::from("artifacts/onnx/n0_q").join(name)
+    }
+}
+
+/// Nạp `.vfa`/`.vfts` theo đuôi; lỗi rõ để UI hiển thị.
+fn load_bundle(path: &std::path::Path, vocoder: &std::path::Path) -> Result<NativeEngine, String> {
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default();
+    match extension {
+        "vfa" => load_vfa(path, vocoder),
+        "vfts" => load_vfts(path),
+        _ => Err("model browser chỉ tải .vfa/.vfts".to_string()),
     }
 }
 
@@ -85,6 +103,7 @@ impl Default for TuiArgs {
             dictionary: None,
             vfts: None,
             vfa: None,
+            model_dir: PathBuf::from("models"),
         }
     }
 }
@@ -104,13 +123,41 @@ enum TuiEvent {
         mode: Mode,
     },
     Error(String),
+    ModelResults(Vec<HfModel>),
+    ModelFiles(Vec<HfFile>),
+    ModelDownloaded(PathBuf),
+    ModelError(String),
 }
 
+#[allow(clippy::large_enum_variant)]
 enum LocalCommand {
     Synthesize {
         text: String,
         options: SynthesisOptions,
     },
+    Reload(PathBuf),
+}
+
+#[derive(Default)]
+struct ModelPane {
+    open: bool,
+    query: String,
+    results: Vec<HfModel>,
+    files: Vec<HfFile>,
+    repo: Option<String>,
+    selected: usize,
+    loading: bool,
+    status: String,
+}
+
+impl ModelPane {
+    fn new() -> Self {
+        Self {
+            query: "vifasttts".to_string(),
+            status: "Enter: tìm · chọn repo: Enter · chọn file: Enter".to_string(),
+            ..Self::default()
+        }
+    }
 }
 
 struct App {
@@ -130,6 +177,8 @@ struct App {
     forward_tx: Sender<TuiEvent>,
     dictionary: HashMap<String, String>,
     last_error: Option<String>,
+    model: ModelPane,
+    model_dir: PathBuf,
 }
 
 impl App {
@@ -166,6 +215,8 @@ impl App {
             forward_tx,
             dictionary,
             last_error: None,
+            model: ModelPane::new(),
+            model_dir: args.model_dir,
         }
     }
 
@@ -272,6 +323,72 @@ impl App {
         tx
     }
 
+    fn model_search(&mut self) {
+        let query = self.model.query.trim().to_string();
+        let query = if query.is_empty() {
+            "vifasttts".to_string()
+        } else {
+            query
+        };
+        self.model.loading = true;
+        self.model.files.clear();
+        self.model.repo = None;
+        self.model.status = format!("Đang tìm {query}…");
+        let manager = ModelManager::new(self.model_dir.clone());
+        let tx = self.forward_tx.clone();
+        thread::spawn(move || match manager.search(&query, 20) {
+            Ok(models) => {
+                let _ = tx.send(TuiEvent::ModelResults(models));
+            }
+            Err(error) => {
+                let _ = tx.send(TuiEvent::ModelError(error));
+            }
+        });
+    }
+
+    fn model_load_files(&mut self) {
+        let Some(model) = self.model.results.get(self.model.selected) else {
+            return;
+        };
+        let repo = model.id.clone();
+        self.model.loading = true;
+        self.model.repo = Some(repo.clone());
+        self.model.files.clear();
+        self.model.status = format!("Đang xem {repo}…");
+        let manager = ModelManager::new(self.model_dir.clone());
+        let tx = self.forward_tx.clone();
+        thread::spawn(move || match manager.files(&repo) {
+            Ok(files) => {
+                let _ = tx.send(TuiEvent::ModelFiles(files));
+            }
+            Err(error) => {
+                let _ = tx.send(TuiEvent::ModelError(error));
+            }
+        });
+    }
+
+    fn model_download(&mut self) {
+        let Some(repo) = self.model.repo.clone() else {
+            return;
+        };
+        let Some(file) = self.model.files.get(self.model.selected) else {
+            return;
+        };
+        let path = file.path.clone();
+        self.model.loading = true;
+        self.model.status = format!("Đang tải {path}…");
+        let manager = ModelManager::new(self.model_dir.clone());
+        let tx = self.forward_tx.clone();
+        thread::spawn(move || match manager.install(&repo, &path) {
+            Ok(model) => {
+                let _ = tx.send(TuiEvent::ModelDownloaded(model.path));
+            }
+            Err(error) => {
+                let _ = tx.send(TuiEvent::ModelError(error));
+            }
+        });
+    }
+
     fn poll(&mut self) {
         while let Ok(event) = self.events.try_recv() {
             match event {
@@ -306,6 +423,33 @@ impl App {
                     self.status = "Lỗi".to_string();
                     self.last_error = Some(error.clone());
                     self.log(format!("Lỗi: {error}"));
+                }
+                TuiEvent::ModelResults(models) => {
+                    self.model.loading = false;
+                    self.model.results = models;
+                    self.model.selected = 0;
+                    self.model.status = format!("Thấy {} repo", self.model.results.len());
+                }
+                TuiEvent::ModelFiles(files) => {
+                    self.model.loading = false;
+                    self.model.files = files;
+                    self.model.selected = 0;
+                    self.model.status = format!("Thấy {} bundle", self.model.files.len());
+                }
+                TuiEvent::ModelDownloaded(path) => {
+                    self.model.loading = false;
+                    self.model.status = format!("Đã tải {}", path.display());
+                    self.log(format!("model: đã tải {}", path.display()));
+                    if self.mode == Mode::Local
+                        && let Some(tx) = &self.local_tx
+                    {
+                        let _ = tx.send(LocalCommand::Reload(path));
+                    }
+                }
+                TuiEvent::ModelError(error) => {
+                    self.model.loading = false;
+                    self.model.status = format!("Lỗi: {error}");
+                    self.last_error = Some(error);
                 }
             }
         }
@@ -344,25 +488,41 @@ fn spawn_local(
             }
         };
         while let Ok(command) = command_rx.recv() {
-            let LocalCommand::Synthesize { text, options } = command;
-            {
-                let Some(engine) = engine.as_mut() else {
-                    let _ = event_tx.send(TuiEvent::Error("Model local chưa sẵn sàng".to_string()));
-                    continue;
-                };
-                let started = Instant::now();
-                match engine.synthesize(&text, &options) {
-                    Ok(result) => {
-                        let _ = event_tx.send(TuiEvent::Done {
-                            wav: result.wav,
-                            elapsed_ms: started.elapsed().as_millis() as u64,
-                            mode: Mode::Local,
-                        });
-                    }
-                    Err(error) => {
-                        let _ = event_tx.send(TuiEvent::Error(error));
+            match command {
+                LocalCommand::Synthesize { text, options } => {
+                    let Some(engine) = engine.as_mut() else {
+                        let _ =
+                            event_tx.send(TuiEvent::Error("Model local chưa sẵn sàng".to_string()));
+                        continue;
+                    };
+                    let started = Instant::now();
+                    match engine.synthesize(&text, &options) {
+                        Ok(result) => {
+                            let _ = event_tx.send(TuiEvent::Done {
+                                wav: result.wav,
+                                elapsed_ms: started.elapsed().as_millis() as u64,
+                                mode: Mode::Local,
+                            });
+                        }
+                        Err(error) => {
+                            let _ = event_tx.send(TuiEvent::Error(error));
+                        }
                     }
                 }
+                LocalCommand::Reload(path) => match load_bundle(&path, &vocoder) {
+                    Ok(new_engine) => {
+                        let info = new_engine.info();
+                        let message = format!(
+                            "Đã đổi model · {} Hz · {} · {}",
+                            info.sample_rate, info.arch, info.vocab_version
+                        );
+                        engine = Some(new_engine);
+                        let _ = event_tx.send(TuiEvent::Ready(message));
+                    }
+                    Err(error) => {
+                        let _ = event_tx.send(TuiEvent::Error(format!("đổi model: {error}")));
+                    }
+                },
             }
         }
     });
@@ -417,10 +577,18 @@ fn run_loop(
 
 fn handle_key(app: &mut App, key: KeyEvent) {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+    if app.model.open {
+        handle_model_key(app, key, ctrl);
+        return;
+    }
     match key.code {
         KeyCode::Char('q') if ctrl => app.quit = true,
         KeyCode::Char('s') if ctrl => app.synthesize(),
         KeyCode::Char('l') if ctrl => app.logs.clear(),
+        KeyCode::Char('o') if ctrl => {
+            app.model.open = true;
+            app.model_search();
+        }
         KeyCode::Char('r') if ctrl => {
             app.last_error = None;
             app.status = "Sẵn sàng".to_string();
@@ -451,6 +619,156 @@ fn handle_key(app: &mut App, key: KeyEvent) {
         KeyCode::Char(c) if !ctrl => app.input.push(c),
         _ => {}
     }
+}
+
+fn handle_model_key(app: &mut App, key: KeyEvent, ctrl: bool) {
+    if key.code == KeyCode::Esc || (ctrl && key.code == KeyCode::Char('o')) {
+        app.model.open = false;
+        return;
+    }
+    if app.model.loading {
+        return;
+    }
+    let file_mode = !app.model.files.is_empty();
+    let list_len = if file_mode {
+        app.model.files.len()
+    } else {
+        app.model.results.len()
+    };
+    match key.code {
+        KeyCode::Enter => {
+            if app.model.results.is_empty() {
+                app.model_search();
+            } else if file_mode {
+                app.model_download();
+            } else {
+                app.model_load_files();
+            }
+        }
+        KeyCode::Up => {
+            if list_len > 0 {
+                app.model.selected = app.model.selected.saturating_sub(1);
+            }
+        }
+        KeyCode::Down => {
+            if list_len > 0 {
+                app.model.selected = (app.model.selected + 1).min(list_len - 1);
+            }
+        }
+        KeyCode::Backspace => {
+            app.model.query.pop();
+            app.model.results.clear();
+            app.model.files.clear();
+            app.model.repo = None;
+            app.model.selected = 0;
+        }
+        KeyCode::Char(character) if !ctrl => {
+            app.model.query.push(character);
+            app.model.results.clear();
+            app.model.files.clear();
+            app.model.repo = None;
+            app.model.selected = 0;
+            app.model.status = "Enter: tìm".to_string();
+        }
+        _ => {}
+    }
+}
+
+fn draw_model(frame: &mut Frame, app: &App) {
+    let area = frame.area();
+    let width = area.width.saturating_sub(8).max(40).min(area.width);
+    let height = area.height.saturating_sub(6).max(12).min(area.height);
+    let popup = ratatui::layout::Rect::new(
+        area.x + (area.width.saturating_sub(width)) / 2,
+        area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    );
+    frame.render_widget(Clear, popup);
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(3),
+            Constraint::Percentage(48),
+            Constraint::Percentage(38),
+            Constraint::Length(2),
+        ])
+        .split(popup);
+    let title = if app.model.loading {
+        "Model browser · đang chạy…"
+    } else {
+        "Model browser · Ctrl+O/Esc đóng"
+    };
+    let query = Paragraph::new(format!("Tìm: {}", app.model.query))
+        .block(Block::default().borders(Borders::ALL).title(title));
+    frame.render_widget(query, chunks[0]);
+
+    let bundle_count = |model: &HfModel| {
+        model
+            .siblings
+            .iter()
+            .filter(|file| file.rfilename.ends_with(".vfa") || file.rfilename.ends_with(".vfts"))
+            .count()
+    };
+    let result_lines: Vec<Line> = app
+        .model
+        .results
+        .iter()
+        .enumerate()
+        .map(|(index, model)| {
+            let marker = if index == app.model.selected {
+                ">"
+            } else {
+                " "
+            };
+            Line::from(format!(
+                "{marker} {}  ({} bundle)",
+                model.id,
+                bundle_count(model)
+            ))
+        })
+        .collect();
+    let results = Paragraph::new(result_lines)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Repo · Enter để xem file"),
+        )
+        .wrap(Wrap { trim: true });
+    frame.render_widget(results, chunks[1]);
+
+    let file_lines: Vec<Line> = app
+        .model
+        .files
+        .iter()
+        .enumerate()
+        .map(|(index, file)| {
+            let marker = if index == app.model.selected {
+                ">"
+            } else {
+                " "
+            };
+            Line::from(format!(
+                "{marker} {}  ({:.1} MB)",
+                file.path,
+                file.size as f64 / 1e6
+            ))
+        })
+        .collect();
+    let title = app
+        .model
+        .repo
+        .as_ref()
+        .map(|repo| format!("Bundle · {repo}"))
+        .unwrap_or_else(|| "Bundle · chọn repo trước".to_string());
+    let files = Paragraph::new(file_lines)
+        .block(Block::default().borders(Borders::ALL).title(title))
+        .wrap(Wrap { trim: true });
+    frame.render_widget(files, chunks[2]);
+
+    let status =
+        Paragraph::new(app.model.status.clone()).style(Style::default().fg(Color::LightBlue));
+    frame.render_widget(status, chunks[3]);
 }
 
 fn draw(frame: &mut Frame, app: &App) {
@@ -528,7 +846,11 @@ fn draw(frame: &mut Frame, app: &App) {
         .wrap(Wrap { trim: false });
     frame.render_widget(log, chunks[3]);
 
-    let footer = Paragraph::new("Ctrl+Enter đọc · Ctrl+S đọc · Tab đổi local/remote · ↑/↓ speed · Ctrl+L xoá log · Ctrl+Q/Esc thoát")
+    let footer = Paragraph::new("Ctrl+Enter đọc · Ctrl+S đọc · Ctrl+O model · Tab đổi local/remote · ↑/↓ speed · Ctrl+L xoá log · Ctrl+Q/Esc thoát")
         .style(Style::default().fg(Color::DarkGray));
     frame.render_widget(footer, chunks[4]);
+
+    if app.model.open {
+        draw_model(frame, app);
+    }
 }

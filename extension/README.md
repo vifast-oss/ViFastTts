@@ -20,6 +20,7 @@ Script sẽ:
 - build `vifasttts-browser` cho `wasm32-unknown-unknown`;
 - chạy `wasm-bindgen --target web` vào `extension/vendor/pkg/`;
 - copy ORT Web `.mjs` + `.wasm` vào `extension/vendor/ort/`;
+- copy shared catalog `web/shared/{model-api,bundle}.js` vào `extension/shared/`;
 - copy model từ `artifacts/onnx/n0_q/` vào `extension/models/` nếu có.
 
 `extension/vendor/`, `extension/models/` không commit. Logo trong
@@ -50,6 +51,8 @@ Bấm icon ViFastTts:
 - nhập text và bấm **Đọc**;
 - **Đọc trang** — lấy text từ `article/main/body` của tab hiện tại và đọc;
 - chỉnh tốc độ, đọc đều, local/remote, server URL, token, model base URL;
+- **Cài đặt → Thêm giọng từ HuggingFace**: tìm/tải `.vfa`/`.vfts` qua server
+  dùng chung `/api/models/*`; bundle lưu vào Cache Storage và tự dùng cho local;
 - xem karaoke, tải SRT/WebVTT.
 
 ### Context menu khi bôi đen
@@ -113,6 +116,8 @@ là gợi ý, không phải cam kết.
 - wasm + ORT Web chạy trong extension;
 - không gửi text ra ngoài;
 - model bundle hoặc tải từ Model base URL rồi cache vào Cache Storage;
+- có thể dùng `.vfa`/`.vfts` tải qua server: offscreen giải nén ZIP, kiểm SHA256
+  bằng `crypto.subtle`, rồi tạo session; `.vfa` lấy vocoder bundled/model base;
 - lần đầu chậm do nạp model/khởi tạo session.
 
 ## Remote
@@ -157,21 +162,21 @@ Giá trị phải là âm tiết tiếng Việt hợp lệ. Ví dụ chữ Z nê
 
 ## Cache model
 
-Nếu không bundle model:
+Hai loại cache trong `vifasttts-models-v1`:
 
-```text
-models/acoustic.onnx
-models/vocoder.onnx
-```
+- raw `acoustic.onnx`/`vocoder.onnx` từ Model base URL;
+- bundle người dùng `.vfa`/`.vfts` (key `https://vifasttts.invalid/bundles/...`).
 
-được tải từ Model base URL và lưu trong Cache Storage `vifasttts-models-v1`.
-Nút **Xoá cache** xoá cache này.
+Bundle đang dùng nằm trong `bundleKey`/`bundleName` của `chrome.storage.local`.
+Nút **Bỏ bundle** chỉ bỏ active bundle; **Xoá cache model** xoá toàn bộ cache và
+active bundle.
 
 ## Giới hạn hiện tại
 
 - Chưa có native messaging/desktop app.
-- Chưa hash/manifest verification cho model remote.
+- Raw ONNX tải từ Model base URL chưa có manifest; bundle `.vfa/.vfts` có
+  manifest/hash và được ưu tiên.
 - Stream hiện chạy trong offscreen; chưa Web Worker riêng.
-- Chưa voice catalog/multi-voice.
+- Catalog dùng server proxy; extension không gọi HuggingFace trực tiếp.
 - Edge chưa test trên máy này; API dùng là Chromium (`chrome.*`, MV3,
   `offscreen`, `contextMenus`, `activeTab`, `scripting`).

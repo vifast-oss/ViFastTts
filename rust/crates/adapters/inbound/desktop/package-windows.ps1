@@ -13,6 +13,13 @@ $Root = Resolve-Path (Join-Path $Here "../../../../..")
 if (-not $ModelDir) { $ModelDir = Join-Path $Root "artifacts/onnx/n0_q" }
 if (-not $Out) { $Out = Join-Path $Root "desktop/dist/vifasttts-desktop-windows-x64" }
 if (-not $Archive) { $Archive = Join-Path $Root "desktop/dist/vifasttts-desktop-windows-x64.zip" }
+if (-not $WebDir) {
+    $candidate = Join-Path $Root "web/dist"
+    if (Test-Path $candidate) { $WebDir = $candidate }
+} elseif (-not [System.IO.Path]::IsPathRooted($WebDir)) {
+    $WebDir = Join-Path $Root $WebDir
+}
+if ($WebDir -and -not (Test-Path $WebDir)) { throw "Thiếu web dir: $WebDir" }
 
 $Acoustic = Join-Path $ModelDir "acoustic.onnx"
 $Vocoder = Join-Path $ModelDir "vocoder.onnx"
@@ -51,9 +58,9 @@ Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")
 Copy-Item $Vocoder (Join-Path $Out "models/vocoder.onnx")
 @"
-ViFastTts Desktop + server + TUI (Windows x64)
+ViFastTts Desktop + unified CLI/TUI/server sidecar (Windows x64)
 Chạy GUI: vifasttts-desktop.exe
-TUI: vifasttts.exe
+TUI (terminal): vifasttts.exe tui --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx
 Server + web: vifasttts.exe server --acoustic models\acoustic.onnx --vocoder models\vocoder.onnx --port 8000
 CLI: vifasttts.exe synth --text "..." --output out.wav
 Kiểm tra headless: vifasttts-desktop.exe --smoke

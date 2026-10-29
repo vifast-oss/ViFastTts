@@ -188,6 +188,16 @@
       }
       summary { cursor: pointer; padding: 8px 10px; font-weight: 700; font-size: 12px; }
       .detailsBody { padding: 0 10px 10px; }
+      #modelList, #modelFiles { max-height: 9rem; overflow: auto; margin-top: 5px; }
+      #modelList button, #modelFiles button {
+        display: block;
+        width: 100%;
+        margin: 2px 0;
+        padding: 5px 7px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 500;
+      }
       .hint { color: var(--muted); font-size: 10px; margin: 5px 0 0; }
       code { background: var(--soft); padding: 1px 4px; border-radius: 4px; }
       #status {
@@ -303,10 +313,28 @@
               <label for="modelBaseUrl">Model base URL (tuỳ chọn)</label>
               <input id="modelBaseUrl" type="url" placeholder="https://cdn.domain.vn/models/" />
               <p class="hint">
-                Model bundle trong extension được ưu tiên. Nếu không có, tải từ URL
+                Bundle trong extension được ưu tiên. Nếu không có, tải từ URL
                 này và cache vào Cache Storage.
               </p>
             </div>
+
+            <details id="modelBrowser">
+              <summary>Thêm giọng từ HuggingFace (qua server)</summary>
+              <div class="detailsBody">
+                <p class="hint">
+                  Tìm và tải `.vfa`/`.vfts` qua API server; bundle được lưu trong
+                  Cache Storage và dùng cho lần đọc local tiếp theo.
+                </p>
+                <input id="modelQuery" type="text" value="vifasttts" />
+                <div class="actions">
+                  <button id="modelSearch" class="ghost" type="button">Tìm</button>
+                  <button id="modelClear" class="ghost" type="button">Bỏ bundle</button>
+                </div>
+                <span id="modelStatus" class="hint"></span>
+                <div id="modelList"></div>
+                <div id="modelFiles"></div>
+              </div>
+            </details>
 
             <label for="selectionAction">Khi bôi đen</label>
             <select id="selectionAction">

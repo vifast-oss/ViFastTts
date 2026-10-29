@@ -15,6 +15,8 @@ const SETTINGS_DEFAULTS = {
   serverUrl: 'http://127.0.0.1:8000',
   token: '',
   modelBaseUrl: '',
+  bundleKey: '',
+  bundleName: '',
   selectionAction: 'hidden',
   dictionary: '',
 };
@@ -205,6 +207,7 @@ async function speakSelection(text) {
         serverUrl: settings_.serverUrl,
         token: settings_.token,
         modelBaseUrl: settings_.modelBaseUrl,
+        bundleKey: settings_.bundleKey,
         dictionary: settings_.dictionary,
       },
     });
@@ -353,6 +356,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'clear-model-cache') {
     caches
       .delete('vifasttts-models-v1')
+      .then(() => chrome.storage.local.remove(['bundleKey', 'bundleName']))
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
+    return true;
+  }
+
+  if (message.type === 'reset-local') {
+    sendToOffscreen({ type: 'reset-local' })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
     return true;

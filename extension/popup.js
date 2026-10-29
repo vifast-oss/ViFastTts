@@ -1,10 +1,13 @@
 // Popup UI: đọc text, đọc cả trang, cấu hình local/remote/cách bôi đen.
+import { ModelApi, bundleFiles, normalizeServerBase } from './shared/model-api.js';
 
 const DEFAULTS = {
   mode: 'local',
   serverUrl: 'http://127.0.0.1:8000',
   token: '',
   modelBaseUrl: '',
+  bundleKey: '',
+  bundleName: '',
   selectionAction: 'hidden',
   dictionary: '',
   stream: false,
@@ -39,11 +42,19 @@ const karaokeEl = $('karaoke');
 const srtEl = $('srt');
 const downloadSrtEl = $('downloadSrt');
 const downloadVttEl = $('downloadVtt');
+const modelQueryEl = $('modelQuery');
+const modelSearchEl = $('modelSearch');
+const modelClearEl = $('modelClear');
+const modelStatusEl = $('modelStatus');
+const modelListEl = $('modelList');
+const modelFilesEl = $('modelFiles');
 
 let currentSrt = '';
 let currentVtt = '';
 let currentAudioUrl = null;
 let history = [];
+let bundleKey = '';
+let bundleName = '';
 
 function setStatus(message, kind = '') {
   statusEl.textContent = message;
@@ -90,6 +101,8 @@ function saveSettings() {
     serverUrl: serverUrlEl.value.trim(),
     token: tokenEl.value,
     modelBaseUrl: modelBaseUrlEl.value.trim(),
+    bundleKey,
+    bundleName,
     selectionAction: selectionActionEl.value,
     dictionary: dictionaryEl.value,
     stream: streamEl.checked,
@@ -102,11 +115,14 @@ async function loadSettings() {
   serverUrlEl.value = settings.serverUrl || DEFAULTS.serverUrl;
   tokenEl.value = settings.token || '';
   modelBaseUrlEl.value = settings.modelBaseUrl || '';
+  bundleKey = settings.bundleKey || '';
+  bundleName = settings.bundleName || '';
   selectionActionEl.value = ['hidden', 'popup', 'tab'].includes(settings.selectionAction)
     ? settings.selectionAction
     : DEFAULTS.selectionAction;
   dictionaryEl.value = settings.dictionary || '';
   streamEl.checked = Boolean(settings.stream);
+  updateBundleLabel();
   await loadHistory();
   setModeFields();
 }
@@ -146,6 +162,118 @@ async function ensureRemotePermission(serverUrl) {
   if (hasPermission) return;
   const granted = await chrome.permissions.request({ origins: [pattern] });
   if (!granted) throw new Error('Chưa cấp quyền truy cập host');
+}
+
+function modelServerUrl() {
+  return normalizeServerBase(serverUrlEl.value.trim(), DEFAULTS.serverUrl);
+}
+
+function modelApi() {
+  return new ModelApi({ baseUrl: modelServerUrl(), token: tokenEl.value });
+}
+
+function bundleCacheUrl(repo, path) {
+  const name = path.split('/').pop();
+  return `https://vifasttts.invalid/bundles/${encodeURIComponent(repo)}/${encodeURIComponent(name)}`;
+}
+
+function updateBundleLabel() {
+  modelStatusEl.textContent = bundleName
+    ? `Đang dùng: ${bundleName}`
+    : 'Chưa chọn bundle; dùng model trong extension hoặc Model base URL.';
+}
+
+async function searchModels() {
+  const query = modelQueryEl.value.trim() || 'vifasttts';
+  modelListEl.innerHTML = '';
+  modelFilesEl.innerHTML = '';
+  modelStatusEl.textContent = 'Đang tìm…';
+  try {
+    await ensureRemotePermission(modelServerUrl());
+    const models = await modelApi().search(query, 20);
+    modelStatusEl.textContent = `${models.length} repo`;
+    for (const model of models) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${model.id} (${bundleFiles(model).length} bundle)`;
+      button.addEventListener('click', () => loadModelFiles(model.id));
+      modelListEl.appendChild(button);
+    }
+  } catch (error) {
+    modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
+  }
+}
+
+async function loadModelFiles(repo) {
+  modelFilesEl.innerHTML = '';
+  modelStatusEl.textContent = `Đang xem ${repo}…`;
+  try {
+    await ensureRemotePermission(modelServerUrl());
+    const files = await modelApi().files(repo);
+    if (!files.length) {
+      modelStatusEl.textContent = 'Repo chưa có .vfa/.vfts.';
+      return;
+    }
+    modelStatusEl.textContent = `${files.length} bundle`;
+    for (const file of files) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${file.path} — ${(file.size / 1e6).toFixed(1)} MB`;
+      button.addEventListener('click', () => downloadModel(repo, file.path));
+      modelFilesEl.appendChild(button);
+    }
+  } catch (error) {
+    modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
+  }
+}
+
+async function downloadModel(repo, path) {
+  modelStatusEl.textContent = `Đang tải ${path}…`;
+  try {
+    await ensureRemotePermission(modelServerUrl());
+    const downloaded = await modelApi().download(repo, path);
+    const key = bundleCacheUrl(repo, path);
+    const cache = await caches.open('vifasttts-models-v1');
+    await cache.put(key, new Response(downloaded.blob, {
+      headers: { 'content-type': 'application/octet-stream' },
+    }));
+    bundleKey = key;
+    bundleName = `${repo}/${downloaded.filename}`;
+    modelStatusEl.textContent = `Đã tải ${downloaded.filename}; lần đọc sau dùng bundle này.`;
+    saveSettings();
+    resetLocal();
+  } catch (error) {
+    modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
+  }
+}
+
+async function clearBundle() {
+  if (bundleKey) {
+    try {
+      const cache = await caches.open('vifasttts-models-v1');
+      await cache.delete(bundleKey);
+    } catch {
+      // Cache có thể đã bị xoá.
+    }
+  }
+  bundleKey = '';
+  bundleName = '';
+  modelListEl.innerHTML = '';
+  modelFilesEl.innerHTML = '';
+  updateBundleLabel();
+  saveSettings();
+  resetLocal();
+}
+
+async function resetLocal() {
+  try {
+    await chrome.runtime.sendMessage({
+      target: 'vifasttts-background',
+      type: 'reset-local',
+    });
+  } catch {
+    // Offscreen chưa mở; lần đọc sau tự nạp theo bundleKey.
+  }
 }
 
 function renderKaraoke(document_) {
@@ -245,6 +373,7 @@ async function run() {
         serverUrl: serverUrlEl.value.trim(),
         token: tokenEl.value,
         modelBaseUrl: modelBaseUrlEl.value.trim(),
+        bundleKey,
         dictionary: dictionaryEl.value,
       },
     });
@@ -352,6 +481,8 @@ for (const element of [serverUrlEl, tokenEl, modelBaseUrlEl, selectionActionEl, 
   element.addEventListener('change', saveSettings);
 }
 streamEl.addEventListener('change', saveSettings);
+modelSearchEl.addEventListener('click', searchModels);
+modelClearEl.addEventListener('click', clearBundle);
 stopStreamEl.addEventListener('click', async () => {
   stopStreamEl.disabled = true;
   try {
@@ -402,6 +533,12 @@ clearCacheEl.addEventListener('click', async () => {
       response?.ok ? 'Đã xoá cache model.' : `Lỗi: ${response?.error || 'không xoá được'}`,
       response?.ok ? 'ok' : 'err',
     );
+    if (response?.ok) {
+      bundleKey = '';
+      bundleName = '';
+      updateBundleLabel();
+      resetLocal();
+    }
   } finally {
     clearCacheEl.disabled = false;
   }

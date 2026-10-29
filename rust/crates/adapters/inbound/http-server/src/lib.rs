@@ -263,7 +263,8 @@ async fn models_download(
         return (StatusCode::UNAUTHORIZED, "Bearer token không hợp lệ").into_response();
     }
     let manager = state.models.clone();
-    match tokio::task::spawn_blocking(move || manager.install_bytes(&query.repo, &query.path)).await
+    match tokio::task::spawn_blocking(move || manager.install_and_read(&query.repo, &query.path))
+        .await
     {
         Ok(Ok(bytes)) => (
             StatusCode::OK,
@@ -470,6 +471,24 @@ impl TapAudio for Response {
     }
 }
 
+/// Tìm web UI cạnh binary hoặc trong cwd khi không truyền `--web-dir`.
+/// Nhờ vậy package chỉ cần chép thư mục `web/` cạnh binary; chạy từ cwd khác
+/// vẫn phục vụ được.
+fn default_web_dir() -> Option<PathBuf> {
+    let mut candidates = vec![PathBuf::from("web/dist"), PathBuf::from("web")];
+    if let Ok(executable) = std::env::current_exe()
+        && let Some(directory) = executable.parent()
+    {
+        candidates.push(directory.join("web"));
+        candidates.push(directory.join("web/dist"));
+        if let Some(contents) = directory.parent() {
+            candidates.push(contents.join("Resources/web"));
+            candidates.push(contents.join("Resources/web/dist"));
+        }
+    }
+    candidates.into_iter().find(|path| path.is_dir())
+}
+
 pub async fn serve(args: Args) -> Result<(), String> {
     let engine = if let Some(path) = args.vfa {
         if args.vocoder.exists() {
@@ -503,7 +522,7 @@ pub async fn serve(args: Args) -> Result<(), String> {
         .layer(DefaultBodyLimit::max(64 * 1024))
         .with_state(state);
     if !args.api_only
-        && let Some(web_dir) = args.web_dir
+        && let Some(web_dir) = args.web_dir.or_else(default_web_dir)
     {
         if web_dir.is_dir() {
             app = app.fallback_service(ServeDir::new(web_dir));

@@ -3,6 +3,7 @@ import * as ort from 'onnxruntime-web';
 import init, { synthesize, karaoke_to_srt, karaoke_to_vtt } from './pkg/vifasttts_wasm.js';
 import { unzipSync, strFromU8 } from 'fflate';
 import { sha256 } from 'js-sha256';
+import { ModelApi, bundleFiles, normalizeServerBase } from './shared/model-api.js';
 
 const statusEl = document.getElementById('status');
 const runEl = document.getElementById('run');
@@ -198,14 +199,11 @@ async function runRemote(text) {
   setStatus(`Xong remote: ${(result.duration_ms / 1000).toFixed(2)} s, ${document_?.units?.length || 0} âm tiết.`);
 }
 
-function serverBase() {
-  return (serverUrlEl.value.trim() || window.location.origin).replace(/\/+$/, '');
-}
-
-function authHeaders() {
-  const headers = {};
-  if (tokenEl.value.trim()) headers.authorization = `Bearer ${tokenEl.value.trim()}`;
-  return headers;
+function modelApi() {
+  return new ModelApi({
+    baseUrl: normalizeServerBase(serverUrlEl.value.trim(), window.location.origin),
+    token: tokenEl.value,
+  });
 }
 
 async function searchModels() {
@@ -214,20 +212,12 @@ async function searchModels() {
   modelFilesEl.innerHTML = '';
   modelStatusEl.textContent = 'Đang tìm…';
   try {
-    const response = await fetch(
-      `${serverBase()}/api/models/search?q=${encodeURIComponent(query)}&limit=20`,
-      { headers: authHeaders() },
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-    const models = await response.json();
+    const models = await modelApi().search(query, 20);
     modelStatusEl.textContent = `${models.length} repo`;
     for (const model of models) {
-      const bundles = (model.siblings || [])
-        .map((file) => file.rfilename)
-        .filter((path) => path.endsWith('.vfa') || path.endsWith('.vfts'));
       const button = document.createElement('button');
       button.type = 'button';
-      button.textContent = `${model.id} (${bundles.length} bundle)`;
+      button.textContent = `${model.id} (${bundleFiles(model).length} bundle)`;
       button.addEventListener('click', () => loadModelFiles(model.id));
       modelListEl.appendChild(button);
     }
@@ -240,12 +230,7 @@ async function loadModelFiles(repo) {
   modelFilesEl.innerHTML = '';
   modelStatusEl.textContent = `Đang xem ${repo}…`;
   try {
-    const response = await fetch(
-      `${serverBase()}/api/models/files?repo=${encodeURIComponent(repo)}`,
-      { headers: authHeaders() },
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-    const files = await response.json();
+    const files = await modelApi().files(repo);
     if (!files.length) {
       modelStatusEl.textContent = 'Repo chưa có .vfa/.vfts.';
       return;
@@ -266,17 +251,11 @@ async function loadModelFiles(repo) {
 async function downloadModel(repo, path) {
   modelStatusEl.textContent = `Đang tải ${path}…`;
   try {
-    const response = await fetch(
-      `${serverBase()}/api/models/download?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`,
-      { headers: authHeaders() },
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-    const blob = await response.blob();
-    const name = path.split('/').pop();
+    const downloaded = await modelApi().download(repo, path);
     modeEl.value = 'local';
     setModeFields();
-    await loadBundle(new File([blob], name));
-    modelStatusEl.textContent = `Đã nạp ${name}`;
+    await loadBundle(new File([downloaded.blob], downloaded.filename));
+    modelStatusEl.textContent = `Đã nạp ${downloaded.filename}`;
   } catch (error) {
     modelStatusEl.textContent = `Lỗi: ${error?.message || error}`;
   }

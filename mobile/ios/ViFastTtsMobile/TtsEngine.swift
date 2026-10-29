@@ -6,26 +6,26 @@ import Foundation
 /// trực tiếp C, tránh block main thread khi model/synth chậm.
 final class TtsEngine: @unchecked Sendable {
     static let shared = TtsEngine()
+    static let activeModelKey = "vifasttts.activeModelPath"
 
     private let queue = DispatchQueue(label: "com.vifasttts.tts")
     private var engine: UnsafeMutableRawPointer?
     private(set) var isReady = false
+    private(set) var activeModel: String = ""
     private var loadError: String?
 
     private init() {
-        guard
-            let acoustic = Bundle.main.url(forResource: "acoustic", withExtension: "onnx"),
-            let vocoder = Bundle.main.url(forResource: "vocoder", withExtension: "onnx")
-        else {
-            loadError = "Thiếu acoustic.onnx/vocoder.onnx trong app bundle"
-            return
+        let stored = UserDefaults.standard.string(forKey: Self.activeModelKey) ?? ""
+        if !stored.isEmpty, FileManager.default.fileExists(atPath: stored) {
+            do {
+                try loadLocked(at: URL(fileURLWithPath: stored))
+                activeModel = URL(fileURLWithPath: stored).lastPathComponent
+                return
+            } catch {
+                loadError = error.localizedDescription
+            }
         }
-        engine = vifasttts_engine_new(acoustic.path, vocoder.path)
-        if engine == nil {
-            loadError = lastError()
-        } else {
-            isReady = true
-        }
+        loadBundled()
     }
 
     deinit {
@@ -68,6 +68,65 @@ final class TtsEngine: @unchecked Sendable {
                 }
             }
         }
+    }
+
+    /// Nạp bundle `.vfa`/`.vfts` đã tải và ghi nhớ cho lần mở app sau.
+    func loadModel(at url: URL) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            queue.async {
+                do {
+                    try self.loadLocked(at: url)
+                    UserDefaults.standard.set(url.path, forKey: Self.activeModelKey)
+                    self.activeModel = url.lastPathComponent
+                    self.loadError = nil
+                    continuation.resume()
+                } catch {
+                    self.loadError = error.localizedDescription
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    private func loadBundled() {
+        isReady = false
+        guard
+            let acoustic = Bundle.main.url(forResource: "acoustic", withExtension: "onnx"),
+            let vocoder = Bundle.main.url(forResource: "vocoder", withExtension: "onnx")
+        else {
+            loadError = "Thiếu acoustic.onnx/vocoder.onnx trong app bundle"
+            return
+        }
+        engine = vifasttts_engine_new(acoustic.path, vocoder.path)
+        if engine == nil {
+            loadError = lastError()
+        } else {
+            isReady = true
+            activeModel = "Bundled acoustic/vocoder"
+        }
+    }
+
+    private func loadLocked(at url: URL) throws {
+        isReady = false
+        if let engine {
+            vifasttts_engine_free(engine)
+            self.engine = nil
+        }
+        let path = url.path
+        if path.hasSuffix(".vfts") {
+            engine = vifasttts_engine_new_vfts(path)
+        } else if path.hasSuffix(".vfa") {
+            guard let vocoder = Bundle.main.url(forResource: "vocoder", withExtension: "onnx") else {
+                throw error("Thiếu vocoder.onnx trong app bundle cho .vfa")
+            }
+            engine = vifasttts_engine_new_vfa(path, vocoder.path)
+        } else {
+            throw error("Bundle phải là .vfa hoặc .vfts")
+        }
+        if engine == nil {
+            throw error(lastError())
+        }
+        isReady = true
     }
 
     private func lastError() -> String {

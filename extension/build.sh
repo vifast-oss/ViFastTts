@@ -7,7 +7,11 @@ EXT="$ROOT/extension"
 WEB="$ROOT/web"
 ORT="$WEB/node_modules/onnxruntime-web/dist"
 
-mkdir -p "$EXT/vendor/pkg" "$EXT/vendor/ort" "$EXT/models"
+mkdir -p "$EXT/vendor/pkg" "$EXT/vendor/ort" "$EXT/models" "$EXT/shared"
+
+echo "==> Copy shared model API"
+cp "$ROOT/web/shared/model-api.js" "$EXT/shared/model-api.js"
+cp "$ROOT/web/shared/bundle.js" "$EXT/shared/bundle.js"
 
 echo "==> Build wasm"
 cd "$ROOT/rust"

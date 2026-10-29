@@ -10,10 +10,12 @@ import init, {
   synthesize_with_options,
 } from './vendor/pkg/vifasttts_wasm.js';
 import * as ort from './vendor/ort/ort.wasm.min.mjs';
+import { parseBundle } from './shared/bundle.js';
 
 const MODEL_CACHE = 'vifasttts-models-v1';
 
 let localReady = null;
+let localSignature = null;
 let wasmReady = null;
 let acousticSession = null;
 let vocoderSession = null;
@@ -88,8 +90,45 @@ async function loadModelBytes(name, settings_) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
+async function loadCachedBundle(key) {
+  const cache = await caches.open(MODEL_CACHE);
+  const cached = await cache.match(key);
+  if (!cached) {
+    throw new Error('Không tìm thấy bundle đã tải; hãy tải lại trong Cài đặt.');
+  }
+  return new Uint8Array(await cached.arrayBuffer());
+}
+
+async function loadBundleModel(key, settings_) {
+  notifyPopup('Đang nạp bundle .vfa/.vfts…');
+  const bytes = await loadCachedBundle(key);
+  let bundle;
+  try {
+    bundle = await parseBundle(bytes);
+  } catch (error) {
+    // .vfa không chứa vocoder: dùng vocoder bundled/model base.
+    if (!/vocoder/i.test(String(error?.message || error))) throw error;
+    const fallback = await loadModelBytes('vocoder.onnx', settings_);
+    bundle = await parseBundle(bytes, { fallbackVocoder: fallback });
+  }
+  notifyPopup(`Đang dùng bundle ${bundle.manifest.arch || 'model'}…`);
+  return [bundle.acoustic, bundle.vocoder];
+}
+
+function bundleSignature(request) {
+  return `${request.bundleKey || ''}|${request.modelBaseUrl || ''}`;
+}
+
 async function initLocal(request) {
-  if (localReady) return localReady;
+  const signature = bundleSignature(request);
+  if (localReady && signature === localSignature) return localReady;
+  if (localReady) {
+    // Đổi bundle: đóng session cũ trước khi nạp model mới.
+    acousticSession = null;
+    vocoderSession = null;
+    localReady = null;
+  }
+  localSignature = signature;
   localReady = (async () => {
     notifyPopup('Đang khởi tạo WASM…');
     await ensureWasm();
@@ -100,10 +139,12 @@ async function initLocal(request) {
     ort.env.wasm.proxy = false;
 
     const settings_ = { modelBaseUrl: request.modelBaseUrl || '' };
-    const [acousticBytes, vocoderBytes] = await Promise.all([
-      loadModelBytes('acoustic.onnx', settings_),
-      loadModelBytes('vocoder.onnx', settings_),
-    ]);
+    const [acousticBytes, vocoderBytes] = request.bundleKey
+      ? await loadBundleModel(request.bundleKey, settings_)
+      : await Promise.all([
+          loadModelBytes('acoustic.onnx', settings_),
+          loadModelBytes('vocoder.onnx', settings_),
+        ]);
 
     notifyPopup('Đang tạo ONNX session…');
     [acousticSession, vocoderSession] = await Promise.all([
@@ -556,6 +597,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === 'stop-stream') {
     stopStream();
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  if (message.type === 'reset-local') {
+    acousticSession = null;
+    vocoderSession = null;
+    localReady = null;
+    localSignature = null;
     sendResponse({ ok: true });
     return true;
   }

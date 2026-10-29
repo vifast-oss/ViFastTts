@@ -10,6 +10,10 @@ description = "CLI for the Rust ViFastTts inference port"
 name = "vifasttts"
 path = "src/main.rs"
 
+[features]
+default = ["tui"]
+tui = ["dep:vifasttts-tui"]
+
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
@@ -19,7 +23,7 @@ tracing-subscriber.workspace = true
 vifasttts-audio = { path = "../../../core/domain/audio" }
 vifasttts-text = { path = "../../../core/domain/text" }
 vifasttts-vfts = { path = "../../../core/domain/vfts" }
-vifasttts-tui = { path = "../tui" }
+vifasttts-tui = { path = "../tui", optional = true }
 vifasttts-http-server = { path = "../http-server" }
 tokio = { version = "1", features = ["rt-multi-thread"] }
 vifasttts-http-client = { path = "../../outbound/http-client" }

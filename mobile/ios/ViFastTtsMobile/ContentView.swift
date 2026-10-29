@@ -7,6 +7,9 @@ struct ContentView: View {
     @State private var busy = false
     @State private var error: String?
     @State private var player: AVAudioPlayer?
+    @State private var showModels = false
+    @State private var activeModel = TtsEngine.shared.activeModel
+    @State private var ready = TtsEngine.shared.isReady
 
     var body: some View {
         NavigationStack {
@@ -15,6 +18,9 @@ struct ContentView: View {
                     .font(.largeTitle.bold())
                 Text("Local ONNX · Rust C ABI")
                     .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(activeModel.isEmpty ? "Chưa có model" : "Model: \(activeModel)")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
 
                 TextEditor(text: $text)
@@ -32,7 +38,14 @@ struct ContentView: View {
                         Label("Đọc", systemImage: "play.fill")
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(busy || !TtsEngine.shared.isReady)
+                    .disabled(busy || !ready)
+
+                    Button {
+                        showModels = true
+                    } label: {
+                        Label("Model", systemImage: "square.stack.3d.up")
+                    }
+                    .disabled(busy)
 
                     Button {
                         player?.stop()
@@ -54,7 +67,7 @@ struct ContentView: View {
                         .font(.callout)
                         .foregroundStyle(.red)
                 }
-                if !TtsEngine.shared.isReady {
+                if !ready {
                     Text("Chưa có model trong bundle hoặc FFI/ORT chưa nạp.")
                         .font(.footnote)
                         .foregroundStyle(.orange)
@@ -63,6 +76,13 @@ struct ContentView: View {
             }
             .padding()
             .navigationTitle("ViFastTts")
+            .sheet(isPresented: $showModels, onDismiss: {
+                ready = TtsEngine.shared.isReady
+                activeModel = TtsEngine.shared.activeModel
+                status = ready ? "Model sẵn sàng" : "Model chưa sẵn sàng"
+            }) {
+                ModelBrowserView()
+            }
         }
     }
 

@@ -11,6 +11,14 @@ ORT_VERSION="${ORT_VERSION:-1.31.1}"
 CACHE="${CACHE:-$ROOT/desktop/dist/cache}"
 ORT_LIB="${ORT_LIB:-}"
 
+WEB_DIR="${WEB_DIR:-}"
+if [ -z "$WEB_DIR" ] && [ -d "$ROOT/web/dist" ]; then WEB_DIR="$ROOT/web/dist"; fi
+if [ -n "$WEB_DIR" ] && [ "${WEB_DIR#/}" = "$WEB_DIR" ]; then WEB_DIR="$ROOT/$WEB_DIR"; fi
+if [ -n "$WEB_DIR" ] && [ ! -d "$WEB_DIR" ]; then
+  echo "Thiếu web dir: $WEB_DIR" >&2
+  exit 2
+fi
+
 [ -f "$MODEL_DIR/acoustic.onnx" ] || { echo "Thiếu $MODEL_DIR/acoustic.onnx" >&2; exit 2; }
 [ -f "$MODEL_DIR/vocoder.onnx" ] || { echo "Thiếu $MODEL_DIR/vocoder.onnx" >&2; exit 2; }
 
@@ -44,9 +52,9 @@ exec ./vifasttts-desktop "$@"
 SH
 chmod +x "$OUT/vifasttts-desktop" "$OUT/vifasttts" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'
-ViFastTts Desktop + server + TUI (Linux x64)
+ViFastTts Desktop + unified CLI/TUI/server sidecar (Linux x64)
 Chạy GUI: ./run.sh
-TUI: ./vifasttts
+TUI (terminal): ./vifasttts tui --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx
 Server + web: ./vifasttts server --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx --port 8000
 CLI: ./vifasttts synth --text "..." --output out.wav
 Kiểm tra headless: ./vifasttts-desktop --smoke

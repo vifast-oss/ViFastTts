@@ -17,5 +17,7 @@ crossterm = "0.29"
 ratatui = "0.30"
 vifasttts-app = { path = "../../../core/application/app" }
 vifasttts-http-client = { path = "../../outbound/http-client" }
+vifasttts-huggingface = { path = "../../outbound/huggingface" }
+vifasttts-model-manager = { path = "../../../core/application/model-manager" }
 vifasttts-native = { path = "../native" }
 vifasttts-text = { path = "../../../core/domain/text" }

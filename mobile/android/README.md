@@ -75,10 +75,17 @@ adb shell am start -n com.vifasttts.mobile/.MainActivity
 - Dùng **JNA** gọi C ABI (không cần viết JNI C++); APK phải bật
   `android:extractNativeLibs="true"` + `useLegacyPackaging = true` để ORT có
   đường dẫn thật trong `nativeLibraryDir`.
-- Local vẫn đóng model FP32 ~86 MB trong APK (`assets/`) và copy sang `filesDir`;
-  chưa tải từ HuggingFace. Remote mode không cần model local.
-- Tải nhiều model/catalog/download manager chưa có; xem `docs/INSTALL.md` và
-  `docs/DISTRIBUTION.md` để chốt trước khi đổi APK sang thin-client.
+- Local mặc định vẫn đóng model FP32 ~86 MB trong APK (`assets/`) và copy sang
+  `filesDir`; remote mode không cần model local.
+- Nút **Tải model .vfa/.vfts** (29/10/2026):
+  - gọi server `/api/models/search|files|download` bằng URL/token đang nhập;
+  - lưu vào `filesDir/models/`, ghi active model vào `SharedPreferences`;
+  - `.vfts` nạp bằng `vifasttts_engine_new_vfts`;
+  - `.vfa` nạp bằng `vifasttts_engine_new_vfa` + `vocoder.onnx` bundled;
+  - remote mode vẫn độc lập, không cần tải model.
+- UI vẫn là smoke client (programmatic view), chưa Compose; catalog nằm ở
+  server, không lặp logic HuggingFace trong Java.
 - Chưa có: Compose UI, audio focus/foreground service, streaming PCM xuống
-  AAudio, chọn giọng, history/settings, UniFFI/Kotlin binding.
+  AAudio, history/settings, UniFFI/Kotlin binding, quản lý nhiều model/active
+  model bằng UI (hiện chỉ một active model).
 - License dataset CC-BY-NC: không phát hành store trước khi xử lý pháp lý.

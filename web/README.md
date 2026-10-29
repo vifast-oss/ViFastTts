@@ -42,10 +42,15 @@ Model ~86 MB; lần đầu tải lâu. Không commit `web/public/models/`, `web/
 - **Local WASM**: mặc định, chạy model trong browser.
 - **Remote server**: nếu web được server phục vụ, app tự kiểm tra `/healthz`
   và mặc định dùng same-origin remote; nếu mở static/file thì mặc định local.
-  Nhập server URL local/online + token nếu cần.
+  Nhập server URL local (`127.0.0.1`), LAN (IP desktop) hoặc online + token nếu cần.
+- Đây là **local WASM**, không phải native binary; muốn native dùng desktop/CLI/
+  mobile. Remote dùng API `/api/tts` hoặc `/api/tts/stream` của server.
 - **Nạp `.vfa`/`.vfts`**: input file trong web; kiểm manifest/SHA256, tạo ONNX
   session ngay trong browser. `.vfa` dùng `/models/vocoder.onnx`; `.vfts` tự chứa
   vocoder.
+- **Tìm/tải từ HuggingFace**: khi có server, mục cùng tên gọi
+  `/api/models/search|files|download` qua `web/shared/model-api.js` dùng chung
+  với extension; server kiểm manifest/hash trước khi trả bundle.
 - Server cùng origin có thể phục vụ web bằng `--web-dir web/dist`; server khác
   origin cần bật `--cors` và cấu hình TLS/reverse proxy nếu public.
 - Nếu dùng remote, browser không cần tải model local.

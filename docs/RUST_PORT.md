@@ -918,13 +918,13 @@ Workspace `rust/` gồm 25 crate, khoảng **11.6k dòng** Rust + resources:
 | `vifasttts-native` | native adapter: async engine + ORT, API sync `load`/`from_bytes`/`load_verified` | `block_on` tại biên; CLI/desktop/server/FFI dùng sync |
 | `vifasttts-mobile` | mobile composition root: model, status, synth, `AudioSink` | iOS/Android; chưa có audio adapter/UI |
 | `vifasttts-desktop` | desktop app egui: local ONNX + remote HTTP + server nội bộ, settings/dictionary/ETA, phát audio, lưu WAV/SRT/VTT | macOS/Linux/Windows package; CI smoke cả ba |
-| `vifasttts-tui` | library TUI ratatui/crossterm | CLI không args mở TUI |
+| `vifasttts-tui` | library TUI ratatui/crossterm; model browser `Ctrl+O` | CLI không args mở TUI |
 | `vifasttts-vfts` | `.vfts` full + `.vfa` acoustic-only (vocoder hash); hash/traversal/zip-bomb | loader native/CLI/server/TUI/FFI/mobile |
 | `vifasttts-huggingface` | search/files/download `.vfa/.vfts` từ HF | adapter native; web dùng API server |
-| `vifasttts-model-manager` | catalog/download/install/installed dùng chung | CLI/desktop/server; web/extension/mobile qua HTTP |
+| `vifasttts-model-manager` | catalog/download/install/installed dùng chung | CLI/desktop/TUI/server; web/extension/mobile qua HTTP |
 | `vifasttts-browser` | browser adapter: async engine + `ort-web` + parse/karaoke/DSP | Ngang hàng `native`; JS chỉ nạp model/session + UI |
 | `vifasttts-http-client` | HTTP client `/healthz`, `/api/config`, `/api/tts` (WAV/karaoke JSON) | Cho CLI remote/web/mobile; không kéo ORT |
-| `vifasttts-cli` | không args = TUI; `server` = HTTP + web; `inspect/synth/stream/bench/vfts` | CLI production; TUI/server dùng chung binary |
+| `vifasttts-cli` | không args = TUI (feature `tui`); `server` = HTTP + web; `inspect/synth/stream/bench/vfts` | CLI production; desktop package kèm sidecar; có thể build `--no-default-features` để bỏ TUI |
 | `vifasttts-tools` | `mel-ids`, `synth-ids` | Parity model; cần native |
 | `vifasttts-parse` | `parse`, `parse-batch` | Text-only; **không link ORT** |
 | `vifasttts-ffi` | C ABI `cdylib`/`staticlib`, header; `vifasttts_synthesize_karaoke` trả WAV + JSON timing | `catch_unwind`, lỗi qua `vifasttts_last_error`, bytes/streaming |
@@ -1127,7 +1127,7 @@ rust/crates/adapters/inbound/desktop/package-macos.sh --run
 - `.app` ~127 MB (model 86 MB + ORT 32 MB + binary 13 MB); app tự tìm model trong
   `Contents/Resources` và ORT cạnh executable (đã test smoke từ bundle).
 - Chưa streaming PCM trong UI; nút Dừng phát chỉ dừng audio, job local vẫn hoàn tất.
-- Package desktop kèm `vifasttts` (CLI/TUI/server); desktop có nút bật
+- Package desktop kèm `vifasttts` unified CLI/TUI/server; GUI không mở TUI; desktop có nút bật
   server nội bộ để extension remote kết nối `http://127.0.0.1:<port>`.
 
 **Android (đã chạy):**
@@ -1154,7 +1154,7 @@ Workflow `.github/workflows/ci.yml` (push main/PR/tag, dispatch):
 | `rust` | fmt + clippy + test trên macOS/Ubuntu/Windows; wasm check |
 | `python-lint` | Python 3.12 + `ruff check .` (full pytest local do suite torch/onnx nặng) |
 | `web-extension` | build wasm-bindgen + ORT Web; zip extension; Vite web dist |
-| `desktop` | macOS `.app` zip, Linux tar.gz, Windows zip (kèm server/TUI); `--smoke` từng gói |
+| `desktop` | macOS `.app` zip, Linux tar.gz, Windows zip (kèm CLI/TUI/server sidecar); `--smoke` từng gói |
 | `server` | macOS/Linux/Windows: binary + ORT + model + launcher; artifact riêng |
 | `android` | SDK 36/NDK 28.2, cargo-ndk, APK, upload |
 | `ios` | macOS runner: Rust staticlib + ORT pod `1.30.0` + xcodebuild simulator; artifact có model |

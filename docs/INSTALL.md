@@ -19,9 +19,10 @@ Trong desktop:
 
 - **Bật server** → server nội bộ tại `http://127.0.0.1:8000`.
 - **Dùng server này** → chuyển chế độ remote sang server vừa bật.
-- TUI: mở PowerShell/CMD tại thư mục giải nén:
+- TUI chạy từ terminal (GUI desktop không mở TUI):
   ```powershell
-  .\vifasttts.exe
+  .\vifasttts.exe tui
+  .\vifasttts.exe tui --server http://127.0.0.1:8000
   ```
 
 Không cần cài Python/Node/Visual C++ redistributable (bản release đã gom runtime
@@ -39,15 +40,14 @@ Rust; nếu Windows thiếu DLL hệ thống, cài VC++ 2015–2022 x64).
    ```
 4. Vào **Cài đặt → Server nội bộ** để bật server cho extension.
 
-TUI/CLI nằm trong `ViFastTts.app/Contents/MacOS/`:
+Desktop kèm unified binary `ViFastTts.app/Contents/MacOS/vifasttts`
+(CLI/TUI/server; GUI không mở TUI):
 ```bash
-# mặc định mở TUI
-/Applications/ViFastTts.app/Contents/MacOS/vifasttts
-# TUI độc lập
-# TUI/CLI/server nằm trong vifasttts
-/Applications/ViFastTts.app/Contents/MacOS/vifasttts
 # server + web (nếu có web/ cạnh binary)
 /Applications/ViFastTts.app/Contents/MacOS/vifasttts server
+# TUI local/remote, chỉ từ terminal
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts tui
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts tui --server http://127.0.0.1:8000
 ```
 
 ## Linux x64
@@ -71,6 +71,8 @@ Nếu chạy headless: `./vifasttts-desktop --smoke`.
 - macOS: `vifasttts-cli-macos-arm64.tar.gz` → `./run.sh`.
 - Linux: `vifasttts-cli-linux-x64.tar.gz` → `./run.sh`.
 - Chạy server: `vifasttts server`; API-only: `--api-only`.
+- Package CLI/desktop đã kèm thư mục `web/`; server tự tìm `web/` cạnh binary
+  (hoặc `web/dist` trong cwd) — không cần tải web riêng.
 
 ```bash
 ./run.sh --host 127.0.0.1 --port 8000
@@ -80,13 +82,17 @@ curl -s http://127.0.0.1:8000/healthz
 Server nhận `dictionary` text hoặc `overrides` JSON; có thể phục vụ web UI:
 
 ```bash
-./run.sh --web-dir web --token 'đổi-token' --host 127.0.0.1 --port 8000
-# CLI hợp nhất: server + web + auth
-vifasttts server --web-dir web --token 'đổi-token' --port 8000
+./run.sh --token 'đổi-token' --host 127.0.0.1 --port 8000
+# CLI hợp nhất: server + web + auth (web tự tìm cạnh binary)
+vifasttts server --token 'đổi-token' --port 8000
 # chỉ API, không phục vụ web
 vifasttts server --api-only --port 8000
 # web ở origin khác cần thêm --cors
 ```
+
+Binary **không nhúng** HTML/WASM/ORT; web là asset tĩnh trong package. Nếu chỉ
+copy mỗi binary, server vẫn chạy API nhưng không có web. Muốn tách web riêng,
+dùng `web-dist.tar.gz` và `--web-dir /đường/dẫn/web-dist`.
 
 Extension remote trỏ tới `http://127.0.0.1:8000`; desktop có nút bật/tắt server
 cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép LAN** (bind
@@ -96,14 +102,16 @@ cùng port. Muốn dùng từ điện thoại/IoT trong LAN: bật **Cho phép L
 
 - Extension: tải `extension.zip` → `chrome://extensions` → Developer mode →
   **Load unpacked** → chọn thư mục đã giải nén. Không dùng `ttsEngine`.
-- Web local: `web-dist.tar.gz` giải nén (đã kèm `models/` + ORT wasm), phục vụ
-  static bằng `python -m http.server` rồi mở `http://127.0.0.1:8000`.
+- Web local: package desktop/CLI đã kèm `web/`; server tự phục vụ tại `/`.
+  Nếu cần web tĩnh riêng, dùng `web-dist.tar.gz` (đã kèm `models/` + ORT wasm),
+  phục vụ bằng `python -m http.server` rồi mở `http://127.0.0.1:8000`.
 - Khi web được server phục vụ, nó tự kiểm tra `/healthz` và mặc định gọi
   remote same-origin; mở static/file thì mặc định local WASM.
 - Web có input nạp `.vfa`/`.vfts`: `.vfa` dùng `/models/vocoder.onnx`, `.vfts`
   tự chứa vocoder; kiểm SHA256 trước khi tạo session.
-- Khi server đang chạy, web có mục **Thêm giọng từ HuggingFace** gọi
-  `/api/models/*`; không cần tải file thủ công.
+- Khi server đang chạy, web và extension có mục **Thêm giọng từ HuggingFace**
+  gọi `/api/models/*`; không cần tải file thủ công. Server kiểm manifest/hash
+  trước khi trả bundle.
 
 ## Android
 
@@ -111,9 +119,11 @@ Tải `app-debug.apk` (debug, chưa ký store), bật **Install unknown apps**, 
 mở. Đây là client local ONNX + remote HTTP:
 
 - mặc định **local**, model FP32 ~86 MB đóng trong APK;
+- nút **Tải model .vfa/.vfts** tìm/tải qua server `/api/models/*`, lưu vào
+  `filesDir/models/` và dùng cho lần đọc local sau;
 - tick **Dùng server remote**, nhập URL desktop (`http://IP:8000`) hoặc server
   online, token nếu có;
-- chưa có server mode trên Android và chưa có catalog/tải nhiều model;
+- chưa có server mode trên Android;
 - quyền: `INTERNET`, `ACCESS_NETWORK_STATE`, Android 16+ `ACCESS_LOCAL_NETWORK`.
   Local HTTP dùng cleartext; production nên HTTPS.
 
@@ -123,6 +133,10 @@ mở. Đây là client local ONNX + remote HTTP:
 Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 `mobile/ios/build-ios.sh`. Thiết bị thật cần ký + ORT device framework.
 
+Sheet **Model** trong app tìm/tải `.vfa/.vfts` qua server, lưu Application
+Support và tự nạp lại C ABI. Phần iOS chưa được chạy thật trên máy không có
+Xcode/iOS SDK.
+
 ## Từ source
 
 ```bash
@@ -130,7 +144,9 @@ Apple Developer). Cài Xcode, mở Simulator, kéo app vào; hoặc build từ
 cargo build --release --manifest-path rust/Cargo.toml \
   -p vifasttts-cli
 # binary: rust/target/release/vifasttts (TUI/CLI/server)
-# ./vifasttts              -> TUI
+# ./vifasttts                          -> TUI local
+# ./vifasttts tui --server URL --token ... -> TUI remote
+# ./vifasttts tui --vfa n0.vfa --vocoder vocoder.onnx
 # ./vifasttts server       -> server + web
 # ./vifasttts synth ...    -> CLI
 ```

@@ -17,6 +17,14 @@ esac
 CACHE="${CACHE:-$ROOT/desktop/dist/cache}"
 OUT="${OUT:-$ROOT/desktop/dist/vifasttts-cli-$out}"
 ARCHIVE="${ARCHIVE:-$ROOT/desktop/dist/vifasttts-cli-$out.tar.gz}"
+
+WEB_DIR="${WEB_DIR:-}"
+if [ -z "$WEB_DIR" ] && [ -d "$ROOT/web/dist" ]; then WEB_DIR="$ROOT/web/dist"; fi
+if [ -n "$WEB_DIR" ] && [ "${WEB_DIR#/}" = "$WEB_DIR" ]; then WEB_DIR="$ROOT/$WEB_DIR"; fi
+if [ -n "$WEB_DIR" ] && [ ! -d "$WEB_DIR" ]; then
+  echo "Thiếu web dir: $WEB_DIR" >&2
+  exit 2
+fi
 (cd "$ROOT/rust" && cargo build --release -p vifasttts-cli)
 mkdir -p "$CACHE"
 archive="$CACHE/onnxruntime-$ort-$ORT_VERSION.tgz"
@@ -49,7 +57,9 @@ chmod +x "$OUT/vifasttts" "$OUT/run.sh"
 cat > "$OUT/README.txt" <<'TXT'
 ViFastTts CLI/TUI/server
 Chạy server: ./run.sh --host 127.0.0.1 --port 8000
-TUI/CLI: ./vifasttts
+TUI local: ./vifasttts tui --acoustic models/acoustic.onnx --vocoder models/vocoder.onnx
+TUI remote: ./vifasttts tui --server http://127.0.0.1:8000
+CLI: ./vifasttts synth --text "..." --output out.wav
 Model: models/acoustic.onnx + models/vocoder.onnx
 ORT: 1.31.1 (load-dynamic, cùng thư mục)
 Endpoints: /healthz, /api/config, /api/tts, /api/tts/stream

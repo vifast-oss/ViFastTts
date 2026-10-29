@@ -215,8 +215,30 @@ enum Command {
         #[command(subcommand)]
         action: VftsAction,
     },
-    /// Mở TUI (tương đương chạy không tham số).
-    Tui,
+    /// Mở TUI local hoặc remote.
+    #[cfg(feature = "tui")]
+    Tui {
+        #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
+        acoustic: PathBuf,
+        #[arg(long, default_value = "artifacts/onnx/n0_q/vocoder.onnx")]
+        vocoder: PathBuf,
+        #[arg(long)]
+        vfa: Option<PathBuf>,
+        #[arg(long)]
+        vfts: Option<PathBuf>,
+        #[arg(long)]
+        server: Option<String>,
+        #[arg(long)]
+        token: Option<String>,
+        #[arg(long, default_value = "models")]
+        model_dir: PathBuf,
+        #[arg(long, default_value = "out-tui.wav")]
+        output: PathBuf,
+        #[arg(long, default_value_t = 1.0)]
+        speed: f32,
+        #[arg(long)]
+        fixed_pauses: bool,
+    },
     /// Chạy HTTP server + web UI (mặc định dùng thư mục `web` nếu có).
     Server {
         #[arg(long, default_value = "artifacts/onnx/n0_q/acoustic.onnx")]
@@ -332,8 +354,15 @@ fn main() -> Result<()> {
     let command = match cli.command {
         Some(command) => command,
         None => {
-            return vifasttts_tui::run(vifasttts_tui::TuiArgs::default())
-                .map_err(anyhow::Error::msg);
+            #[cfg(feature = "tui")]
+            {
+                return vifasttts_tui::run(vifasttts_tui::TuiArgs::default())
+                    .map_err(anyhow::Error::msg);
+            }
+            #[cfg(not(feature = "tui"))]
+            {
+                anyhow::bail!("bản build này không có TUI; dùng `vifasttts server` hoặc lệnh con");
+            }
         }
     };
     match command {
@@ -550,8 +579,33 @@ fn main() -> Result<()> {
                 summary.cancelled
             );
         }
-        Command::Tui => {
-            vifasttts_tui::run(vifasttts_tui::TuiArgs::default()).map_err(anyhow::Error::msg)?
+        #[cfg(feature = "tui")]
+        Command::Tui {
+            acoustic,
+            vocoder,
+            vfa,
+            vfts,
+            server,
+            token,
+            model_dir,
+            output,
+            speed,
+            fixed_pauses,
+        } => {
+            let args = vifasttts_tui::TuiArgs {
+                acoustic,
+                vocoder,
+                vfa,
+                vfts,
+                server,
+                token,
+                model_dir,
+                output,
+                speed,
+                fixed_pauses,
+                ..vifasttts_tui::TuiArgs::default()
+            };
+            vifasttts_tui::run(args).map_err(anyhow::Error::msg)?
         }
         Command::Server {
             acoustic,

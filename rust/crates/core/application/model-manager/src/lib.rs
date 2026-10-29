@@ -60,6 +60,12 @@ impl ModelManager {
             .ok_or_else(|| "không mô tả được model".to_string())
     }
 
+    /// Tải + lưu cache server rồi trả bytes cho UI remote.
+    pub fn install_and_read(&self, repo: &str, path: &str) -> Result<Vec<u8>, String> {
+        let model = self.install(repo, path)?;
+        std::fs::read(&model.path).map_err(|error| format!("đọc {}: {error}", model.path.display()))
+    }
+
     /// Proxy bytes cho web/extension/mobile, vẫn kiểm bundle trước khi trả.
     pub fn install_bytes(&self, repo: &str, path: &str) -> Result<Vec<u8>, String> {
         let bytes = download_bytes(repo, path)?;
@@ -93,5 +99,32 @@ impl ModelManager {
             kind: extension,
             size,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn installed_chi_lay_bundle() {
+        let directory = std::env::temp_dir().join(format!(
+            "vifasttts-model-manager-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("a.vfa"), b"x").unwrap();
+        std::fs::write(directory.join("b.vfts"), b"xy").unwrap();
+        std::fs::write(directory.join("note.txt"), b"x").unwrap();
+        let manager = ModelManager::new(&directory);
+        let found = manager.installed();
+        assert_eq!(found.len(), 2);
+        assert!(found.iter().any(|model| model.kind == "vfa"));
+        assert!(found.iter().any(|model| model.kind == "vfts"));
+        std::fs::remove_dir_all(directory).unwrap();
     }
 }

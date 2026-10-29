@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use ort::environment::Environment;
 use ort::ep::CPU;
@@ -134,7 +135,11 @@ fn ort_library_candidates() -> Vec<PathBuf> {
     candidates
 }
 
-fn init_environment() -> Result<Environment, String> {
+/// ORT chỉ cho tạo một `Environment`/process. Giữ mạnh để session mới dùng lại;
+/// nếu không, đổi model lần hai sẽ lỗi "only one environment is allowed".
+static ENVIRONMENT: Mutex<Option<Environment>> = Mutex::new(None);
+
+fn build_environment() -> Result<Environment, String> {
     for key in ["VIFASTT_ORT_DYLIB", "ORT_DYLIB_PATH"] {
         if let Ok(value) = std::env::var(key) {
             let path = PathBuf::from(value);
@@ -161,6 +166,18 @@ fn init_environment() -> Result<Environment, String> {
          libonnxruntime vào rust/lib/ (đã tìm: {:?})",
         ort_library_candidates()
     ))
+}
+
+fn init_environment() -> Result<Environment, String> {
+    let mut slot = ENVIRONMENT
+        .lock()
+        .map_err(|_| "khóa ORT environment bị poison".to_string())?;
+    if let Some(environment) = slot.as_ref() {
+        return Ok(environment.clone());
+    }
+    let environment = build_environment()?;
+    *slot = Some(environment.clone());
+    Ok(environment)
 }
 
 fn session_options(builder: SessionBuilder) -> Result<SessionBuilder, String> {
