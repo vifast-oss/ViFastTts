@@ -27,6 +27,8 @@ production. UI SwiftUI/Compose/Flutter cuối cùng vẫn chưa chốt.
 - Android SDK: platform 36, build-tools 36, NDK 28.2.
 - Rust targets `x86_64-linux-android`, `aarch64-linux-android`.
 - `cargo-ndk` (`cargo install cargo-ndk`), `gradle` (hoặc wrapper).
+- Cấu hình trong app: **Cấu hình** → tốc độ, alpha, pause cố định, peak normalize,
+  max ký tự/chunk; lưu trong `SharedPreferences`.
 - Model local: `artifacts/onnx/n0_q/{acoustic,vocoder}.onnx` (không commit).
 - ORT Android AAR 1.31.1 (script tự tải từ Maven).
 

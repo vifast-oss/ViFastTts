@@ -30,6 +30,8 @@ sudo. Thiết bị thật vẫn cần ký Apple Developer và ORT device slice.
   Bearer token; dùng chung Server URL/token với model browser.
 - `ModelCatalog.swift`, `ModelBrowserView.swift`: Server URL trống → gọi
   HuggingFace trực tiếp; nhập URL → qua server `/api/models/*`.
+- `ContentView` + `TtsEngine`/`RemoteTts`: sheet **Cấu hình** cho tốc độ, alpha,
+  pause cố định, peak normalize, max ký tự/chunk; truyền vào FFI local và server remote.
 - `ViFastTtsMobile-Bridging-Header.h`: include trực tiếp header canonical của
   crate FFI, không copy hợp đồng.
 - `project.yml`: XcodeGen spec; link `libvifasttts_ffi.a` + `onnxruntime.framework`.

@@ -14,6 +14,12 @@ struct ContentView: View {
     // Điện thoại không có localhost của máy dev: để trống, chỉ gợi ý IP LAN.
     @AppStorage("vifasttts.serverURL") private var serverURL = ""
     @AppStorage("vifasttts.token") private var token = ""
+    @AppStorage("vifasttts.speed") private var speed = 1.0
+    @AppStorage("vifasttts.alpha") private var alpha = 1.5
+    @AppStorage("vifasttts.fixedPauses") private var fixedPauses = false
+    @AppStorage("vifasttts.peakNormalize") private var peakNormalize = false
+    @AppStorage("vifasttts.maxChars") private var maxChars = 300
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -77,6 +83,13 @@ struct ContentView: View {
                     .disabled(busy)
 
                     Button {
+                        showSettings = true
+                    } label: {
+                        Label("Cấu hình", systemImage: "slider.horizontal.3")
+                    }
+                    .disabled(busy)
+
+                    Button {
                         player?.stop()
                         status = "Đã dừng phát"
                     } label: {
@@ -123,6 +136,15 @@ struct ContentView: View {
             }) {
                 ModelBrowserView()
             }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(
+                    speed: $speed,
+                    alpha: $alpha,
+                    fixedPauses: $fixedPauses,
+                    peakNormalize: $peakNormalize,
+                    maxChars: $maxChars
+                )
+            }
             .onChange(of: mode) { value in
                 status = value == "remote" ? "Remote: nhập server URL" : "Local: sẵn sàng"
             }
@@ -168,10 +190,24 @@ struct ContentView: View {
                 let url: URL
                 if mode == "remote" {
                     let client = try RemoteTtsClient(server: serverURL, token: token)
-                    url = try await client.synthesize(text: input)
+                    url = try await client.synthesize(
+                        text: input,
+                        speed: Float(speed),
+                        fixedPauses: fixedPauses
+                    )
                 } else {
-                    url = try await TtsEngine.shared.synthesize(text: input)
+                    url = try await TtsEngine.shared.synthesize(
+                        text: input,
+                        speed: Float(speed),
+                        alpha: Float(alpha),
+                        maxChars: maxChars,
+                        fixedPauses: fixedPauses,
+                        peakNormalize: peakNormalize
+                    )
                 }
+                let session = AVAudioSession.sharedInstance()
+                try? session.setCategory(.playback, mode: .spokenAudio)
+                try? session.setActive(true)
                 let audio = try AVAudioPlayer(contentsOf: url)
                 audio.prepareToPlay()
                 audio.play()
@@ -182,6 +218,62 @@ struct ContentView: View {
                 status = "Tổng hợp lỗi"
             }
             busy = false
+        }
+    }
+}
+
+
+private struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var speed: Double
+    @Binding var alpha: Double
+    @Binding var fixedPauses: Bool
+    @Binding var peakNormalize: Bool
+    @Binding var maxChars: Int
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Âm thanh") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(format: "Tốc độ: %.2f×", speed))
+                            .font(VFTheme.body)
+                        Slider(value: $speed, in: 0.5...2.0, step: 0.05)
+                            .tint(VFTheme.accent)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(format: "Độ nét mel (alpha): %.2f", alpha))
+                            .font(VFTheme.body)
+                        Slider(value: $alpha, in: 0.5...3.0, step: 0.05)
+                            .tint(VFTheme.accent)
+                    }
+                    Toggle("Pause cố định theo dấu câu", isOn: $fixedPauses)
+                        .tint(VFTheme.accent)
+                    Toggle("Peak normalize", isOn: $peakNormalize)
+                        .tint(VFTheme.accent)
+                }
+                Section("Giới hạn") {
+                    Stepper("Max ký tự/chunk: \(maxChars)", value: $maxChars, in: 50...5000, step: 50)
+                }
+                Section("Ghi chú") {
+                    Text("Local áp dụng đầy đủ các tùy chọn. Remote chỉ gửi tốc độ và pause cố định; alpha/max do server quyết định.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
+                    Text("Model base 60k nặng hơn small; nếu máy chậm, dùng small hoặc giảm max ký tự/chunk.")
+                        .font(VFTheme.caption)
+                        .foregroundStyle(VFTheme.muted)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(VFTheme.background.ignoresSafeArea())
+            .tint(VFTheme.accent)
+            .font(VFTheme.body)
+            .navigationTitle("Cấu hình")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Xong") { dismiss() }
+                }
+            }
         }
     }
 }

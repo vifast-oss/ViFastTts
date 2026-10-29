@@ -74,6 +74,8 @@ Nên dùng **catalog** thay vì hard-code URL:
 - File tải nên là `.vfts` (manifest + ONNX + dictionary snapshot) để một file
   chứa đủ model và kiểm hash.
 - Client lưu nhiều model, chọn active model; xoá từng model; không tải trùng.
+- Android/iOS có cấu hình local: tốc độ, alpha, pause cố định, peak normalize,
+  max ký tự/chunk; model base 60k nặng hơn small nên máy yếu nên dùng small.
 - Không cần server riêng cho model public; server chỉ hữu ích cho model nội bộ
   hoặc LAN.
 - Khi remote, không cần tải model local.

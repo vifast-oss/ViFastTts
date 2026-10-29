@@ -22,7 +22,7 @@ struct RemoteTtsClient {
         return baseURL.appendingPathComponent("api").appendingPathComponent("tts")
     }
 
-    func synthesize(text: String, speed: Float = 1.0) async throws -> URL {
+    func synthesize(text: String, speed: Float = 1.0, fixedPauses: Bool = false) async throws -> URL {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.timeoutInterval = 120
@@ -33,7 +33,7 @@ struct RemoteTtsClient {
         let body: [String: Any] = [
             "text": text,
             "speed": Double(speed),
-            "fixed_pauses": false,
+            "fixed_pauses": fixedPauses,
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await URLSession.shared.data(for: request)

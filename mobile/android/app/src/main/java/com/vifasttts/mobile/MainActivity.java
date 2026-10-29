@@ -5,6 +5,9 @@ import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,11 +16,13 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -79,6 +84,11 @@ public class MainActivity extends Activity {
     private static final String KEY_MODE = "mode";
     private static final String KEY_SERVER = "server_url";
     private static final String KEY_TOKEN = "token";
+    private static final String KEY_SPEED = "speed";
+    private static final String KEY_ALPHA = "alpha";
+    private static final String KEY_MAX_CHARS = "max_chars";
+    private static final String KEY_FIXED_PAUSES = "fixed_pauses";
+    private static final String KEY_PEAK_NORMALIZE = "peak_normalize";
 
     private Ffi ffi;
     private Pointer engine;
@@ -96,13 +106,21 @@ public class MainActivity extends Activity {
     private Button runButton;
     private Button stopButton;
     private Button modelButton;
+    private Button settingsButton;
     private ProgressBar progress;
     private MediaPlayer player;
+    private AudioManager audioManager;
+    private AudioFocusRequest focusRequest;
     private SharedPreferences prefs;
     private String activeModelPath = "";
     private String mode = "local";
     private boolean remoteMode = false;
     private boolean busy = false;
+    private float speechSpeed = 1.0f;
+    private float sharpenAlpha = 1.5f;
+    private int maxChars = 300;
+    private boolean fixedPauses = false;
+    private boolean peakNormalize = false;
 
     private String lastError() {
         try {
@@ -257,6 +275,7 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
             runButton.setEnabled(!value);
             modelButton.setEnabled(!value);
+            settingsButton.setEnabled(!value);
             progress.setVisibility(value ? View.VISIBLE : View.GONE);
         });
     }
@@ -328,11 +347,11 @@ public class MainActivity extends Activity {
             try {
                 ensureEngine();
                 Options options = new Options();
-                options.speed = 1.0f;
-                options.alpha = 1.5f;
-                options.max_chars = new NativeLong(0);
-                options.fixed_pauses = 0;
-                options.peak_normalize = 0;
+                options.speed = speechSpeed;
+                options.alpha = sharpenAlpha;
+                options.max_chars = new NativeLong(maxChars);
+                options.fixed_pauses = fixedPauses ? (byte) 1 : (byte) 0;
+                options.peak_normalize = peakNormalize ? (byte) 1 : (byte) 0;
                 NativeLongByReference len = new NativeLongByReference();
                 Pointer data = ffi.vifasttts_synthesize(engine, input, options, len);
                 if (data == null) throw new IllegalStateException(lastError());
@@ -364,8 +383,8 @@ public class MainActivity extends Activity {
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
                 JSONObject body = new JSONObject();
                 body.put("text", input);
-                body.put("speed", 1.0);
-                body.put("fixed_pauses", false);
+                body.put("speed", speechSpeed);
+                body.put("fixed_pauses", fixedPauses);
                 byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(payload.length);
                 try (java.io.OutputStream out = connection.getOutputStream()) {
@@ -390,20 +409,69 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    private AudioAttributes speechAudioAttributes() {
+        return new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build();
+    }
+
+    private void requestAudioFocus() {
+        if (audioManager == null) return;
+        AudioAttributes attributes = speechAudioAttributes();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(attributes)
+                    .setOnAudioFocusChangeListener(change -> {})
+                    .build();
+            audioManager.requestAudioFocus(focusRequest);
+        } else {
+            audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN);
+        }
+    }
+
+    private void abandonAudioFocus() {
+        if (audioManager == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (focusRequest != null) {
+                audioManager.abandonAudioFocusRequest(focusRequest);
+                focusRequest = null;
+            }
+        } else {
+            audioManager.abandonAudioFocus(null);
+        }
+    }
+
     private void play(File out, String message) {
         runOnUiThread(() -> {
             status.setText(message);
             setBusy(false);
             try {
-                if (player != null) player.release();
+                if (player != null) {
+                    player.release();
+                    player = null;
+                }
+                requestAudioFocus();
                 player = new MediaPlayer();
+                player.setAudioAttributes(speechAudioAttributes());
                 player.setDataSource(out.getAbsolutePath());
+                player.setOnCompletionListener(done -> {
+                    stopButton.setEnabled(false);
+                    abandonAudioFocus();
+                });
+                player.setOnErrorListener((mp, what, extra) -> {
+                    setError("MediaPlayer lỗi " + what + "/" + extra);
+                    abandonAudioFocus();
+                    return false;
+                });
                 player.prepare();
                 player.start();
                 stopButton.setEnabled(true);
             } catch (Exception error) {
                 status.setText("Đã tạo WAV, lỗi phát: " + error.getMessage());
                 setError(error.getMessage());
+                abandonAudioFocus();
             }
         });
     }
@@ -419,7 +487,121 @@ public class MainActivity extends Activity {
             player = null;
         }
         stopButton.setEnabled(false);
+        abandonAudioFocus();
         setStatus("Đã dừng phát");
+    }
+
+    private void showSettings() {
+        Typeface font = VfTheme.typeface(this);
+        LinearLayout form = new LinearLayout(this);
+        form.setOrientation(LinearLayout.VERTICAL);
+        int pad = VfTheme.dp(this, 18);
+        form.setPadding(pad, VfTheme.dp(this, 8), pad, VfTheme.dp(this, 8));
+
+        TextView speedLabel = new TextView(this);
+        VfTheme.text(speedLabel, font, 13, VfTheme.INK, true);
+        form.addView(speedLabel);
+        SeekBar speedBar = new SeekBar(this);
+        speedBar.setMax(150);
+        speedBar.setProgress(Math.round((speechSpeed - 0.5f) * 100f));
+        form.addView(speedBar);
+        speedLabel.setText(String.format("Tốc độ: %.2f×", speechSpeed));
+        speedBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                speedLabel.setText(String.format("Tốc độ: %.2f×", 0.5f + progress / 100f));
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        TextView alphaLabel = new TextView(this);
+        VfTheme.text(alphaLabel, font, 13, VfTheme.INK, true);
+        LinearLayout.LayoutParams alphaLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        alphaLabelParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(alphaLabel, alphaLabelParams);
+        SeekBar alphaBar = new SeekBar(this);
+        alphaBar.setMax(250);
+        alphaBar.setProgress(Math.round((sharpenAlpha - 0.5f) * 100f));
+        form.addView(alphaBar);
+        alphaLabel.setText(String.format("Độ nét mel (alpha): %.2f", sharpenAlpha));
+        alphaBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                alphaLabel.setText(String.format("Độ nét mel (alpha): %.2f", 0.5f + progress / 100f));
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        TextView maxLabel = new TextView(this);
+        VfTheme.text(maxLabel, font, 13, VfTheme.INK, true);
+        LinearLayout.LayoutParams maxLabelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        maxLabelParams.topMargin = VfTheme.dp(this, 10);
+        form.addView(maxLabel, maxLabelParams);
+        maxLabel.setText("Max ký tự mỗi chunk");
+        EditText maxInput = new EditText(this);
+        maxInput.setText(String.valueOf(maxChars));
+        maxInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        VfTheme.input(maxInput, font);
+        form.addView(maxInput);
+
+        CheckBox fixed = new CheckBox(this);
+        fixed.setText("Pause cố định theo dấu câu");
+        fixed.setChecked(fixedPauses);
+        VfTheme.text(fixed, font, 14, VfTheme.INK, false);
+        fixed.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        form.addView(fixed);
+
+        CheckBox peak = new CheckBox(this);
+        peak.setText("Peak normalize");
+        peak.setChecked(peakNormalize);
+        VfTheme.text(peak, font, 14, VfTheme.INK, false);
+        peak.setButtonTintList(android.content.res.ColorStateList.valueOf(VfTheme.ACCENT));
+        form.addView(peak);
+
+        TextView note = new TextView(this);
+        VfTheme.text(note, font, 12, VfTheme.MUTED, false);
+        note.setText("Local: áp dụng đầy đủ. Remote: server chỉ nhận tốc độ và pause cố định; alpha/max do server quyết định. Model base 60k nặng hơn small; máy yếu nên dùng small.");
+        LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        noteParams.topMargin = VfTheme.dp(this, 8);
+        form.addView(note, noteParams);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(form);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Cấu hình")
+                .setView(scroll)
+                .setPositiveButton("Lưu", null)
+                .setNegativeButton("Huỷ", null)
+                .create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener(view -> {
+                    speechSpeed = 0.5f + speedBar.getProgress() / 100f;
+                    sharpenAlpha = 0.5f + alphaBar.getProgress() / 100f;
+                    try {
+                        maxChars = Math.max(50, Math.min(5000,
+                                Integer.parseInt(maxInput.getText().toString().trim())));
+                    } catch (NumberFormatException ignoredValue) {
+                        maxChars = 300;
+                    }
+                    fixedPauses = fixed.isChecked();
+                    peakNormalize = peak.isChecked();
+                    maxInput.setText(String.valueOf(maxChars));
+                    prefs.edit()
+                            .putFloat(KEY_SPEED, speechSpeed)
+                            .putFloat(KEY_ALPHA, sharpenAlpha)
+                            .putInt(KEY_MAX_CHARS, maxChars)
+                            .putBoolean(KEY_FIXED_PAUSES, fixedPauses)
+                            .putBoolean(KEY_PEAK_NORMALIZE, peakNormalize)
+                            .apply();
+                    setStatus(String.format(
+                            "Đã lưu cấu hình · %.2f× · alpha %.2f · tối đa %d ký tự",
+                            speechSpeed, sharpenAlpha, maxChars));
+                    dialog.dismiss();
+                }));
+        dialog.show();
     }
 
     private void showModelSearch() {
@@ -541,6 +723,12 @@ public class MainActivity extends Activity {
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         activeModelPath = prefs.getString(KEY_ACTIVE_MODEL, "");
         mode = prefs.getString(KEY_MODE, "local");
+        speechSpeed = prefs.getFloat(KEY_SPEED, 1.0f);
+        sharpenAlpha = prefs.getFloat(KEY_ALPHA, 1.5f);
+        maxChars = prefs.getInt(KEY_MAX_CHARS, 300);
+        fixedPauses = prefs.getBoolean(KEY_FIXED_PAUSES, false);
+        peakNormalize = prefs.getBoolean(KEY_PEAK_NORMALIZE, false);
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         VfTheme.applyWindow(this);
         Typeface font = VfTheme.typeface(this);
 
@@ -550,7 +738,19 @@ public class MainActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         int pad = VfTheme.dp(this, 20);
-        root.setPadding(pad, pad, pad, VfTheme.dp(this, 28));
+        int baseBottom = VfTheme.dp(this, 28);
+        root.setPadding(pad, pad, pad, baseBottom);
+        final int baseLeft = pad;
+        final int baseTop = pad;
+        final int baseRight = pad;
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            view.setPadding(
+                    baseLeft,
+                    baseTop + insets.getSystemWindowInsetTop(),
+                    baseRight,
+                    baseBottom + insets.getSystemWindowInsetBottom());
+            return insets;
+        });
         scroll.addView(root, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -691,6 +891,15 @@ public class MainActivity extends Activity {
         stopParams.leftMargin = VfTheme.dp(this, 8);
         actions.addView(stopButton, stopParams);
 
+        settingsButton = new Button(this);
+        settingsButton.setText("Cấu hình");
+        VfTheme.secondaryButton(settingsButton, font);
+        settingsButton.setOnClickListener(view -> showSettings());
+        LinearLayout.LayoutParams settingsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        settingsParams.leftMargin = VfTheme.dp(this, 8);
+        actions.addView(settingsButton, settingsParams);
+
         progress = new ProgressBar(this);
         progress.setIndeterminate(true);
         progress.setVisibility(View.GONE);
@@ -736,6 +945,7 @@ public class MainActivity extends Activity {
         setMode(mode);
 
         setContentView(scroll);
+        root.requestApplyInsets();
         requestLocalNetworkPermission();
     }
 
@@ -753,6 +963,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (player != null) player.release();
+        abandonAudioFocus();
         if (engine != null && ffi != null) ffi.vifasttts_engine_free(engine);
         super.onDestroy();
     }

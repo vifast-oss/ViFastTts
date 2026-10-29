@@ -31,6 +31,9 @@ final class VfTheme {
 
     static void applyWindow(Activity activity) {
         Window window = activity.getWindow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false);
+        }
         window.setStatusBarColor(BG);
         window.setNavigationBarColor(BG);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

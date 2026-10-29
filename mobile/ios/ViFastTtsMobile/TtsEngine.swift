@@ -34,7 +34,14 @@ final class TtsEngine: @unchecked Sendable {
         }
     }
 
-    func synthesize(text: String, speed: Float = 1.0) async throws -> URL {
+    func synthesize(
+        text: String,
+        speed: Float = 1.0,
+        alpha: Float = 1.5,
+        maxChars: Int = 300,
+        fixedPauses: Bool = false,
+        peakNormalize: Bool = false
+    ) async throws -> URL {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 guard let engine = self.engine else {
@@ -43,10 +50,10 @@ final class TtsEngine: @unchecked Sendable {
                 }
                 var options = VifasttOptions(
                     speed: speed,
-                    alpha: 1.5,
-                    max_chars: 300,
-                    fixed_pauses: 0,
-                    peak_normalize: 0
+                    alpha: alpha,
+                    max_chars: maxChars,
+                    fixed_pauses: fixedPauses ? 1 : 0,
+                    peak_normalize: peakNormalize ? 1 : 0
                 )
                 var length = 0
                 let pointer = text.withCString { cText in
