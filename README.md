@@ -68,6 +68,7 @@ cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần to
 - **Model bundles:** [.vfa/.vfts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles) ·
   [base 60k sau Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
   [3 mẫu nghe](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo)
+- **App release:** [v0.1.0](https://github.com/dvchd/ViFastTts/releases/tag/v0.1.0)
 
 ### Chọn đúng luồng
 
