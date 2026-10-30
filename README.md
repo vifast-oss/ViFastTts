@@ -10,9 +10,9 @@
 
 **Cách nhanh nhất:** tải ZIP → giải nén → chạy `vifasttts-desktop.exe`.
 
-1. Vào [Releases v0.3.4](https://github.com/dvchd/ViFastTts/releases/tag/v0.3.4) và tải
-   [`vifasttts-desktop-windows-x64.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-windows-x64.zip)
-   (~92 MB).
+1. Vào [Releases v0.3.5](https://github.com/dvchd/ViFastTts/releases/tag/v0.3.5) và tải
+   [`vifasttts-desktop-windows-x64.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-windows-x64.zip)
+   (~125 MB).
 2. Chuột phải file ZIP → **Extract All** (đừng chạy trực tiếp trong file ZIP).
 3. Mở thư mục vừa giải nén → chạy `vifasttts-desktop.exe`.
 4. Nếu SmartScreen cảnh báo: **More info → Run anyway** (bản chưa ký số).
@@ -34,13 +34,13 @@ nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 | CLI/TUI/server | `vifasttts-cli-windows-x64.zip` (hoặc macOS/Linux tương ứng) |
 | Web tĩnh riêng | `web-dist.tar.gz` (nâng cao) |
 
-Tất cả nằm trong [release v0.3.4](https://github.com/dvchd/ViFastTts/releases/tag/v0.3.4).
+Tất cả nằm trong [release v0.3.5](https://github.com/dvchd/ViFastTts/releases/tag/v0.3.5).
 Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
 
 > **Lưu ý bản build:** các thay đổi UI 29/10 (alpha/peak/max, HuggingFace trực
 > tiếp, từ điển mobile, karaoke/SRT/VTT, cách đọc `iOS = ai âu ét`,
 > `Android = an đờ roi`), iOS stream local/remote, huỷ tải model Android,
-> catalog/WAV dùng chung và release **v0.3.4**; tải APK Android **0.3.4** hoặc
+> catalog/WAV dùng chung và release **v0.3.5**; tải APK Android **0.3.5** hoặc
 > build từ source; xem
 > `docs/UI_PARITY.md` và `mobile/android/README.md`.
 
@@ -48,8 +48,8 @@ Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.m
 
 Extension dùng model bundled nên **không cần Python/server** để đọc local.
 
-1. Tải [`vifasttts-extension.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-extension.zip)
-   (~80 MB) từ release `v0.3.4`.
+1. Tải [`vifasttts-extension.zip`](https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-extension.zip)
+   (~80 MB) từ release `v0.3.5`.
 2. Chuột phải ZIP → **Extract All** để có một thư mục chứa `manifest.json`.
 3. Chrome: mở `chrome://extensions` → bật **Developer mode** → **Load unpacked**
    → chọn thư mục vừa giải nén.
@@ -134,7 +134,7 @@ Người dùng Windows bình thường nên dùng bản desktop ở trên; mục
 - **Model bundles:** [.vfa/.vfts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles) ·
   [base 60k sau Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
   [3 mẫu nghe](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo)
-- **App release:** [v0.3.4](https://github.com/dvchd/ViFastTts/releases/tag/v0.3.4)
+- **App release:** [v0.3.5](https://github.com/dvchd/ViFastTts/releases/tag/v0.3.5)
 
 ### Chọn đúng luồng
 
