@@ -38,7 +38,7 @@
   }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
-  html { scroll-behavior:smooth; scroll-padding-top:88px; }
+  html { scroll-behavior:smooth; scroll-padding-top:84px; }
   body {
     margin:0; color:var(--ink); font-family:var(--font); font-size:16px; line-height:1.55;
     background:
@@ -423,7 +423,7 @@
     .stats-panel { grid-template-columns:1fr; }
   }
   @media (max-width:900px) {
-    html { scroll-padding-top:120px; }
+    html { scroll-padding-top:108px; }
     .header-inner { flex-wrap:wrap; gap:8px 18px; padding:10px 0; }
     .nav { order:3; width:100%; gap:18px; overflow-x:auto; padding-bottom:4px; margin-left:0; }
     .nav a { padding:3px 0; white-space:nowrap; }
@@ -439,7 +439,7 @@
   @media (max-width:600px) {
     .wrap { width:calc(100% - 28px); }
     body { font-size:15px; }
-    html { scroll-padding-top:138px; }
+    html { scroll-padding-top:112px; }
     h1 { font-size:clamp(2.25rem,10vw,3.1rem); }
     .brand-word { font-size:21px; }
     .brand img { width:36px; height:36px; }
@@ -575,8 +575,8 @@
     </div>
   </section>
 
-  <section class="section wrap" id="tinh-nang">
-    <div class="section-head">
+  <section class="section wrap">
+    <div class="section-head" id="tinh-nang">
       <div>
         <div class="eyebrow">Vì sao ViFastTts</div>
         <h2>Đủ chuẩn để đọc tiếng Việt.<br>Đủ nhẹ để chạy mọi nơi.</h2>
@@ -643,8 +643,8 @@
     </div>
   </section>
 
-  <section class="section wrap" id="tai-ve">
-    <div class="section-head">
+  <section class="section wrap">
+    <div class="section-head" id="tai-ve">
       <div>
         <div class="eyebrow">Tải về</div>
         <h2>Chọn nền tảng.<br>Cài trong vài phút.</h2>
@@ -1127,8 +1127,8 @@ cd web-dist</code></pre></li>
     </div>
   </section>
 
-  <section class="section wrap" id="api">
-    <div class="section-head">
+  <section class="section wrap">
+    <div class="section-head" id="api">
       <div>
         <div class="eyebrow">API &amp; Python</div>
         <h2>Gọi model bằng<br><span class="accent">một request.</span></h2>
@@ -1195,8 +1195,8 @@ vifasttts synthesize-onnx \
     </div>
   </section>
 
-  <section class="section wrap" id="san-pham">
-    <div class="section-head">
+  <section class="section wrap">
+    <div class="section-head" id="san-pham">
       <div>
         <div class="eyebrow">Sản phẩm</div>
         <h2>Hai sản phẩm,<br>một hệ sinh thái.</h2>
@@ -1235,8 +1235,8 @@ vifasttts synthesize-onnx \
     </div>
   </section>
 
-  <section class="section wrap" id="feedback">
-    <div class="feedback-panel">
+  <section class="section wrap">
+    <div class="feedback-panel" id="feedback">
       <div class="feedback-copy">
         <div class="eyebrow">Góp ý</div>
         <h2>Nói cho mình biết.</h2>
@@ -1273,8 +1273,8 @@ vifasttts synthesize-onnx \
     </div>
   </section>
 
-  <section class="section wrap" id="faq">
-    <div class="section-head compact">
+  <section class="section wrap">
+    <div class="section-head compact" id="faq">
       <div>
         <div class="eyebrow">Hỏi đáp</div>
         <h2>Những câu thường gặp.</h2>
@@ -1292,8 +1292,8 @@ vifasttts synthesize-onnx \
       <details class="faq"><summary>Làm sao báo lỗi hoặc góp ý?</summary><p>Dùng form <a href="#feedback">Góp ý</a> ngay trên trang này. Nếu là lỗi cài đặt, kèm hệ điều hành, file đã tải và thông báo lỗi để dễ tái hiện.</p></details>
     </div>
   </section>
-  <section class="section wrap" id="thong-ke">
-    <div class="section-head compact">
+  <section class="section wrap">
+    <div class="section-head compact" id="thong-ke">
       <div>
         <div class="eyebrow">Thống kê</div>
         <h2>Demo đang được dùng thế nào.</h2>
