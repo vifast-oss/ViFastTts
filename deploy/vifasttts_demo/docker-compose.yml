@@ -10,9 +10,11 @@ services:
       MAX_CHARS: "3000"
       SYNTH_CHUNK_CHARS: "300"
       DATA_DIR: "/app/data"
+      DOWNLOADS_DIR: "/app/downloads"
       # ADMIN_PASSWORD: "..."   # bỏ trống = /admin mở công khai
     volumes:
       - ./data:/app/data
+      - ./downloads:/app/downloads:ro
     expose:
       - "8000"
     networks:

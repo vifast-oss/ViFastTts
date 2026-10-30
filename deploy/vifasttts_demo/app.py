@@ -106,6 +106,7 @@ DOWNLOAD_LABELS = {
     "model": "Model bundle",
 }
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
+DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", ROOT / "downloads"))
 DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 VN_TZ = timezone(timedelta(hours=7))
@@ -118,6 +119,13 @@ app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 # Trang chủ dùng đường dẫn tương đối `brand/...` để cùng một HTML chạy được cả VPS
 # lẫn HF Space tĩnh; mount thêm để `/brand/*` và `/static/brand/*` cùng hợp lệ.
 app.mount("/brand", StaticFiles(directory=ROOT / "static" / "brand"), name="brand")
+# Bản mirror tạm khi GitHub Release không truy cập được. Volume chỉ chứa asset
+# tải xuống; check_dir=False để app vẫn khởi động nếu chưa mount thư mục.
+app.mount(
+    "/downloads",
+    StaticFiles(directory=DOWNLOADS_DIR, check_dir=False),
+    name="downloads",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://huggingface.co"],

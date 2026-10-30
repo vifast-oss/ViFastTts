@@ -14,6 +14,8 @@ ONNX-only demo (không cần torch):
   nâng cao, stream, lịch sử; góp ý chuyển về landing.
 - `/brand/*` mount cùng nội dung `static/brand/` để landing dùng đường dẫn tương đối;
   nhờ vậy cùng một HTML chạy được trên VPS và HF Space tĩnh.
+- `/downloads/v0.3.5/*` phục vụ asset release từ volume `./downloads` (mirror tạm khi
+  GitHub Release không truy cập được); đặt `DOWNLOADS_DIR` nếu dùng đường dẫn khác.
 - `static/samples/` — 3 WAV mẫu (không commit; tải bằng `scripts/fetch_demo_samples.sh`).
 - `static/brand/` — icon, lockup, favicon, OG image, manifest (nguồn: `resources/brand/`).
 - `Dockerfile` / `requirements.txt` / `docker-compose.yml`.
