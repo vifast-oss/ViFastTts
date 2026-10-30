@@ -1,7 +1,24 @@
 # Changelog
 
+## 2026-10-30 — v0.3.5
+
+- **Sửa đóng gói Windows desktop**: `package-windows.ps1` thiếu tham số `$WebDir`
+  nên gói desktop Windows v0.3.4 rơi mất `web/` (chỉ 8 file, 92 MB) trong khi gói
+  CLI/server có web (40 file, 119 MB). Thêm `[string]$WebDir` + `[CmdletBinding()]`
+  và chặn build nếu thiếu `web/index.html`.
+- **CI guard**: kiểm tra `web/index.html` trong cả gói desktop và CLI trên
+  macOS/Linux/Windows trước khi upload artifact.
+- **Liên kết hai chiều ViFastKey ↔ ViFastTts**: landing và demo ViFastTts thêm mục
+  “Dự án liên quan” + link footer; web ViFastKey thêm link ViFastTts ở mục tải về/footer.
+- Version: **0.3.5**; Android `versionCode 13`, iOS build 9.
+
 ## 2026-10-30 — v0.3.4
 
+- **Web Python + Space**: trang chủ mới dạng landing page — nghe thử nhanh, giới thiệu
+  model, tab **tải xuống + hướng dẫn cài chi tiết từng nền tảng** (Windows/macOS/Linux/
+  Android/iOS/Chrome/CLI/Web), mục model bundle, API/Python và FAQ. Demo đầy đủ chuyển
+  sang `/demo` (Space: `demo.html`); hai bản HTML đồng bộ bằng
+  `tools/sync_space_static.py`.
 - Thêm **icon ⓘ giải thích Resolve OOV** ở mọi UI: web Python, Space, web Vite,
   extension, Android (mở dialog), iOS (info.circle + alert), desktop (hover), TUI (`ⓘ`).
 - Giữ nguyên help panel "Giải thích các cài đặt" của v0.3.3.

@@ -89,6 +89,9 @@ logger = logging.getLogger("vifasttts-demo")
 
 app = FastAPI(title="ViFastTts research demo", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
+# Trang chủ dùng đường dẫn tương đối `brand/...` để cùng một HTML chạy được cả VPS
+# lẫn HF Space tĩnh; mount thêm để `/brand/*` và `/static/brand/*` cùng hợp lệ.
+app.mount("/brand", StaticFiles(directory=ROOT / "static" / "brand"), name="brand")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://huggingface.co"],
@@ -742,8 +745,22 @@ def _synthesize(text: str, speed: float, fixed_pauses: bool,
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> HTMLResponse:
+    """Landing page: giới thiệu, nghe thử nhanh, tải xuống và hướng dẫn cài."""
     return HTMLResponse((ROOT / "static" / "index.html").read_text(encoding="utf-8"),
                         headers={"Cache-Control": "no-store"})
+
+
+@app.get("/demo", response_class=HTMLResponse)
+def demo() -> HTMLResponse:
+    """Demo đầy đủ (tuỳ chọn nâng cao, lịch sử, góp ý)."""
+    return HTMLResponse((ROOT / "static" / "demo.html").read_text(encoding="utf-8"),
+                        headers={"Cache-Control": "no-store"})
+
+
+@app.get("/demo.html", include_in_schema=False)
+def demo_alias() -> Response:
+    """Alias cho bản tĩnh trên HF Space; VPS dùng URL gọn `/demo`."""
+    return RedirectResponse(url="/demo", status_code=307)
 
 
 @app.get("/api/config")

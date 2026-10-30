@@ -1,10 +1,14 @@
 # Đóng gói desktop Windows x64: binary + ORT + model.
+[CmdletBinding()]
 param(
     [string]$ModelDir = "",
     [string]$Out = "",
     [string]$Archive = "",
     [string]$OrtLib = "",
-    [string]$OrtVersion = "1.31.1"
+    [string]$OrtVersion = "1.31.1",
+    # Bắt buộc có để CI truyền -WebDir; thiếu tham số này gói desktop Windows
+    # từng bị rơi mất web/ (v0.3.4) và nhỏ hơn gói CLI.
+    [string]$WebDir = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -57,6 +61,9 @@ Copy-Item (Join-Path $Root "rust/target/release/vifasttts.exe") (Join-Path $Out 
 if ($WebDir -and (Test-Path $WebDir)) {
     Copy-Item -Recurse -Force $WebDir (Join-Path $Out "web")
     Remove-Item -Recurse -Force (Join-Path $Out "web/models") -ErrorAction SilentlyContinue
+    if (-not (Test-Path (Join-Path $Out "web/index.html"))) {
+        throw "Gói desktop Windows thiếu web/index.html sau khi copy"
+    }
 }
 Copy-Item $OrtLib (Join-Path $Out "onnxruntime.dll")
 Copy-Item $Acoustic (Join-Path $Out "models/acoustic.onnx")

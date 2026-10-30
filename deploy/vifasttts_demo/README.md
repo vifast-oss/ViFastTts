@@ -6,7 +6,12 @@ ONNX-only demo (không cần torch):
   Full và stream dùng chung `vifasttts.runtime.tts_engine.OnnxTtsEngine`.
 - `GET /api/config` trả defaults/capabilities/endpoints; `POST /api/tts/stream`
   trả NDJSON PCM16 (UI checkbox **Stream** phát bằng WebAudio).
-- `static/index.html` — trang nhập câu, play/tải WAV, 3 mẫu nghe sẵn.
+- `static/index.html` — landing page: giới thiệu, nghe thử nhanh, tải xuống + hướng dẫn
+  cài chi tiết từng nền tảng (Windows/macOS/Linux/Android/iOS/Chrome/CLI/Web).
+- `static/demo.html` — demo đầy đủ tại `/demo` (`/demo.html` chuyển hướng): tuỳ chọn
+  nâng cao, stream, lịch sử, góp ý.
+- `/brand/*` mount cùng nội dung `static/brand/` để landing dùng đường dẫn tương đối;
+  nhờ vậy cùng một HTML chạy được trên VPS và HF Space tĩnh.
 - `static/samples/` — 3 WAV mẫu (không commit; tải bằng `scripts/fetch_demo_samples.sh`).
 - `static/brand/` — icon, lockup, favicon, OG image, manifest (nguồn: `resources/brand/`).
 - `Dockerfile` / `requirements.txt` / `docker-compose.yml`.
@@ -32,6 +37,16 @@ docker run --rm -p 8090:8000 vifasttts-demo
 ```
 
 Cách nhanh nhất vẫn là `./scripts/run_ngochuyen_demo.sh` (không cần Docker).
+
+## Đồng bộ HF Space
+
+Landing/demo dùng chung HTML với Space tĩnh (`brand/...` tương đối, JS tự chọn API
+base theo host). Sau khi sửa `static/index.html` hoặc `static/demo.html`:
+
+```bash
+.venv/bin/python tools/sync_space_static.py --check  # CI: phải khớp
+.venv/bin/python tools/sync_space_static.py          # chép sang huggingface/space-static
+```
 
 
 ## Thống kê

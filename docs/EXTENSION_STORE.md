@@ -1,6 +1,6 @@
 # Đưa extension lên Chrome Web Store và Microsoft Edge Add-ons
 
-Trạng thái hiện tại: extension MV3 `0.3.4`; các thay đổi UI 29/10 (alpha/peak/
+Trạng thái hiện tại: extension MV3 `0.3.5`; các thay đổi UI 29/10 (alpha/peak/
 max, HuggingFace trực tiếp, OOV, karaoke) nằm trên `main` và cần build package
 mới trước khi nộp store.
 
@@ -96,7 +96,7 @@ hiện dùng `chrome.*`, `offscreen`, `contextMenus`, `activeTab`, `scripting`.
 ## 4. Trước khi bấm Submit — checklist
 
 - [ ] `manifest.json` nằm ở root ZIP.
-- [ ] `version` là `0.3.4` (hoặc bump version nếu sửa package).
+- [ ] `version` là `0.3.5` (hoặc bump version nếu sửa package).
 - [ ] Không có token, `.env`, file local, `node_modules`, `target`.
 - [ ] Test **Load unpacked** trên Chrome sạch; bấm icon → Đọc không cần server.
 - [ ] Test đọc trang/bôi đen, Remote mode với server local, và **HuggingFace trực tiếp**.

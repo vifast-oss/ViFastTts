@@ -166,17 +166,22 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           WEB_DIR=web-dist rust/crates/adapters/inbound/desktop/package-macos.sh
+          test -f desktop/dist/ViFastTts.app/Contents/MacOS/web/index.html
           desktop/dist/ViFastTts.app/Contents/MacOS/vifasttts-desktop --smoke
       - name: package Linux
         if: runner.os == 'Linux'
         run: |
           WEB_DIR=web-dist rust/crates/adapters/inbound/desktop/package-linux.sh
+          test -f desktop/dist/vifasttts-desktop-linux-x64/web/index.html
           (cd desktop/dist/vifasttts-desktop-linux-x64 && ./vifasttts-desktop --smoke)
       - name: package Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           rust/crates/adapters/inbound/desktop/package-windows.ps1 -WebDir web-dist
+          if (-not (Test-Path "desktop/dist/vifasttts-desktop-windows-x64/web/index.html")) {
+            throw "Gói desktop Windows thiếu web/index.html"
+          }
           & desktop/dist/vifasttts-desktop-windows-x64/vifasttts-desktop.exe --smoke
       - uses: actions/upload-artifact@v4
         with:
@@ -229,13 +234,17 @@ jobs:
         run: |
           chmod +x server/package-unix.sh
           WEB_DIR=web-dist server/package-unix.sh
-          cli_bin="$(find desktop/dist -path '*vifasttts-cli-*' -type d -name 'vifasttts-cli-*' | head -1)/vifasttts"
-          "$cli_bin" --help >/dev/null
+          cli_dir="$(find desktop/dist -path '*vifasttts-cli-*' -type d -name 'vifasttts-cli-*' | head -1)"
+          test -f "$cli_dir/web/index.html"
+          "$cli_dir/vifasttts" --help >/dev/null
       - name: package windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           server/package-windows.ps1 -WebDir web-dist
+          if (-not (Test-Path "desktop/dist/vifasttts-cli-windows-x64/web/index.html")) {
+            throw "Gói CLI Windows thiếu web/index.html"
+          }
           & desktop/dist/vifasttts-cli-windows-x64/vifasttts.exe --help | Out-Null
       - uses: actions/upload-artifact@v4
         with:

@@ -3,393 +3,1212 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ViFastTts · Ngọc Huyền (Small 6,1M)</title>
-<meta name="description" content="Demo TTS tiếng Việt nhỏ, nhanh, chạy CPU: model Ngọc Huyền small 6,1M, 24 kHz, ONNX.">
+<title>ViFastTts — Giọng đọc tiếng Việt nhỏ, nhanh, chạy CPU</title>
+<meta name="description" content="TTS tiếng Việt mã nguồn mở: model Ngọc Huyền small 6,1M, 24 kHz, ONNX CPU. Nghe thử trong trình duyệt, tải app Windows/macOS/Linux/Android và xem hướng dẫn cài từng bước.">
 <meta name="theme-color" content="#D42A20">
-<link rel="icon" href="/static/brand/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16.png">
-<link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png">
-<link rel="manifest" href="/static/brand/site.webmanifest">
+<link rel="canonical" href="https://vifasttts.hoctuthien.com/">
+<link rel="icon" href="brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<link rel="manifest" href="brand/site.webmanifest">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ViFastTts">
-<meta property="og:title" content="ViFastTts · Ngọc Huyền (Small 6,1M)">
-<meta property="og:description" content="TTS tiếng Việt nhỏ, nhanh, chạy CPU. Nghe thử model Ngọc Huyền 6,1M, 24 kHz.">
-<meta property="og:image" content="https://vifasttts.hoctuthien.com/static/brand/og-image.png">
+<meta property="og:title" content="ViFastTts — Giọng đọc tiếng Việt nhỏ, nhanh, chạy CPU">
+<meta property="og:description" content="Model Ngọc Huyền small 6,1M, 24 kHz, ONNX CPU. Nghe thử và tải app cho Windows, macOS, Linux, Android, iOS, Chrome/Edge.">
+<meta property="og:image" content="https://vifasttts.hoctuthien.com/brand/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ViFastTts · Giọng đọc tiếng Việt">
 <meta property="og:url" content="https://vifasttts.hoctuthien.com/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://vifasttts.hoctuthien.com/static/brand/og-image.png">
+<meta name="twitter:title" content="ViFastTts — Giọng đọc tiếng Việt nhỏ, nhanh, chạy CPU">
+<meta name="twitter:description" content="Nghe thử TTS tiếng Việt 6,1M tham số, 24 kHz, ONNX CPU. Tải app và xem hướng dẫn cài từng nền tảng.">
+<meta name="twitter:image" content="https://vifasttts.hoctuthien.com/brand/og-image.png">
 <style>
-  :root { --ink:#1F2430; --muted:#6B7280; --accent:#C6281E; --accent-dark:#991B1B;
-          --gold:#B77900; --line:#E8DDD0; --bg:#FBF6EE; --cream:#FFF8EC; }
+  :root {
+    --bg:#FBF6EE; --surface:#fff; --cream:#FFF8EC; --soft:#FBF0EC;
+    --ink:#1F2430; --body:#4B5563; --muted:#6B7280;
+    --accent:#D42A22; --accent-dark:#B3140F;
+    --gold:#F5A300; --gold-soft:#FFE14D; --gold-line:#FFC93C;
+    --border:#E8DDD0; --success:#15803D; --error:#B91C1C;
+    --radius:16px; --shadow:0 24px 70px -30px rgba(90,45,25,.35);
+    --font:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,"Liberation Mono",monospace;
+  }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:Arial,"Helvetica Neue",Helvetica,sans-serif; color:var(--ink);
-         background:linear-gradient(180deg,var(--cream) 0%,var(--bg) 48%); line-height:1.45; }
-  main { max-width:1320px; margin:0 auto; padding:22px 18px 46px; }
-  .brandbar { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:10px; }
-  .brand { display:block; line-height:0; }
-  .brand-lockup { display:block; width:clamp(250px, 30vw, 330px); height:auto; }
-  .links { display:flex; flex-wrap:wrap; gap:13px; justify-content:flex-end; margin-top:3px; }
-  .src { color:var(--accent); font-weight:700; font-size:.86rem; text-decoration:none; }
-  .src:hover { text-decoration:underline; }
-  .hero { margin:0 0 16px; }
-  .hero-title { display:flex; align-items:center; flex-wrap:wrap; gap:10px 12px; }
-  h1 { font-size:clamp(1.55rem,3vw,2.15rem); letter-spacing:-.03em; margin:0; }
-  .badge { display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-           color:#8A2B1A; background:#FFF0EB; border:1px solid #F1C3B8; padding:4px 8px; border-radius:999px; }
-  .tier { display:inline-flex; gap:6px; align-items:center; padding:4px 9px; border:1px solid #F0D49A;
-          background:#FFF4D6; color:#7A4B00; border-radius:999px; font-size:.7rem; font-weight:800;
-          letter-spacing:.06em; }
-  .sub { color:var(--muted); margin:7px 0 0; max-width:760px; font-size:.9rem; }
-  .notice { color:#8A5A2B; background:#FFF5E7; border:1px solid #F0D9B8; border-radius:8px;
-            padding:6px 9px; font-size:.8rem; margin:8px 0 0; }
-  .workspace { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.78fr) minmax(300px,.86fr);
-               grid-template-areas:"main adv feedback"; gap:14px; align-items:start; }
-  .main-card { grid-area:main; } .advanced { grid-area:adv; } .feedback { grid-area:feedback; }
-  .card, .panel { background:#fff; border:1px solid var(--line); border-radius:14px;
-                  box-shadow:0 10px 28px rgba(90,45,25,.06); }
-  .card { padding:16px; }
-  .panel { padding:14px; }
-  .card-head, .panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
-  h2 { font-size:.98rem; margin:0; letter-spacing:-.01em; }
-  .pill { color:#9B2C20; background:#FBF0EC; border:1px solid #F0D2CA; border-radius:999px;
-          padding:2px 7px; font-size:.68rem; font-weight:700; white-space:nowrap; }
-  label { font-weight:650; font-size:.9rem; }
-  textarea { width:100%; min-height:98px; resize:vertical; margin-top:6px; padding:11px 12px; font:inherit;
-             font-size:.98rem; border:1px solid #E3D2C2; border-radius:10px; outline:none; background:#FFFDF9; }
-  textarea:focus, select:focus, input[type=text]:focus { border-color:var(--accent); outline:none;
-             box-shadow:0 0 0 3px rgba(198,40,30,.13); }
-  #overrides { min-height:96px; font-family:Consolas,"Liberation Mono",monospace; font-size:.82rem; }
-  #feedbackMessage { min-height:62px; }
-  .meta { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:.76rem; margin-top:5px; }
-  .speed-row { margin:10px 0 0; }
-  .speed-row label { font-weight:500; color:var(--muted); font-size:.86rem; }
-  input[type=range] { accent-color:var(--accent); vertical-align:middle; width:180px; max-width:55%; }
-  input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; vertical-align:middle; margin-right:4px; }
-  .row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center; }
-  button { border:0; border-radius:8px; padding:8px 12px; font:inherit; font-weight:700; cursor:pointer; }
-  .primary { background:var(--accent); color:#fff; padding:10px 16px; font-size:.94rem; }
-  .primary:disabled { opacity:.55; cursor:wait; }
-  .ghost { background:#FBF0EC; color:#9B2C20; border:1px solid #F0D2CA; font-weight:600; font-size:.83rem; }
-  .examples { margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--line); }
-  .examples p { margin:0 0 6px; color:var(--muted); font-size:.78rem; }
-  .examples button { background:#FFFCF7; color:#3F3A36; border:1px solid var(--line); font-weight:500;
-                     font-size:.8rem; padding:5px 8px; }
-  .samples audio { width:100%; height:30px; margin-top:4px; }
-  .metrics { color:var(--muted); font-size:.78rem; margin-top:7px; }
-  .history { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); }
-  .history h3 { font-size:.86rem; margin:0; }
-  .history-list { display:flex; flex-direction:column; gap:6px; margin-top:7px; }
-  .history-item { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%;
-                  padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:#FFFCF7;
-                  color:var(--ink); text-align:left; font-weight:500; font-size:.8rem; }
-  .history-item:hover { border-color:#E3B7A8; background:#FFF7F0; }
-  .history-item .hmeta { color:var(--muted); font-size:.72rem; font-weight:400; }
-  .history-item .htext { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  #status { min-height:1.2em; color:var(--muted); font-size:.83rem; margin-top:8px; }
-  #status.err { color:#B42318; }
-  #player { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
-  #player audio { width:100%; }
-  .fine { color:var(--muted); font-size:.76rem; margin:12px 0 0; }
-  .help { margin:10px 0 0; border:1px solid var(--line); border-radius:10px; background:#FFFCF7; }
-  .help summary { cursor:pointer; padding:8px 10px; font-weight:700; font-size:.82rem; color:#6B3A2A; }
-  .help-body { padding:0 10px 10px; color:var(--muted); font-size:.78rem; }
-  .help-body p { margin:5px 0; }
-  .help-body b { color:var(--ink); }
-  .help-body code { white-space:nowrap; }
-  .fine a { color:var(--accent); }
-  .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
-  .download-strip { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:6px; max-width:840px; }
-  .download-strip .download-label { color:var(--muted); font-size:.82rem; font-weight:700; margin-right:2px; }
-  .download-strip a { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:9px 14px;
-                      border:1px solid #E9C3B7; border-radius:10px; background:#FFF8F3; color:#8F241B;
-                      font-size:.85rem; font-weight:750; line-height:1.15; text-align:center; text-decoration:none; }
-  .download-strip a:hover { border-color:var(--accent); background:#FFF0E9; color:var(--accent-dark); }
-  .download-strip .download-version { color:var(--muted); font-size:.74rem; margin-left:3px; }
-  code { background:#FBF0EC; padding:1px 4px; border-radius:4px; }
-  .option-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:2px 0 8px;
-                color:var(--muted); font-size:.82rem; }
-  .option-row label { color:var(--ink); font-weight:650; font-size:.84rem; }
-  .checkline { display:inline-flex; align-items:center; gap:3px; }
-  .label-row { display:flex; align-items:center; gap:5px; margin:2px 0 0; }
-  .info { position:relative; display:inline-flex; align-items:center; justify-content:center;
-          width:16px; height:16px; border-radius:50%; border:1px solid #C9B8A8; color:#8A6A4F;
-          font:700 11px/1 Arial; cursor:help; flex:0 0 auto; }
-  .info .tip { display:none; position:absolute; z-index:30; bottom:calc(100% + 7px); left:50%;
-               transform:translateX(-50%); width:min(270px,72vw); padding:8px 9px; border-radius:8px;
-               background:#2C2320; color:#FFF8EC; font:400 12px/1.4 Arial; text-align:left;
-               box-shadow:0 8px 22px rgba(0,0,0,.18); }
-  .info:hover .tip, .info:focus .tip { display:block; }
-  .panel p { color:var(--muted); font-size:.78rem; margin:5px 0 7px; }
-  .rule-examples { margin:8px 0 2px; }
-  .rule-examples p { margin:0 0 5px; color:var(--muted); font-size:.74rem; }
-  .rule-examples button { background:#FFFCF7; color:#6B3A2A; border:1px solid var(--line);
-    font-size:.72rem; font-weight:600; padding:3px 6px; }
-  .rule-examples button:hover { border-color:#E3B7A8; background:#FFF7F0; }
-  .share { display:flex; gap:5px; align-items:flex-start; margin:6px 0 2px; color:var(--muted); font-size:.76rem; }
-  .share input { margin-top:2px; }
-  #builtin { max-height:150px; overflow:auto; white-space:pre-wrap; background:#FFFCF7;
-             border:1px solid var(--line); border-radius:8px; padding:8px; font-size:.74rem; }
-  #overrideStatus, #feedbackStatus { color:var(--muted); font-size:.76rem; }
-  #overrideStatus.err, #feedbackStatus.err { color:#B42318; }
-  .feedback-grid { display:grid; grid-template-columns:1fr; gap:7px; margin:6px 0 5px; }
-  .feedback-grid label { display:flex; flex-direction:column; gap:3px; color:var(--muted); font-size:.76rem; font-weight:600; }
-  select, .feedback input[type=text] { width:100%; padding:7px 8px; border:1px solid #E3D2C2; border-radius:8px;
-             background:#FFFDF9; color:var(--ink); font:inherit; font-size:.84rem; }
-  .feedback .hp { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
-  button:focus-visible, a:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible {
-    outline:3px solid rgba(198,40,30,.25); outline-offset:2px; }
-  @media (max-width:1120px) {
-    .workspace { grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr);
-                 grid-template-areas:"main adv" "feedback feedback"; }
-    .feedback-grid { grid-template-columns:1fr 1fr; }
+  [hidden] { display:none !important; }
+  html { scroll-behavior:smooth; scroll-padding-top:88px; }
+  body {
+    margin:0; color:var(--ink); font-family:var(--font); font-size:16px; line-height:1.55;
+    background:
+      radial-gradient(900px 520px at 88% -8%, rgba(255,225,77,.22), transparent 62%),
+      radial-gradient(700px 480px at -6% 18%, rgba(212,42,34,.09), transparent 60%),
+      var(--bg);
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  body::before {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background-image:
+      linear-gradient(rgba(31,36,48,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31,36,48,.035) 1px, transparent 1px);
+    background-size:44px 44px;
+    mask-image:linear-gradient(180deg,#000,transparent 72%);
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 72%);
+  }
+  a { color:inherit; }
+  img { max-width:100%; }
+  code, pre { font-family:var(--mono); font-size:.88em; }
+  code { background:rgba(212,42,34,.07); border:1px solid rgba(212,42,34,.12); border-radius:5px; padding:.08em .34em; overflow-wrap:anywhere; }
+  .wrap { width:min(1180px, calc(100% - 48px)); margin-inline:auto; }
+  .topline { height:5px; background:linear-gradient(90deg,var(--accent) 0%,var(--accent) 62%,var(--gold) 62%,var(--gold) 100%); }
+  .skip { position:absolute; left:-9999px; top:0; background:var(--ink); color:#fff; padding:10px 14px; z-index:100; }
+  .skip:focus { left:12px; top:10px; }
+  .svg-sprite { position:absolute; width:0; height:0; overflow:hidden; }
+  .icon { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8;
+          stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto; }
+
+  /* ------------------------------------------------------------ header */
+  .site-header { position:sticky; top:0; z-index:40; background:rgba(255,248,236,.84);
+                 border-bottom:1px solid rgba(232,221,208,.7); backdrop-filter:blur(14px);
+                 -webkit-backdrop-filter:blur(14px); }
+  .header-inner { display:flex; align-items:center; gap:26px; min-height:70px; }
+  .brand { display:inline-flex; align-items:center; gap:10px; text-decoration:none; flex:0 0 auto; }
+  .brand img { width:40px; height:40px; border-radius:10px; box-shadow:0 8px 18px -8px rgba(179,20,15,.55); }
+  .brand-word { font-size:24px; font-weight:800; letter-spacing:-1.1px; line-height:1; }
+  .brand-word em { font-style:italic; color:var(--ink); }
+  .brand-word .red { color:var(--accent); }
+  .nav { display:flex; gap:24px; margin-left:auto; font-size:14px; font-weight:600; }
+  .nav a { text-decoration:none; color:#4B5563; padding:6px 0; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; }
+  .nav a:hover { color:var(--accent); border-color:var(--accent); }
+  .ghost-btn { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border:1px solid var(--border);
+               border-radius:999px; background:var(--surface); text-decoration:none; font-size:13px; font-weight:700;
+               transition:border-color .15s,transform .15s,box-shadow .15s; }
+  .ghost-btn:hover { border-color:var(--accent); transform:translateY(-1px); box-shadow:0 8px 18px -12px rgba(31,36,48,.5); }
+  .header-live { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border:1px solid #CFE8D8;
+                 border-radius:999px; background:#F2FBF5; color:#166534; font-size:10.5px; font-weight:800; white-space:nowrap; }
+  .header-live-dot { width:6px; height:6px; border-radius:50%; background:#22C55E; box-shadow:0 0 0 3px rgba(34,197,94,.12); }
+  .header-live.off { border-color:#E5D6C6; background:#FBF3E8; color:#9B2C20; }
+  .header-live.off .header-live-dot { background:#C08457; box-shadow:0 0 0 3px rgba(192,132,87,.12); }
+
+  /* ------------------------------------------------------------ hero */
+  .hero { display:grid; grid-template-columns:1.02fr .98fr; gap:clamp(32px,5vw,64px);
+          align-items:center; padding:64px 0 48px; }
+  .eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:800;
+             letter-spacing:.14em; text-transform:uppercase; color:var(--accent-dark); }
+  .eyebrow .spark { color:var(--gold); font-size:15px; line-height:1; }
+  .eyebrow.light { color:var(--gold-soft); }
+  h1 { font-size:clamp(2.8rem,5.3vw,4.6rem); line-height:1.02; letter-spacing:-.045em;
+       margin:18px 0 0; font-weight:800; }
+  .mark { color:var(--accent); position:relative; display:inline-block; }
+  .mark::after { content:""; position:absolute; left:-.02em; right:-.02em; bottom:.02em; height:.17em;
+                 background:var(--gold-soft); border-radius:5px; z-index:-1; transform:rotate(-.5deg); }
+  .lede { font-size:clamp(1rem,1.3vw,1.1rem); color:var(--body); margin:22px 0 0; max-width:570px; }
+  .hero-actions { display:flex; align-items:center; flex-wrap:wrap; gap:14px 18px; margin-top:28px; }
+  .primary-btn { display:inline-flex; align-items:center; justify-content:center; gap:9px;
+                 padding:13px 22px; border-radius:12px; background:var(--accent); color:#fff;
+                 font-size:.96rem; font-weight:800; text-decoration:none; border:1px solid var(--accent);
+                 box-shadow:0 14px 30px -14px rgba(212,42,34,.7); transition:transform .15s,background .15s,box-shadow .15s; }
+  .primary-btn:hover { background:var(--accent-dark); border-color:var(--accent-dark); transform:translateY(-1px); }
+  .text-btn { display:inline-flex; align-items:center; gap:7px; color:var(--accent-dark); font-size:.94rem;
+              font-weight:700; text-decoration:none; border-bottom:1px solid rgba(212,42,34,.35); padding-bottom:2px; }
+  .text-btn:hover { border-color:var(--accent); }
+  .hero-facts { display:flex; flex-wrap:wrap; gap:16px 32px; list-style:none; margin:36px 0 0; padding:20px 0 0;
+                border-top:1px solid var(--border); }
+  .hero-facts li { font-size:.78rem; color:var(--muted); }
+  .hero-facts strong { display:block; font-size:1.28rem; line-height:1.15; color:var(--ink); letter-spacing:-.03em; }
+
+  /* ------------------------------------------------------------ quick demo */
+  .quick-demo { position:relative; background:var(--surface); border:1px solid var(--border);
+                border-radius:22px; box-shadow:var(--shadow); overflow:hidden; }
+  .quick-demo::before { content:""; position:absolute; inset:0 0 auto; height:5px;
+                        background:linear-gradient(90deg,var(--accent),var(--gold)); }
+  .qd-head { display:flex; align-items:center; gap:8px; padding:18px 20px 0; }
+  .live-dot { width:8px; height:8px; border-radius:50%; background:#22C55E; box-shadow:0 0 0 4px rgba(34,197,94,.13); }
+  .qd-title { font-size:.96rem; font-weight:800; }
+  .qd-badge { margin-left:auto; font-size:.64rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+              color:#8A2B1A; background:#FFF0EB; border:1px solid #F1C3B8; border-radius:999px; padding:4px 8px; }
+  .qd-body { padding:14px 20px 20px; }
+  .qd-label { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;
+              color:var(--muted); font-size:.78rem; font-weight:650; }
+  .qd-body textarea { width:100%; min-height:104px; resize:vertical; padding:12px 13px; font:inherit;
+                      font-size:.97rem; line-height:1.5; color:var(--ink); border:1px solid #E3D2C2;
+                      border-radius:12px; background:#FFFDF9; outline:none; }
+  .qd-body textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(212,42,34,.13); }
+  .qd-meta { display:flex; justify-content:space-between; gap:12px; margin-top:6px; color:var(--muted); font-size:.74rem; }
+  .qd-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .qd-actions .primary-btn { padding:10px 16px; font-size:.9rem; }
+  .ghost-link { display:inline-flex; align-items:center; gap:6px; padding:9px 13px; border:1px solid var(--border);
+                border-radius:10px; background:#FFFCF7; color:#6B3A2A; font-size:.82rem; font-weight:700;
+                text-decoration:none; cursor:pointer; font-family:inherit; }
+  .ghost-link:hover { border-color:#E3B7A8; background:#FFF7F0; }
+  .qd-status { min-height:1.25em; margin-top:10px; color:var(--muted); font-size:.82rem; }
+  .qd-status.err { color:var(--error); }
+  .qd-player { display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .qd-player.on { display:block; }
+  .qd-player audio { width:100%; height:38px; }
+  .qd-player-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:8px; }
+  .qd-player-foot a { color:var(--accent-dark); font-size:.8rem; font-weight:700; text-decoration:none; }
+  .qd-player-foot span { color:var(--muted); font-size:.74rem; }
+  .quick-samples { margin-top:14px; border-top:1px dashed var(--border); padding-top:10px; }
+  .quick-samples summary { cursor:pointer; color:#6B3A2A; font-size:.8rem; font-weight:700; }
+  .sample-row { display:grid; gap:6px; margin-top:8px; }
+  .sample-row audio { width:100%; height:30px; }
+  .chip-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:11px; }
+  .chip-row button { border:1px solid var(--border); border-radius:999px; background:#FFFCF7; color:#5F4A3A;
+                     padding:5px 10px; font:inherit; font-size:.74rem; font-weight:600; cursor:pointer; }
+  .chip-row button:hover { border-color:#E3B7A8; background:#FFF7F0; color:var(--accent-dark); }
+  .qd-fine { margin:10px 0 0; color:var(--muted); font-size:.7rem; }
+
+  /* ------------------------------------------------------------ sections */
+  .section { padding:72px 0; }
+  .section.tight { padding-top:0; }
+  .section-head { display:grid; grid-template-columns:1.08fr .92fr; gap:40px; align-items:end; margin-bottom:40px; }
+  .section-head h2 { font-size:clamp(1.95rem,3.3vw,2.9rem); line-height:1.08; letter-spacing:-.035em; margin:10px 0 0; }
+  .section-head p { margin:0; color:var(--muted); font-size:.98rem; max-width:520px; justify-self:end; }
+  .section-head.compact { margin-bottom:28px; }
+  .accent { color:var(--accent); }
+
+  /* ------------------------------------------------------------ features */
+  .feature-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .feature { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+             padding:24px; transition:transform .18s,border-color .18s,box-shadow .18s; }
+  .feature:hover { transform:translateY(-3px); border-color:#E3B7A8; box-shadow:0 18px 36px -26px rgba(90,45,25,.45); }
+  .f-icon { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px;
+            border-radius:13px; background:var(--soft); color:var(--accent); border:1px solid #F1D8D0; }
+  .f-icon .icon { width:22px; height:22px; }
+  .feature h3 { margin:16px 0 8px; font-size:1.02rem; letter-spacing:-.02em; }
+  .feature p { margin:0; color:var(--muted); font-size:.9rem; }
+  .feature p strong { color:var(--ink); }
+
+  /* ------------------------------------------------------------ architecture */
+  .arch { position:relative; display:grid; grid-template-columns:1fr .95fr; gap:48px; align-items:center;
+          overflow:hidden; border-radius:24px; padding:clamp(28px,4vw,50px);
+          background:#221E1B; color:#FFF8EC; box-shadow:var(--shadow); }
+  .arch::after { content:""; position:absolute; right:-90px; top:-120px; width:360px; height:360px;
+                 background:radial-gradient(circle,rgba(255,225,77,.22),transparent 68%); pointer-events:none; }
+  .arch h2 { font-size:clamp(1.8rem,3vw,2.6rem); line-height:1.08; letter-spacing:-.035em; margin:12px 0 0; }
+  .arch p { color:#C9BDB2; margin:16px 0 0; font-size:.96rem; }
+  .arch .gold { color:var(--gold-soft); }
+  .arch-list { list-style:none; padding:0; margin:22px 0 0; display:grid; gap:9px; color:#D9CDC2; font-size:.86rem; }
+  .arch-list li { position:relative; padding-left:20px; }
+  .arch-list li::before { content:""; position:absolute; left:2px; top:.55em; width:7px; height:7px;
+                          border-radius:2px; background:var(--gold); transform:rotate(45deg); }
+  .arch-list code { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); color:#F4E7D9; }
+  .arch-code { position:relative; z-index:1; background:#171412; border:1px solid #3A322C; border-radius:16px;
+               overflow:hidden; box-shadow:0 24px 50px -28px #000; }
+  .code-head { display:flex; align-items:center; gap:6px; padding:11px 14px; border-bottom:1px solid #2E2823; background:#1C1815; }
+  .code-head span { width:9px; height:9px; border-radius:50%; background:#4A4038; }
+  .code-head span:nth-child(1) { background:#E05A4E; }
+  .code-head span:nth-child(2) { background:#E9B949; }
+  .code-head span:nth-child(3) { background:#5AA46E; }
+  .code-head em { margin-left:8px; color:#8E8176; font:600 .7rem var(--mono); font-style:normal; }
+  .arch-code pre, .code-panel pre { margin:0; padding:20px; overflow:auto; color:#F4E7D9; font-size:.8rem; line-height:1.75; }
+  .arch-code code, .code-panel code { background:none; border:0; padding:0; font-size:inherit; color:inherit; }
+  .c-muted { color:#8E8176; }
+  .c-key { color:#FFC93C; }
+  .c-str { color:#9FD8A9; }
+  .c-num { color:#8FC7FF; }
+  .c-bool { color:#FF9C8A; }
+
+  /* ------------------------------------------------------------ downloads */
+  .release-bar { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; padding:11px 15px;
+                 border:1px solid #F0D9B8; border-radius:12px; background:var(--cream); color:#7A4B00;
+                 font-size:.8rem; margin-bottom:16px; }
+  .release-bar strong { font-size:.84rem; }
+  .release-bar .dot { width:4px; height:4px; border-radius:50%; background:#C9A46A; }
+  .release-bar a { color:#8A2B1A; font-weight:700; text-decoration:none; border-bottom:1px solid rgba(138,43,26,.25); }
+  .release-bar a:hover { border-color:var(--accent); }
+  .platform-tabs { display:flex; gap:6px; overflow-x:auto; padding:6px; margin-bottom:16px;
+                   background:var(--surface); border:1px solid var(--border); border-radius:14px;
+                   scrollbar-width:thin; }
+  .platform-tab { display:inline-flex; align-items:center; gap:7px; flex:0 0 auto; padding:10px 13px;
+                  border:0; border-radius:9px; background:transparent; color:#5A4A3D; cursor:pointer;
+                  font:inherit; font-size:.84rem; font-weight:700; white-space:nowrap; transition:background .15s,color .15s; }
+  .platform-tab .icon { width:17px; height:17px; }
+  .platform-tab:hover { background:#FFF7F0; color:var(--accent-dark); }
+  .platform-tab[aria-selected="true"] { background:var(--accent); color:#fff; box-shadow:0 8px 18px -12px rgba(212,42,34,.8); }
+  .platform-panel { background:var(--surface); border:1px solid var(--border); border-radius:20px;
+                    padding:clamp(20px,3vw,32px); box-shadow:0 18px 44px -34px rgba(90,45,25,.45); }
+  .platform-panel[hidden] { display:none; }
+  .platform-top { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px 24px;
+                  padding-bottom:20px; margin-bottom:26px; border-bottom:1px solid var(--border); }
+  .platform-title { display:flex; align-items:flex-start; gap:13px; min-width:260px; }
+  .platform-title .p-icon { display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px;
+                            border-radius:14px; background:var(--soft); color:var(--accent); border:1px solid #F1D8D0; flex:0 0 auto; }
+  .platform-title .p-icon .icon { width:25px; height:25px; }
+  .platform-title h3 { margin:0; font-size:1.18rem; letter-spacing:-.02em; }
+  .platform-title p { margin:5px 0 0; color:var(--muted); font-size:.86rem; max-width:520px; }
+  .dl-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .dl-btn { display:inline-flex; align-items:center; gap:9px; padding:10px 14px; border-radius:10px;
+            border:1px solid #E9C3B7; background:#FFF8F3; color:#8F241B; text-decoration:none;
+            font-size:.83rem; font-weight:750; line-height:1.2; transition:background .15s,border-color .15s,transform .15s; }
+  .dl-btn span { color:#A56B5D; font-size:.7rem; font-weight:600; }
+  .dl-btn:hover { background:#FFF0E9; border-color:var(--accent); transform:translateY(-1px); }
+  .dl-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 10px 22px -14px rgba(212,42,34,.8); }
+  .dl-btn.primary span { color:rgba(255,255,255,.78); }
+  .dl-btn.primary:hover { background:var(--accent-dark); border-color:var(--accent-dark); }
+  .platform-body { display:grid; grid-template-columns:1.25fr .75fr; gap:clamp(24px,4vw,44px); }
+  .platform-body, .platform-body > *, .platform-top > * { min-width:0; }
+  .platform-body h4 { margin:0 0 14px; font-size:.82rem; letter-spacing:.1em; text-transform:uppercase; color:#7A4B00; }
+  .steps { list-style:none; counter-reset:step; padding:0; margin:0; display:grid; gap:16px;
+           grid-template-columns:minmax(0,1fr); min-width:0; }
+  .steps li { counter-increment:step; position:relative; padding-left:42px; min-width:0; }
+  .steps li::before { content:counter(step); position:absolute; left:0; top:0; width:27px; height:27px;
+                      display:flex; align-items:center; justify-content:center; border-radius:50%;
+                      background:var(--soft); border:1px solid #F0D2CA; color:var(--accent);
+                      font-size:.76rem; font-weight:800; }
+  .steps strong { display:block; font-size:.92rem; }
+  .steps span { display:block; margin-top:3px; color:var(--muted); font-size:.85rem; }
+  .steps code { white-space:normal; overflow-wrap:anywhere; }
+  .spec { background:#FFFCF7; border:1px solid var(--border); border-radius:14px; padding:18px; align-self:start; }
+  .spec ul { margin:0; padding:0; list-style:none; display:grid; gap:9px; }
+  .spec li { position:relative; padding-left:20px; color:var(--body); font-size:.84rem; }
+  .spec li::before { content:"✓"; position:absolute; left:0; top:0; color:var(--success); font-weight:800; }
+  .note { margin-top:14px; padding:11px 12px; border-radius:10px; background:var(--cream);
+          border:1px solid #F0D9B8; color:#7A4B00; font-size:.79rem; line-height:1.5; }
+  .note b { color:#8A2B1A; }
+  .trouble { margin-top:24px; border:1px solid var(--border); border-radius:12px; background:#FFFCF7; }
+  .trouble summary { cursor:pointer; padding:11px 14px; font-size:.84rem; font-weight:750; color:#6B3A2A; }
+  .trouble-body { padding:0 14px 14px; color:var(--muted); font-size:.83rem; }
+  .trouble-body p { margin:5px 0; }
+  .trouble-body b { color:var(--ink); }
+  .cmd { margin:8px 0 0; padding:11px 13px; border-radius:9px; background:#221E1B; color:#F4E7D9;
+         font:400 .78rem/1.65 var(--mono); overflow:auto; white-space:pre; max-width:100%; }
+  .cmd code { background:none; border:0; padding:0; color:inherit; font-size:inherit; white-space:pre; }
+
+  /* ------------------------------------------------------------ models */
+  .model-panel { display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(28px,4vw,52px); align-items:center;
+                 background:var(--surface); border:1px solid var(--border); border-radius:24px;
+                 padding:clamp(26px,4vw,46px); box-shadow:0 24px 60px -44px rgba(90,45,25,.5); }
+  .model-panel h2 { font-size:clamp(1.8rem,3vw,2.5rem); line-height:1.1; letter-spacing:-.035em; margin:10px 0 0; }
+  .model-panel p { color:var(--muted); margin:14px 0 0; font-size:.95rem; }
+  .bundle-grid { display:grid; gap:10px; }
+  .bundle { border:1px solid var(--border); border-radius:13px; padding:15px 16px; background:#FFFCF7; }
+  .bundle-head { display:flex; align-items:center; gap:9px; }
+  .bundle-head strong { font-size:.9rem; }
+  .bundle-head span { margin-left:auto; color:var(--muted); font-size:.72rem; }
+  .bundle p { margin:6px 0 0; font-size:.8rem; }
+  .model-foot { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .model-foot .dl-btn { font-size:.78rem; padding:8px 11px; }
+
+  /* ------------------------------------------------------------ api */
+  .api-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+  .api-grid > *, .python-quick > * { min-width:0; }
+  .endpoint-list { display:grid; gap:8px; margin:0; padding:0; list-style:none; min-width:0; }
+  .endpoint { display:grid; grid-template-columns:56px minmax(0,1fr); gap:12px; align-items:start; padding:12px 14px;
+              border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .endpoint > div { min-width:0; }
+  .method { display:inline-flex; align-items:center; justify-content:center; padding:3px 6px; border-radius:6px;
+            background:#EAF6EE; color:#166534; font:800 .62rem var(--mono); letter-spacing:.04em; }
+  .method.post { background:#FFF0EB; color:#9B2C20; }
+  .endpoint code { background:none; border:0; padding:0; font-size:.8rem; color:var(--ink); }
+  .endpoint p { margin:3px 0 0; color:var(--muted); font-size:.79rem; }
+  .code-panel { background:#221E1B; border-radius:14px; overflow:hidden; box-shadow:var(--shadow); }
+  .code-panel + .code-panel { margin-top:14px; }
+  .api-note { margin:14px 0 0; padding:11px 13px; border-radius:10px; border:1px solid #F0D9B8;
+              background:var(--cream); color:#7A4B00; font-size:.8rem; }
+  .python-quick { margin-top:22px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .quick-card { border:1px solid var(--border); border-radius:14px; background:var(--surface); padding:18px; }
+  .quick-card h4 { margin:0 0 8px; font-size:.9rem; }
+  .quick-card p { margin:0 0 8px; color:var(--muted); font-size:.8rem; }
+
+  /* ------------------------------------------------------------ related */
+  .related-panel { position:relative; display:grid; grid-template-columns:1.15fr .85fr; gap:32px; align-items:center;
+                   overflow:hidden; border:1px solid var(--border); border-radius:24px;
+                   padding:clamp(26px,4vw,44px); background:linear-gradient(120deg,#fff 0%,#fff8ec 100%);
+                   box-shadow:0 24px 60px -44px rgba(90,45,25,.5); }
+  .related-panel::before { content:""; position:absolute; right:-80px; top:-90px; width:280px; height:280px;
+                           background:radial-gradient(circle,rgba(255,193,60,.3),transparent 68%); pointer-events:none; }
+  .related-panel h2 { font-size:clamp(1.7rem,2.8vw,2.3rem); line-height:1.1; letter-spacing:-.035em; margin:10px 0 0; }
+  .related-panel p { color:var(--muted); margin:14px 0 0; font-size:.95rem; max-width:620px; }
+  .related-actions { position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-start;
+                     gap:14px; justify-self:end; }
+
+  /* ------------------------------------------------------------ faq */
+  .faq-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; align-items:start; }
+  .faq { border:1px solid var(--border); border-radius:12px; background:var(--surface); }
+  .faq summary { cursor:pointer; padding:13px 15px; font-size:.88rem; font-weight:750; color:var(--ink);
+                 list-style:none; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .faq summary::-webkit-details-marker { display:none; }
+  .faq summary::after { content:"+"; color:var(--accent); font-size:1.1rem; line-height:1; font-weight:600; }
+  .faq[open] summary::after { content:"−"; }
+  .faq p { margin:0; padding:0 15px 14px; color:var(--muted); font-size:.84rem; }
+  .faq a { color:var(--accent-dark); }
+
+  /* ------------------------------------------------------------ footer */
+  .site-footer { border-top:1px solid var(--border); background:rgba(255,248,236,.6); padding:36px 0 46px; }
+  .footer-inner { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+  .footer-brand { display:flex; align-items:center; gap:10px; }
+  .footer-brand img { width:34px; height:34px; border-radius:9px; }
+  .footer-brand strong { font-size:.92rem; color:var(--ink); }
+  .footer-brand span { display:block; color:var(--muted); font-size:.75rem; font-weight:400; }
+  .footer-inner p { margin:0; color:var(--muted); font-size:.76rem; max-width:440px; }
+  .footer-links { display:flex; flex-wrap:wrap; gap:8px 18px; font-size:.78rem; font-weight:600; }
+  .footer-links a { color:#6B3A2A; text-decoration:none; }
+  .footer-links a:hover { color:var(--accent); text-decoration:underline; }
+  .footer-links button { border:0; background:none; padding:0; color:#6B3A2A; font:inherit; font-weight:600; cursor:pointer; }
+  .footer-links button:hover { color:var(--accent); text-decoration:underline; }
+
+  :focus-visible { outline:3px solid rgba(212,42,34,.28); outline-offset:2px; }
+
+  /* ------------------------------------------------------------ responsive */
+  @media (max-width:1060px) {
+    .hero { grid-template-columns:1fr; gap:36px; padding-top:48px; padding-bottom:64px; }
+    .hero-copy { max-width:720px; }
+    .quick-demo { max-width:720px; }
+    .section-head { grid-template-columns:1fr; gap:14px; }
+    .section-head p { justify-self:start; }
+    .feature-grid { grid-template-columns:repeat(2,1fr); }
+    .arch { grid-template-columns:1fr; gap:30px; }
+    .platform-body { grid-template-columns:1fr; }
+    .spec { max-width:560px; }
+    .model-panel { grid-template-columns:1fr; }
+    .api-grid, .python-quick { grid-template-columns:1fr; }
+    .related-panel { grid-template-columns:1fr; }
+    .related-actions { justify-self:start; }
   }
   @media (max-width:900px) {
-    .brandbar { flex-wrap:wrap; gap:8px; }
-    .header-right { width:100%; align-items:flex-start; }
-    .links { width:100%; justify-content:flex-start; }
-    .download-strip { justify-content:flex-start; max-width:none; }
+    html { scroll-padding-top:120px; }
+    .header-inner { flex-wrap:wrap; gap:8px 18px; padding:10px 0; }
+    .nav { order:3; width:100%; gap:18px; overflow-x:auto; padding-bottom:4px; margin-left:0; }
+    .nav a { padding:3px 0; white-space:nowrap; }
+    .ghost-btn { margin-left:auto; }
+    .header-live { display:none; }
   }
   @media (max-width:760px) {
-    .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv" "feedback"; }
+    .section { padding:64px 0; }
+    .feature-grid, .faq-grid { grid-template-columns:1fr; }
+    .hero-facts { gap:14px 24px; }
+    .faq summary { font-size:.85rem; }
   }
   @media (max-width:600px) {
-    .info .tip { position:fixed; top:24vh; left:12px; right:12px; bottom:auto;
-                 transform:none; width:auto; max-width:none; max-height:52vh; overflow:auto; }
-    main { padding:16px 12px 34px; }
-    .brandbar { flex-wrap:wrap; gap:8px; }
-    .brand-lockup { width:min(300px,84vw); }
-    .header-right { width:100%; align-items:flex-start; }
-    .links { width:100%; justify-content:flex-start; }
-    .download-strip { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); justify-content:stretch;
-                      width:100%; max-width:none; align-items:stretch; }
-    .download-strip .download-label, .download-strip .download-version { grid-column:1/-1; }
-    .download-strip .download-label { margin:2px 0 0; }
-    .download-strip a { min-height:46px; padding:10px 8px; font-size:.84rem; }
-    .hero { margin-bottom:12px; }
-    .card, .panel { padding:12px; }
-    .speed-row input[type=range] { width:160px; }
+    .wrap { width:calc(100% - 28px); }
+    body { font-size:15px; }
+    html { scroll-padding-top:138px; }
+    h1 { font-size:clamp(2.25rem,10vw,3.1rem); }
+    .brand-word { font-size:21px; }
+    .brand img { width:36px; height:36px; }
+    .ghost-btn { padding:7px 11px; font-size:12px; }
+    .hero { padding-top:36px; }
+    .hero-facts { display:grid; grid-template-columns:1fr 1fr; gap:14px 18px; }
+    .qd-head, .qd-body { padding-left:15px; padding-right:15px; }
+    .qd-badge { font-size:.58rem; }
+    .arch { padding:24px 18px; border-radius:18px; }
+    .release-bar { align-items:flex-start; }
+    .platform-panel { padding:18px 15px; border-radius:16px; }
+    .platform-title { min-width:0; }
+    .platform-title .p-icon { width:42px; height:42px; }
+    .platform-title h3 { font-size:1.06rem; }
+    .dl-row { width:100%; }
+    .dl-btn { flex:1 1 100%; justify-content:space-between; }
+    .steps li { padding-left:36px; }
+    .steps li::before { width:25px; height:25px; }
+    .footer-inner { flex-direction:column; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    html { scroll-behavior:auto; }
+    *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
   }
 </style>
+<noscript><style>
+  /* Không có JS: bỏ tab, hiện đủ mọi hướng dẫn cài thay vì chỉ panel đầu. */
+  .platform-panel[hidden] { display:block !important; margin-bottom:16px; }
+</style></noscript>
 </head>
 <body>
-<main>
-<header class="brandbar">
-  <a class="brand" href="/" aria-label="ViFastTts · trang chủ">
-    <img class="brand-lockup" src="/static/brand/vifasttts-lockup.png" width="420" height="120"
-         alt="ViFastTts · Giọng đọc tiếng Việt">
-  </a>
-  <div class="header-right">
-    <nav class="links" aria-label="Liên kết">
-      <a class="src" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub ↗</a>
-      <a class="src" href="https://huggingface.co/dvchd" target="_blank" rel="noopener">Hugging Face ↗</a>
-      <a class="src" href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space ↗</a>
+<a class="skip" href="#main">Bỏ qua điều hướng</a>
+<div class="topline" aria-hidden="true"></div>
+
+<svg class="svg-sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-windows" viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="8" rx="1"/><rect x="13" y="4" width="8" height="8" rx="1"/><rect x="3" y="14" width="8" height="7" rx="1"/><rect x="13" y="14" width="8" height="7" rx="1"/></symbol>
+  <symbol id="i-mac" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20M9 19l.5-2h5l.5 2"/></symbol>
+  <symbol id="i-linux" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></symbol>
+  <symbol id="i-android" viewBox="0 0 24 24"><path d="M7 10a5 5 0 0 1 10 0v6H7z"/><path d="M8 5 6.5 2.8M16 5l1.5-2.2M10 9h.01M14 9h.01M4 11v4M20 11v4"/></symbol>
+  <symbol id="i-ios" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M10 5h4M11 19h2"/></symbol>
+  <symbol id="i-chrome" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5h8M9 14.5 5 8M14.5 15l-4 6.5"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M6.5 9l2.5 2.5L6.5 14M11.5 14.5H17"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3z"/></symbol>
+  <symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-offline" viewBox="0 0 24 24"><path d="M3 3l18 18M8.5 8.5A6 6 0 0 1 18 11"/><path d="M5 12a9 9 0 0 1 2.5-1.9M2 8.8A14 14 0 0 1 6 6.6M12 20h.01M8 16.5a5 5 0 0 1 6.5-.5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-3a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h4z"/><path d="M7 8h4M7 11h4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 6 2.5 12 8 18M16 6l5.5 6L16 18M14 4l-4 16"/></symbol>
+  <symbol id="i-devices" viewBox="0 0 24 24"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M6 18h6M9 14v4"/><rect x="17" y="9" width="5" height="11" rx="1.5"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 1.8a10.2 10.2 0 0 0-3.2 19.9c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.1-4.7-5.1 0-1.1.4-2 1.1-2.7-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.8 1.1a9.8 9.8 0 0 1 5.2 0c1.9-1.4 2.8-1.1 2.8-1.1.6 1.4.2 2.4.1 2.7.7.7 1.1 1.6 1.1 2.7 0 4-2.4 4.8-4.7 5.1.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.2 10.2 0 0 0 12 1.8z"/></symbol>
+</svg>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#" aria-label="ViFastTts — về đầu trang">
+      <img src="brand/vifasttts-icon-192.png" width="40" height="40" alt="">
+      <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Tts</span></span>
+    </a>
+    <nav class="nav" aria-label="Điều hướng chính">
+      <a href="#nghe-thu">Nghe thử</a>
+      <a href="#tinh-nang">Tính năng</a>
+      <a href="#tai-ve">Tải về</a>
+      <a href="#cai-dat">Hướng dẫn cài</a>
+      <a href="#api">API</a>
+      <a href="#faq">Hỏi đáp</a>
     </nav>
-    <nav class="download-strip" aria-label="Tải ứng dụng ViFastTts">
-      <span class="download-label">Tải xuống:</span>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-windows-x64.zip" target="_blank" rel="noopener" title="Windows 10/11 x64">Windows</a>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-macos-arm64.zip" target="_blank" rel="noopener" title="macOS Apple Silicon">macOS</a>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-linux-x64.tar.gz" target="_blank" rel="noopener" title="Linux x64">Linux</a>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-mobile-android.apk" target="_blank" rel="noopener" title="Android APK">Android</a>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener" title="iOS Simulator — cần Xcode, không phải app App Store">iOS Simulator</a>
-      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-extension.zip" target="_blank" rel="noopener" title="Chrome Extension">Chrome Extension</a>
-      <span class="download-version">v0.3.4</span>
-    </nav>
+    <span class="header-live" id="header-live" title="Demo API đang chạy"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></span>
+    <a class="ghost-btn" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">
+      <svg class="icon" aria-hidden="true"><use href="#i-github"></use></svg> GitHub
+    </a>
   </div>
 </header>
 
-<div class="hero">
-  <div class="hero-title">
-    <h1>Ngọc Huyền</h1>
-    <span class="badge">Research demo · phi thương mại</span>
-    <span class="tier">SMALL · 6,1M · 24 kHz</span>
-  </div>
-  <p class="sub">Nhập câu tiếng Việt (tối đa 3000 ký tự). Model tự ngắt nghỉ; Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
-  
-</div>
-
-<div class="workspace">
-  <section class="card main-card">
-    <div class="card-head"><h2>Câu cần đọc</h2><span class="pill">Ctrl/⌘ + Enter</span></div>
-    <textarea id="text" maxlength="3000" placeholder="Ví dụ: Sáng nay trời đẹp, chúng ta cùng đi dạo nhé."></textarea>
-    <div class="meta"><span id="count">0/3000</span><span id="limitLabel">Tối đa 3000 ký tự</span></div>
-
-    <div class="speed-row">
-      <label>Tốc độ <input id="speed" type="range" min="0.5" max="2.0" step="0.05" value="1"> <output id="speedOut">1.00×</output></label>
-      <label>Alpha <input id="alpha" type="range" min="0.5" max="3.0" step="0.05" value="1.5"> <output id="alphaOut">1.50</output></label>
-    </div>
-    <div class="speed-row">
-      <label>Phương ngữ
-        <select id="dialect">
-          <option value="north">Bắc</option>
-          <option value="central">Trung</option>
-          <option value="south">Nam</option>
-        </select>
-      </label>
-      <label>Max ký tự/chunk <input id="chunkChars" type="number" min="50" max="3000" step="50" value="300" style="width:76px"></label>
-    </div>
-
-    <div class="row">
-      <button id="go" class="primary">Tạo âm thanh</button>
-      <button id="cancel" class="ghost" type="button" hidden>Dừng</button>
-      <button id="clear" class="ghost">Xoá</button>
-    </div>
-    <div id="status" role="status"></div>
-
-    <div id="player">
-      <audio id="audio" controls preload="none"></audio>
-      <div class="row">
-        <a id="download" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.wav">Tải WAV</a>
-        <a id="downloadSrt" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.srt" hidden>Tải SRT</a>
-        <a id="downloadVtt" class="ghost" style="text-decoration:none;padding:7px 10px;border-radius:8px" download="vifasttts-demo.vtt" hidden>Tải VTT</a>
-        <button id="share" class="ghost" type="button" hidden>Chia sẻ</button>
+<main id="main">
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="spark">★</span> TTS tiếng Việt · mã nguồn mở</div>
+      <h1>Giọng đọc<br>tiếng Việt,<br><span class="mark">nhỏ mà rõ.</span></h1>
+      <p class="lede">Ngọc Huyền small <strong>6,1M tham số</strong> chạy ONNX ngay trên CPU: 24 kHz, tự ngắt nghỉ, đọc đúng số, ngày giờ, viết tắt và từ điển riêng. Nghe thử trong trình duyệt rồi tải app cho máy của bạn.</p>
+      <div class="hero-actions">
+        <a class="primary-btn" href="#nghe-thu">Nghe thử ngay</a>
+        <a class="text-btn" href="#tai-ve">Tải về cho máy của bạn <span aria-hidden="true">→</span></a>
       </div>
-      <div id="metrics" class="metrics" hidden></div>
+      <ul class="hero-facts" aria-label="Điểm chính">
+        <li><strong>6,1M</strong> tham số acoustic</li>
+        <li><strong>24 kHz</strong> WAV mono</li>
+        <li><strong>~0,03</strong> RTF trên CPU</li>
+        <li><strong>8</strong> nền tảng</li>
+      </ul>
     </div>
 
-    <div id="historyCard" class="history" hidden>
-      <div class="card-head"><h3>Gần đây</h3><button id="clearHistory" class="ghost" type="button">Xoá lịch sử</button></div>
-      <div id="historyList" class="history-list"></div>
-    </div>
-
-    <div class="samples examples">
-      <p>Nghe mẫu có sẵn (không cần gọi API):</p>
-      <div class="row"><audio controls preload="none" src="/static/samples/fresh01.wav"></audio><audio controls preload="none" src="/static/samples/fresh02.wav"></audio><audio controls preload="none" src="/static/samples/fresh04.wav"></audio></div>
-    </div>
-
-    <div class="examples">
-      <p>Thử nhanh:</p>
-      <div class="row">
-        <button data-text="Sáng nay trời đẹp, chúng ta cùng đi dạo quanh hồ nhé.">Đi dạo</button>
-        <button data-text="Cô giáo nhẹ nhàng nhắc học sinh kiểm tra lại bài tập trước khi vào tiết mới.">Lời nhắc</button>
-        <button data-text="Chiếc tàu rời bến từ sớm, mang theo những giỏ cá tươi vừa được đánh bắt ngoài khơi.">Buổi sớm</button>
+    <div class="quick-demo" id="nghe-thu">
+      <div class="qd-head">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="qd-title">Nghe thử nhanh</span>
+        <span class="qd-badge">N0 · Q · 6,1M</span>
+      </div>
+      <div class="qd-body">
+        <label class="qd-label" for="quick-text"><span>Câu cần đọc</span><span>Giọng Bắc · model tự nghỉ</span></label>
+        <textarea id="quick-text" maxlength="3000" spellcheck="false" placeholder="Ví dụ: Sáng nay trời đẹp, chúng ta cùng đi dạo quanh hồ nhé."></textarea>
+        <div class="qd-meta"><span id="quick-count">0/3000</span><span>Tối đa 3000 ký tự</span></div>
+        <div class="qd-actions">
+          <button class="primary-btn" id="quick-go" type="button">Đọc câu này</button>
+          <button class="ghost-link" id="quick-cancel" type="button" hidden>Dừng</button>
+          <a class="ghost-link" href="demo.html" data-demo-link>Tuỳ chọn nâng cao <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="qd-status" id="quick-status" role="status"></div>
+        <div class="qd-player" id="quick-player">
+          <audio id="quick-audio" controls preload="none" aria-label="Audio vừa tạo"></audio>
+          <div class="qd-player-foot">
+            <a id="quick-download" href="#" download="vifasttts-demo.wav">Tải WAV</a>
+            <span id="quick-metrics"></span>
+          </div>
+        </div>
+        <div class="chip-row" aria-label="Câu mẫu">
+          <button type="button" data-quick-text="Xin chào, mình là Ngọc Huyền, giọng đọc tiếng Việt của ViFastTts.">Câu chào</button>
+          <button type="button" data-quick-text="Chiếc tàu rời bến từ sớm, mang theo những giỏ cá tươi vừa được đánh bắt ngoài khơi.">Buổi sớm</button>
+          <button type="button" data-quick-text="Cuộc họp bắt đầu lúc 8 giờ 30 phút ngày 30 tháng 10 năm 2026, tại hội trường A.">Số &amp; ngày</button>
+          <button type="button" data-quick-text="UBND thành phố Hà Nội vừa công bố kế hoạch hỗ trợ doanh nghiệp vừa và nhỏ.">Viết tắt</button>
+        </div>
+        <details class="quick-samples">
+          <summary>Nghe mẫu có sẵn (không cần gọi API)</summary>
+          <div class="sample-row">
+            <audio controls preload="none" aria-label="Mẫu giọng 1" src="https://vifasttts.hoctuthien.com/static/samples/fresh01.wav"></audio>
+            <audio controls preload="none" aria-label="Mẫu giọng 2" src="https://vifasttts.hoctuthien.com/static/samples/fresh02.wav"></audio>
+            <audio controls preload="none" aria-label="Mẫu giọng 3" src="https://vifasttts.hoctuthien.com/static/samples/fresh04.wav"></audio>
+          </div>
+        </details>
+        <p class="qd-fine">Không lưu văn bản hay audio · 6 lượt/phút mỗi IP · demo nghiên cứu, phi thương mại.</p>
       </div>
     </div>
   </section>
 
-  <section class="panel advanced" id="advanced">
-      <div class="panel-head"><h2>Tùy chọn nâng cao</h2><span class="pill">Đọc &amp; nghỉ</span></div>
-      <div class="option-row">
-        <label class="checkline" for="fixed"><input id="fixed" type="checkbox"> Nghỉ cố định</label>
-        <span class="info" tabindex="0" role="img" aria-label="Giải thích nghỉ cố định">i
-          <span class="tip" role="tooltip">Nghỉ cố định: chèn khoảng lặng theo dấu câu (0,25 giây sau phẩy; 0,55 giây sau chấm/hỏi/than) thay vì để model tự dự đoán. Mặc định tắt vì model tự ngắt nghỉ tự nhiên hơn; bật khi cần nhịp đọc đều, dễ đoán.</span>
-        </span>
-        <label class="checkline" for="peakNormalize"><input id="peakNormalize" type="checkbox"> Peak normalize</label>
-        <span class="info" tabindex="0" role="img" aria-label="Giải thích Peak normalize">i
-          <span class="tip" role="tooltip">Peak normalize: chuẩn hoá đỉnh của toàn bộ WAV về −3 dBFS để không bị clip và âm lượng ổn định hơn. Có thể làm to cả tiếng nền/rè; không dùng khi stream vì cần biết đỉnh toàn file. Mặc định tắt.</span>
-        </span>
-        <span id="peakStreamNote" class="fine" hidden>Stream không dùng peak normalize.</span>
-        <label class="checkline" for="streamMode"><input id="streamMode" type="checkbox"> Stream (phát ngay)</label>
-        <span class="fine">Mặc định tắt</span>
-        <label class="checkline" for="resolveOov"><input id="resolveOov" type="checkbox" checked> Resolve OOV</label>
-        <span class="info" tabindex="0" role="img" aria-label="Giải thích Resolve OOV">i
-          <span class="tip" role="tooltip">OOV = token lạ (tên riêng, viết tắt, tiếng Anh, mã sản phẩm…). Bật để tra từ điển hoặc đánh vần tên chữ cái (VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.</span>
-        </span>
+  <section class="section wrap" id="tinh-nang">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Vì sao ViFastTts</div>
+        <h2>Đủ chuẩn để đọc tiếng Việt.<br>Đủ nhẹ để chạy mọi nơi.</h2>
       </div>
-      <div class="label-row">
-        <label for="overrides">Cách đọc từ</label>
-        <span class="info" tabindex="0" role="img" aria-label="Giải thích cách đọc từ">i
-          <span class="tip" role="tooltip">Mỗi dòng một quy tắc dạng “từ gốc = cách đọc”. Hỗ trợ từ, cụm, domain hoặc công thức; không hỗ trợ regex/script. Quy tắc tự lưu khi gõ trong trình duyệt; nếu bật gửi duyệt, server chỉ lưu cặp từ/cách đọc vào hàng chờ, không lưu câu hay IP. Bấm chip ví dụ để thêm nhanh.</span>
-        </span>
-      </div>
-      <textarea id="overrides" placeholder="AI = ây ai&#10;VPS = vi pi ét&#10;khongdich.com = không dịch chấm com"></textarea>
-      <div class="rule-examples">
-        <p>Ví dụ nhanh:</p>
-        <div class="row">
-          <button type="button" title="khongdich.com = không dịch chấm com" data-rule="khongdich.com = không dịch chấm com">Domain</button>
-          <button type="button" title="H2 + O2 -> H2O = hát hai cộng ô hai tạo ra nước" data-rule="H2 + O2 -&gt; H2O = hát hai cộng ô hai tạo ra nước">H₂+O₂→H₂O</button>
-          <button type="button" title="CO2 = xê ô hai" data-rule="CO2 = xê ô hai">CO₂</button>
-          <button type="button" title="x^2 = x bình phương" data-rule="x^2 = x bình phương">x²</button>
-          <button type="button" title="\frac{a}{b} = a trên b" data-rule="\frac{a}{b} = a trên b">LaTeX</button>
-          <button type="button" title="m/s = mét trên giây" data-rule="m/s = mét trên giây">m/s</button>
-          <button type="button" title="AI = ây ai" data-rule="AI = ây ai">AI</button>
-        </div>
-      </div>
-      <label class="share"><input id="shareOverrides" type="checkbox" checked>
-        Gửi quy tắc này để duyệt vào từ điển chung <span class="fine">(bỏ tích nếu không muốn)</span></label>
-      <div class="row">
-        <button id="showBuiltin" class="ghost" type="button">Xem từ điển &amp; STEM</button>
-      </div>
-      <div id="overrideStatus"></div>
-      <pre id="builtin" hidden></pre>
-      <details class="help">
-        <summary>Giải thích các cài đặt</summary>
-        <div class="help-body">
-          <p><b>Tốc độ:</b> 1.00× là bình thường; nhỏ hơn chậm hơn, lớn hơn nhanh hơn (0,5–2,0×).</p>
-          <p><b>Độ nét mel (alpha):</b> 1,5 là mặc định; cao hơn nét hơn nhưng dễ làm rõ rè/nhiễu, thấp hơn mềm hơn.</p>
-          <p><b>Pause cố định:</b> tự chèn khoảng lặng sau dấu câu (khoảng 0,25 s sau phẩy; 0,55 s sau chấm/hỏi/than) thay vì để model tự đoán. Mặc định tắt.</p>
-          <p><b>Peak normalize:</b> đưa đỉnh toàn bộ WAV về −3 dBFS để tránh clip và ổn định âm lượng; có thể làm to cả rè/nền. Không dùng khi stream vì cần biết đỉnh cả file.</p>
-          <p><b>Stream:</b> phát ngay từng đoạn khi tổng hợp xong; không dùng peak normalize; WAV/SRT/VTT chỉ có sau khi stream xong nếu bật lưu.</p>
-          <p><b>Max ký tự/chunk:</b> độ dài tối đa mỗi đoạn đưa vào model. Nhỏ = ít RAM nhưng nhiều lần ngắt; lớn = ít ngắt nhưng chậm/nặng hơn.</p>
-          <p><b>Phương ngữ:</b> đổi cách đọc một số từ qua normalizer. Model N0 hiện là giọng Bắc; muốn đổi giọng nền hoàn toàn cần model của vùng đó.</p>
-          <p><b>Resolve OOV:</b> OOV là token lạ (tên riêng, viết tắt, từ tiếng Anh, mã sản phẩm…). Bật để thử tra từ điển/đánh vần tên chữ cái (ví dụ VNG → “vê en giê”); tắt để giữ fallback, không tự đoán.</p>
-          <p><b>Từ điển / Cách đọc:</b> mỗi dòng <code>từ = cách đọc</code>; dùng cho từ lạ, viết tắt, tên riêng, domain. Quy tắc được áp trước normalizer/STEM; remote sẽ gửi kèm request.</p>
-          <p><b>Local / Remote:</b> Local chạy model trên máy/trình duyệt; Remote gửi văn bản tới server. Server cũ có thể bỏ qua một số tùy chọn.</p>
-          <p><b>RTF:</b> thời gian xử lý chia cho thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực (0,05 ≈ nhanh gấp 20 lần).</p>
-        </div>
-      </details>
+      <p>Không phải model đa ngữ gắn thêm tiếng Việt: frontend được thiết kế cho âm tiết Việt, model non-autoregressive chạy tất định và xuất ONNX để dùng lại trên desktop, mobile, extension hay server.</p>
+    </div>
+    <div class="feature-grid">
+      <article class="feature">
+        <span class="f-icon" aria-hidden="true"><svg class="icon"><use href="#i-speech"></use></svg></span>
+        <h3>Chuẩn âm tiết Việt</h3>
+        <p><strong>25 âm đầu · 2 âm đệm · 15 âm chính · 11 âm cuối · 6 thanh</strong> → 264 vần. Parser vét cạn 49.104 tổ hợp, 0 lỗi; 39K từ thật parse 6.617/6.633.</p>
+      </article>
+      <article class="feature">
+        <span class="f-icon" aria-hidden="true"><svg class="icon"><use href="#i-bolt"></use></svg></span>
+        <h3>Nhỏ và nhanh trên CPU</h3>
+        <p>Acoustic <strong>6,1M</strong> + vocoder <strong>13,5M</strong>. ONNX FP32, RTF ~0,03 trên VPS CPU; không cần GPU, không cần PyTorch khi dùng ONNX.</p>
+      </article>
+      <article class="feature">
+        <span class="f-icon" aria-hidden="true"><svg class="icon"><use href="#i-offline"></use></svg></span>
+        <h3>Chạy offline</h3>
+        <p>Desktop, extension, Android và iOS đóng gói model + ONNX Runtime. Đọc không cần mạng và không gửi văn bản ra ngoài.</p>
+      </article>
+      <article class="feature">
+        <span class="f-icon" aria-hidden="true"><svg class="icon"><use href="#i-book"></use></svg></span>
+        <h3>Đọc đúng từ khó</h3>
+        <p>Từ điển <strong>hơn 200 mục</strong>, quy tắc STEM (hoá học, toán, lý, LaTeX), đánh vần OOV và bảng đọc riêng của bạn. Hỗ trợ cụm/domain như <code>khongdich.com</code>.</p>
+      </article>
+      <article class="feature">
+        <span class="f-icon" aria-hidden="true"><svg class="icon"><use href="#i-code"></use></svg></span>
+        <h3>Tất định, dễ tích hợp</h3>
+        <p>Cùng một câu cho cùng một kết quả. REST <code>/api/tts</code>, stream NDJSON, CLI server, Python engine và ONNX cho mọi stack.</p>
+      </article>
+      <article class="feature">
+        <span class="f-icon" aria-hidden="true"><svg class="icon"><use href="#i-devices"></use></svg></span>
+        <h3>Một model, mọi nền tảng</h3>
+        <p>Windows, macOS, Linux, Android, iOS Simulator, Chrome/Edge, CLI/server và web tĩnh. Cùng model, cùng cách đọc, cùng bộ test.</p>
+      </article>
+    </div>
   </section>
 
-  <section class="panel feedback" id="feedback">
-      <div class="panel-head"><h2>Góp ý / báo lỗi</h2><span class="pill">Admin xem</span></div>
-      <p>Gửi trực tiếp cho admin. Nội dung và liên hệ (nếu có) chỉ admin đã đặt mật khẩu mới xem được; không công khai.</p>
-      <form id="feedbackForm">
-        <div class="feedback-grid">
-          <label for="fbCategory">Loại
-            <select id="fbCategory">
-              <option value="gop_y">Góp ý chung</option>
-              <option value="cai_tien">Đề xuất cải tiến</option>
-              <option value="bao_loi">Báo lỗi</option>
-            </select>
-          </label>
-          <label for="fbContact">Liên hệ (không bắt buộc)
-            <input id="fbContact" type="text" maxlength="120" autocomplete="off" placeholder="Email / Telegram / Zalo">
-          </label>
-        </div>
-        <label for="feedbackMessage">Nội dung</label>
-        <textarea id="feedbackMessage" maxlength="1000" required placeholder="Ví dụ: Ở câu có từ viết tắt, model đọc chưa đúng..."></textarea>
-        <div class="meta"><span id="fbCount">0/1000</span><span>Tối thiểu 5 ký tự</span></div>
-        <div class="hp" aria-hidden="true"><label>Website <input id="fbWebsite" type="text" tabindex="-1" autocomplete="off"></label></div>
-        <div class="row">
-          <button id="feedbackSubmit" class="primary" type="submit">Gửi góp ý</button>
-          <span id="feedbackStatus" role="status"></span>
-        </div>
-      </form>
+  <section class="section wrap" id="kien-truc">
+    <div class="arch">
+      <div>
+        <div class="eyebrow light">Kiến trúc</div>
+        <h2>Văn bản → âm tiết →<br>mel → <span class="gold">WAV 24 kHz</span>.</h2>
+        <p>Mỗi âm tiết thành 7 ID (âm đầu, đệm, chính, cuối, thanh điệu, ranh giới, dấu câu). Model dự đoán mel + thời lượng + F0 trong một lượt, vocoder dựng sóng. Không tự hồi quy, không lấy mẫu ngẫu nhiên.</p>
+        <ul class="arch-list">
+          <li><strong>2.942 test pass / 24 skip</strong>; <code>ruff</code> sạch, parser audit 0 lỗi.</li>
+          <li>Holdout: mel L1 <strong>4,0 dB</strong> · duration MAE <strong>1,37 frame</strong>.</li>
+          <li>ONNX opset 18, batch và độ dài động, FP32/FP16/INT8.</li>
+        </ul>
+      </div>
+      <div class="arch-code" aria-label="Luồng tổng hợp">
+        <div class="code-head"><span></span><span></span><span></span><em>pipeline.txt</em></div>
+        <pre><code><span class="c-muted"># văn bản tiếng Việt</span>
+<span class="c-key">"Sáng nay trời đẹp"</span>
+        ↓  frontend
+<span class="c-str">7 ID / âm tiết</span>  ·  4 âm tiết
+        ↓  acoustic 6,1M
+<span class="c-num">mel</span> + <span class="c-num">thời lượng</span> + <span class="c-num">f0/vuv/energy</span>
+        ↓  vocoder 13,5M
+<span class="c-bool">WAV</span> · 24 kHz · mono · PCM16</code></pre>
+      </div>
+    </div>
   </section>
-</div>
 
+  <section class="section wrap" id="tai-ve">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Tải về</div>
+        <h2>Chọn nền tảng.<br>Cài trong vài phút.</h2>
+      </div>
+      <p>Bản portable v0.3.4, model FP32 nằm sẵn trong gói. Không cần Python, Node hay GPU cho các app. Mỗi tab có file tải, yêu cầu hệ thống, các bước cài và xử lý sự cố.</p>
+    </div>
 
+    <div class="release-bar">
+      <strong>v0.3.4</strong><span class="dot" aria-hidden="true"></span><span>30/10/2026</span>
+      <a href="https://github.com/dvchd/ViFastTts/releases/tag/v0.3.4" target="_blank" rel="noopener">Release notes ↗</a>
+      <a href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
+      <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Tài liệu cài đặt đầy đủ ↗</a>
+    </div>
 
-<p class="fine">Không lưu văn bản hay audio. Giới hạn 6 lần/phút mỗi IP. Đây là demo nghiên cứu,
-  <b>không dùng để giả giọng, lừa đảo hoặc thương mại</b>. Xem
-  <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">mã nguồn GitHub</a>
-  · <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
-   · <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space demo</a> · <a href="https://github.com/dvchd/ViFastTts/releases/tag/v0.3.4" target="_blank" rel="noopener">release v0.3.4</a>.</p>
-<footer>ViFastTts · single-speaker · CC-BY-NC-4.0 · không production ·
-  <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://huggingface.co/dvchd" target="_blank" rel="noopener">Hugging Face</a> ·
-  <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a> ·
-  <a href="#feedback" id="feedbackLink">Góp ý</a> ·
-  <a href="/admin">Thống kê</a></footer>
+    <div class="platform-tabs" id="cai-dat" role="tablist" aria-label="Chọn nền tảng">
+      <button class="platform-tab" type="button" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-platform="windows">
+        <svg class="icon" aria-hidden="true"><use href="#i-windows"></use></svg> Windows
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-macos" aria-controls="panel-macos" aria-selected="false" tabindex="-1" data-platform="macos">
+        <svg class="icon" aria-hidden="true"><use href="#i-mac"></use></svg> macOS
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-platform="linux">
+        <svg class="icon" aria-hidden="true"><use href="#i-linux"></use></svg> Linux
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-android" aria-controls="panel-android" aria-selected="false" tabindex="-1" data-platform="android">
+        <svg class="icon" aria-hidden="true"><use href="#i-android"></use></svg> Android
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-ios" aria-controls="panel-ios" aria-selected="false" tabindex="-1" data-platform="ios">
+        <svg class="icon" aria-hidden="true"><use href="#i-ios"></use></svg> iOS
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-extension" aria-controls="panel-extension" aria-selected="false" tabindex="-1" data-platform="extension">
+        <svg class="icon" aria-hidden="true"><use href="#i-chrome"></use></svg> Chrome/Edge
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-cli" aria-controls="panel-cli" aria-selected="false" tabindex="-1" data-platform="cli">
+        <svg class="icon" aria-hidden="true"><use href="#i-terminal"></use></svg> CLI / Server
+      </button>
+      <button class="platform-tab" type="button" role="tab" id="tab-web" aria-controls="panel-web" aria-selected="false" tabindex="-1" data-platform="web">
+        <svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg> Web tĩnh
+      </button>
+    </div>
+
+    <div>
+      <!-- Windows -->
+      <section class="platform-panel" role="tabpanel" id="panel-windows" aria-labelledby="tab-windows" tabindex="0">
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-windows"></use></svg></span>
+            <div>
+              <h3>Windows 10/11 · x64</h3>
+              <p>Bản desktop đầy đủ: giao diện, server nội bộ, model và ONNX Runtime đi kèm.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-windows-x64.zip" target="_blank" rel="noopener">Tải desktop · 92 MB <span>ZIP</span></a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-cli-windows-x64.zip" target="_blank" rel="noopener">CLI / server · 119 MB <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải và giải nén</strong><span>Chuột phải file ZIP → <b>Extract All</b>. Đừng chạy trực tiếp trong file ZIP.</span></li>
+              <li><strong>Chạy ứng dụng</strong><span>Mở thư mục vừa giải nén → chạy <code>vifasttts-desktop.exe</code>.</span></li>
+              <li><strong>Vượt SmartScreen</strong><span>Bản chưa ký số: bấm <b>More info → Run anyway</b>.</span></li>
+              <li><strong>Đọc thử</strong><span>Nhập câu → bấm <b>Đọc</b>. Model, vocoder và ONNX Runtime đã nằm trong gói; không cần tải thêm.</span></li>
+              <li><strong>Bật server nội bộ (tuỳ chọn)</strong><span>Vào <b>Cài đặt → Bật server</b> để dùng cho extension/điện thoại tại <code>http://127.0.0.1:8000</code>.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Windows 10/11 64-bit</li>
+              <li>~250 MB sau giải nén</li>
+              <li>Không cần Python, Node, GPU</li>
+              <li>Không cần mạng sau khi cài</li>
+            </ul>
+            <div class="note">Thiếu DLL hệ thống? Cài <b>VC++ 2015–2022 x64</b>. ZIP bị chặn? Chuột phải → Properties → Unblock.</div>
+            <div class="note">Chỉ muốn server/TUI? Dùng file CLI; chạy <code>vifasttts.exe server</code> hoặc <code>vifasttts.exe tui</code>.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố Windows</summary>
+          <div class="trouble-body">
+            <p><b>SmartScreen/Defender cảnh báo:</b> bản build chưa ký số nên có thể bị cảnh báo; chọn More info → Run anyway. Chỉ tải từ GitHub Release chính thức.</p>
+            <p><b>Lỗi thiếu DLL:</b> cài Microsoft Visual C++ Redistributable 2015–2022 x64 rồi mở lại.</p>
+            <p><b>Không mở được file:</b> kiểm tra đã giải nén toàn bộ ZIP, không chạy từ file nén; thử chạy bằng quyền user thường trước.</p>
+            <p><b>Không kết nối được từ điện thoại:</b> bật <b>Cho phép LAN</b> trên desktop, dùng IP LAN (ví dụ <code>http://192.168.1.100:8000</code>) và mở firewall cho port 8000.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- macOS -->
+      <section class="platform-panel" role="tabpanel" id="panel-macos" aria-labelledby="tab-macos" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-mac"></use></svg></span>
+            <div>
+              <h3>macOS 13+ · Apple Silicon</h3>
+              <p>App native cho M1/M2/M3/M4; có sẵn CLI/TUI/server trong cùng bundle.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-macos-arm64.zip" target="_blank" rel="noopener">Tải desktop · 131 MB <span>ZIP</span></a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-cli-macos-arm64.tar.gz" target="_blank" rel="noopener">CLI / server · 125 MB <span>TAR.GZ</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải và giải nén</strong><span>Mở file ZIP; kéo <code>ViFastTts.app</code> vào thư mục <code>Applications</code>.</span></li>
+              <li><strong>Mở lần đầu</strong><span>Chuột phải app → <b>Open</b> → <b>Open</b> để qua Gatekeeper (bản chưa ký).</span></li>
+              <li><strong>Nếu vẫn bị chặn</strong><span>Chạy Terminal:</span><pre class="cmd"><code>xattr -dr com.apple.quarantine /Applications/ViFastTts.app
+open /Applications/ViFastTts.app</code></pre></li>
+              <li><strong>Bật server (tuỳ chọn)</strong><span>Vào <b>Cài đặt → Server nội bộ</b> để extension/điện thoại dùng chung model.</span></li>
+              <li><strong>Dùng CLI/TUI</strong><span>Binary nằm trong app:</span><pre class="cmd"><code>/Applications/ViFastTts.app/Contents/MacOS/vifasttts server
+/Applications/ViFastTts.app/Contents/MacOS/vifasttts tui</code></pre></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>macOS 13 trở lên</li>
+              <li>Apple Silicon (arm64)</li>
+              <li>~350 MB sau giải nén</li>
+              <li>Không cần Python/Node/GPU</li>
+            </ul>
+            <div class="note">Bản phát hành hiện chỉ có <b>arm64</b>; máy Intel dùng web demo, Python hoặc build từ source.</div>
+            <div class="note">Gatekeeper chỉ cảnh báo vì app chưa notarize; mã nguồn mở và model nằm trong gói.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố macOS</summary>
+          <div class="trouble-body">
+            <p><b>“App is damaged” hoặc không mở được:</b> chạy lệnh <code>xattr -dr com.apple.quarantine ...</code> ở trên, hoặc System Settings → Privacy &amp; Security → Open Anyway.</p>
+            <p><b>Máy Intel:</b> bản arm64 không chạy; dùng web demo hoặc build từ source theo <code>docs/INSTALL.md</code>.</p>
+            <p><b>Không tìm thấy CLI:</b> CLI nằm trong <code>ViFastTts.app/Contents/MacOS/vifasttts</code>; gói CLI riêng cũng có <code>run.sh</code>.</p>
+            <p><b>Extension không kết nối:</b> bật server trong app và kiểm tra <code>http://127.0.0.1:8000/healthz</code>.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Linux -->
+      <section class="platform-panel" role="tabpanel" id="panel-linux" aria-labelledby="tab-linux" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-linux"></use></svg></span>
+            <div>
+              <h3>Linux x64</h3>
+              <p>Bản desktop + web server đóng gói sẵn; chạy được trên X11 và Wayland.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-desktop-linux-x64.tar.gz" target="_blank" rel="noopener">Tải desktop · 133 MB <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-cli-linux-x64.tar.gz" target="_blank" rel="noopener">CLI / server · 124 MB <span>TAR.GZ</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Giải nén</strong><pre class="cmd"><code>tar -xzf vifasttts-desktop-linux-x64.tar.gz
+cd vifasttts-desktop-linux-x64</code></pre></li>
+              <li><strong>Cài thư viện hệ thống</strong><span>Ubuntu/Debian:</span><pre class="cmd"><code>sudo apt-get install -y libasound2 libxkbcommon0 libx11-6 libgl1</code></pre></li>
+              <li><strong>Chạy app</strong><pre class="cmd"><code>./run.sh
+# hoặc
+./vifasttts</code></pre></li>
+              <li><strong>Chạy server</strong><span>Server + web mặc định ở <code>http://127.0.0.1:8000</code>:</span><pre class="cmd"><code>./run.sh --host 127.0.0.1 --port 8000</code></pre></li>
+              <li><strong>Kiểm tra headless</strong><span>Máy không có màn hình:</span><pre class="cmd"><code>./vifasttts-desktop --smoke</code></pre></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Linux x86_64</li>
+              <li>X11 hoặc Wayland, OpenGL</li>
+              <li>libasound2, libxkbcommon, libX11, libGL</li>
+              <li>~350 MB sau giải nén</li>
+            </ul>
+            <div class="note">Nếu thiếu thư viện, app báo lỗi ngay khi mở; cài đúng gói theo distro (dnf/pacman tương ứng).</div>
+            <div class="note">Server chưa có TLS; đặt sau reverse proxy nếu mở ra Internet.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố Linux</summary>
+          <div class="trouble-body">
+            <p><b>Lỗi <code>libasound.so.2</code>:</b> cài <code>libasound2</code> (Debian/Ubuntu) hoặc <code>alsa-lib</code> (Fedora).</p>
+            <p><b>Không mở được cửa sổ:</b> kiểm tra <code>DISPLAY</code>/<code>WAYLAND_DISPLAY</code>; thử <code>./vifasttts-desktop --smoke</code> để tách lỗi GUI.</p>
+            <p><b>File không chạy:</b> <code>chmod +x run.sh vifasttts vifasttts-desktop</code>.</p>
+            <p><b>Port 8000 bận:</b> đổi <code>--port 8010</code> và cập nhật URL trong extension/điện thoại.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Android -->
+      <section class="platform-panel" role="tabpanel" id="panel-android" aria-labelledby="tab-android" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-android"></use></svg></span>
+            <div>
+              <h3>Android 8.0+ · arm64 / x86_64</h3>
+              <p>Client local-first: model FP32 đóng trong APK, đọc offline; có thể chuyển sang server LAN.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-mobile-android.apk" target="_blank" rel="noopener">Tải APK · 110 MB <span>APK</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải APK</strong><span>Bản debug, chưa phát hành trên CH Play; chỉ tải từ GitHub Release chính thức.</span></li>
+              <li><strong>Cho phép cài ngoài store</strong><span>Mở file APK → Settings → <b>Install unknown apps</b> → cho phép trình quản lý file/trình duyệt vừa tải.</span></li>
+              <li><strong>Cài và mở app</strong><span>Nhập câu → chọn giọng local có sẵn → bấm <b>Đọc</b>. Model ~86 MB đã nằm trong APK.</span></li>
+              <li><strong>Tải thêm model (tuỳ chọn)</strong><span>Bấm <b>Tải model .vfa/.vfts</b>. Để trống Server URL → tải trực tiếp HuggingFace; nhập URL LAN → tải qua server.</span></li>
+              <li><strong>Dùng server remote (tuỳ chọn)</strong><span>Tick <b>Dùng server remote</b>, nhập <code>http://IP-LAN:8000</code> (không dùng <code>127.0.0.1</code> trên điện thoại), token nếu có.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Android 8.0+ (minSdk 26)</li>
+              <li>arm64-v8a hoặc x86_64</li>
+              <li>~300 MB dung lượng trống</li>
+              <li>Quyền INTERNET, ACCESS_NETWORK_STATE</li>
+            </ul>
+            <div class="note">APK <b>không chạy server</b>; server nằm ở desktop/CLI. Điện thoại và máy tính phải cùng Wi-Fi/LAN.</div>
+            <div class="note">Android 16+ sẽ hỏi quyền <b>Local network</b> khi kết nối server LAN; HTTP dev dùng cleartext, production nên HTTPS.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố Android</summary>
+          <div class="trouble-body">
+            <p><b>“App not installed”:</b> gỡ bản cũ trước, kiểm tra đủ dung lượng; APK hỗ trợ arm64/x86_64.</p>
+            <p><b>Không kết nối server:</b> dùng IP LAN của máy tính, không dùng <code>127.0.0.1</code>; bật <b>Cho phép LAN</b> trên desktop và mở firewall port 8000.</p>
+            <p><b>Tải model lỗi:</b> để trống Server URL để đi trực tiếp HuggingFace, hoặc kiểm tra server có <code>/api/models/*</code>.</p>
+            <p><b>Không có tiếng:</b> kiểm tra âm lượng media và chọn đúng output; emulator có thể lỗi HAL audio, nên thử trên máy thật.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- iOS -->
+      <section class="platform-panel" role="tabpanel" id="panel-ios" aria-labelledby="tab-ios" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-ios"></use></svg></span>
+            <div>
+              <h3>iOS 16+ · Simulator</h3>
+              <p>Bản chạy trên iOS Simulator (chưa ký Apple Developer), có local FFI và remote HTTP.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener">Tải Simulator · 89 MB <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Cài Xcode + Simulator</strong><span>Mở App Store → cài Xcode; mở Xcode → Settings → Platforms → tải iOS Simulator runtime.</span></li>
+              <li><strong>Mở Simulator</strong><span>Xcode → Open Developer Tool → Simulator; chọn một thiết bị iPhone.</span></li>
+              <li><strong>Cài app</strong><span>Giải nén file ZIP, kéo <code>ViFastTtsMobile.app</code> vào cửa sổ Simulator.</span></li>
+              <li><strong>Chọn model</strong><span>Sheet <b>Model</b>: để trống Server URL → tải trực tiếp HuggingFace; hoặc nhập URL server LAN.</span></li>
+              <li><strong>Đọc local/remote</strong><span>Local dùng ONNX Runtime iOS + model bundled; Remote gọi <code>/api/tts</code> với Bearer token nếu có.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>macOS + Xcode + Simulator runtime</li>
+              <li>iOS 16 trở lên (Simulator)</li>
+              <li>Apple ID để tải Xcode</li>
+              <li>Không cài lên iPhone thật</li>
+            </ul>
+            <div class="note">Đây <b>không phải app App Store</b>. Thiết bị thật cần ký Apple Developer + ORT device framework.</div>
+            <div class="note">Build từ source: <code>mobile/ios/build-ios.sh</code>.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố iOS</summary>
+          <div class="trouble-body">
+            <p><b>Không thấy Simulator:</b> cài runtime trong Xcode → Settings → Platforms; kiểm tra dung lượng ổ đĩa.</p>
+            <p><b>Không cài lên iPhone:</b> bản phát hành chỉ dành cho Simulator; máy thật cần signing và build riêng.</p>
+            <p><b>Remote không kết nối:</b> dùng IP LAN của máy chạy server; kiểm tra ATS exception (HTTP dev) và firewall.</p>
+            <p><b>Model không tải:</b> để trống Server URL để đi trực tiếp HuggingFace, hoặc kiểm tra kết nối mạng của Simulator.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Extension -->
+      <section class="platform-panel" role="tabpanel" id="panel-extension" aria-labelledby="tab-extension" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-chrome"></use></svg></span>
+            <div>
+              <h3>Chrome / Edge · MV3</h3>
+              <p>Đọc đoạn bôi đen hoặc cả trang; model bundled chạy local trong trình duyệt.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-extension.zip" target="_blank" rel="noopener">Tải extension · 80 MB <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Giải nén</strong><span>Giải nén ZIP ra một thư mục có chứa <code>manifest.json</code> (không chọn nhầm thư mục cha).</span></li>
+              <li><strong>Mở trang quản lý</strong><span>Chrome: <code>chrome://extensions</code> · Edge: <code>edge://extensions</code>.</span></li>
+              <li><strong>Bật Developer mode</strong><span>Bật công tắc <b>Developer mode</b> ở góc trên bên phải.</span></li>
+              <li><strong>Load unpacked</strong><span>Bấm <b>Load unpacked</b> → chọn thư mục vừa giải nén.</span></li>
+              <li><strong>Ghim và dùng</strong><span>Ghim icon ViFastTts → bấm icon → nhập text → <b>Đọc</b>; hoặc bôi đen text trên trang và dùng menu chuột phải.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Chrome/Edge 116+</li>
+              <li>~250 MB sau giải nén</li>
+              <li>Không cần server để đọc local</li>
+              <li>Model bundled trong extension</li>
+            </ul>
+            <div class="note">Extension <b>chưa có trên Chrome Web Store/Edge Add-ons</b>; phải Load unpacked. Khi store duyệt xong sẽ có link cài trực tiếp.</div>
+            <div class="note">Muốn tìm/tải thêm giọng từ HuggingFace: dùng trực tiếp hoặc server <code>/api/models/*</code>.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố extension</summary>
+          <div class="trouble-body">
+            <p><b>“Manifest file is missing”:</b> chọn đúng thư mục chứa <code>manifest.json</code>, không chọn thư mục cha hoặc file ZIP.</p>
+            <p><b>Không thấy nút Load unpacked:</b> bật Developer mode trước.</p>
+            <p><b>Đọc trang không hoạt động:</b> reload tab sau khi cài; một số trang chặn content script (chrome://, PDF viewer, store).</p>
+            <p><b>Remote server lỗi:</b> kiểm tra URL/token trong Cài đặt; local mode không cần server.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- CLI -->
+      <section class="platform-panel" role="tabpanel" id="panel-cli" aria-labelledby="tab-cli" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-terminal"></use></svg></span>
+            <div>
+              <h3>CLI · TUI · Server</h3>
+              <p>Một binary Rust cho terminal, server API và web; phù hợp máy chủ, NAS hoặc tích hợp nội bộ.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-cli-linux-x64.tar.gz" target="_blank" rel="noopener">Linux · 124 MB</a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-cli-macos-arm64.tar.gz" target="_blank" rel="noopener">macOS · 125 MB</a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/vifasttts-cli-windows-x64.zip" target="_blank" rel="noopener">Windows · 119 MB</a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Giải nén gói CLI</strong><span>Linux/macOS có <code>run.sh</code>; Windows có <code>vifasttts.exe</code>.</span></li>
+              <li><strong>Chạy server + web</strong><pre class="cmd"><code>./run.sh --host 127.0.0.1 --port 8000
+# hoặc
+vifasttts server --port 8000</code></pre></li>
+              <li><strong>Kiểm tra</strong><pre class="cmd"><code>curl -s http://127.0.0.1:8000/healthz
+curl -s http://127.0.0.1:8000/api/config</code></pre></li>
+              <li><strong>Chỉ API (không web)</strong><pre class="cmd"><code>vifasttts server --api-only --port 8000</code></pre></li>
+              <li><strong>Bảo vệ &amp; chia sẻ LAN</strong><pre class="cmd"><code>vifasttts server --token 'đổi-token' --host 0.0.0.0 --port 8000</code></pre><span>Đặt sau reverse proxy/TLS nếu mở ra Internet; giới hạn firewall theo nhu cầu.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Windows / macOS / Linux x64</li>
+              <li>Port mặc định 8000</li>
+              <li>Gói đã kèm model + ORT + web</li>
+              <li>Không cần Python</li>
+            </ul>
+            <div class="note">Package giữ <b>một bản model</b>; web local lấy qua <code>/models/acoustic.onnx</code> và <code>/models/vocoder.onnx</code>.</div>
+            <div class="note">TUI chạy từ terminal: <code>vifasttts tui</code> hoặc <code>vifasttts tui --server http://127.0.0.1:8000</code>.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố CLI/server</summary>
+          <div class="trouble-body">
+            <p><b>Port bận:</b> đổi <code>--port 8010</code>; kiểm tra tiến trình cũ bằng <code>lsof -i :8000</code>.</p>
+            <p><b>Không thấy web:</b> web là asset tĩnh trong package; nếu chỉ copy binary, server vẫn chạy API nhưng không có UI. Dùng <code>--web-dir</code> trỏ tới <code>web-dist</code>.</p>
+            <p><b>Extension/điện thoại không gọi được:</b> server phải bind <code>0.0.0.0</code>, mở firewall, dùng IP LAN; thêm <code>--cors</code> nếu web ở origin khác.</p>
+            <p><b>Token:</b> client gửi <code>Authorization: Bearer ...</code>; kiểm tra token khớp khi khởi động server.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Web static -->
+      <section class="platform-panel" role="tabpanel" id="panel-web" aria-labelledby="tab-web" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <span class="p-icon" aria-hidden="true"><svg class="icon"><use href="#i-globe"></use></svg></span>
+            <div>
+              <h3>Web tĩnh · WASM + ONNX Runtime Web</h3>
+              <p>Chạy hoàn toàn trong trình duyệt, không server; phù hợp GitHub Pages, Cloudflare Pages hoặc LAN.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/web-dist.tar.gz" target="_blank" rel="noopener">Tải web-dist · 109 MB <span>TAR.GZ</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Giải nén</strong><pre class="cmd"><code>tar -xzf web-dist.tar.gz
+cd web-dist</code></pre></li>
+              <li><strong>Phục vụ qua HTTP</strong><span>Không mở bằng <code>file://</code> vì WASM/model cần HTTP:</span><pre class="cmd"><code>python3 -m http.server 8080</code></pre></li>
+              <li><strong>Mở trình duyệt</strong><span>Truy cập <code>http://127.0.0.1:8080</code>; mặc định chạy local WASM.</span></li>
+              <li><strong>Nạp giọng khác (tuỳ chọn)</strong><span>Dùng input <code>.vfa/.vfts</code> trong web; file được kiểm SHA256 trước khi tạo session.</span></li>
+              <li><strong>Dùng server (tuỳ chọn)</strong><span>Nếu web được server phục vụ, app tự kiểm tra <code>/healthz</code> và chuyển sang remote same-origin.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Trình duyệt hỗ trợ WebAssembly</li>
+              <li>~200 MB RAM khi nạp model</li>
+              <li>Model + ORT wasm đi kèm</li>
+              <li>HTTPS hoặc localhost để dùng mic/share</li>
+            </ul>
+            <div class="note">Lần đầu tải model ~86 MB có thể chậm; sau đó trình duyệt cache. CPU yếu sẽ chậm hơn native.</div>
+            <div class="note">Đây là bản web tĩnh; muốn API/server đầy đủ, dùng gói CLI/desktop hoặc Docker demo.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố web tĩnh</summary>
+          <div class="trouble-body">
+            <p><b>Mở file HTML trực tiếp bị lỗi:</b> WASM/model không tải được qua <code>file://</code>; luôn phục vụ bằng HTTP server.</p>
+            <p><b>Model không nạp:</b> kiểm tra Network tab, đảm bảo thư mục <code>models/</code> nằm cạnh web-dist và server trả đúng MIME.</p>
+            <p><b>Trang trắng:</b> xoá cache/service worker cũ, thử cửa sổ ẩn danh; kiểm tra console lỗi WASM.</p>
+            <p><b>Chậm:</b> giảm max ký tự/chunk trong UI; đóng tab nặng khác; ưu tiên bản desktop nếu máy yếu.</p>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <details class="trouble">
+      <summary>Kiểm tra SHA256 trước khi cài (tuỳ chọn nhưng nên làm)</summary>
+      <div class="trouble-body">
+        <p>Tải <code>SHA256SUMS.txt</code> cùng release, đặt cạnh file vừa tải. macOS/Linux:</p>
+        <pre class="cmd"><code>grep 'vifasttts-desktop-windows-x64.zip' SHA256SUMS.txt | shasum -a 256 -c -</code></pre>
+        <p>Windows PowerShell:</p>
+        <pre class="cmd"><code>Get-FileHash .\vifasttts-desktop-windows-x64.zip -Algorithm SHA256</code></pre>
+        <p>So hash với dòng tương ứng trong <code>SHA256SUMS.txt</code>. Không khớp → tải lại; không chạy file lạ.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="section wrap" id="mo-hinh">
+    <div class="model-panel">
+      <div>
+        <div class="eyebrow">Mô hình</div>
+        <h2>Một giọng. Hai định dạng bundle.</h2>
+        <p>Model <strong>N0 Ngọc Huyền Q-init</strong>: acoustic small 6,1M, 24 kHz, ONNX FP32. Dùng bundle để đổi giọng hoặc tải riêng cho app/CLI; desktop/extension/mobile đã có model sẵn.</p>
+        <div class="model-foot">
+          <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/n0-ngochuyen.vfa" target="_blank" rel="noopener">n0-ngochuyen.vfa · 28 MB</a>
+          <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.4/n0-ngochuyen.vfts" target="_blank" rel="noopener">n0-ngochuyen.vfts · 76 MB</a>
+          <a class="dl-btn" href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face ↗</a>
+        </div>
+      </div>
+      <div class="bundle-grid">
+        <div class="bundle">
+          <div class="bundle-head"><strong><code>.vfa</code> — acoustic-only</strong><span>28 MB</span></div>
+          <p>Chỉ chứa acoustic; cần vocoder ONNX đi kèm. Nhẹ, phù hợp khi đã có vocoder trong app/server.</p>
+        </div>
+        <div class="bundle">
+          <div class="bundle-head"><strong><code>.vfts</code> — full bundle</strong><span>76 MB</span></div>
+          <p>Tự chứa vocoder + frontend; nạp một file là chạy. Phù hợp chia sẻ, mobile và web.</p>
+        </div>
+        <div class="bundle">
+          <div class="bundle-head"><strong>Thông tin model</strong><span>N0</span></div>
+          <p><code>arch=v2_slot5</code> · <code>vocab_version=vi-q25-v1</code> · 24 kHz · một giọng nữ Bắc. License model/dataset <b>CC BY-NC 4.0</b>, code MIT.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="api">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">API &amp; Python</div>
+        <h2>Gọi model bằng<br><span class="accent">một request.</span></h2>
+      </div>
+      <p>Demo VPS đã mở API công khai để thử. Muốn chạy riêng, dùng <code>vifasttts server</code> hoặc quickstart Python — cùng engine ONNX, không cần torch.</p>
+    </div>
+    <div class="api-grid">
+      <div>
+        <ul class="endpoint-list">
+          <li class="endpoint"><span class="method post">POST</span><div><code>/api/tts</code><p>Trả WAV 24 kHz. Nhận <code>text</code>, <code>speed</code>, <code>alpha</code>, <code>dialect</code>, <code>overrides</code>.</p></div></li>
+          <li class="endpoint"><span class="method post">POST</span><div><code>/api/tts/stream</code><p>NDJSON: <code>units → audio PCM16 → done</code>; dùng cho phát ngay.</p></div></li>
+          <li class="endpoint"><span class="method">GET</span><div><code>/api/config</code><p>Giới hạn, defaults và capabilities để UI tự cấu hình.</p></div></li>
+          <li class="endpoint"><span class="method">GET</span><div><code>/api/overrides</code><p>Từ điển có sẵn, quy tắc đã duyệt và ví dụ STEM.</p></div></li>
+          <li class="endpoint"><span class="method post">POST</span><div><code>/api/feedback</code><p>Góp ý/báo lỗi; nội dung chỉ admin xem.</p></div></li>
+          <li class="endpoint"><span class="method">GET</span><div><code>/healthz</code><p>Trạng thái model, arch, vocab hash, alpha.</p></div></li>
+        </ul>
+        <p class="api-note">Demo công khai: tối đa <b>3000 ký tự</b>, <b>6 lượt/phút/IP</b>, không lưu văn bản hay audio. Hợp đồng đầy đủ: <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/API_CONTRACT.md" target="_blank" rel="noopener">docs/API_CONTRACT.md ↗</a></p>
+      </div>
+      <div>
+        <div class="code-panel">
+          <div class="code-head"><span></span><span></span><span></span><em>curl · WAV</em></div>
+          <pre><code><span class="c-muted"># tạo file WAV từ câu tiếng Việt</span>
+curl -s https://vifasttts.hoctuthien.com/api/tts \
+  -H <span class="c-str">'content-type: application/json'</span> \
+  -d <span class="c-str">'{"text":"Xin chào, đây là ViFastTts.","speed":1.0}'</span> \
+  -o out.wav</code></pre>
+        </div>
+        <div class="code-panel">
+          <div class="code-head"><span></span><span></span><span></span><em>python · local server</em></div>
+          <pre><code><span class="c-key">import</span> requests
+
+r = requests.post(
+    <span class="c-str">"http://127.0.0.1:8000/api/tts"</span>,
+    json={<span class="c-str">"text"</span>: <span class="c-str">"Xin chào"</span>, <span class="c-str">"speed"</span>: <span class="c-num">1.0</span>},
+    timeout=<span class="c-num">120</span>,
+)
+r.raise_for_status()
+open(<span class="c-str">"out.wav"</span>, <span class="c-str">"wb"</span>).write(r.content)</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="python-quick">
+      <div class="quick-card">
+        <h4>Quickstart demo Python</h4>
+        <p>Cần Python ≥ 3.11; script tự tải ONNX (kiểm sha256), tạo venv và chạy web ở cổng 8090.</p>
+        <pre class="cmd"><code>git clone https://github.com/dvchd/ViFastTts.git
+cd ViFastTts
+./scripts/run_ngochuyen_demo.sh</code></pre>
+        <p style="margin-top:8px">Windows PowerShell:</p>
+        <pre class="cmd"><code>powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1</code></pre>
+      </div>
+      <div class="quick-card">
+        <h4>CLI ONNX (không cần torch)</h4>
+        <p>Cài package và gọi trực tiếp bằng ONNX Runtime + numpy.</p>
+        <pre class="cmd"><code>cd ViFastTts
+pip install -e ".[onnx]"
+vifasttts synthesize-onnx \
+  --acoustic acoustic.onnx \
+  --vocoder vocoder.onnx \
+  --text "Xin chào" \
+  --output out.wav</code></pre>
+        <p style="margin-top:8px">Tài liệu: <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/PYTHON_ENGINE.md" target="_blank" rel="noopener">PYTHON_ENGINE.md ↗</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="lien-ket">
+    <div class="related-panel">
+      <div>
+        <div class="eyebrow">Dự án liên quan</div>
+        <h2>ViFastKey — bộ gõ tiếng Việt.</h2>
+        <p>Telex, Simple Telex, VNI và VIQR trên một lõi Rust nhỏ, chạy local. Có WASM để gõ thử trong trình duyệt, C ABI cho IMK/TSF/Fcitx5/IBus, API Python và app cho macOS, Windows, Linux, Android, iOS.</p>
+      </div>
+      <div class="related-actions">
+        <a class="primary-btn" href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">Mở ViFastKey <span aria-hidden="true">↗</span></a>
+        <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub ViFastKey <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="faq">
+    <div class="section-head compact">
+      <div>
+        <div class="eyebrow">Hỏi đáp</div>
+        <h2>Những câu thường gặp.</h2>
+      </div>
+      <p>Không thấy câu trả lời? Gửi góp ý ở trang demo — nội dung chỉ admin xem.</p>
+    </div>
+    <div class="faq-grid">
+      <details class="faq"><summary>Dùng thương mại được không?</summary><p>Code repo là <b>MIT</b>, nhưng model mẫu và dataset <code>ngochuyen_voice</code> là <b>CC BY-NC 4.0</b> — chỉ dùng nghiên cứu/phi thương mại. Không dùng để giả giọng, lừa đảo hoặc bán lại khi chưa có quyền riêng.</p></details>
+      <details class="faq"><summary>Cần GPU hay Python không?</summary><p>Không, với app desktop, extension và mobile: model + ONNX Runtime đã đóng gói. Python chỉ cần khi chạy quickstart/dev hoặc train; ONNX chạy CPU là đủ cho demo và phần lớn nhu cầu.</p></details>
+      <details class="faq"><summary>Vì sao chỉ có một giọng?</summary><p>Mỗi checkpoint là một người nói, một phương ngữ — không cần <code>speaker_id</code> hay audio mẫu. Muốn giọng khác, train checkpoint mới theo <code>docs/TRAINING_N0.md</code> rồi export ONNX.</p></details>
+      <details class="faq"><summary>macOS Intel có bản không?</summary><p>Bản phát hành hiện chỉ có <b>arm64</b> (Apple Silicon). Máy Intel có thể dùng web demo, Python/ONNX hoặc build từ source; xem <code>docs/INSTALL.md</code>.</p></details>
+      <details class="faq"><summary>App có trên App Store / CH Play chưa?</summary><p>Chưa. Android là APK debug (cài ngoài store); iOS chỉ chạy Simulator, chưa ký Apple Developer. Desktop cũng chưa ký số nên có cảnh báo SmartScreen/Gatekeeper.</p></details>
+      <details class="faq"><summary>Demo có lưu văn bản hay audio không?</summary><p>Không lưu văn bản hay audio. Server chỉ ghi thống kê ẩn danh (số ký tự, thời lượng, thời gian xử lý, hash visitor), không lưu IP/text; góp ý chỉ admin xem khi đã đặt mật khẩu.</p></details>
+      <details class="faq"><summary>RTF ~0,03 nghĩa là gì?</summary><p>RTF = thời gian xử lý chia cho thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực. Con số ~0,03 đo trên VPS CPU với ONNX; máy yếu hơn sẽ chậm hơn, máy mạnh hơn có thể nhanh hơn.</p></details>
+      <details class="faq"><summary>Làm sao báo lỗi hoặc góp ý?</summary><p>Mở <a href="demo.html#feedback" data-demo-feedback>trang demo đầy đủ</a> và dùng form <b>Góp ý / báo lỗi</b>. Nếu là lỗi cài đặt, kèm hệ điều hành, file đã tải và thông báo lỗi để dễ tái hiện.</p></details>
+    </div>
+  </section>
 </main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="brand/vifasttts-icon-192.png" width="34" height="34" alt="">
+      <div><strong>ViFastTts</strong><span>Giọng đọc tiếng Việt · research, phi thương mại</span></div>
+    </div>
+    <p>Code MIT · model/dataset CC BY-NC 4.0 · không dùng giả giọng, lừa đảo hoặc production thương mại. Model N0 Ngọc Huyền Q-init, ONNX FP32.</p>
+    <div class="footer-links">
+      <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
+      <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a>
+      <a href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">ViFastKey</a>
+      <a href="https://vifasttts.hoctuthien.com/admin">Thống kê</a>
+      <button type="button" id="footer-feedback">Góp ý</button>
+      <a href="#nghe-thu">Nghe thử</a>
+    </div>
+  </div>
+</footer>
+
 <script>
 const $ = (id) => document.getElementById(id);
-const text = $("text"), count = $("count"), status = $("status"), player = $("player");
-let currentUrl = null;
-let currentBlob = null;
-let generateTimer = null;
-const VISIT_URL = "/api/visit";
-const API_URL = "/api/tts";
-const STREAM_URL = "/api/tts/stream";
-const FEEDBACK_URL = "/api/feedback";
-const SOURCE = "web";
-const CONFIG_URL = "/api/config";
-const HISTORY_KEY = "vifasttts_demo_history_v1";
-const HISTORY_LIMIT = 8;
-let maxChars = 3000;
+const HF_HOST = /(^|\.)hf\.space$/i.test(location.hostname);
+const FILE_HOST = location.protocol === "file:";
+// Space tĩnh gọi VPS qua CORS; bản VPS và bản chạy local dùng same-origin.
+const API_BASE = HF_HOST || FILE_HOST ? "https://vifasttts.hoctuthien.com" : "";
+const DEMO_URL = HF_HOST || FILE_HOST ? "demo.html" : "/demo";
+const SOURCE = HF_HOST ? "space" : "web";
+
+document.querySelectorAll("[data-demo-link]").forEach((link) => { link.href = DEMO_URL; });
+document.querySelectorAll("[data-demo-feedback]").forEach((link) => { link.href = `${DEMO_URL}#feedback`; });
+$("footer-feedback").addEventListener("click", () => {
+  window.location.href = `${DEMO_URL}#feedback`;
+});
+
 function visitorId() {
   try {
     let id = localStorage.getItem("vifasttts_visitor_v1");
@@ -398,547 +1217,202 @@ function visitorId() {
       localStorage.setItem("vifasttts_visitor_v1", id);
     }
     return id;
-  } catch (_) { return "anon-" + Math.random().toString(36).slice(2); }
+  } catch (_) {
+    return "anon-" + Math.random().toString(36).slice(2);
+  }
 }
 const VISITOR_ID = visitorId();
-fetch(VISIT_URL, {method: "POST", headers: {"Content-Type": "application/json"},
-  body: JSON.stringify({visitor_id: VISITOR_ID})}).catch(() => {});
 
-const OVERRIDES_URL = "/api/overrides";
-const SUGGEST_URL = "/api/overrides/suggest";
-const OVERRIDES_KEY = "vifasttts_overrides_v1";
-const SHARE_KEY = "vifasttts_share_overrides_v1";
-const rulesBox = $("overrides");
-const shareBox = $("shareOverrides");
-const overrideStatus = $("overrideStatus");
-try { if (localStorage.getItem(SHARE_KEY) === "0") shareBox.checked = false; } catch (_) {}
-shareBox.addEventListener("change", () => {
-  lastSuggestedRules = "";
-  try { localStorage.setItem(SHARE_KEY, shareBox.checked ? "1" : "0"); } catch (_) {}
-});
-function parseRules(value) {
-  const rules = {};
-  for (const line of value.split("\n")) {
-    const pos = line.indexOf("=");
-    if (pos < 1) continue;
-    const key = line.slice(0, pos).trim(), val = line.slice(pos + 1).trim();
-    if (key && val) rules[key] = val;
-  }
-  return rules;
-}
-function readStoredRules() {
-  for (const store of [localStorage, sessionStorage]) {
-    try {
-      const raw = store.getItem(OVERRIDES_KEY);
-      if (raw && raw !== "{}") return raw;
-    } catch (_) {}
-  }
-  return null;
-}
-function writeStoredRules(value) {
-  // Ưu tiên localStorage (bền qua tab); nếu browser/iframe chặn thì sessionStorage
-  // vẫn giữ được qua F5 trong cùng tab.
-  for (const store of [localStorage, sessionStorage]) {
-    try { store.setItem(OVERRIDES_KEY, value); return true; } catch (_) {}
-  }
-  return false;
-}
-function saveRules() {
-  const rules = parseRules(rulesBox.value);
-  if (Object.keys(rules).length > 50) {
-    overrideStatus.textContent = "Tối đa 50 quy tắc.";
-    return false;
-  }
-  if (!writeStoredRules(JSON.stringify(rules))) {
-    overrideStatus.textContent = "Trình duyệt chặn lưu local; quy tắc chỉ dùng trong phiên này.";
-    return false;
-  }
-  return true;
-}
-let lastSuggestedRules = "";
-async function syncSharedRules() {
-  if (!shareBox.checked) return false;
-  const rules = parseRules(rulesBox.value);
-  if (!Object.keys(rules).length || Object.keys(rules).length > 50) return false;
-  const signature = JSON.stringify(rules);
-  if (signature === lastSuggestedRules) return false;
-  overrideStatus.textContent = "Đang gửi quy tắc để duyệt...";
+// Chỉ ghi một lượt/phiên để landing + demo không nhân đôi thống kê.
+function trackVisit() {
   try {
-    const response = await fetch(SUGGEST_URL, {
-      method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({rules: rules, visitor_id: VISITOR_ID, source: SOURCE})
-    });
-    if (!response.ok) throw new Error("gửi thất bại");
-    const data = await response.json();
-    lastSuggestedRules = signature;
-    overrideStatus.textContent = `Đã gửi ${data.queued} quy tắc chờ duyệt.`;
-    return true;
-  } catch (_) {
-    overrideStatus.textContent = "Đã lưu local; gửi đề xuất thất bại.";
-    return false;
-  }
+    if (sessionStorage.getItem("vifasttts_visit_v1")) return;
+    sessionStorage.setItem("vifasttts_visit_v1", "1");
+  } catch (_) {}
+  fetch(`${API_BASE}/api/visit`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({visitor_id: VISITOR_ID}),
+  }).catch(() => {});
 }
-try {
-  const stored = JSON.parse(readStoredRules() || "{}");
-  rulesBox.value = Object.entries(stored).map(([k, v]) => `${k} = ${v}`).join("\n");
-  if (Object.keys(stored).length) {
-    overrideStatus.textContent = `Đã khôi phục ${Object.keys(stored).length} quy tắc local.`;
-  }
-} catch (_) {
-  overrideStatus.textContent = "Không đọc được storage; quy tắc chỉ dùng trong phiên này.";
+trackVisit();
+
+const quickText = $("quick-text");
+const quickCount = $("quick-count");
+const quickStatus = $("quick-status");
+const quickPlayer = $("quick-player");
+const quickAudio = $("quick-audio");
+let quickMax = 3000;
+let quickAlpha = 1.5;
+let quickUrl = null;
+let quickController = null;
+
+function setQuickStatus(message, isError = false) {
+  quickStatus.textContent = message;
+  quickStatus.className = isError ? "qd-status err" : "qd-status";
 }
-rulesBox.addEventListener("input", () => {
-  if (!saveRules()) return;
-  lastSuggestedRules = "";
-  if (shareBox.checked) {
-    overrideStatus.textContent = "Đã lưu local; sẽ gửi khi tạo âm thanh.";
-  } else {
-    overrideStatus.textContent = "Đã lưu local; checkbox đang tắt nên không gửi.";
-  }
-});
-rulesBox.addEventListener("change", () => { saveRules(); });
-window.addEventListener("pagehide", () => { saveRules(); });
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") saveRules();
-});
-document.querySelectorAll("[data-rule]").forEach((button) => button.addEventListener("click", () => {
-  const line = button.dataset.rule;
-  const existing = rulesBox.value.split("\n").map((item) => item.trim());
-  if (!existing.includes(line.trim())) {
-    rulesBox.value = rulesBox.value.trim() ? rulesBox.value.trim() + "\n" + line : line;
-  }
-  saveRules();
-  lastSuggestedRules = "";
-  overrideStatus.textContent = "Đã thêm ví dụ; bấm Tạo âm thanh để dùng.";
-}));
-$("showBuiltin").addEventListener("click", async () => {
-  const pre = $("builtin");
-  if (!pre.hidden) { pre.hidden = true; return; }
-  pre.hidden = false; pre.textContent = "Đang tải...";
-  try {
-    const response = await fetch(OVERRIDES_URL);
-    const data = await response.json();
-    const merged = {...(data.builtin || {}), ...(data.approved || {})};
-    const lines = Object.entries(merged).map(([k, v]) => `${k} = ${v}`);
-    const stem = data.stem || {};
-    if (stem.groups && stem.groups.length) {
-      lines.push("", "[STEM NỘI BỘ — VÍ DỤ]");
-      if (stem.note) lines.push(stem.note);
-      for (const group of stem.groups) {
-        lines.push(`[${group.label}]`);
-        for (const item of group.items || []) lines.push(`${item.input} = ${item.reading}`);
-      }
-    }
-    pre.textContent = lines.length ? lines.join("\n") : "Chưa có từ điển có sẵn.";
-    const stemCount = (stem.groups || []).reduce((n, group) => n + (group.items || []).length, 0);
-    overrideStatus.textContent = `${Object.keys(merged).length} quy tắc có sẵn/đã duyệt + ${stemCount} ví dụ STEM, chỉ đọc.`;
-  } catch (_) { pre.textContent = "Không tải được từ điển có sẵn."; }
-});
-const feedbackForm = $("feedbackForm");
-const fbMessage = $("feedbackMessage");
-const fbCount = $("fbCount");
-const feedbackStatus = $("feedbackStatus");
-const feedbackLink = $("feedbackLink");
-if (feedbackLink) {
-  feedbackLink.addEventListener("click", () => {
-    setTimeout(() => { $("feedback").scrollIntoView({block: "center"}); fbMessage.focus(); }, 30);
-  });
+function updateQuickCount() {
+  quickCount.textContent = `${quickText.value.length}/${quickMax}`;
 }
-fbMessage.addEventListener("input", () => { fbCount.textContent = `${fbMessage.value.length}/1000`; });
-feedbackForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const message = fbMessage.value.trim();
-  if (message.length < 5) {
-    feedbackStatus.textContent = "Nội dung cần ít nhất 5 ký tự.";
-    feedbackStatus.className = "err";
-    fbMessage.focus();
-    return;
-  }
-  const button = $("feedbackSubmit");
-  button.disabled = true;
-  feedbackStatus.textContent = "Đang gửi...";
-  feedbackStatus.className = "";
-  try {
-    const response = await fetch(FEEDBACK_URL, {
-      method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        category: $("fbCategory").value,
-        message: message,
-        contact: $("fbContact").value.trim(),
-        website: $("fbWebsite").value,
-        visitor_id: VISITOR_ID,
-        source: SOURCE,
-      }),
-    });
-    let payload = {};
-    try { payload = await response.json(); } catch (_) {}
-    if (!response.ok) throw new Error(payload.detail || "Gửi chưa được; thử lại sau.");
-    feedbackForm.reset();
-    fbCount.textContent = "0/1000";
-    feedbackStatus.textContent = "Đã gửi. Cảm ơn bạn!";
-    feedbackStatus.className = "";
-  } catch (err) {
-    feedbackStatus.textContent = err.message || "Gửi chưa được; thử lại sau.";
-    feedbackStatus.className = "err";
-  } finally {
-    button.disabled = false;
-  }
-});
-function currentOverrides() { return parseRules(rulesBox.value); }
-function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }
-function updateCount() { count.textContent = `${text.value.length}/${maxChars}`; }
-function loadHistory() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-    return Array.isArray(raw) ? raw.filter((item) => item && typeof item.text === "string").slice(0, HISTORY_LIMIT) : [];
-  } catch (_) { return []; }
-}
-function saveHistory(items) {
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_LIMIT))); } catch (_) {}
-}
-function renderHistory() {
-  const items = loadHistory();
-  const card = $("historyCard"), list = $("historyList");
-  if (!card || !list) return;
-  card.hidden = !items.length;
-  list.textContent = "";
-  for (const item of items) {
-    const button = document.createElement("button");
-    button.type = "button"; button.className = "history-item";
-    const textEl = document.createElement("span");
-    textEl.className = "htext"; textEl.textContent = item.text;
-    const meta = document.createElement("span");
-    meta.className = "hmeta";
-    const when = item.at ? new Date(item.at).toLocaleString("vi-VN", {hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit"}) : "";
-    const mode = item.mode === "stream" ? "stream" : "full";
-    const rtf = Number.isFinite(Number(item.rtf)) ? ` · RTF ${Number(item.rtf).toFixed(4)}` : "";
-    const audio = Number.isFinite(Number(item.audio)) ? ` · ${formatAudio(Number(item.audio))}` : "";
-    meta.textContent = `${when} · ${mode}${audio}${rtf}`;
-    button.append(textEl, meta);
-    button.addEventListener("click", () => {
-      text.value = item.text; updateCount(); text.focus();
-      setStatus("Đã đưa câu trong lịch sử vào ô nhập.");
-    });
-    list.appendChild(button);
-  }
-}
-function addHistory(value, mode, audio, processing, rtf) {
-  const items = loadHistory();
-  items.unshift({
-    text: value.slice(0, 500), mode, audio: Number(audio) || 0,
-    processing: Number(processing) || 0, rtf: Number(rtf) || 0, at: Date.now(),
-  });
-  saveHistory(items);
-  renderHistory();
-}
-function cancelGeneration() {
-  if (activeController) { try { activeController.abort(); } catch (_) {} }
-  if (streamAudioContext) { streamAudioContext.close().catch(() => {}); streamAudioContext = null; }
-  setStatus("Đã dừng.");
-}
-async function shareAudio() {
-  if (!currentBlob) { setStatus("Chưa có audio để chia sẻ.", true); return; }
-  const file = new File([currentBlob], "vifasttts-demo.wav", {type: "audio/wav"});
-  try {
-    if (!navigator.canShare || !navigator.canShare({files: [file]})) {
-      setStatus("Trình duyệt không hỗ trợ chia sẻ file; bấm Tải WAV.", true);
-      return;
-    }
-    await navigator.share({files: [file], title: "ViFastTts", text: "Audio tạo bởi ViFastTts"});
-    setStatus("Đã mở hộp thoại chia sẻ.");
-  } catch (error) {
-    if (error.name !== "AbortError") setStatus("Không chia sẻ được; bấm Tải WAV.", true);
-  }
-}
-function syncStreamPeak() {
-  const stream = $("streamMode") && $("streamMode").checked;
-  if ($("peakNormalize")) {
-    $("peakNormalize").disabled = Boolean(stream);
-    $("peakNormalize").title = stream ? "Peak normalize cần biết đỉnh toàn file nên không dùng khi stream." : "";
-  }
-  if ($("peakStreamNote")) $("peakStreamNote").hidden = !stream;
-}
-let activeController = null;
-fetch(CONFIG_URL).then((response) => response.ok ? response.json() : null).then((data) => {
-  const limit = Number(data && data.max_chars);
-  if (Number.isFinite(limit) && limit >= 100) {
-    maxChars = limit; text.maxLength = limit;
-    const label = $("limitLabel"); if (label) label.textContent = `Tối đa ${limit} ký tự`;
-    updateCount();
-  }
-  const defaults = data && data.defaults;
-  if (defaults) {
-    if (Number.isFinite(Number(defaults.speed)) && $("speed")) { $("speed").value = defaults.speed; if ($("speedOut")) $("speedOut").textContent = Number(defaults.speed).toFixed(2) + "×"; }
-    if (Number.isFinite(Number(defaults.alpha)) && $("alpha")) { $("alpha").value = defaults.alpha; if ($("alphaOut")) $("alphaOut").textContent = Number(defaults.alpha).toFixed(2); }
-    if (Number.isFinite(Number(defaults.max_chars)) && $("chunkChars")) $("chunkChars").value = defaults.max_chars;
-    if (defaults.dialect && $("dialect")) $("dialect").value = defaults.dialect;
-    if ($("fixed")) $("fixed").checked = Boolean(defaults.fixed_pauses);
-    if ($("peakNormalize")) $("peakNormalize").checked = Boolean(defaults.peak_normalize);
-    if ($("resolveOov")) $("resolveOov").checked = defaults.resolve_oov !== false;
-  }
-  const streamMode = $("streamMode");
-  if (streamMode && data && data.capabilities && data.capabilities.stream === false) {
-    streamMode.parentElement.hidden = true;
-  }
-}).catch(() => {});
 function formatAudio(seconds) {
   if (!Number.isFinite(seconds)) return "";
   const total = Math.round(seconds);
   return total >= 60 ? `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}` : `${seconds.toFixed(1)}s`;
 }
-text.addEventListener("input", updateCount);
-$("streamMode").addEventListener("change", syncStreamPeak);
-$("cancel").addEventListener("click", cancelGeneration);
-$("share").addEventListener("click", shareAudio);
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !$("cancel").hidden) cancelGeneration();
-});
-$("clearHistory").addEventListener("click", () => {
-  saveHistory([]); renderHistory(); setStatus("Đã xoá lịch sử trên máy này.");
-});
-renderHistory(); syncStreamPeak();
-$("speed").addEventListener("input", (e) => { $("speedOut").textContent = Number(e.target.value).toFixed(2) + "×"; });
-$("alpha").addEventListener("input", (e) => { $("alphaOut").textContent = Number(e.target.value).toFixed(2); });
-document.querySelectorAll("[data-text]").forEach((b) => b.addEventListener("click", () => {
-  text.value = b.dataset.text; updateCount(); text.focus();
-}));
-$("clear").addEventListener("click", () => {
-  text.value = ""; updateCount(); setStatus(""); player.style.display = "none";
-  const metrics = $("metrics"); if (metrics) metrics.hidden = true;
-  if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
-  currentBlob = null; if ($("share")) $("share").hidden = true;
-  if (streamAbort) { streamAbort.abort(); streamAbort = null; }
-  if (activeController) { try { activeController.abort(); } catch (_) {} activeController = null; }
-  if (streamAudioContext) { streamAudioContext.close().catch(() => {}); streamAudioContext = null; }
-  $("downloadSrt").hidden = true;
-  $("downloadVtt").hidden = true;
-});
-let streamAbort = null;
-let streamAudioContext = null;
+function setQuickBusy(busy) {
+  $("quick-go").disabled = busy;
+  $("quick-cancel").hidden = !busy;
+}
+function cancelQuick() {
+  if (quickController) { try { quickController.abort(); } catch (_) {} }
+  setQuickBusy(false);
+  setQuickStatus("Đã dừng.");
+}
 
-function streamTime(ms, vtt = false) {
-  const total = Math.max(0, Math.round(ms));
-  const hours = Math.floor(total / 3600000);
-  const minutes = Math.floor((total % 3600000) / 60000);
-  const seconds = Math.floor((total % 60000) / 1000);
-  const millis = total % 1000;
-  return `${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}${vtt ? "." : ","}${String(millis).padStart(3,"0")}`;
-}
-function streamLines(units) {
-  const lines = []; let current = [];
-  for (const unit of units || []) {
-    current.push(unit);
-    const length = current.reduce((sum, item) => sum + String(item.text || "").length + 1, 0);
-    if (unit.sentence_end || length >= 80) { lines.push(current); current = []; }
+fetch(`${API_BASE}/api/config`).then((response) => response.ok ? response.json() : null).then((data) => {
+  const limit = Number(data && data.max_chars);
+  if (Number.isFinite(limit) && limit >= 100) {
+    quickMax = limit;
+    quickText.maxLength = limit;
+    updateQuickCount();
   }
-  if (current.length) lines.push(current);
-  return lines;
-}
-function streamSrt(units) {
-  return streamLines(units).map((line, index) => {
-    const text = line.map((unit) => `${unit.text || ""}${unit.punctuation || ""}`).join(" ");
-    return `${index + 1}\n${streamTime(line[0].start_ms)} --> ${streamTime(line[line.length - 1].end_ms)}\n${text}`;
-  }).join("\n\n") + (units && units.length ? "\n" : "");
-}
-function streamVtt(units) {
-  const lines = ["WEBVTT", ""];
-  for (const line of streamLines(units)) {
-    lines.push(`${streamTime(line[0].start_ms, true)} --> ${streamTime(line[line.length - 1].end_ms, true)}`);
-    for (const unit of line) lines.push(`<${streamTime(unit.start_ms, true)}>${unit.text || ""}${unit.punctuation || ""}`);
-    lines.push("");
+  const alpha = Number(data && data.defaults && data.defaults.alpha);
+  if (Number.isFinite(alpha) && alpha > 0) quickAlpha = alpha;
+}).catch(() => {});
+fetch(`${API_BASE}/healthz`).then((response) => {
+  if (!response.ok) throw new Error("offline");
+}).catch(() => {
+  const badge = document.getElementById("header-live");
+  if (badge) {
+    badge.classList.add("off");
+    badge.title = "Không kết nối được API demo";
+    const label = document.getElementById("header-live-label");
+    if (label) label.textContent = "API offline";
   }
-  return lines.join("\n");
-}
-function streamWav(pcm, sampleRate) {
-  const buffer = new ArrayBuffer(44 + pcm.length);
-  const view = new DataView(buffer);
-  const text = (offset, value) => { for (let i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i)); };
-  text(0, "RIFF"); view.setUint32(4, 36 + pcm.length, true); text(8, "WAVEfmt ");
-  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
-  view.setUint16(32, 2, true); view.setUint16(34, 16, true); text(36, "data");
-  view.setUint32(40, pcm.length, true); new Uint8Array(buffer, 44).set(pcm);
-  return new Blob([buffer], { type: "audio/wav" });
-}
-function streamNum(id, fallback) { const el = $(id); const value = el ? Number(el.value) : NaN; return Number.isFinite(value) ? value : fallback; }
-function streamVal(id, fallback) { const el = $(id); return el && el.value ? el.value : fallback; }
-function streamChecked(id, fallback = false) { const el = $(id); return el ? el.checked : fallback; }
-async function streamGenerate(value, started) {
-  if (streamAbort) streamAbort.abort();
-  if (streamAudioContext) { try { await streamAudioContext.close(); } catch (_) {} }
+});
+
+async function quickGenerate() {
+  const text = quickText.value.trim();
+  if (!text) {
+    setQuickStatus("Nhập câu cần đọc trước.", true);
+    quickText.focus();
+    return;
+  }
+  if (quickController) { try { quickController.abort(); } catch (_) {} }
   const controller = new AbortController();
-  streamAbort = controller;
-  activeController = controller;
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  streamAudioContext = ctx;
-  try { await ctx.resume(); } catch (_) {}
-  let nextTime = ctx.currentTime + 0.08;
-  const pcmParts = []; const units = []; let samples = 0; let doneInfo = null;
-  if (generateTimer) { clearInterval(generateTimer); generateTimer = null; }
-  try {
-    const response = await fetch(STREAM_URL, {
-      method: "POST", headers: {"Content-Type": "application/json"}, signal: controller.signal,
-      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: false, dialect: $("dialect").value, resolve_oov: $("resolveOov").checked, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()}),
-    });
-    if (!response.ok) {
-      let detail = "Không stream được âm thanh.";
-      try { const j = await response.json(); if (j.detail) detail = j.detail; } catch (_) {}
-      throw new Error(detail);
-    }
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let pending = "";
-    const handle = (event) => {
-      if (event.type === "units" && Array.isArray(event.units)) units.push(...event.units);
-      if (event.type === "done") doneInfo = event;
-      if (event.type === "error") throw new Error(event.message || "Server stream lỗi");
-      if (event.type === "audio" && event.pcm_base64) {
-        const binary = atob(event.pcm_base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-        pcmParts.push(bytes);
-        const floats = new Float32Array(bytes.length / 2);
-        for (let i = 0; i < floats.length; i += 1) {
-          const low = bytes[i * 2], high = bytes[i * 2 + 1];
-          let value16 = (high << 8) | low;
-          if (value16 >= 0x8000) value16 -= 0x10000;
-          floats[i] = value16 / 32768;
-        }
-        if (floats.length) {
-          const buffer = ctx.createBuffer(1, floats.length, event.sample_rate || 24000);
-          buffer.copyToChannel(floats, 0);
-          const source = ctx.createBufferSource();
-          source.buffer = buffer; source.connect(ctx.destination);
-          const at = Math.max(nextTime, ctx.currentTime + 0.02);
-          source.start(at); nextTime = at + buffer.duration;
-          samples += floats.length;
-          setStatus(`Đang stream… đã nhận ${formatAudio(samples / 24000)}`);
-        }
-      }
-    };
-    for (;;) {
-      const { value: chunk, done } = await reader.read();
-      if (done) break;
-      pending += decoder.decode(chunk, { stream: true });
-      const lines = pending.split("\n"); pending = lines.pop() || "";
-      for (const line of lines) if (line.trim()) handle(JSON.parse(line));
-    }
-    pending += decoder.decode();
-    if (pending.trim()) handle(JSON.parse(pending));
-    if (!samples) throw new Error("Server không trả audio.");
-    const total = pcmParts.reduce((sum, part) => sum + part.length, 0);
-    const pcm = new Uint8Array(total); let cursor = 0;
-    for (const part of pcmParts) { pcm.set(part, cursor); cursor += part.length; }
-    if (currentUrl) URL.revokeObjectURL(currentUrl);
-    currentBlob = streamWav(pcm, 24000);
-    currentUrl = URL.createObjectURL(currentBlob);
-    $("audio").src = currentUrl; $("download").href = currentUrl;
-    if ($("share")) $("share").hidden = !(navigator.canShare && navigator.canShare({files: [new File([currentBlob], "vifasttts-demo.wav", {type: "audio/wav"})]}));
-    const srt = streamSrt(units); const vtt = streamVtt(units);
-    for (const [id, text, type] of [["downloadSrt", srt, "text/plain"], ["downloadVtt", vtt, "text/vtt"]]) {
-      const link = $(id); if (!link) continue;
-      if (text) { link.href = URL.createObjectURL(new Blob([text], {type})); link.hidden = false; } else link.hidden = true;
-    }
-    player.style.display = "block";
-    const audioSeconds = doneInfo && Number.isFinite(Number(doneInfo.audio_seconds)) ? Number(doneInfo.audio_seconds) : samples / 24000;
-    const processing = doneInfo && Number.isFinite(Number(doneInfo.processing_seconds)) ? Number(doneInfo.processing_seconds) : (performance.now() - started) / 1000;
-    const rtf = doneInfo && Number.isFinite(Number(doneInfo.rtf)) ? Number(doneInfo.rtf) : (audioSeconds > 0 ? processing / audioSeconds : 0);
-    const metrics = $("metrics");
-    if (metrics) { metrics.textContent = `Xử lý ${processing.toFixed(2)}s · Audio ${formatAudio(audioSeconds)} · RTF ${rtf.toFixed(4)} · stream`; metrics.title = "RTF = thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực. Audio đã phát ngay khi từng chunk về."; metrics.hidden = false; }
-    addHistory(value, "stream", audioSeconds, processing, rtf);
-    setStatus("Xong stream. Bấm play để nghe lại.");
-    const waitMs = Math.max(0, (nextTime - ctx.currentTime) * 1000) + 500;
-    setTimeout(() => { if (streamAudioContext === ctx) { ctx.close().catch(() => {}); streamAudioContext = null; } }, waitMs);
-  } finally {
-    if (streamAbort === controller) streamAbort = null;
-    if (activeController === controller) activeController = null;
-  }
-}
-
-async function generate() {
-  const value = text.value.trim();
-  if (!value) { setStatus("Nhập câu cần đọc trước.", true); return; }
-  $("go").disabled = true; setStatus("Đang tạo…");
+  quickController = controller;
+  setQuickBusy(true);
+  setQuickStatus("Đang tạo…");
   const started = performance.now();
-  if (generateTimer) clearInterval(generateTimer);
-  generateTimer = setInterval(() => {
-    setStatus(`Đang tạo… ${((performance.now() - started) / 1000).toFixed(1)}s`);
-  }, 250);
-  const pendingMetrics = $("metrics"); if (pendingMetrics) pendingMetrics.hidden = true;
-  if (shareBox.checked) void syncSharedRules();
-  const controller = new AbortController();
-  activeController = controller;
-  $("cancel").hidden = false;
   try {
-    if ($("streamMode").checked) {
-      await streamGenerate(value, started);
-      return;
-    }
-    const response = await fetch(API_URL, {
-      method: "POST", headers: {"Content-Type": "application/json"},
+    const response = await fetch(`${API_BASE}/api/tts`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
       signal: controller.signal,
-      body: JSON.stringify({text: value, speed: Number($("speed").value), alpha: Number($("alpha").value), max_chars: Number($("chunkChars").value), fixed_pauses: $("fixed").checked, peak_normalize: $("peakNormalize").checked, dialect: $("dialect").value, resolve_oov: $("resolveOov").checked, karaoke: true, visitor_id: VISITOR_ID, source: SOURCE, overrides: currentOverrides()})
+      body: JSON.stringify({
+        text, speed: 1.0, alpha: quickAlpha, resolve_oov: true,
+        visitor_id: VISITOR_ID, source: SOURCE,
+      }),
     });
     if (!response.ok) {
       let detail = "Không tạo được âm thanh.";
-      try { const j = await response.json(); if (j.detail) detail = j.detail; } catch (_) {}
+      try { const payload = await response.json(); if (payload.detail) detail = payload.detail; } catch (_) {}
       throw new Error(detail);
     }
-    const processingHeader = parseFloat(response.headers.get("X-Processing-Seconds") || "");
-    const audioHeader = parseFloat(response.headers.get("X-Audio-Seconds") || "");
-    const rtfHeader = parseFloat(response.headers.get("X-RTF") || "");
-    const payload = await response.json();
-    const processing = Number.isFinite(processingHeader) ? processingHeader : Number(payload.processing_seconds);
-    const audioSeconds = Number.isFinite(audioHeader) ? audioHeader : Number(payload.audio_seconds);
-    const rtf = Number.isFinite(rtfHeader) ? rtfHeader : Number(payload.rtf);
-    if (!payload.audio_base64) throw new Error("Server không trả audio_base64.");
-    const binary = atob(payload.audio_base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], {type: "audio/wav"});
-    currentBlob = blob;
-    if (currentUrl) URL.revokeObjectURL(currentUrl);
-    currentUrl = URL.createObjectURL(blob);
-    $("audio").src = currentUrl;
-    $("download").href = currentUrl;
-    if ($("share")) $("share").hidden = !(navigator.canShare && navigator.canShare({files: [new File([blob], "vifasttts-demo.wav", {type: "audio/wav"})]}));
-    for (const [id, text, type] of [["downloadSrt", payload.srt, "text/plain"], ["downloadVtt", payload.vtt || payload.vtt_karaoke, "text/vtt"]]) {
-      const link = $(id);
-      if (!link) continue;
-      if (text) {
-        link.href = URL.createObjectURL(new Blob([text], {type}));
-        link.hidden = false;
-      } else {
-        link.hidden = true;
-      }
-    }
-    player.style.display = "block";
-    const metrics = $("metrics");
-    if (metrics) {
-      if (Number.isFinite(processing) && Number.isFinite(audioSeconds) && Number.isFinite(rtf)) {
-        metrics.textContent = `Xử lý ${processing.toFixed(2)}s · Audio ${formatAudio(audioSeconds)} · RTF ${rtf.toFixed(4)}`;
-        metrics.title = "RTF = thời gian xử lý / thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực.";
-        metrics.hidden = false;
-      } else {
-        metrics.hidden = true;
-      }
-    }
-    addHistory(value, "full", audioSeconds, processing, rtf);
-    setStatus("Xong. Bấm play để nghe.");
-    $("audio").play().catch(() => {});
-  } catch (err) {
-    if (err.name === "AbortError") setStatus("Đã dừng.");
-    else setStatus(err.message || "Lỗi không xác định.", true);
+    const blob = await response.blob();
+    if (quickUrl) URL.revokeObjectURL(quickUrl);
+    quickUrl = URL.createObjectURL(blob);
+    quickAudio.src = quickUrl;
+    $("quick-download").href = quickUrl;
+    quickPlayer.classList.add("on");
+    const audioSeconds = Number(response.headers.get("X-Audio-Seconds"));
+    const rtf = Number(response.headers.get("X-RTF"));
+    const elapsed = (performance.now() - started) / 1000;
+    const parts = [];
+    if (Number.isFinite(audioSeconds)) parts.push(formatAudio(audioSeconds));
+    if (Number.isFinite(rtf)) parts.push(`RTF ${rtf.toFixed(4)}`);
+    else parts.push(`${elapsed.toFixed(1)}s`);
+    $("quick-metrics").textContent = parts.join(" · ");
+    setQuickStatus("Xong. Bấm play để nghe.");
+    quickAudio.play().catch(() => {});
+  } catch (error) {
+    if (error.name === "AbortError") setQuickStatus("Đã dừng.");
+    else setQuickStatus(error.message || "Lỗi không xác định.", true);
   } finally {
-    if (generateTimer) { clearInterval(generateTimer); generateTimer = null; }
-    if (activeController === controller) activeController = null;
-    $("cancel").hidden = true;
-    $("go").disabled = false;
+    if (quickController === controller) quickController = null;
+    setQuickBusy(false);
   }
 }
-$("go").addEventListener("click", generate);
-text.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") generate(); });
-updateCount();
+
+quickText.addEventListener("input", updateQuickCount);
+quickText.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") quickGenerate();
+});
+$("quick-go").addEventListener("click", quickGenerate);
+$("quick-cancel").addEventListener("click", cancelQuick);
+document.querySelectorAll("[data-quick-text]").forEach((button) => {
+  button.addEventListener("click", () => {
+    quickText.value = button.dataset.quickText;
+    updateQuickCount();
+    quickText.focus();
+    setQuickStatus("Đã điền câu mẫu; bấm Đọc câu này.");
+  });
+});
+updateQuickCount();
+
+/* ---------------------------------------------------------------- tabs */
+const tabs = Array.from(document.querySelectorAll(".platform-tab"));
+const panels = Array.from(document.querySelectorAll(".platform-panel"));
+
+function selectPlatform(name, focus = false) {
+  for (const tab of tabs) {
+    const active = tab.dataset.platform === name;
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+    tab.tabIndex = active ? 0 : -1;
+    if (active && focus) tab.focus();
+  }
+  for (const panel of panels) {
+    const active = panel.id === `panel-${name}`;
+    panel.hidden = !active;
+  }
+}
+
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => selectPlatform(tab.dataset.platform));
+  tab.addEventListener("keydown", (event) => {
+    const index = tabs.indexOf(tab);
+    let next = null;
+    if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+    if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = tabs.length - 1;
+    if (next !== null) {
+      event.preventDefault();
+      selectPlatform(tabs[next].dataset.platform, true);
+    }
+  });
+});
+
+// Tự chọn đúng nền tảng đang dùng; người dùng vẫn đổi tab bình thường.
+(function detectPlatform() {
+  const ua = navigator.userAgent;
+  let name = "windows";
+  if (/Android/i.test(ua)) name = "android";
+  else if (/iPhone|iPad|iPod/i.test(ua)) name = "ios";
+  else if (/Macintosh|Mac OS X/i.test(ua)) name = "macos";
+  else if (/Linux/i.test(ua)) name = "linux";
+  selectPlatform(name);
+})();
+
+// Nếu URL có #panel-..., mở đúng tab (tiện chia sẻ link hướng dẫn).
+function openFromHash() {
+  const match = location.hash.match(/^#panel-(windows|macos|linux|android|ios|extension|cli|web)$/);
+  if (!match) return;
+  selectPlatform(match[1]);
+  const panel = $(`panel-${match[1]}`);
+  if (panel) panel.scrollIntoView({block: "start"});
+}
+window.addEventListener("hashchange", openFromHash);
+openFromHash();
 </script>
 </body>
 </html>
