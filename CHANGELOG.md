@@ -8,8 +8,9 @@
   và chặn build nếu thiếu `web/index.html`.
 - **CI guard**: kiểm tra `web/index.html` trong cả gói desktop và CLI trên
   macOS/Linux/Windows trước khi upload artifact.
-- **Liên kết hai chiều ViFastKey ↔ ViFastTts**: landing và demo ViFastTts thêm mục
-  “Dự án liên quan” + link footer; web ViFastKey thêm link ViFastTts ở mục tải về/footer.
+- **Liên kết hai chiều ViFastKey ↔ ViFastTts**: mục **Sản phẩm** lớn giới thiệu cả hai
+  sản phẩm; form **Góp ý** chuyển từ `/demo` sang landing để hiển thị công khai;
+  ViFastKey hiển thị góp ý thành mục thay vì popup.
 - Version: **0.3.5**; Android `versionCode 13`, iOS build 9.
 
 ## 2026-10-30 — v0.3.4

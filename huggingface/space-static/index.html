@@ -313,17 +313,51 @@
   .quick-card h4 { margin:0 0 8px; font-size:.9rem; }
   .quick-card p { margin:0 0 8px; color:var(--muted); font-size:.8rem; }
 
-  /* ------------------------------------------------------------ related */
-  .related-panel { position:relative; display:grid; grid-template-columns:1.15fr .85fr; gap:32px; align-items:center;
-                   overflow:hidden; border:1px solid var(--border); border-radius:24px;
-                   padding:clamp(26px,4vw,44px); background:linear-gradient(120deg,#fff 0%,#fff8ec 100%);
-                   box-shadow:0 24px 60px -44px rgba(90,45,25,.5); }
-  .related-panel::before { content:""; position:absolute; right:-80px; top:-90px; width:280px; height:280px;
-                           background:radial-gradient(circle,rgba(255,193,60,.3),transparent 68%); pointer-events:none; }
-  .related-panel h2 { font-size:clamp(1.7rem,2.8vw,2.3rem); line-height:1.1; letter-spacing:-.035em; margin:10px 0 0; }
-  .related-panel p { color:var(--muted); margin:14px 0 0; font-size:.95rem; max-width:620px; }
-  .related-actions { position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-start;
-                     gap:14px; justify-self:end; }
+  /* ------------------------------------------------------------ products */
+  .product-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .product-card { position:relative; display:flex; flex-direction:column; gap:12px; overflow:hidden;
+                  padding:clamp(22px,3vw,30px); border:1px solid var(--border); border-radius:20px;
+                  background:var(--surface); box-shadow:0 18px 44px -34px rgba(90,45,25,.45); }
+  .product-card.current { background:linear-gradient(150deg,#fff 0%,#FFF8EC 100%); border-color:#E9C3B7; }
+  .product-card.current::before { content:""; position:absolute; right:-70px; top:-90px; width:220px; height:220px;
+                                  background:radial-gradient(circle,rgba(255,193,60,.3),transparent 68%); pointer-events:none; }
+  .p-tag { position:relative; z-index:1; align-self:flex-start; font-size:.64rem; font-weight:800; letter-spacing:.09em;
+           text-transform:uppercase; color:#8A2B1A; background:#FFF0EB; border:1px solid #F1C3B8;
+           border-radius:999px; padding:4px 8px; }
+  .product-card h3 { position:relative; z-index:1; margin:0; font-size:clamp(1.35rem,2.2vw,1.75rem); letter-spacing:-.035em; }
+  .product-card p { position:relative; z-index:1; margin:0; color:var(--muted); font-size:.9rem; }
+  .product-list { position:relative; z-index:1; list-style:none; margin:0; padding:0; display:grid; gap:7px; }
+  .product-list li { position:relative; padding-left:18px; color:var(--body); font-size:.82rem; }
+  .product-list li::before { content:"✓"; position:absolute; left:0; top:0; color:var(--success); font-weight:800; }
+  .product-actions { position:relative; z-index:1; display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; padding-top:8px; }
+  .product-actions .primary-btn { padding:10px 15px; font-size:.86rem; }
+  .product-actions .text-btn { font-size:.82rem; }
+
+  /* ------------------------------------------------------------ feedback */
+  .feedback-panel { display:grid; grid-template-columns:.95fr 1.05fr; gap:clamp(24px,4vw,44px); align-items:start;
+                    padding:clamp(24px,4vw,42px); border:1px solid var(--border); border-radius:24px;
+                    background:var(--surface); box-shadow:0 24px 60px -44px rgba(90,45,25,.5); }
+  .feedback-copy h2 { font-size:clamp(1.8rem,3vw,2.5rem); line-height:1.08; letter-spacing:-.035em; margin:10px 0 0; }
+  .feedback-copy p { color:var(--muted); margin:14px 0 0; font-size:.94rem; }
+  .feedback-copy ul { list-style:none; margin:18px 0 0; padding:0; display:grid; gap:8px; }
+  .feedback-copy li { position:relative; padding-left:19px; color:var(--body); font-size:.83rem; }
+  .feedback-copy li::before { content:"•"; position:absolute; left:3px; top:0; color:var(--accent); font-weight:800; }
+  .feedback-form { display:grid; gap:9px; }
+  .fb-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .feedback-form label { display:flex; flex-direction:column; gap:4px; color:var(--muted); font-size:.73rem; font-weight:700; }
+  .feedback-form select, .feedback-form input[type=text], .feedback-form textarea {
+    width:100%; padding:9px 10px; border:1px solid #E3D2C2; border-radius:9px; background:#FFFDF9;
+    color:var(--ink); font:inherit; font-size:.86rem; outline:none; }
+  .feedback-form textarea { min-height:112px; resize:vertical; line-height:1.5; }
+  .feedback-form select:focus, .feedback-form input[type=text]:focus, .feedback-form textarea:focus {
+    border-color:var(--accent); box-shadow:0 0 0 3px rgba(212,42,34,.13); }
+  .fb-meta { display:flex; justify-content:space-between; gap:10px; margin-top:-3px; color:var(--muted); font-size:.72rem; }
+  .fb-hp { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
+  .fb-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:4px; }
+  .fb-actions .primary-btn { padding:10px 16px; font-size:.88rem; }
+  .fb-status { min-height:1.2em; color:var(--muted); font-size:.78rem; }
+  .fb-status.err { color:var(--error); }
+  .fb-status.ok { color:var(--success); }
 
   /* ------------------------------------------------------------ faq */
   .faq-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; align-items:start; }
@@ -365,8 +399,7 @@
     .spec { max-width:560px; }
     .model-panel { grid-template-columns:1fr; }
     .api-grid, .python-quick { grid-template-columns:1fr; }
-    .related-panel { grid-template-columns:1fr; }
-    .related-actions { justify-self:start; }
+    .feedback-panel { grid-template-columns:1fr; }
   }
   @media (max-width:900px) {
     html { scroll-padding-top:120px; }
@@ -378,7 +411,7 @@
   }
   @media (max-width:760px) {
     .section { padding:64px 0; }
-    .feature-grid, .faq-grid { grid-template-columns:1fr; }
+    .feature-grid, .faq-grid, .product-grid { grid-template-columns:1fr; }
     .hero-facts { gap:14px 24px; }
     .faq summary { font-size:.85rem; }
   }
@@ -400,6 +433,7 @@
     .platform-title { min-width:0; }
     .platform-title .p-icon { width:42px; height:42px; }
     .platform-title h3 { font-size:1.06rem; }
+    .fb-grid { grid-template-columns:1fr; }
     .dl-row { width:100%; }
     .dl-btn { flex:1 1 100%; justify-content:space-between; }
     .steps li { padding-left:36px; }
@@ -447,10 +481,11 @@
     <nav class="nav" aria-label="Điều hướng chính">
       <a href="#nghe-thu">Nghe thử</a>
       <a href="#tinh-nang">Tính năng</a>
+      <a href="#san-pham">Sản phẩm</a>
       <a href="#tai-ve">Tải về</a>
       <a href="#cai-dat">Hướng dẫn cài</a>
+      <a href="#feedback">Góp ý</a>
       <a href="#api">API</a>
-      <a href="#faq">Hỏi đáp</a>
     </nav>
     <span class="header-live" id="header-live" title="Demo API đang chạy"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></span>
     <a class="ghost-btn" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">
@@ -1139,17 +1174,81 @@ vifasttts synthesize-onnx \
     </div>
   </section>
 
-  <section class="section wrap" id="lien-ket">
-    <div class="related-panel">
+  <section class="section wrap" id="san-pham">
+    <div class="section-head">
       <div>
-        <div class="eyebrow">Dự án liên quan</div>
-        <h2>ViFastKey — bộ gõ tiếng Việt.</h2>
-        <p>Telex, Simple Telex, VNI và VIQR trên một lõi Rust nhỏ, chạy local. Có WASM để gõ thử trong trình duyệt, C ABI cho IMK/TSF/Fcitx5/IBus, API Python và app cho macOS, Windows, Linux, Android, iOS.</p>
+        <div class="eyebrow">Sản phẩm</div>
+        <h2>Hai sản phẩm,<br>một hệ sinh thái.</h2>
       </div>
-      <div class="related-actions">
-        <a class="primary-btn" href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">Mở ViFastKey <span aria-hidden="true">↗</span></a>
-        <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub ViFastKey <span aria-hidden="true">↗</span></a>
+      <p>Cùng chạy local-first, cùng mục tiêu tiếng Việt nhẹ và nhanh: một bên đọc thành tiếng, một bên gõ thành chữ.</p>
+    </div>
+    <div class="product-grid">
+      <article class="product-card current">
+        <span class="p-tag">Đang xem · TTS</span>
+        <h3>ViFastTts</h3>
+        <p>Giọng đọc tiếng Việt non-autoregressive, ONNX CPU, 24 kHz.</p>
+        <ul class="product-list">
+          <li>Model Ngọc Huyền small 6,1M tham số</li>
+          <li>Desktop, extension, Android, iOS Simulator</li>
+          <li>API REST/stream, CLI server, Python, ONNX</li>
+        </ul>
+        <div class="product-actions">
+          <a class="primary-btn" href="#nghe-thu">Nghe thử</a>
+          <a class="text-btn" href="#tai-ve">Tải về <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+      <article class="product-card">
+        <span class="p-tag">Cùng hệ sinh thái · Bộ gõ</span>
+        <h3>ViFastKey</h3>
+        <p>Bộ gõ Telex, Simple Telex, VNI và VIQR trên lõi Rust nhỏ, chạy local.</p>
+        <ul class="product-list">
+          <li>WASM gõ thử ngay trong trình duyệt</li>
+          <li>C ABI cho IMK/TSF/Fcitx5/IBus</li>
+          <li>API Python, app desktop và mobile</li>
+        </ul>
+        <div class="product-actions">
+          <a class="primary-btn" href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">Mở ViFastKey <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section wrap" id="feedback">
+    <div class="feedback-panel">
+      <div class="feedback-copy">
+        <div class="eyebrow">Góp ý</div>
+        <h2>Nói cho mình biết.</h2>
+        <p>Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung và liên hệ chỉ admin xem, không hiển thị công khai.</p>
+        <ul>
+          <li>Lỗi đọc, lỗi cài đặt, câu đọc chưa đúng.</li>
+          <li>Đề xuất tính năng hoặc giọng mới.</li>
+          <li>Góp ý cho ViFastKey? Gửi ở trang ViFastKey.</li>
+        </ul>
       </div>
+      <form id="feedbackForm" class="feedback-form">
+        <div class="fb-grid">
+          <label for="fbCategory">Loại
+            <select id="fbCategory">
+              <option value="gop_y">Góp ý chung</option>
+              <option value="cai_tien">Đề xuất cải tiến</option>
+              <option value="bao_loi">Báo lỗi</option>
+            </select>
+          </label>
+          <label for="fbContact">Liên hệ (không bắt buộc)
+            <input id="fbContact" type="text" maxlength="120" autocomplete="off" placeholder="Email / Telegram / Zalo">
+          </label>
+        </div>
+        <label for="feedbackMessage">Nội dung
+          <textarea id="feedbackMessage" maxlength="1000" required placeholder="Ví dụ: Ở câu có từ viết tắt, model đọc chưa đúng..."></textarea>
+        </label>
+        <div class="fb-meta"><span id="fbCount">0/1000</span><span>Tối thiểu 5 ký tự</span></div>
+        <div class="fb-hp" aria-hidden="true"><label>Website <input id="fbWebsite" type="text" tabindex="-1" autocomplete="off"></label></div>
+        <div class="fb-actions">
+          <button id="feedbackSubmit" class="primary-btn" type="submit">Gửi góp ý</button>
+          <span id="feedbackStatus" class="fb-status" role="status"></span>
+        </div>
+      </form>
     </div>
   </section>
 
@@ -1159,7 +1258,7 @@ vifasttts synthesize-onnx \
         <div class="eyebrow">Hỏi đáp</div>
         <h2>Những câu thường gặp.</h2>
       </div>
-      <p>Không thấy câu trả lời? Gửi góp ý ở trang demo — nội dung chỉ admin xem.</p>
+      <p>Không thấy câu trả lời? Gửi góp ý ở phần Góp ý — nội dung chỉ admin xem.</p>
     </div>
     <div class="faq-grid">
       <details class="faq"><summary>Dùng thương mại được không?</summary><p>Code repo là <b>MIT</b>, nhưng model mẫu và dataset <code>ngochuyen_voice</code> là <b>CC BY-NC 4.0</b> — chỉ dùng nghiên cứu/phi thương mại. Không dùng để giả giọng, lừa đảo hoặc bán lại khi chưa có quyền riêng.</p></details>
@@ -1169,7 +1268,7 @@ vifasttts synthesize-onnx \
       <details class="faq"><summary>App có trên App Store / CH Play chưa?</summary><p>Chưa. Android là APK debug (cài ngoài store); iOS chỉ chạy Simulator, chưa ký Apple Developer. Desktop cũng chưa ký số nên có cảnh báo SmartScreen/Gatekeeper.</p></details>
       <details class="faq"><summary>Demo có lưu văn bản hay audio không?</summary><p>Không lưu văn bản hay audio. Server chỉ ghi thống kê ẩn danh (số ký tự, thời lượng, thời gian xử lý, hash visitor), không lưu IP/text; góp ý chỉ admin xem khi đã đặt mật khẩu.</p></details>
       <details class="faq"><summary>RTF ~0,03 nghĩa là gì?</summary><p>RTF = thời gian xử lý chia cho thời lượng audio; nhỏ hơn 1 là nhanh hơn thời gian thực. Con số ~0,03 đo trên VPS CPU với ONNX; máy yếu hơn sẽ chậm hơn, máy mạnh hơn có thể nhanh hơn.</p></details>
-      <details class="faq"><summary>Làm sao báo lỗi hoặc góp ý?</summary><p>Mở <a href="demo.html#feedback" data-demo-feedback>trang demo đầy đủ</a> và dùng form <b>Góp ý / báo lỗi</b>. Nếu là lỗi cài đặt, kèm hệ điều hành, file đã tải và thông báo lỗi để dễ tái hiện.</p></details>
+      <details class="faq"><summary>Làm sao báo lỗi hoặc góp ý?</summary><p>Dùng form <a href="#feedback">Góp ý</a> ngay trên trang này. Nếu là lỗi cài đặt, kèm hệ điều hành, file đã tải và thông báo lỗi để dễ tái hiện.</p></details>
     </div>
   </section>
 </main>
@@ -1188,7 +1287,8 @@ vifasttts synthesize-onnx \
       <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a>
       <a href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">ViFastKey</a>
       <a href="https://vifasttts.hoctuthien.com/admin">Thống kê</a>
-      <button type="button" id="footer-feedback">Góp ý</button>
+      <a href="#feedback">Góp ý</a>
+      <a href="#faq">Hỏi đáp</a>
       <a href="#nghe-thu">Nghe thử</a>
     </div>
   </div>
@@ -1202,12 +1302,9 @@ const FILE_HOST = location.protocol === "file:";
 const API_BASE = HF_HOST || FILE_HOST ? "https://vifasttts.hoctuthien.com" : "";
 const DEMO_URL = HF_HOST || FILE_HOST ? "demo.html" : "/demo";
 const SOURCE = HF_HOST ? "space" : "web";
+const FEEDBACK_URL = `${API_BASE}/api/feedback`;
 
 document.querySelectorAll("[data-demo-link]").forEach((link) => { link.href = DEMO_URL; });
-document.querySelectorAll("[data-demo-feedback]").forEach((link) => { link.href = `${DEMO_URL}#feedback`; });
-$("footer-feedback").addEventListener("click", () => {
-  window.location.href = `${DEMO_URL}#feedback`;
-});
 
 function visitorId() {
   try {
@@ -1358,6 +1455,54 @@ document.querySelectorAll("[data-quick-text]").forEach((button) => {
   });
 });
 updateQuickCount();
+
+/* ---------------------------------------------------------------- feedback */
+const feedbackForm = $("feedbackForm");
+const fbMessage = $("feedbackMessage");
+const fbCount = $("fbCount");
+const feedbackStatus = $("feedbackStatus");
+if (feedbackForm) {
+  fbMessage.addEventListener("input", () => { fbCount.textContent = `${fbMessage.value.length}/1000`; });
+  feedbackForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = fbMessage.value.trim();
+    if (message.length < 5) {
+      feedbackStatus.textContent = "Nội dung cần ít nhất 5 ký tự.";
+      feedbackStatus.className = "fb-status err";
+      fbMessage.focus();
+      return;
+    }
+    const button = $("feedbackSubmit");
+    button.disabled = true;
+    feedbackStatus.textContent = "Đang gửi...";
+    feedbackStatus.className = "fb-status";
+    try {
+      const response = await fetch(FEEDBACK_URL, {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          category: $("fbCategory").value,
+          message: message,
+          contact: $("fbContact").value.trim(),
+          website: $("fbWebsite").value,
+          visitor_id: VISITOR_ID,
+          source: SOURCE,
+        }),
+      });
+      let payload = {};
+      try { payload = await response.json(); } catch (_) {}
+      if (!response.ok) throw new Error(payload.detail || "Gửi chưa được; thử lại sau.");
+      feedbackForm.reset();
+      fbCount.textContent = "0/1000";
+      feedbackStatus.textContent = "Đã gửi. Cảm ơn bạn!";
+      feedbackStatus.className = "fb-status ok";
+    } catch (error) {
+      feedbackStatus.textContent = error.message || "Gửi chưa được; thử lại sau.";
+      feedbackStatus.className = "fb-status err";
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
 
 /* ---------------------------------------------------------------- tabs */
 const tabs = Array.from(document.querySelectorAll(".platform-tab"));

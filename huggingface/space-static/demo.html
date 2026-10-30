@@ -47,9 +47,9 @@
   .sub { color:var(--muted); margin:7px 0 0; max-width:760px; font-size:.9rem; }
   .notice { color:#8A5A2B; background:#FFF5E7; border:1px solid #F0D9B8; border-radius:8px;
             padding:6px 9px; font-size:.8rem; margin:8px 0 0; }
-  .workspace { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.78fr) minmax(300px,.86fr);
-               grid-template-areas:"main adv feedback"; gap:14px; align-items:start; }
-  .main-card { grid-area:main; } .advanced { grid-area:adv; } .feedback { grid-area:feedback; }
+  .workspace { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.9fr);
+               grid-template-areas:"main adv"; gap:14px; align-items:start; }
+  .main-card { grid-area:main; } .advanced { grid-area:adv; }
   .card, .panel { background:#fff; border:1px solid var(--line); border-radius:14px;
                   box-shadow:0 10px 28px rgba(90,45,25,.06); }
   .card { padding:16px; }
@@ -64,7 +64,6 @@
   textarea:focus, select:focus, input[type=text]:focus { border-color:var(--accent); outline:none;
              box-shadow:0 0 0 3px rgba(198,40,30,.13); }
   #overrides { min-height:96px; font-family:Consolas,"Liberation Mono",monospace; font-size:.82rem; }
-  #feedbackMessage { min-height:62px; }
   .meta { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:.76rem; margin-top:5px; }
   .speed-row { margin:10px 0 0; }
   .speed-row label { font-weight:500; color:var(--muted); font-size:.86rem; }
@@ -134,19 +133,15 @@
   .share input { margin-top:2px; }
   #builtin { max-height:150px; overflow:auto; white-space:pre-wrap; background:#FFFCF7;
              border:1px solid var(--line); border-radius:8px; padding:8px; font-size:.74rem; }
-  #overrideStatus, #feedbackStatus { color:var(--muted); font-size:.76rem; }
-  #overrideStatus.err, #feedbackStatus.err { color:#B42318; }
-  .feedback-grid { display:grid; grid-template-columns:1fr; gap:7px; margin:6px 0 5px; }
-  .feedback-grid label { display:flex; flex-direction:column; gap:3px; color:var(--muted); font-size:.76rem; font-weight:600; }
-  select, .feedback input[type=text] { width:100%; padding:7px 8px; border:1px solid #E3D2C2; border-radius:8px;
+  #overrideStatus { color:var(--muted); font-size:.76rem; }
+  #overrideStatus.err { color:#B42318; }
+  select { width:100%; padding:7px 8px; border:1px solid #E3D2C2; border-radius:8px;
              background:#FFFDF9; color:var(--ink); font:inherit; font-size:.84rem; }
-  .feedback .hp { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
   button:focus-visible, a:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible {
     outline:3px solid rgba(198,40,30,.25); outline-offset:2px; }
   @media (max-width:1120px) {
     .workspace { grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr);
-                 grid-template-areas:"main adv" "feedback feedback"; }
-    .feedback-grid { grid-template-columns:1fr 1fr; }
+                 grid-template-areas:"main adv"; }
   }
   @media (max-width:900px) {
     .brandbar { flex-wrap:wrap; gap:8px; }
@@ -155,7 +150,7 @@
     .download-strip { justify-content:flex-start; max-width:none; }
   }
   @media (max-width:760px) {
-    .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv" "feedback"; }
+    .workspace { grid-template-columns:1fr; grid-template-areas:"main" "adv"; }
   }
   @media (max-width:600px) {
     .info .tip { position:fixed; top:24vh; left:12px; right:12px; bottom:auto;
@@ -213,7 +208,7 @@
   </div>
   <p class="sub">Bản demo đầy đủ với tốc độ, alpha, nghỉ, stream, phương ngữ, từ điển riêng và lịch sử.
     Nhập câu tiếng Việt (tối đa 3000 ký tự); model tự ngắt nghỉ; Vocos pretrained; làm nét mel <b>alpha 1.5</b>.</p>
-  <p class="notice">Bạn đang ở bản đầy đủ. <a href="./">← Về trang chủ ViFastTts</a> để xem giới thiệu và hướng dẫn cài từng nền tảng.</p>
+  <p class="notice">Bạn đang ở bản đầy đủ. <a href="./">← Về trang chủ ViFastTts</a> để xem giới thiệu và hướng dẫn cài từng nền tảng. Góp ý / báo lỗi đã chuyển sang <a href="./#feedback">mục Góp ý ở trang chủ</a>.</p>
 </div>
 
 <div class="workspace">
@@ -337,33 +332,6 @@
         </div>
       </details>
   </section>
-
-  <section class="panel feedback" id="feedback">
-      <div class="panel-head"><h2>Góp ý / báo lỗi</h2><span class="pill">Admin xem</span></div>
-      <p>Gửi trực tiếp cho admin. Nội dung và liên hệ (nếu có) chỉ admin đã đặt mật khẩu mới xem được; không công khai.</p>
-      <form id="feedbackForm">
-        <div class="feedback-grid">
-          <label for="fbCategory">Loại
-            <select id="fbCategory">
-              <option value="gop_y">Góp ý chung</option>
-              <option value="cai_tien">Đề xuất cải tiến</option>
-              <option value="bao_loi">Báo lỗi</option>
-            </select>
-          </label>
-          <label for="fbContact">Liên hệ (không bắt buộc)
-            <input id="fbContact" type="text" maxlength="120" autocomplete="off" placeholder="Email / Telegram / Zalo">
-          </label>
-        </div>
-        <label for="feedbackMessage">Nội dung</label>
-        <textarea id="feedbackMessage" maxlength="1000" required placeholder="Ví dụ: Ở câu có từ viết tắt, model đọc chưa đúng..."></textarea>
-        <div class="meta"><span id="fbCount">0/1000</span><span>Tối thiểu 5 ký tự</span></div>
-        <div class="hp" aria-hidden="true"><label>Website <input id="fbWebsite" type="text" tabindex="-1" autocomplete="off"></label></div>
-        <div class="row">
-          <button id="feedbackSubmit" class="primary" type="submit">Gửi góp ý</button>
-          <span id="feedbackStatus" role="status"></span>
-        </div>
-      </form>
-  </section>
 </div>
 
 
@@ -379,7 +347,7 @@
   <a href="https://huggingface.co/dvchd" target="_blank" rel="noopener">Hugging Face</a> ·
   <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a> ·
   <a href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">ViFastKey</a> ·
-  <a href="#feedback" id="feedbackLink">Góp ý</a> ·
+  <a href="./#feedback">Góp ý</a> ·
   <a href="https://vifasttts.hoctuthien.com/admin">Thống kê</a></footer>
 </main>
 <script>
@@ -394,7 +362,6 @@ const API_BASE = SPACE_HOST || location.protocol === "file:" ? "https://vifasttt
 const VISIT_URL = `${API_BASE}/api/visit`;
 const API_URL = `${API_BASE}/api/tts`;
 const STREAM_URL = `${API_BASE}/api/tts/stream`;
-const FEEDBACK_URL = `${API_BASE}/api/feedback`;
 const SOURCE = SPACE_HOST ? "space" : "web";
 const CONFIG_URL = `${API_BASE}/api/config`;
 const HISTORY_KEY = "vifasttts_demo_history_v1";
@@ -543,56 +510,6 @@ $("showBuiltin").addEventListener("click", async () => {
     const stemCount = (stem.groups || []).reduce((n, group) => n + (group.items || []).length, 0);
     overrideStatus.textContent = `${Object.keys(merged).length} quy tắc có sẵn/đã duyệt + ${stemCount} ví dụ STEM, chỉ đọc.`;
   } catch (_) { pre.textContent = "Không tải được từ điển có sẵn."; }
-});
-const feedbackForm = $("feedbackForm");
-const fbMessage = $("feedbackMessage");
-const fbCount = $("fbCount");
-const feedbackStatus = $("feedbackStatus");
-const feedbackLink = $("feedbackLink");
-if (feedbackLink) {
-  feedbackLink.addEventListener("click", () => {
-    setTimeout(() => { $("feedback").scrollIntoView({block: "center"}); fbMessage.focus(); }, 30);
-  });
-}
-fbMessage.addEventListener("input", () => { fbCount.textContent = `${fbMessage.value.length}/1000`; });
-feedbackForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const message = fbMessage.value.trim();
-  if (message.length < 5) {
-    feedbackStatus.textContent = "Nội dung cần ít nhất 5 ký tự.";
-    feedbackStatus.className = "err";
-    fbMessage.focus();
-    return;
-  }
-  const button = $("feedbackSubmit");
-  button.disabled = true;
-  feedbackStatus.textContent = "Đang gửi...";
-  feedbackStatus.className = "";
-  try {
-    const response = await fetch(FEEDBACK_URL, {
-      method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        category: $("fbCategory").value,
-        message: message,
-        contact: $("fbContact").value.trim(),
-        website: $("fbWebsite").value,
-        visitor_id: VISITOR_ID,
-        source: SOURCE,
-      }),
-    });
-    let payload = {};
-    try { payload = await response.json(); } catch (_) {}
-    if (!response.ok) throw new Error(payload.detail || "Gửi chưa được; thử lại sau.");
-    feedbackForm.reset();
-    fbCount.textContent = "0/1000";
-    feedbackStatus.textContent = "Đã gửi. Cảm ơn bạn!";
-    feedbackStatus.className = "";
-  } catch (err) {
-    feedbackStatus.textContent = err.message || "Gửi chưa được; thử lại sau.";
-    feedbackStatus.className = "err";
-  } finally {
-    button.disabled = false;
-  }
 });
 function currentOverrides() { return parseRules(rulesBox.value); }
 function setStatus(msg, err = false) { status.textContent = msg; status.className = err ? "err" : ""; }
