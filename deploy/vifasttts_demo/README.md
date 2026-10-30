@@ -6,8 +6,10 @@ ONNX-only demo (không cần torch):
   Full và stream dùng chung `vifasttts.runtime.tts_engine.OnnxTtsEngine`.
 - `GET /api/config` trả defaults/capabilities/endpoints; `POST /api/tts/stream`
   trả NDJSON PCM16 (UI checkbox **Stream** phát bằng WebAudio).
+- `GET /api/stats` trả số liệu tổng hợp công khai; `POST /api/download` ghi lượt bấm
+  nút tải theo nền tảng (không lưu IP/file, không xác nhận tải xong).
 - `static/index.html` — landing page: giới thiệu, nghe thử nhanh, mục **Sản phẩm**,
-  tải xuống + hướng dẫn cài chi tiết từng nền tảng, form **Góp ý**.
+  tải xuống + hướng dẫn cài chi tiết từng nền tảng, form **Góp ý**, mục **Thống kê**.
 - `static/demo.html` — demo đầy đủ tại `/demo` (`/demo.html` chuyển hướng): tuỳ chọn
   nâng cao, stream, lịch sử; góp ý chuyển về landing.
 - `/brand/*` mount cùng nội dung `static/brand/` để landing dùng đường dẫn tương đối;

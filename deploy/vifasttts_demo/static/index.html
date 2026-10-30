@@ -28,7 +28,7 @@
 <style>
   :root {
     --bg:#FBF6EE; --surface:#fff; --cream:#FFF8EC; --soft:#FBF0EC;
-    --ink:#1F2430; --body:#4B5563; --muted:#6B7280;
+    --ink:#1F2430; --body:#4B5563; --muted:#5F6673;
     --accent:#D42A22; --accent-dark:#B3140F;
     --gold:#F5A300; --gold-soft:#FFE14D; --gold-line:#FFC93C;
     --border:#E8DDD0; --success:#15803D; --error:#B91C1C;
@@ -243,7 +243,7 @@
   .dl-btn { display:inline-flex; align-items:center; gap:9px; padding:10px 14px; border-radius:10px;
             border:1px solid #E9C3B7; background:#FFF8F3; color:#8F241B; text-decoration:none;
             font-size:.83rem; font-weight:750; line-height:1.2; transition:background .15s,border-color .15s,transform .15s; }
-  .dl-btn span { color:#A56B5D; font-size:.7rem; font-weight:600; }
+  .dl-btn span { color:#8A5A4A; font-size:.7rem; font-weight:600; }
   .dl-btn:hover { background:#FFF0E9; border-color:var(--accent); transform:translateY(-1px); }
   .dl-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 10px 22px -14px rgba(212,42,34,.8); }
   .dl-btn.primary span { color:rgba(255,255,255,.78); }
@@ -359,6 +359,26 @@
   .fb-status.err { color:var(--error); }
   .fb-status.ok { color:var(--success); }
 
+  /* ------------------------------------------------------------ stats */
+  .stats-panel { display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(24px,4vw,40px); align-items:start;
+                 padding:clamp(24px,4vw,40px); border:1px solid var(--border); border-radius:24px;
+                 background:var(--surface); box-shadow:0 24px 60px -44px rgba(90,45,25,.5); }
+  .stats-main { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .stat-card { display:flex; flex-direction:column; gap:4px; padding:16px 17px; border:1px solid var(--border);
+               border-radius:14px; background:#FFFCF7; }
+  .stat-card strong { font-size:1.75rem; line-height:1.1; letter-spacing:-.04em; color:var(--accent); }
+  .stat-card span { color:var(--muted); font-size:.77rem; }
+  .stat-card small { color:#7A5A42; font-size:.68rem; }
+  .stats-downloads h3 { margin:0 0 12px; font-size:.9rem; letter-spacing:-.01em; }
+  .dl-stat-row { display:grid; grid-template-columns:76px minmax(0,1fr) 38px; gap:9px; align-items:center;
+                 margin:9px 0; color:var(--body); font-size:.76rem; }
+  .dl-stat-row b { text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); font-size:.74rem; }
+  .dl-bar { height:8px; overflow:hidden; border-radius:999px; background:#F1E6DA; }
+  .dl-bar span { display:block; height:100%; width:0; border-radius:inherit;
+                 background:linear-gradient(90deg,var(--accent),var(--gold)); transition:width .35s ease; }
+  .stats-note { margin:14px 0 0; color:var(--muted); font-size:.72rem; line-height:1.5; }
+  .stats-empty { margin:0; color:var(--muted); font-size:.78rem; }
+
   /* ------------------------------------------------------------ faq */
   .faq-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; align-items:start; }
   .faq { border:1px solid var(--border); border-radius:12px; background:var(--surface); }
@@ -400,6 +420,7 @@
     .model-panel { grid-template-columns:1fr; }
     .api-grid, .python-quick { grid-template-columns:1fr; }
     .feedback-panel { grid-template-columns:1fr; }
+    .stats-panel { grid-template-columns:1fr; }
   }
   @media (max-width:900px) {
     html { scroll-padding-top:120px; }
@@ -677,8 +698,8 @@
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-windows-x64.zip" target="_blank" rel="noopener">Tải desktop · 125 MB <span>ZIP</span></a>
-            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-windows-x64.zip" target="_blank" rel="noopener">CLI / server · 119 MB <span>ZIP</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-windows-x64.zip" target="_blank" rel="noopener" data-download="vifasttts-desktop-windows-x64.zip">Tải desktop · 125 MB <span>ZIP</span></a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-windows-x64.zip" target="_blank" rel="noopener" data-download="vifasttts-cli-windows-x64.zip">CLI / server · 119 MB <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -726,8 +747,8 @@
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-macos-arm64.zip" target="_blank" rel="noopener">Tải desktop · 131 MB <span>ZIP</span></a>
-            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-macos-arm64.tar.gz" target="_blank" rel="noopener">CLI / server · 125 MB <span>TAR.GZ</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-macos-arm64.zip" target="_blank" rel="noopener" data-download="vifasttts-desktop-macos-arm64.zip">Tải desktop · 131 MB <span>ZIP</span></a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-macos-arm64.tar.gz" target="_blank" rel="noopener" data-download="vifasttts-cli-macos-arm64.tar.gz">CLI / server · 125 MB <span>TAR.GZ</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -777,8 +798,8 @@ open /Applications/ViFastTts.app</code></pre></li>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-linux-x64.tar.gz" target="_blank" rel="noopener">Tải desktop · 133 MB <span>TAR.GZ</span></a>
-            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-linux-x64.tar.gz" target="_blank" rel="noopener">CLI / server · 124 MB <span>TAR.GZ</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-desktop-linux-x64.tar.gz" target="_blank" rel="noopener" data-download="vifasttts-desktop-linux-x64.tar.gz">Tải desktop · 133 MB <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-linux-x64.tar.gz" target="_blank" rel="noopener" data-download="vifasttts-cli-linux-x64.tar.gz">CLI / server · 124 MB <span>TAR.GZ</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -829,7 +850,7 @@ cd vifasttts-desktop-linux-x64</code></pre></li>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-mobile-android.apk" target="_blank" rel="noopener">Tải APK · 110 MB <span>APK</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-mobile-android.apk" target="_blank" rel="noopener" data-download="vifasttts-mobile-android.apk">Tải APK · 110 MB <span>APK</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -877,7 +898,7 @@ cd vifasttts-desktop-linux-x64</code></pre></li>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener">Tải Simulator · 89 MB <span>ZIP</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-mobile-ios-simulator.zip" target="_blank" rel="noopener" data-download="vifasttts-mobile-ios-simulator.zip">Tải Simulator · 89 MB <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -925,7 +946,7 @@ cd vifasttts-desktop-linux-x64</code></pre></li>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-extension.zip" target="_blank" rel="noopener">Tải extension · 80 MB <span>ZIP</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-extension.zip" target="_blank" rel="noopener" data-download="vifasttts-extension.zip">Tải extension · 80 MB <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -973,9 +994,9 @@ cd vifasttts-desktop-linux-x64</code></pre></li>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-linux-x64.tar.gz" target="_blank" rel="noopener">Linux · 124 MB</a>
-            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-macos-arm64.tar.gz" target="_blank" rel="noopener">macOS · 125 MB</a>
-            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-windows-x64.zip" target="_blank" rel="noopener">Windows · 119 MB</a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-linux-x64.tar.gz" target="_blank" rel="noopener" data-download="vifasttts-cli-linux-x64.tar.gz">Linux · 124 MB</a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-macos-arm64.tar.gz" target="_blank" rel="noopener" data-download="vifasttts-cli-macos-arm64.tar.gz">macOS · 125 MB</a>
+            <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/vifasttts-cli-windows-x64.zip" target="_blank" rel="noopener" data-download="vifasttts-cli-windows-x64.zip">Windows · 119 MB</a>
           </div>
         </div>
         <div class="platform-body">
@@ -1026,7 +1047,7 @@ curl -s http://127.0.0.1:8000/api/config</code></pre></li>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/web-dist.tar.gz" target="_blank" rel="noopener">Tải web-dist · 109 MB <span>TAR.GZ</span></a>
+            <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/web-dist.tar.gz" target="_blank" rel="noopener" data-download="web-dist.tar.gz">Tải web-dist · 109 MB <span>TAR.GZ</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -1084,8 +1105,8 @@ cd web-dist</code></pre></li>
         <h2>Một giọng. Hai định dạng bundle.</h2>
         <p>Model <strong>N0 Ngọc Huyền Q-init</strong>: acoustic small 6,1M, 24 kHz, ONNX FP32. Dùng bundle để đổi giọng hoặc tải riêng cho app/CLI; desktop/extension/mobile đã có model sẵn.</p>
         <div class="model-foot">
-          <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/n0-ngochuyen.vfa" target="_blank" rel="noopener">n0-ngochuyen.vfa · 28 MB</a>
-          <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/n0-ngochuyen.vfts" target="_blank" rel="noopener">n0-ngochuyen.vfts · 76 MB</a>
+          <a class="dl-btn primary" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/n0-ngochuyen.vfa" target="_blank" rel="noopener" data-download="n0-ngochuyen.vfa">n0-ngochuyen.vfa · 28 MB</a>
+          <a class="dl-btn" href="https://github.com/dvchd/ViFastTts/releases/download/v0.3.5/n0-ngochuyen.vfts" target="_blank" rel="noopener" data-download="n0-ngochuyen.vfts">n0-ngochuyen.vfts · 76 MB</a>
           <a class="dl-btn" href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face ↗</a>
         </div>
       </div>
@@ -1271,6 +1292,42 @@ vifasttts synthesize-onnx \
       <details class="faq"><summary>Làm sao báo lỗi hoặc góp ý?</summary><p>Dùng form <a href="#feedback">Góp ý</a> ngay trên trang này. Nếu là lỗi cài đặt, kèm hệ điều hành, file đã tải và thông báo lỗi để dễ tái hiện.</p></details>
     </div>
   </section>
+  <section class="section wrap" id="thong-ke">
+    <div class="section-head compact">
+      <div>
+        <div class="eyebrow">Thống kê</div>
+        <h2>Demo đang được dùng thế nào.</h2>
+      </div>
+      <p>Số liệu ẩn danh, tự làm mới khi tải trang. Lượt tải chỉ đếm lúc bấm nút trên landing, không phải số file đã tải xong.</p>
+    </div>
+    <div class="stats-panel">
+      <div class="stats-main">
+        <div class="stat-card">
+          <strong id="stat-tts">—</strong>
+          <span>audio đã tạo</span>
+          <small id="stat-tts-today"></small>
+        </div>
+        <div class="stat-card">
+          <strong id="stat-downloads">—</strong>
+          <span>lượt bấm tải</span>
+          <small id="stat-downloads-today"></small>
+        </div>
+        <div class="stat-card">
+          <strong id="stat-visitors">—</strong>
+          <span>người dùng ẩn danh</span>
+        </div>
+        <div class="stat-card">
+          <strong id="stat-feedback">—</strong>
+          <span>góp ý / báo lỗi</span>
+        </div>
+      </div>
+      <div class="stats-downloads">
+        <h3>Lượt bấm tải theo nền tảng</h3>
+        <div id="download-platforms"><p class="stats-empty">Đang tải…</p></div>
+        <p class="stats-note">Đếm ở nút tải trên landing và trang demo. Người dùng có thể bấm rồi huỷ, nên đây là tín hiệu nhu cầu, không phải số lượt cài hoàn tất.</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -1286,7 +1343,8 @@ vifasttts synthesize-onnx \
       <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
       <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a>
       <a href="https://vifastkey.hoctuthien.com/" target="_blank" rel="noopener">ViFastKey</a>
-      <a href="https://vifasttts.hoctuthien.com/admin">Thống kê</a>
+      <a href="#thong-ke">Số liệu</a>
+      <a href="https://vifasttts.hoctuthien.com/admin">Admin</a>
       <a href="#feedback">Góp ý</a>
       <a href="#faq">Hỏi đáp</a>
       <a href="#nghe-thu">Nghe thử</a>
@@ -1303,6 +1361,8 @@ const API_BASE = HF_HOST || FILE_HOST ? "https://vifasttts.hoctuthien.com" : "";
 const DEMO_URL = HF_HOST || FILE_HOST ? "demo.html" : "/demo";
 const SOURCE = HF_HOST ? "space" : "web";
 const FEEDBACK_URL = `${API_BASE}/api/feedback`;
+const STATS_URL = `${API_BASE}/api/stats`;
+const DOWNLOAD_URL = `${API_BASE}/api/download`;
 
 document.querySelectorAll("[data-demo-link]").forEach((link) => { link.href = DEMO_URL; });
 
@@ -1503,6 +1563,67 @@ if (feedbackForm) {
     }
   });
 }
+
+/* ---------------------------------------------------------------- downloads + stats */
+const numberFormat = new Intl.NumberFormat("vi-VN");
+
+function trackDownload(asset) {
+  fetch(DOWNLOAD_URL, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    keepalive: true,
+    body: JSON.stringify({asset, visitor_id: VISITOR_ID, source: SOURCE}),
+  }).catch(() => {});
+}
+document.querySelectorAll("[data-download]").forEach((link) => {
+  link.addEventListener("click", () => {
+    trackDownload(link.dataset.download);
+    setTimeout(loadStats, 600);
+  });
+});
+
+async function loadStats() {
+  const response = await fetch(STATS_URL);
+  if (!response.ok) throw new Error("stats unavailable");
+  const data = await response.json();
+  $("stat-tts").textContent = numberFormat.format(data.tts_total || 0);
+  $("stat-tts-today").textContent = `${numberFormat.format(data.tts_today || 0)} hôm nay`;
+  $("stat-downloads").textContent = numberFormat.format(data.downloads_total || 0);
+  $("stat-downloads-today").textContent = `${numberFormat.format(data.downloads_today || 0)} hôm nay`;
+  $("stat-visitors").textContent = numberFormat.format(data.visitors || 0);
+  $("stat-feedback").textContent = numberFormat.format(data.feedback_total || 0);
+  const items = Array.isArray(data.downloads_by_platform) ? data.downloads_by_platform : [];
+  const max = Math.max(1, ...items.map((item) => Number(item.count) || 0));
+  const box = $("download-platforms");
+  box.textContent = "";
+  if (!data.downloads_total) {
+    const empty = document.createElement("p");
+    empty.className = "stats-empty";
+    empty.textContent = "Chưa có lượt bấm tải nào. Hãy thử một nút tải phía trên.";
+    box.appendChild(empty);
+    return;
+  }
+  for (const item of items) {
+    const row = document.createElement("div");
+    row.className = "dl-stat-row";
+    const label = document.createElement("span");
+    label.textContent = item.label;
+    const bar = document.createElement("div");
+    bar.className = "dl-bar";
+    const fill = document.createElement("span");
+    const count = Number(item.count) || 0;
+    fill.style.width = count ? `${Math.max(4, (count / max) * 100).toFixed(1)}%` : "0";
+    bar.appendChild(fill);
+    const value = document.createElement("b");
+    value.textContent = numberFormat.format(count);
+    row.append(label, bar, value);
+    box.appendChild(row);
+  }
+}
+loadStats().catch(() => {
+  const box = $("download-platforms");
+  if (box) box.innerHTML = '<p class="stats-empty">Không tải được thống kê.</p>';
+});
 
 /* ---------------------------------------------------------------- tabs */
 const tabs = Array.from(document.querySelectorAll(".platform-tab"));

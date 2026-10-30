@@ -79,6 +79,32 @@ FEEDBACK_CATEGORIES = {
     "bao_loi": "Báo lỗi",
 }
 FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã xử lý"}
+#: Tên file trong GitHub Release → nền tảng; server tự map để client không gửi
+#: chuỗi tùy ý vào thống kê.
+DOWNLOAD_PLATFORMS = {
+    "vifasttts-desktop-windows-x64.zip": "windows",
+    "vifasttts-cli-windows-x64.zip": "windows",
+    "vifasttts-desktop-macos-arm64.zip": "macos",
+    "vifasttts-cli-macos-arm64.tar.gz": "macos",
+    "vifasttts-desktop-linux-x64.tar.gz": "linux",
+    "vifasttts-cli-linux-x64.tar.gz": "linux",
+    "vifasttts-mobile-android.apk": "android",
+    "vifasttts-mobile-ios-simulator.zip": "ios",
+    "vifasttts-extension.zip": "extension",
+    "web-dist.tar.gz": "web",
+    "n0-ngochuyen.vfa": "model",
+    "n0-ngochuyen.vfts": "model",
+}
+DOWNLOAD_LABELS = {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "android": "Android",
+    "ios": "iOS Simulator",
+    "extension": "Chrome/Edge",
+    "web": "Web tĩnh",
+    "model": "Model bundle",
+}
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
 DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
@@ -163,6 +189,14 @@ def _init_stats() -> None:
                 );
                 CREATE INDEX IF NOT EXISTS feedback_status ON feedback(status);
                 CREATE INDEX IF NOT EXISTS feedback_category ON feedback(category);
+                CREATE TABLE IF NOT EXISTS download_clicks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts REAL NOT NULL,
+                    platform TEXT NOT NULL,
+                    asset TEXT NOT NULL,
+                    source TEXT NOT NULL DEFAULT 'web'
+                );
+                CREATE INDEX IF NOT EXISTS download_ts ON download_clicks(ts);
             """)
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(usage)")}
             if "source" not in columns:
@@ -294,6 +328,21 @@ def _record_tts(visitor: str, chars: int, audio_seconds: float, elapsed: float,
                 "ON CONFLICT(visitor) DO UPDATE SET last_seen=excluded.last_seen, "
                 "tts_count=visitors.tts_count+1",
                 (visitor, now, now),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _record_download(platform: str, asset: str, source: str) -> None:
+    """Ghi một lượt bấm nút tải; không lưu IP/text, chỉ platform/asset/source."""
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "INSERT INTO download_clicks(ts, platform, asset, source) VALUES(?,?,?,?)",
+                (now, platform, asset, source),
             )
             connection.commit()
         finally:
@@ -441,6 +490,18 @@ def _stats_payload() -> dict:
             feedback_new = connection.execute(
                 "SELECT COUNT(*) AS n FROM feedback WHERE status='new'"
             ).fetchone()["n"]
+            downloads_total = connection.execute(
+                "SELECT COUNT(*) AS n FROM download_clicks"
+            ).fetchone()["n"]
+            downloads_today = connection.execute(
+                "SELECT COUNT(*) AS n FROM download_clicks WHERE ts >= ?", (day_start,)
+            ).fetchone()["n"]
+            downloads_by_platform = {
+                str(row["platform"]): int(row["n"])
+                for row in connection.execute(
+                    "SELECT platform, COUNT(*) AS n FROM download_clicks GROUP BY platform"
+                ).fetchall()
+            }
             totals = connection.execute(
                 "SELECT COALESCE(SUM(audio_seconds),0) AS audio, "
                 "COALESCE(SUM(chars),0) AS chars, "
@@ -469,6 +530,9 @@ def _stats_payload() -> dict:
         "suggestions_approved": int(suggestions_approved),
         "feedback_total": int(feedback_total),
         "feedback_new": int(feedback_new),
+        "downloads_total": int(downloads_total),
+        "downloads_today": int(downloads_today),
+        "downloads_by_platform": downloads_by_platform,
         "audio_seconds": round(float(totals["audio"]), 2),
         "chars_total": int(totals["chars"]),
         "avg_chars": round(float(totals["chars"]) / tts, 1) if tts else 0.0,
@@ -567,6 +631,10 @@ def _admin_html(stats: dict) -> str:
                         f"Cải tiến {feedback_counts['by_category'].get('cai_tien', 0)} · "
                         f"Báo lỗi {feedback_counts['by_category'].get('bao_loi', 0)} · "
                         f"Đã đọc {feedback_counts['read']} · Đã xử lý {feedback_counts['resolved']}")
+    download_summary = " · ".join(
+        f"{label} {int(stats['downloads_by_platform'].get(key, 0))}"
+        for key, label in DOWNLOAD_LABELS.items()
+    )
     return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
@@ -611,7 +679,11 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
   <div class="card"><b>{stats['suggestions_approved']}</b><span>quy tắc đã duyệt</span></div>
   <div class="card"><b>{stats['feedback_total']}</b><span>góp ý / báo lỗi</span></div>
   <div class="card"><b>{stats['feedback_new']}</b><span>góp ý mới</span></div>
+  <div class="card"><b>{stats['downloads_total']}</b><span>lượt bấm tải</span></div>
+  <div class="card"><b>{stats['downloads_today']}</b><span>lượt bấm tải hôm nay</span></div>
 </div>
+<h2 style="margin:24px 0 4px">Lượt bấm tải theo nền tảng</h2>
+<p class="sub">{download_summary}</p>
 <h2 style="margin:24px 0 4px">Đề xuất cách đọc</h2>
 <p class="sub">{review_note}</p>
 <table><thead><tr><th>Thời điểm</th><th>Từ</th><th>Cách đọc</th><th>Nguồn</th><th>Duyệt</th></tr></thead>
@@ -625,7 +697,8 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 <table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>RTF</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="note">Số “người dùng” là ước lượng theo hash visitor/IP, không lưu IP/text TTS.
-Góp ý chỉ lưu nội dung bạn gửi và liên hệ (nếu có), chỉ admin đã đặt mật khẩu mới xem được. {auth_note}</div>
+Góp ý chỉ lưu nội dung bạn gửi và liên hệ (nếu có), chỉ admin đã đặt mật khẩu mới xem được.
+Lượt bấm tải chỉ ghi nền tảng/tên file/thời điểm, không lưu IP hay file. {auth_note}</div>
 </main></body></html>"""
 
 
@@ -675,12 +748,18 @@ class FeedbackRequest(BaseModel):
     website: str | None = None
 
 
-def _rate_ok(client: str) -> bool:
+class DownloadRequest(BaseModel):
+    asset: str
+    visitor_id: str | None = None
+    source: str = "web"
+
+
+def _rate_ok(client: str, limit: int = RATE_LIMIT) -> bool:
     now = time.monotonic()
     bucket = _hits[client]
     while bucket and now - bucket[0] > RATE_WINDOW:
         bucket.popleft()
-    if len(bucket) >= RATE_LIMIT:
+    if len(bucket) >= limit:
         return False
     bucket.append(now)
     return True
@@ -797,6 +876,51 @@ def public_config() -> dict:
             "config": "/api/config",
         },
     }
+
+
+@app.get("/api/stats")
+def public_stats() -> dict:
+    """Thống kê tổng hợp công khai; không trả visitor, text hay nội dung góp ý."""
+    stats = _stats_payload()
+    return {
+        "generated_at": stats["generated_at"],
+        "page_views": stats["page_views"],
+        "visitors": stats["users_total"],
+        "tts_total": stats["tts_total"],
+        "tts_today": stats["tts_today"],
+        "audio_seconds": stats["audio_seconds"],
+        "feedback_total": stats["feedback_total"],
+        "downloads_total": stats["downloads_total"],
+        "downloads_today": stats["downloads_today"],
+        "downloads_by_platform": [
+            {"platform": key, "label": label,
+             "count": int(stats["downloads_by_platform"].get(key, 0))}
+            for key, label in DOWNLOAD_LABELS.items()
+        ],
+    }
+
+
+@app.post("/api/download")
+def download_click(payload: DownloadRequest, request: Request) -> dict:
+    """Đếm lượt bấm nút tải; không xác nhận file đã tải xong."""
+    asset = Path(str(payload.asset)).name
+    platform = DOWNLOAD_PLATFORMS.get(asset)
+    if not platform:
+        raise HTTPException(status_code=422, detail="File tải không hợp lệ")
+    try:
+        visitor = _visitor_hash(request, payload.visitor_id)
+    except Exception:
+        logger.warning("download visitor hash failed", exc_info=True)
+        visitor = "unknown"
+    if not _rate_ok(f"download:{visitor}", limit=60):
+        raise HTTPException(status_code=429, detail="Ghi nhận quá nhanh; thử lại sau")
+    source = payload.source if payload.source in ("web", "space", "api") else "api"
+    try:
+        _record_download(platform, asset, source)
+    except Exception:
+        logger.exception("download stats failed")
+        raise HTTPException(status_code=500, detail="Không ghi được thống kê") from None
+    return {"ok": True, "platform": platform, "asset": asset}
 
 
 @app.post("/api/visit")

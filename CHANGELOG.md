@@ -11,6 +11,8 @@
 - **Liên kết hai chiều ViFastKey ↔ ViFastTts**: mục **Sản phẩm** lớn giới thiệu cả hai
   sản phẩm; form **Góp ý** chuyển từ `/demo` sang landing để hiển thị công khai;
   ViFastKey hiển thị góp ý thành mục thay vì popup.
+- **Thống kê web**: landing có mục **Thống kê** (`/api/stats`) và đếm lượt bấm nút tải
+  theo nền tảng (`POST /api/download`); demo cũng ghi nhận lượt bấm tải.
 - Version: **0.3.5**; Android `versionCode 13`, iOS build 9.
 
 ## 2026-10-30 — v0.3.4
