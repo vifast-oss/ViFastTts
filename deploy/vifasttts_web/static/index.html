@@ -6,6 +6,7 @@
 <title>ViFastTts — Giọng đọc tiếng Việt nhỏ, nhanh, chạy CPU</title>
 <meta name="description" content="TTS tiếng Việt mã nguồn mở: model Ngọc Huyền small 6,1M, 24 kHz, ONNX CPU. Nghe thử trong trình duyệt, tải app Windows/macOS/Linux/Android và xem hướng dẫn cài từng bước.">
 <meta name="theme-color" content="#D42A20">
+  <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://tts.vifast.org/">
 <link rel="icon" href="brand/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
@@ -78,6 +79,18 @@
   .brand-word { font-size:24px; font-weight:800; letter-spacing:-1.1px; line-height:1; }
   .brand-word em { font-style:italic; color:var(--ink); }
   .brand-word .red { color:var(--accent); }
+  .nav-toggle { display:none; align-items:center; justify-content:center; width:42px; height:42px;
+                padding:0; border:1px solid var(--border); border-radius:10px; background:var(--surface);
+                color:var(--ink); cursor:pointer; flex:0 0 auto; }
+  .nav-toggle__bars, .nav-toggle__bars::before, .nav-toggle__bars::after {
+                display:block; width:18px; height:2px; border-radius:2px; background:currentColor; position:relative; }
+  .nav-toggle__bars::before, .nav-toggle__bars::after { content:""; position:absolute; left:0; }
+  .nav-toggle__bars::before { top:-6px; }
+  .nav-toggle__bars::after { top:6px; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars { background:transparent; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars::before { transform:translateY(6px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars::after { transform:translateY(-6px) rotate(-45deg); }
+
   .nav { display:flex; gap:24px; margin-left:auto; font-size:14px; font-weight:600; }
   .nav a { text-decoration:none; color:#4B5563; padding:6px 0; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; }
   .nav a:hover { color:var(--accent); border-color:var(--accent); }
@@ -90,6 +103,8 @@
   .header-live-dot { width:6px; height:6px; border-radius:50%; background:#22C55E; box-shadow:0 0 0 3px rgba(34,197,94,.12); }
   .header-live.off { border-color:#E5D6C6; background:#FBF3E8; color:#9B2C20; }
   .header-live.off .header-live-dot { background:#C08457; box-shadow:0 0 0 3px rgba(192,132,87,.12); }
+  a.header-live { text-decoration:none; transition:border-color .15s, background .15s; }
+  a.header-live:hover { border-color:#22C55E; background:#E9F9F0; }
 
   /* ------------------------------------------------------------ hero */
   .hero { display:grid; grid-template-columns:1.02fr .98fr; gap:clamp(32px,5vw,64px);
@@ -424,9 +439,17 @@
   }
   @media (max-width:900px) {
     html { scroll-padding-top:108px; }
-    .header-inner { flex-wrap:wrap; gap:8px 18px; padding:10px 0; }
-    .nav { order:3; width:100%; gap:18px; overflow-x:auto; padding-bottom:4px; margin-left:0; }
-    .nav a { padding:3px 0; white-space:nowrap; }
+    .header-inner { flex-wrap:nowrap; gap:10px; padding:10px 0; }
+    .nav-toggle { display:inline-flex; margin-left:auto; }
+    .nav { display:none; position:absolute; left:0; right:0; top:100%; flex-direction:column;
+           align-items:flex-start; gap:0; padding:8px 24px 12px; margin-left:0;
+           background:var(--cream); border-bottom:1px solid rgba(232,221,208,.85);
+           box-shadow:0 16px 28px -22px rgba(31,36,48,.55); z-index:45; }
+    .nav.is-open { display:flex; }
+    .nav a { width:100%; padding:12px 0; border-bottom:1px solid rgba(232,221,208,.7); font-size:15px; }
+    .nav a:last-child { border-bottom:0; }
+    .nav .nav-home { order:9; opacity:.8; }
+    .ghost-btn { margin-left:0; }
     .ghost-btn { margin-left:auto; }
     .header-live { display:none; }
   }
@@ -504,17 +527,18 @@
       <img src="brand/vifasttts-icon-192.png" width="40" height="40" alt="">
       <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Tts</span></span>
     </a>
-    <nav class="nav" aria-label="Điều hướng chính">
-      <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
+    <nav class="nav" id="site-nav" aria-label="Điều hướng chính">
       <a href="#nghe-thu">Nghe thử</a>
       <a href="#tinh-nang">Tính năng</a>
-      <a href="#san-pham">Sản phẩm</a>
       <a href="#tai-ve">Tải về</a>
-      <a href="#cai-dat">Hướng dẫn cài</a>
+      <a href="#san-pham">Sản phẩm</a>
       <a href="#feedback">Góp ý</a>
-      <a href="#api">API</a>
+      <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
     </nav>
-    <span class="header-live" id="header-live" title="Demo API đang chạy"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></span>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Mở menu">
+      <span class="nav-toggle__bars" aria-hidden="true"></span>
+    </button>
+    <a class="header-live" id="header-live" href="#api" title="Demo API đang chạy — xem phần API"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></a>
     <a class="ghost-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">
       <svg class="icon" aria-hidden="true"><use href="#i-github"></use></svg> GitHub
     </a>
@@ -1367,10 +1391,6 @@ vifasttts synthesize-onnx \
       .vf-rel-sum strong{font-weight:650}
       .vf-rel-card a{font-size:14px}
       .vf-rel-empty,.vf-rel-load{opacity:.75;font-size:15px;padding:6px 0}
-      @media (prefers-color-scheme: dark){
-        .vf-rel-card{background:rgba(28,20,18,.72);border-color:rgba(229,53,43,.28)}
-        .vf-rel-tag{border-color:rgba(229,53,43,.45)}
-      }
     </style>
     <h2 id="vf-rel-title">Bản phát hành</h2>
     <p class="vf-rel-sub">Tải trực tiếp từ GitHub Releases của <code>vifast-oss/ViFastTts</code>.</p>
@@ -1761,6 +1781,15 @@ function openFromHash() {
 }
 window.addEventListener("hashchange", openFromHash);
 openFromHash();
+</script>
+<script>
+(function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');
+if(!b||!n)return;
+function s(o){n.classList.toggle('is-open',o);b.setAttribute('aria-expanded',o?'true':'false');b.setAttribute('aria-label',o?'Đóng menu':'Mở menu');}
+b.addEventListener('click',function(){s(!n.classList.contains('is-open'));});
+n.addEventListener('click',function(e){if(e.target.closest('a'))s(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')s(false);});
+window.addEventListener('resize',function(){if(window.innerWidth>760)s(false);});})();
 </script>
 </body>
 </html>
