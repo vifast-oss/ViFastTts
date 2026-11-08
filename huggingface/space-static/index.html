@@ -6,6 +6,7 @@
 <title>ViFastTts — Giọng đọc tiếng Việt nhỏ, nhanh, chạy CPU</title>
 <meta name="description" content="TTS tiếng Việt mã nguồn mở: model Ngọc Huyền small 6,1M, 24 kHz, ONNX CPU. Nghe thử trong trình duyệt, tải app Windows/macOS/Linux/Android và xem hướng dẫn cài từng bước.">
 <meta name="theme-color" content="#D42A20">
+  <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://tts.vifast.org/">
 <link rel="icon" href="brand/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
@@ -78,6 +79,18 @@
   .brand-word { font-size:24px; font-weight:800; letter-spacing:-1.1px; line-height:1; }
   .brand-word em { font-style:italic; color:var(--ink); }
   .brand-word .red { color:var(--accent); }
+  .nav-toggle { display:none; align-items:center; justify-content:center; width:42px; height:42px;
+                padding:0; border:1px solid var(--border); border-radius:10px; background:var(--surface);
+                color:var(--ink); cursor:pointer; flex:0 0 auto; }
+  .nav-toggle__bars, .nav-toggle__bars::before, .nav-toggle__bars::after {
+                display:block; width:18px; height:2px; border-radius:2px; background:currentColor; position:relative; }
+  .nav-toggle__bars::before, .nav-toggle__bars::after { content:""; position:absolute; left:0; }
+  .nav-toggle__bars::before { top:-6px; }
+  .nav-toggle__bars::after { top:6px; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars { background:transparent; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars::before { transform:translateY(6px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars::after { transform:translateY(-6px) rotate(-45deg); }
+
   .nav { display:flex; gap:24px; margin-left:auto; font-size:14px; font-weight:600; }
   .nav a { text-decoration:none; color:#4B5563; padding:6px 0; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; }
   .nav a:hover { color:var(--accent); border-color:var(--accent); }
@@ -90,6 +103,8 @@
   .header-live-dot { width:6px; height:6px; border-radius:50%; background:#22C55E; box-shadow:0 0 0 3px rgba(34,197,94,.12); }
   .header-live.off { border-color:#E5D6C6; background:#FBF3E8; color:#9B2C20; }
   .header-live.off .header-live-dot { background:#C08457; box-shadow:0 0 0 3px rgba(192,132,87,.12); }
+  a.header-live { text-decoration:none; transition:border-color .15s, background .15s; }
+  a.header-live:hover { border-color:#22C55E; background:#E9F9F0; }
 
   /* ------------------------------------------------------------ hero */
   .hero { display:grid; grid-template-columns:1.02fr .98fr; gap:clamp(32px,5vw,64px);
@@ -314,7 +329,7 @@
   .quick-card p { margin:0 0 8px; color:var(--muted); font-size:.8rem; }
 
   /* ------------------------------------------------------------ products */
-  .product-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
   .product-card { position:relative; display:flex; flex-direction:column; gap:12px; overflow:hidden;
                   padding:clamp(22px,3vw,30px); border:1px solid var(--border); border-radius:20px;
                   background:var(--surface); box-shadow:0 18px 44px -34px rgba(90,45,25,.45); }
@@ -424,10 +439,19 @@
   }
   @media (max-width:900px) {
     html { scroll-padding-top:108px; }
-    .header-inner { flex-wrap:wrap; gap:8px 18px; padding:10px 0; }
-    .nav { order:3; width:100%; gap:18px; overflow-x:auto; padding-bottom:4px; margin-left:0; }
-    .nav a { padding:3px 0; white-space:nowrap; }
-    .ghost-btn { margin-left:auto; }
+    .header-inner { flex-wrap:nowrap; gap:10px; padding:10px 0; }
+    .nav-toggle { display:inline-flex; margin-left:0; order:3; }
+    .header-inner .brand { order:1; margin-right:auto; }
+    .header-inner .ghost-btn { order:2; margin-left:0; }
+    .nav { display:none; position:absolute; left:0; right:0; top:100%; flex-direction:column;
+           align-items:flex-start; gap:0; padding:8px 24px 12px; margin-left:0;
+           background:var(--cream); border-bottom:1px solid rgba(232,221,208,.85);
+           box-shadow:0 16px 28px -22px rgba(31,36,48,.55); z-index:45; }
+    .nav.is-open { display:flex; }
+    .nav a { width:100%; padding:12px 0; border-bottom:1px solid rgba(232,221,208,.7); font-size:15px; }
+    .nav a:last-child { border-bottom:0; }
+    .nav .nav-home { order:9; opacity:.8; }
+    .ghost-btn { margin-left:0; }
     .header-live { display:none; }
   }
   @media (max-width:760px) {
@@ -465,6 +489,11 @@
     html { scroll-behavior:auto; }
     *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
   }
+
+/* link tro ve trang chu thuong hieu */
+.nav .nav-home, .site-nav .nav-home { font-weight: 600; opacity: .85; }
+.nav .nav-home:hover, .nav .nav-home:focus-visible,
+.site-nav .nav-home:hover, .site-nav .nav-home:focus-visible { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
 </style>
 <noscript><style>
   /* Không có JS: bỏ tab, hiện đủ mọi hướng dẫn cài thay vì chỉ panel đầu. */
@@ -499,16 +528,18 @@
       <img src="brand/vifasttts-icon-192.png" width="40" height="40" alt="">
       <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Tts</span></span>
     </a>
-    <nav class="nav" aria-label="Điều hướng chính">
+    <nav class="nav" id="site-nav" aria-label="Điều hướng chính">
       <a href="#nghe-thu">Nghe thử</a>
       <a href="#tinh-nang">Tính năng</a>
-      <a href="#san-pham">Sản phẩm</a>
       <a href="#tai-ve">Tải về</a>
-      <a href="#cai-dat">Hướng dẫn cài</a>
+      <a href="#san-pham">Sản phẩm</a>
       <a href="#feedback">Góp ý</a>
-      <a href="#api">API</a>
+      <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
     </nav>
-    <span class="header-live" id="header-live" title="Demo API đang chạy"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></span>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Mở menu">
+      <span class="nav-toggle__bars" aria-hidden="true"></span>
+    </button>
+    <a class="header-live" id="header-live" href="#api" title="Demo API đang chạy — xem phần API"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></a>
     <a class="ghost-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">
       <svg class="icon" aria-hidden="true"><use href="#i-github"></use></svg> GitHub
     </a>
@@ -1199,37 +1230,51 @@ vifasttts synthesize-onnx \
     <div class="section-head" id="san-pham">
       <div>
         <div class="eyebrow">Sản phẩm</div>
-        <h2>Hai sản phẩm,<br>một hệ sinh thái.</h2>
+        <h2>Ba sản phẩm,<br>một hệ sinh thái.</h2>
       </div>
-      <p>Cùng chạy local-first, cùng mục tiêu tiếng Việt nhẹ và nhanh: một bên đọc thành tiếng, một bên gõ thành chữ.</p>
+      <p>Cùng local-first, cùng giấy phép MIT: một bên đọc thành tiếng, một bên gõ thành chữ, một bên giữ lõi hệ điều hành.</p>
     </div>
     <div class="product-grid">
       <article class="product-card current">
         <span class="p-tag">Đang xem · TTS</span>
         <h3>ViFastTts</h3>
-        <p>Giọng đọc tiếng Việt non-autoregressive, ONNX CPU, 24 kHz.</p>
+        <p>Giọng đọc tiếng Việt chạy CPU trên ONNX, 24 kHz.</p>
         <ul class="product-list">
           <li>Model Ngọc Huyền small 6,1M tham số</li>
           <li>Desktop, extension, Android, iOS Simulator</li>
           <li>API REST/stream, CLI server, Python, ONNX</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="#nghe-thu">Nghe thử</a>
-          <a class="text-btn" href="#tai-ve">Tải về <span aria-hidden="true">→</span></a>
+          <a class="primary-btn" href="https://tts.vifast.org/">Website <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
       <article class="product-card">
         <span class="p-tag">Cùng hệ sinh thái · Bộ gõ</span>
         <h3>ViFastKey</h3>
-        <p>Bộ gõ Telex, Simple Telex, VNI và VIQR trên lõi Rust nhỏ, chạy local.</p>
+        <p>Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic trên lõi Rust.</p>
         <ul class="product-list">
-          <li>WASM gõ thử ngay trong trình duyệt</li>
-          <li>C ABI cho IMK/TSF/Fcitx5/IBus</li>
-          <li>API Python, app desktop và mobile</li>
+          <li>Telex, Simple Telex, VNI, VIQR · 16 bảng mã</li>
+          <li>WASM gõ thử trong trình duyệt, C ABI, API Python</li>
+          <li>Windows, macOS, Linux, Android, iOS và demo UEFI</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="https://key.vifast.org/" target="_blank" rel="noopener">Mở ViFastKey <span aria-hidden="true">↗</span></a>
-          <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+          <a class="primary-btn" href="https://key.vifast.org/">Website <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+      <article class="product-card">
+        <span class="p-tag">Cùng hệ sinh thái · Hệ điều hành</span>
+        <h3>ViFastOs</h3>
+        <p>Microkernel viết bằng Rust, capability-based, chạy trên QEMU.</p>
+        <ul class="product-list">
+          <li>Capability, IPC + notification, no_std</li>
+          <li>riscv64, aarch64 và x86_64 (UEFI/OVMF)</li>
+          <li>Đang phát triển — chưa có bản phát hành</li>
+        </ul>
+        <div class="product-actions">
+          <a class="primary-btn" href="https://os.vifast.org/">Website <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastOs" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
     </div>
@@ -1328,6 +1373,63 @@ vifasttts synthesize-onnx \
       </div>
     </div>
   </section>
+
+  <!-- bản phát hành công khai: lấy từ GitHub Releases qua /api/releases -->
+  <section id="ban-phat-hanh" class="vf-rel" aria-labelledby="vf-rel-title">
+    <style>
+      .vf-rel{max-width:1080px;margin:0 auto;padding:56px 20px 8px}
+      .vf-rel h2{font-size:clamp(22px,2.4vw,30px);margin:0 0 6px}
+      .vf-rel .vf-rel-sub{margin:0 0 22px;opacity:.75;font-size:15px}
+      .vf-rel-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+      .vf-rel-card{border:1px solid rgba(155,44,32,.18);border-radius:14px;padding:16px 18px;background:rgba(255,252,247,.92)}
+      .vf-rel-tag{display:inline-block;font:600 13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+        border:1px solid rgba(155,44,32,.35);border-radius:999px;padding:2px 10px;margin-bottom:8px}
+      .vf-rel-name{font-weight:650;margin:0 0 4px}
+      .vf-rel-meta{font-size:13px;opacity:.7;margin:0 0 8px}
+      .vf-rel-sum{font-size:14px;line-height:1.5;margin:0 0 10px;opacity:.9}
+      .vf-rel-sum code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;
+        background:rgba(155,44,32,.09);border-radius:4px;padding:1px 4px}
+      .vf-rel-sum strong{font-weight:650}
+      .vf-rel-card a{font-size:14px}
+      .vf-rel-empty,.vf-rel-load{opacity:.75;font-size:15px;padding:6px 0}
+    </style>
+    <h2 id="vf-rel-title">Bản phát hành</h2>
+    <p class="vf-rel-sub">Tải trực tiếp từ GitHub Releases của <code>vifast-oss/ViFastTts</code>.</p>
+    <div class="vf-rel-grid" id="vf-rel-list" data-api="/api/releases">
+      <p class="vf-rel-load">Đang tải…</p>
+    </div>
+    <p style="margin:18px 0 0"><a href="https://github.com/vifast-oss/ViFastTts/releases" target="_blank" rel="noopener">Xem tất cả bản phát hành trên GitHub →</a></p>
+  </section>
+  <script>
+  (function(){
+    var box=document.getElementById('vf-rel-list'); if(!box) return;
+    var api=box.getAttribute('data-api')||'/api/releases';
+    function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function md(s){
+      var t=esc(s);
+      t=t.replace(/^\s*[-*\u2022]\s+/,'');
+      t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+      t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+      t=t.replace(/(^|[^*])\*([^*\s][^*]*)\*/g,'$1<em>$2</em>');
+      t=t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+      return t;
+    }
+    function fmt(d){try{return new Date(d).toLocaleDateString('vi-VN',{year:'numeric',month:'2-digit',day:'2-digit'});}catch(e){return '';}}
+    fetch(api,{headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(function(d){
+      var items=(d&&d.releases)||[];
+      if(!items.length){box.innerHTML='<p class="vf-rel-empty">Chưa có bản phát hành chính thức — theo dõi repo để nhận bản đầu tiên.</p>';return;}
+      box.innerHTML=items.map(function(r){
+        return '<article class="vf-rel-card">'
+          +'<span class="vf-rel-tag">'+esc(r.tag)+(r.prerelease?' · pre':'')+'</span>'
+          +'<p class="vf-rel-name">'+esc(r.name||r.tag)+'</p>'
+          +'<p class="vf-rel-meta">'+esc(fmt(r.published_at))+'</p>'
+          +(r.summary?'<p class="vf-rel-sum">'+md(r.summary)+'</p>':'')
+          +'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">Xem bản phát hành →</a>'
+          +'</article>';
+      }).join('');
+    }).catch(function(){box.innerHTML='<p class="vf-rel-empty">Không tải được danh sách bản phát hành.</p>';});
+  })();
+  </script>
 </main>
 
 <footer class="site-footer">
@@ -1338,11 +1440,12 @@ vifasttts synthesize-onnx \
     </div>
     <p>Code MIT · model/dataset CC BY-NC 4.0 · không dùng giả giọng, lừa đảo hoặc production thương mại. Model N0 Ngọc Huyền Q-init, ONNX FP32.</p>
     <div class="footer-links">
+      <a href="https://vifast.org">vifast.org</a>
       <a href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/vifast-oss/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
       <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
       <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a>
-      <a href="https://key.vifast.org/" target="_blank" rel="noopener">ViFastKey</a>
+      <a href="https://key.vifast.org/">ViFastKey</a>
       <a href="#thong-ke">Số liệu</a>
       <a href="https://tts.vifast.org/admin">Admin</a>
       <a href="#feedback">Góp ý</a>
@@ -1679,6 +1782,15 @@ function openFromHash() {
 }
 window.addEventListener("hashchange", openFromHash);
 openFromHash();
+</script>
+<script>
+(function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');
+if(!b||!n)return;
+function s(o){n.classList.toggle('is-open',o);b.setAttribute('aria-expanded',o?'true':'false');b.setAttribute('aria-label',o?'Đóng menu':'Mở menu');}
+b.addEventListener('click',function(){s(!n.classList.contains('is-open'));});
+n.addEventListener('click',function(e){if(e.target.closest('a'))s(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')s(false);});
+window.addEventListener('resize',function(){if(window.innerWidth>760)s(false);});})();
 </script>
 </body>
 </html>
