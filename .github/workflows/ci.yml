@@ -1,12 +1,9 @@
 name: ci
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
-  pull_request:
+  # Tạm thời chỉ chạy tay: tránh dùng GitHub-hosted runner khi repo public.
+  # TODO: chuyển job sang self-hosted rồi bật lại push/PR.
   workflow_dispatch:
-
 permissions:
   contents: write
 
