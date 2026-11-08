@@ -440,7 +440,9 @@
   @media (max-width:900px) {
     html { scroll-padding-top:108px; }
     .header-inner { flex-wrap:nowrap; gap:10px; padding:10px 0; }
-    .nav-toggle { display:inline-flex; margin-left:auto; }
+    .nav-toggle { display:inline-flex; margin-left:0; order:3; }
+    .header-inner .brand { order:1; margin-right:auto; }
+    .header-inner .ghost-btn { order:2; margin-left:0; }
     .nav { display:none; position:absolute; left:0; right:0; top:100%; flex-direction:column;
            align-items:flex-start; gap:0; padding:8px 24px 12px; margin-left:0;
            background:var(--cream); border-bottom:1px solid rgba(232,221,208,.85);
@@ -450,7 +452,6 @@
     .nav a:last-child { border-bottom:0; }
     .nav .nav-home { order:9; opacity:.8; }
     .ghost-btn { margin-left:0; }
-    .ghost-btn { margin-left:auto; }
     .header-live { display:none; }
   }
   @media (max-width:760px) {
@@ -1244,7 +1245,7 @@ vifasttts synthesize-onnx \
           <li>API REST/stream, CLI server, Python, ONNX</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="https://tts.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+          <a class="primary-btn" href="https://tts.vifast.org/">Website <span aria-hidden="true">↗</span></a>
           <a class="text-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
@@ -1258,7 +1259,7 @@ vifasttts synthesize-onnx \
           <li>Windows, macOS, Linux, Android, iOS và demo UEFI</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="https://key.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+          <a class="primary-btn" href="https://key.vifast.org/">Website <span aria-hidden="true">↗</span></a>
           <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
@@ -1272,7 +1273,7 @@ vifasttts synthesize-onnx \
           <li>Đang phát triển — chưa có bản phát hành</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="https://os.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+          <a class="primary-btn" href="https://os.vifast.org/">Website <span aria-hidden="true">↗</span></a>
           <a class="text-btn" href="https://github.com/vifast-oss/ViFastOs" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
@@ -1444,7 +1445,7 @@ vifasttts synthesize-onnx \
       <a href="https://github.com/vifast-oss/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
       <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
       <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a>
-      <a href="https://key.vifast.org/" target="_blank" rel="noopener">ViFastKey</a>
+      <a href="https://key.vifast.org/">ViFastKey</a>
       <a href="#thong-ke">Số liệu</a>
       <a href="https://tts.vifast.org/admin">Admin</a>
       <a href="#feedback">Góp ý</a>
