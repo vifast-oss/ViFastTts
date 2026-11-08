@@ -24,4 +24,4 @@ Demo nghe thử model TTS tiếng Việt **small 6,1M acoustic**, 24 kHz, ONNX C
 
 Code: https://github.com/dvchd/ViFastTts
 Model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
-Demo VPS: https://vifasttts.hoctuthien.com/
+Demo VPS: https://tts.vifast.org/

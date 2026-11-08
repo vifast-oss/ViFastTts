@@ -41,14 +41,14 @@ cd ViFastTts
 powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1
 
 Demo online:
-https://vifasttts.hoctuthien.com/
+https://tts.vifast.org/
 
 Toàn bộ tài nguyên:
 
 - Mã nguồn: https://github.com/dvchd/ViFastTts
 - Hugging Face model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - Space nghe thử miễn phí: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
-- Demo: https://vifasttts.hoctuthien.com/
+- Demo: https://tts.vifast.org/
 - Release research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
 - Release prod candidate nội bộ: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
 - Hướng dẫn train lại: docs/TRAINING_N0.md trong repo

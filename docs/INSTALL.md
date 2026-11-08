@@ -3,7 +3,7 @@
 Ưu tiên **Windows** và **macOS**; Linux, Android, iOS, server, extension và TUI ở
 các mục sau.
 
-> Release portable mới nhất: <https://vifasttts.hoctuthien.com/#tai-ve>
+> Release portable mới nhất: <https://tts.vifast.org/#tai-ve>
 > (mirror tạm trong khi GitHub Release gián đoạn).
 > Bản desktop chưa ký số; model FP32 nằm sẵn trong gói.
 

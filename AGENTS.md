@@ -94,7 +94,7 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
   Deploy web qua `ssh root@jp` → `lxc exec hoctuthien-vps` (staging `/opt/vifasttts`,
   `docker compose up -d --build`); upload Space bằng `huggingface_hub` (token trong
   `~/.cache/huggingface`). **Sau khi deploy phải kiểm chứng**: tải thử từng link release
-  trên cả `https://vifasttts.hoctuthien.com/` và Space, không chỉ nói đã cập nhật.
+  trên cả `https://tts.vifast.org/` và Space, không chỉ nói đã cập nhật.
 - **Sau mỗi lần deploy Python web** (kể cả không phát hành release): bắt buộc upload lại
   `huggingface/space-static/` lên HF Space, rồi kiểm tra `raw/main/index.html` + URL static;
   không được chỉ deploy VPS rồi báo xong. Space và web phải cùng version/tính năng.
@@ -106,7 +106,7 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
 
 > Chi tiết + việc còn lại: `docs/handoff/TRANG_THAI.md`. Mục lục tài liệu: `docs/README.md`.
 
-- **Live:** `https://vifasttts.hoctuthien.com/` — ONNX FP32, `arch=v2_slot5`,
+- **Live:** `https://tts.vifast.org/` — ONNX FP32, `arch=v2_slot5`,
   `vocab_version=vi-q25-v1` / `vocab_hash`, alpha 1,5, `pause_mode=model`; model **N0 Ngọc Huyền Q-init** (`Q` = `K`,
   bit-exact với N0 Bắc cũ). Checkpoint nguồn `runs/acoustic_ngochuyen_q/init_q.pt`
   (sha256 `3c330cfc…`); ONNX live `artifacts/onnx/n0_q/acoustic.onnx` (sha256 `df61599a…`).

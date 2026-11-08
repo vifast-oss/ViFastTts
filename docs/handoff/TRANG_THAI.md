@@ -9,7 +9,7 @@
 
 ## 0. Năm dòng cho người không kỹ thuật
 
-1. Web **https://vifasttts.hoctuthien.com/** đang chạy model N0 Ngọc Huyền bằng ONNX CPU.
+1. Web **https://tts.vifast.org/** đang chạy model N0 Ngọc Huyền bằng ONNX CPU.
 2. Bản đang chạy là **Q-init**: thêm âm đầu `Q` cho chữ `qu` nhưng `Q` được khởi tạo bằng `K`,
    nên giọng Bắc giữ nguyên từng mẫu âm thanh so với N0 cũ.
 3. Bản **fine-tune Q 3k** đã train xong, hay hơn rất nhẹ về độ nét nhưng **chưa được chọn**;
@@ -23,7 +23,7 @@
 
 | Hạng mục | Giá trị |
 | --- | --- |
-| URL | https://vifasttts.hoctuthien.com/ |
+| URL | https://tts.vifast.org/ |
 | Health | `{"ok":true,"sample_rate":24000,"arch":"v2_slot5","vocab_version":"vi-q25-v1","vocab_hash":"…","alpha":1.5,"pause":"model"}` |
 | Acoustic | N0 Ngọc Huyền **Q-init**; `runs/acoustic_ngochuyen_q/init_q.pt` sha256 `3c330cfcec9ad2…` |
 | ONNX live | `artifacts/onnx/n0_q/acoustic.onnx` sha256 `df61599a15984dcc…`; vocoder `b3eb09cf5c3baa…` |

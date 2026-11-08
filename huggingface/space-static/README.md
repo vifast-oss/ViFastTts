@@ -28,4 +28,4 @@ Static demo miễn phí cho model TTS tiếng Việt small 6,1M, 24 kHz, ONNX CP
 
 Code: https://github.com/dvchd/ViFastTts
 Model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
-VPS demo: https://vifasttts.hoctuthien.com/
+VPS demo: https://tts.vifast.org/

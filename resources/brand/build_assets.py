@@ -82,7 +82,7 @@ def og_image(lockup: Image.Image) -> Image.Image:
     f_big = ImageFont.truetype(str(FONTS / "Arial Bold.ttf"), 30)
     f_small = ImageFont.truetype(str(FONTS / "Arial.ttf"), 24)
     d.text((600, 500), "TTS tiếng Việt · nhỏ · nhanh · chạy CPU", font=f_big, fill=INK, anchor="mm")
-    d.text((600, 548), "vifasttts.hoctuthien.com", font=f_small, fill=RED, anchor="mm")
+    d.text((600, 548), "tts.vifast.org", font=f_small, fill=RED, anchor="mm")
     d.text((600, 590), "ONNX CPU · 24 kHz · small 6,1M", font=f_small, fill=MUTED, anchor="mm")
     return im
 

@@ -11,8 +11,8 @@
 **Cách nhanh nhất:** tải ZIP → giải nén → chạy `vifasttts-desktop.exe`.
 
 1. Tải
-   [`vifasttts-desktop-windows-x64.zip`](https://vifasttts.hoctuthien.com/downloads/v0.3.5/vifasttts-desktop-windows-x64.zip)
-   (~125 MB) từ [trang tải v0.3.5](https://vifasttts.hoctuthien.com/#tai-ve).
+   [`vifasttts-desktop-windows-x64.zip`](https://tts.vifast.org/downloads/v0.3.5/vifasttts-desktop-windows-x64.zip)
+   (~125 MB) từ [trang tải v0.3.5](https://tts.vifast.org/#tai-ve).
 2. Chuột phải file ZIP → **Extract All** (đừng chạy trực tiếp trong file ZIP).
 3. Mở thư mục vừa giải nén → chạy `vifasttts-desktop.exe`.
 4. Nếu SmartScreen cảnh báo: **More info → Run anyway** (bản chưa ký số).
@@ -34,7 +34,7 @@ nếu máy thiếu DLL hệ thống, cài **VC++ 2015–2022 x64**.
 | CLI/TUI/server | `vifasttts-cli-windows-x64.zip` (hoặc macOS/Linux tương ứng) |
 | Web tĩnh riêng | `web-dist.tar.gz` (nâng cao) |
 
-Tất cả nằm trong [trang tải v0.3.5](https://vifasttts.hoctuthien.com/#tai-ve) (bản mirror tạm
+Tất cả nằm trong [trang tải v0.3.5](https://tts.vifast.org/#tai-ve) (bản mirror tạm
 trong khi GitHub Release gián đoạn; kèm `SHA256SUMS.txt`).
 Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
 
@@ -49,8 +49,8 @@ Hướng dẫn chi tiết + xử lý lỗi: **[`docs/INSTALL.md`](docs/INSTALL.m
 
 Extension dùng model bundled nên **không cần Python/server** để đọc local.
 
-1. Tải [`vifasttts-extension.zip`](https://vifasttts.hoctuthien.com/downloads/v0.3.5/vifasttts-extension.zip)
-   (~80 MB) từ [trang tải v0.3.5](https://vifasttts.hoctuthien.com/#tai-ve).
+1. Tải [`vifasttts-extension.zip`](https://tts.vifast.org/downloads/v0.3.5/vifasttts-extension.zip)
+   (~80 MB) từ [trang tải v0.3.5](https://tts.vifast.org/#tai-ve).
 2. Chuột phải ZIP → **Extract All** để có một thư mục chứa `manifest.json`.
 3. Chrome: mở `chrome://extensions` → bật **Developer mode** → **Load unpacked**
    → chọn thư mục vừa giải nén.
@@ -125,17 +125,17 @@ Script tự tải ONNX FP32 **Q-init** từ HuggingFace (có kiểm sha256), t�
 cài `onnxruntime + fastapi + uvicorn` và chạy web demo — **không cần torch**. Cần Python ≥ 3.11.
 Người dùng Windows bình thường nên dùng bản desktop ở trên; mục này chỉ dành cho dev/CLI.
 
-- **Demo online:** https://vifasttts.hoctuthien.com/
+- **Demo online:** https://tts.vifast.org/
 - **Hugging Face model:** https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - **Space demo miễn phí:** https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
-- **Thống kê demo:** https://vifasttts.hoctuthien.com/admin
+- **Thống kê demo:** https://tts.vifast.org/admin
 - **Góp ý / báo lỗi:** form trên web và Space; admin xem tại `/admin` sau khi đặt
   `ADMIN_PASSWORD` (nội dung bị khoá nếu chưa đặt).
 - **Model/card:** `docs/NGOC_HUYEN.md`
 - **Model bundles:** [.vfa/.vfts](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles) ·
   [base 60k sau Q](https://huggingface.co/dvchd/vifasttts-ngochuyen-base) ·
   [3 mẫu nghe](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo)
-- **App release:** [v0.3.5](https://vifasttts.hoctuthien.com/#tai-ve)
+- **App release:** [v0.3.5](https://tts.vifast.org/#tai-ve)
 
 ### Chọn đúng luồng
 
@@ -421,7 +421,7 @@ Mục lục đầy đủ + phân loại **hiện hành / tham chiếu / lịch s
 | | `docs/TRAINING_N0.md` | **Run N0 Ngọc Huyền**: pipeline, thời gian, chọn dữ liệu |
 | | `docs/NGOC_HUYEN.md` | Model card model mẫu, license, quickstart |
 | | `docs/Q_ONSET.md` | Quyết định Q + fine-tune candidate |
-| | `docs/handoff/N0_DEPLOY.md` | ONNX + service `vifasttts.hoctuthien.com` |
+| | `docs/handoff/N0_DEPLOY.md` | ONNX + service `tts.vifast.org` |
 | | `docs/HUGGINGFACE.md` | Hugging Face model + Space static demo |
 | | `docs/TRAINING_ESTIMATES.md` | Ước lượng dữ liệu/tham số/thời gian/máy/chi phí |
 | | `docs/APPLE_SILICON.md` | Mac/M-series: MPS, MLX, ANE, provider ONNX |

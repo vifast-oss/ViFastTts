@@ -45,7 +45,7 @@ qua CLI.
    - Summary: `Đọc tiếng Việt local-first bằng WASM + ONNX; hỗ trợ đọc trang và đoạn bôi đen.`
    - Category: **Productivity** (hoặc Accessibility nếu phù hợp hơn).
    - Language: **Vietnamese**.
-   - Homepage: `https://vifasttts.hoctuthien.com/`
+   - Homepage: `https://tts.vifast.org/`
    - Support: `https://github.com/dvchd/ViFastTts/issues`
    - Privacy policy: `https://github.com/dvchd/ViFastTts/blob/main/docs/EXTENSION_PRIVACY.md`
 3. Screenshots:

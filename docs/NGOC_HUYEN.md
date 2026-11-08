@@ -31,11 +31,11 @@ Không muốn tải script? Xem `deploy/vifasttts_web/README.md` để chạy Do
 
 ## Demo online
 
-- Web: **https://vifasttts.hoctuthien.com/**
+- Web: **https://tts.vifast.org/**
 - Hugging Face model: **https://huggingface.co/dvchd/vifasttts-ngochuyen-small**
 - Space demo miễn phí: **https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo**
-- Thống kê demo (mở công khai): **https://vifasttts.hoctuthien.com/admin**
-- Health: https://vifasttts.hoctuthien.com/healthz
+- Thống kê demo (mở công khai): **https://tts.vifast.org/admin**
+- Health: https://tts.vifast.org/healthz
 - Giới hạn mặc định: **3000 ký tự** · 6 request/phút/IP · không lưu text/audio;
   có thể đổi bằng env `MAX_CHARS` (UI đọc `/api/config`).
 - Web VPS có **3 mẫu nghe sẵn** (không gọi API), lấy từ [HuggingFace demo](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/demo).

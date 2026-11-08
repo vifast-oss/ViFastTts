@@ -2,7 +2,7 @@
 
 ## Dịch vụ đang chạy (27/10/2026)
 
-- **Demo công khai:** https://vifasttts.hoctuthien.com/ — FastAPI + ONNX Runtime CPU,
+- **Demo công khai:** https://tts.vifast.org/ — FastAPI + ONNX Runtime CPU,
   acoustic N0 **Q-init** + Vocos pretrained, alpha 1,5, model tự nghỉ.
 - `healthz` phải báo `arch=v2_slot5` + `vocab_version`; ONNX cũ thiếu hash bị từ chối.
 - Chi tiết VPS/Docker/Traefik, release asset, feedback/admin: `docs/handoff/N0_DEPLOY.md`.

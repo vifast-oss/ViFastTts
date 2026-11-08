@@ -38,7 +38,7 @@
 
 ## 1. Trạng thái hiện tại (tóm tắt)
 
-- **Live:** https://vifasttts.hoctuthien.com/ — ONNX FP32, `arch=v2_slot5`,
+- **Live:** https://tts.vifast.org/ — ONNX FP32, `arch=v2_slot5`,
   `vocab_version=vi-q25-v1` / `vocab_hash`, `sharpen_alpha=1.5`, `pause_mode=model`.
 - **Model đang live:** N0 Ngọc Huyền **Q-init** (`Q` = `K`, bit-exact với N0 Bắc cũ);
   checkpoint nguồn `runs/acoustic_ngochuyen_q/init_q.pt`.

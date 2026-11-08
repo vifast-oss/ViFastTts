@@ -1,7 +1,12 @@
-# N0 — ONNX + demo service `vifasttts.hoctuthien.com`
+# N0 — ONNX + demo service `tts.vifast.org`
 
 > **Demo nghiên cứu / phi thương mại** — dataset CC-BY-NC-4.0. Không dùng làm production
 > thương mại, không dùng giả giọng/lừa đảo.
+
+> **Cập nhật:** dịch vụ đã chuyển ra **host `jp` bằng Docker trực tiếp** (không còn LXD).
+> Deploy bằng `./deploy/vifasttts_web/deploy-jp.sh`, domain `https://tts.vifast.org`.
+> Phần dưới là bối cảnh lịch sử của lần dựng đầu tiên.
+
 
 ## 1. ONNX
 
@@ -31,8 +36,8 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
 
 ## 2. Service
 
-- URL: **https://vifasttts.hoctuthien.com/**
-- Health: `https://vifasttts.hoctuthien.com/healthz`
+- URL: **https://tts.vifast.org/**
+- Health: `https://tts.vifast.org/healthz`
 - Host: VPS `jp` (Tailscale `100.104.111.17`), LXD container `hoctuthien-vps` (web host
   của `hoctuthien.com`), Docker path `/opt/vifasttts`. VPS có **6 vCPU** (Icelake, cpuset 0–5,
   không quota); Docker không giới hạn CPU. ONNX Runtime đặt `VIFASTT_INTRA_THREADS=2`,
@@ -41,7 +46,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   đến sau chờ tối đa **45 s**, quá hạn trả 503 (không có queue/job nền, không có vị trí chờ).
 - Image: `vifasttts-vifasttts:latest`; container `vifasttts`, restart `unless-stopped`.
 - Routing: Traefik trong LXD (Coolify proxy) dùng Docker labels; DNS
-  `vifasttts.hoctuthien.com` đã trỏ VPS, wildcard `*.hoctuthien.com` đi qua LXD.
+  `tts.vifast.org` đã trỏ VPS, wildcard `*.hoctuthien.com` đi qua LXD.
 - TLS: Let's Encrypt (TLS-ALPN) tại Traefik LXD; cert hợp lệ.
 - Trang: nhập text **3000 ký tự** (mặc định; env `MAX_CHARS`), play/tải WAV; mặc định **model tự nghỉ**, alpha **1.5**,
   Vocos pretrained. Fixed pause là checkbox, mặc định tắt. Có **3 mẫu nghe sẵn**
@@ -114,8 +119,8 @@ ssh root@100.104.111.17 'lxc exec hoctuthien-vps -- bash -lc \
 Kiểm tra:
 
 ```bash
-curl -sS https://vifasttts.hoctuthien.com/healthz
-curl -sS -X POST https://vifasttts.hoctuthien.com/api/tts \
+curl -sS https://tts.vifast.org/healthz
+curl -sS -X POST https://tts.vifast.org/api/tts \
   -H 'Content-Type: application/json' \
   -d '{"text":"Xin chào, đây là demo.","speed":1.0,"fixed_pauses":false}' -o demo.wav
 ```

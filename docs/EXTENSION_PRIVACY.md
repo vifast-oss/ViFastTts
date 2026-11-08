@@ -76,7 +76,7 @@ release notes.
 ## Contact
 
 Open an issue at <https://github.com/dvchd/ViFastTts/issues> or use the feedback
-form at <https://vifasttts.hoctuthien.com/>. Do not include private text or
+form at <https://tts.vifast.org/>. Do not include private text or
 tokens in a public issue.
 
 ## Model and dataset license

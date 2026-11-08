@@ -62,7 +62,7 @@ vocoder = hf_hub_download("dvchd/vifasttts-ngochuyen-small", "onnx/vocoder.onnx"
 ```
 
 Sau đó dùng `vifasttts.runtime.onnx_engine` hoặc service demo:
-https://vifasttts.hoctuthien.com/
+https://tts.vifast.org/
 
 Mặc định: `sharpen_alpha=1.5`, Vocos pretrained, **model tự ngắt nghỉ**.
 Nghỉ cố định là opt-in (`--fixed-pauses` / `pause_mode="fixed"`), mặc định tắt.
@@ -132,7 +132,7 @@ request giả để tăng số.
 ## Liên kết
 
 - Code: https://github.com/dvchd/ViFastTts
-- Demo: https://vifasttts.hoctuthien.com/
+- Demo: https://tts.vifast.org/
 - Hugging Face: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - Space demo: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - Model bundles: https://huggingface.co/dvchd/vifasttts-ngochuyen-small/tree/main/bundles

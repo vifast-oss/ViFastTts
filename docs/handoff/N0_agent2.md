@@ -194,7 +194,7 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 - Bản đầu: `artifacts/onnx/n0/` (N0 chưa Q; giờ bị runtime mới từ chối).
 - **Bản đang live:** `artifacts/onnx/n0_q/acoustic.onnx` (Q-init, sha256 `df61599a…`) +
   `vocoder.onnx` (`b3eb09cf…`), opset 18, FP32; `synthesize-onnx` smoke-test CPU pass.
-- Demo public: **https://vifasttts.hoctuthien.com/**
+- Demo public: **https://tts.vifast.org/**
   (VPS `jp` qua Tailscale → LXD `hoctuthien-vps` → Docker `/opt/vifasttts` → Traefik).
 - Service dùng ONNX Runtime, alpha 1.5, Vocos pretrained, model tự nghỉ mặc định;
   fixed pause là checkbox tắt mặc định. Rate limit 6 request/phút/IP, text 3000 ký tự (env `MAX_CHARS`).
