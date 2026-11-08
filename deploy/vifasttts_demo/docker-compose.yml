@@ -1,6 +1,13 @@
+# Production compose for tts.vifast.org (ViFastTts demo).
+# Runs on the jp host; container joins the external `coolify` network so the
+# Coolify Traefik instance on jp discovers it through docker labels.
+#
+#   docker compose up -d --build
+
 services:
   vifasttts:
     build: .
+    image: vifasttts-web:latest
     container_name: vifasttts
     restart: unless-stopped
     environment:
@@ -19,16 +26,23 @@ services:
       - "8000"
     networks:
       - coolify
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=coolify"
       - "traefik.http.middlewares.vifasttts-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.vifasttts-compress.compress=true"
-      - "traefik.http.routers.vifasttts-http.rule=Host(`vifasttts.hoctuthien.com`)"
+      - "traefik.http.routers.vifasttts-http.rule=Host(`tts.vifast.org`)"
       - "traefik.http.routers.vifasttts-http.entrypoints=http"
       - "traefik.http.routers.vifasttts-http.middlewares=vifasttts-redirect"
       - "traefik.http.routers.vifasttts-http.service=vifasttts"
-      - "traefik.http.routers.vifasttts-https.rule=Host(`vifasttts.hoctuthien.com`)"
+      - "traefik.http.routers.vifasttts-https.rule=Host(`tts.vifast.org`)"
       - "traefik.http.routers.vifasttts-https.entrypoints=https"
       - "traefik.http.routers.vifasttts-https.middlewares=vifasttts-compress"
       - "traefik.http.routers.vifasttts-https.tls=true"
