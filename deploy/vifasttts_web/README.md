@@ -22,8 +22,10 @@ ONNX-only demo (không cần torch):
 
 Build context phải có `src/`, `models/{acoustic,vocoder}.onnx`, `app.py`, `static/`
 (kèm `static/brand/`).
-Trên VPS, staging ở `/opt/vifasttts` dùng `docker compose up -d --build`; container join
-network `coolify`, Traefik label route `vifasttts.hoctuthien.com` → `http://vifasttts:8000`.
+Trên host **jp**, thư mục `/opt/vifasttts` giữ `models/`, `data/`, `downloads/` (không nằm
+trong git). Deploy bằng `./deploy/vifasttts_web/deploy-jp.sh` (rsync `app.py`, `static/`,
+`configs/`, package `src/` rồi `docker compose up -d --build`). Container join network
+`coolify`; Traefik label route **`tts.vifast.org`** → `http://vifasttts:8000`.
 
 ## Docker cục bộ
 
