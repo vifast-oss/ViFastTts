@@ -15,7 +15,7 @@ Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastTts** 
 | `apple-touch-icon.png` | iOS home screen, nền đỏ full-bleed |
 | `vifasttts-lockup.png` | logo ngang, nền trong |
 | `vifasttts-lockup-cream.png` | README, model card, tài liệu (nền kem, đọc được ở dark mode) |
-| `og-image.png` | Open Graph / Twitter card 1200×630 |
+| `og-1200.png` | Open Graph / Twitter card 1200×630 |
 | `site.webmanifest` | manifest PWA |
 
 Bản dùng trên web nằm ở `deploy/vifasttts_web/static/brand/` và
@@ -54,8 +54,8 @@ Yêu cầu macOS (Quick Look `qlmanage`) + Pillow + scipy:
 Sau khi dựng lại, copy sang hai thư mục web:
 
 ```bash
-cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-image.png,site.webmanifest} deploy/vifasttts_web/static/brand/
-cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-image.png,site.webmanifest} huggingface/space-static/brand/
+cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-1200.png,site.webmanifest} deploy/vifasttts_web/static/brand/
+cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-1200.png,site.webmanifest} huggingface/space-static/brand/
 ```
 
 Logo do chủ dự án cung cấp. Code repo là MIT; nhãn hiệu/logo không tự động thuộc phạm vi

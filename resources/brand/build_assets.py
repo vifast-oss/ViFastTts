@@ -108,7 +108,7 @@ def main() -> None:
     cream = Image.new("RGBA", lockup.size, (255, 248, 236, 255))
     cream.alpha_composite(lockup)
     cream.convert("RGB").save(ROOT / "vifasttts-lockup-cream.png")
-    og_image(lockup).save(ROOT / "og-image.png", optimize=True)
+    og_image(lockup).save(ROOT / "og-1200.png", optimize=True)
 
     print("wrote", ROOT)
 

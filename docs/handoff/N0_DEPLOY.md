@@ -58,7 +58,7 @@ vifasttts export-vocoder-onnx --config configs/small_ngochuyen.yaml \
   Fine-tune 3k (`n0_q_ft`) **chưa deploy**. D/GI/R/V vẫn 4 token (Bắc Trung Bộ có thổ ngữ
   phân biệt; Trung bộ chính/Nam gộp D/GI — không ghi “Nam phân biệt D/GI”).
 - **Nhận diện:** nguồn logo ở `resources/brand/` (`vifasttts-icon.svg`,
-  `vifasttts-lockup.svg`, favicon, `og-image.png`, manifest). Web phục vụ
+  `vifasttts-lockup.svg`, favicon, `og-1200.png`, manifest). Web phục vụ
   `/static/brand/`; `app.py` mount `StaticFiles` và có route `/favicon.ico`.
 - Chống lạm dụng: 6 request/phút/IP (X-Forwarded-For), 1 request đồng thời, text 3000 ký tự,
   không lưu text/audio.
