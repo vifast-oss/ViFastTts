@@ -43,3 +43,9 @@ rust/lib/*.so
 rust/lib/*.dll
 rust/lib/*.dylib.*
 rust/lib/*.so.*
+
+# --- local data & models (not published) ---
+/data/
+/models/
+/downloads/
+.venv-demo/

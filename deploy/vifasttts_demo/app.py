@@ -115,6 +115,47 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger("vifasttts-demo")
 
 app = FastAPI(title="ViFastTts research demo", docs_url=None, redoc_url=None)
+
+# ── Bản phát hành công khai (proxy GitHub Releases, cache 10 phút) ──────────
+RELEASES_REPO = "vifast-oss/ViFastTts"
+_RELEASES_CACHE: dict = {"at": 0.0, "data": []}
+
+
+@app.get("/api/releases")
+def api_releases():
+    import json as _json
+    import time as _time
+    from urllib.request import Request as _Req, urlopen as _urlopen
+
+    now = _time.time()
+    at = _RELEASES_CACHE.get("at") or 0.0
+    if items := _RELEASES_CACHE.get("data"):
+        if (now - float(at)) < 600:
+            return JSONResponse({"repo": RELEASES_REPO, "releases": items, "cached": True})
+    items: list = []
+    try:
+        req = _Req(
+            f"https://api.github.com/repos/{RELEASES_REPO}/releases?per_page=5",
+            headers={"Accept": "application/vnd.github+json", "User-Agent": "vifast-web"},
+        )
+        with _urlopen(req, timeout=6) as resp:
+            raw = _json.loads(resp.read().decode("utf-8"))
+        for r in raw[:5]:
+            body = (r.get("body") or "").strip().splitlines()
+            items.append({
+                "tag": r.get("tag_name"),
+                "name": r.get("name") or r.get("tag_name"),
+                "published_at": r.get("published_at"),
+                "url": r.get("html_url"),
+                "prerelease": bool(r.get("prerelease")),
+                "summary": (body[0][:200] if body else ""),
+            })
+        _RELEASES_CACHE.update({"at": now, "data": items})
+    except Exception as exc:  # mạng lỗi / rate-limit: trả danh sách rỗng, không 5xx
+        logging.getLogger(__name__).info("releases fetch failed: %s", exc)
+    return JSONResponse({"repo": RELEASES_REPO, "releases": items, "cached": False})
+
+
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 # Trang chủ dùng đường dẫn tương đối `brand/...` để cùng một HTML chạy được cả VPS
 # lẫn HF Space tĩnh; mount thêm để `/brand/*` và `/static/brand/*` cùng hợp lệ.
