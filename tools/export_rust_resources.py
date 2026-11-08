@@ -47,7 +47,7 @@ def main() -> None:
     _write("products.json", EXACT_PRODUCT_NAMES)
     _write("letter_readings.json", LETTER_READINGS)
 
-    overrides_path = ROOT / "deploy" / "vifasttts_demo" / "configs" / "overrides_vi.json"
+    overrides_path = ROOT / "deploy" / "vifasttts_web" / "configs" / "overrides_vi.json"
     _write("overrides_vi.json", json.loads(overrides_path.read_text(encoding="utf-8")))
 
     # File này chỉ dùng cho profile "full"; production live không nạp mặc định.

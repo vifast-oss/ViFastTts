@@ -31,10 +31,10 @@ eval/baselines/*
 huggingface/space-static/samples/
 
 # VPS demo samples are fetched from GitHub release, not committed
-deploy/vifasttts_demo/static/samples/
+deploy/vifasttts_web/static/samples/
 
 # runtime stats DB (local/VPS)
-deploy/vifasttts_demo/data/
+deploy/vifasttts_web/data/
 
 # Rust build artifacts
 rust/target/

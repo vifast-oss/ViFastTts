@@ -1673,7 +1673,7 @@ offscreen.html/js
 - ✅ Remote domain VPS: optional host permission `https://*/*`, token Bearer;
   cần TLS hợp lệ.
 - ✅ Logo/icon extension (16/32/48/128) resize từ `resources/brand/`
-  (cùng brand với Python `deploy/vifasttts_demo/static/brand/`).
+  (cùng brand với Python `deploy/vifasttts_web/static/brand/`).
 
 ### 19.4 Chưa có
 

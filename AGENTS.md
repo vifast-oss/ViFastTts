@@ -89,8 +89,8 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
   Nhãn file ghi rõ model + biến thể (`v2b8_sh15_*` = model b8, làm nét α=1,5) + cập nhật phần
   **notes** của release thành mục lục mỗi khi thêm bản mới.
 - **Mỗi lần phát hành release mới** (tag/asset GitHub): bắt buộc cập nhật đồng thời
-  `deploy/vifasttts_demo/static/index.html` (web Python) và `huggingface/space-static/index.html`
-  (HF Space) sang tag mới; nếu đổi demo code thì deploy cả `deploy/vifasttts_demo/`.
+  `deploy/vifasttts_web/static/index.html` (web Python) và `huggingface/space-static/index.html`
+  (HF Space) sang tag mới; nếu đổi demo code thì deploy cả `deploy/vifasttts_web/`.
   Deploy web qua `ssh root@jp` → `lxc exec hoctuthien-vps` (staging `/opt/vifasttts`,
   `docker compose up -d --build`); upload Space bằng `huggingface_hub` (token trong
   `~/.cache/huggingface`). **Sau khi deploy phải kiểm chứng**: tải thử từng link release

@@ -18,7 +18,7 @@ Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastTts** 
 | `og-image.png` | Open Graph / Twitter card 1200×630 |
 | `site.webmanifest` | manifest PWA |
 
-Bản dùng trên web nằm ở `deploy/vifasttts_demo/static/brand/` và
+Bản dùng trên web nằm ở `deploy/vifasttts_web/static/brand/` và
 `huggingface/space-static/brand/`; hai thư mục này được copy từ đây. Web dùng PNG cho
 lockup để font không bị lệch giữa macOS/Windows/Linux; SVG vẫn là nguồn thiết kế.
 
@@ -54,7 +54,7 @@ Yêu cầu macOS (Quick Look `qlmanage`) + Pillow + scipy:
 Sau khi dựng lại, copy sang hai thư mục web:
 
 ```bash
-cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-image.png,site.webmanifest} deploy/vifasttts_demo/static/brand/
+cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-image.png,site.webmanifest} deploy/vifasttts_web/static/brand/
 cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-image.png,site.webmanifest} huggingface/space-static/brand/
 ```
 

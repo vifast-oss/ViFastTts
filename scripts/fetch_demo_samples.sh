@@ -3,7 +3,7 @@
 # Không commit WAV; script này tái tạo thư mục samples.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="$ROOT/deploy/vifasttts_demo/static/samples"
+DEST="$ROOT/deploy/vifasttts_web/static/samples"
 BASE="${DEMO_SAMPLES_URL:-https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/demo}"
 
 if [ -f "$DEST/fresh01.wav" ] && [ -f "$DEST/fresh02.wav" ] && [ -f "$DEST/fresh04.wav" ]; then

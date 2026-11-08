@@ -44,7 +44,7 @@ for chunk in engine.iter_chunks("Câu một. Câu hai!", TtsSettings(max_chars=6
 
 ## 2. Web Python
 
-`deploy/vifasttts_demo/app.py` dùng `OnnxTtsEngine` đã nạp sẵn:
+`deploy/vifasttts_web/app.py` dùng `OnnxTtsEngine` đã nạp sẵn:
 
 | Endpoint | Ý nghĩa |
 |---|---|

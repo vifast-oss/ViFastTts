@@ -13,7 +13,7 @@ from vifasttts.frontend.syllable import safe_parse_syllable
 
 ROOT = Path(__file__).resolve().parents[1]
 OVERRIDES = ROOT / "configs" / "overrides_vi.json"
-DEPLOY_OVERRIDES = ROOT / "deploy" / "vifasttts_demo" / "configs" / "overrides_vi.json"
+DEPLOY_OVERRIDES = ROOT / "deploy" / "vifasttts_web" / "configs" / "overrides_vi.json"
 
 
 def _load() -> dict[str, str]:

@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "deploy" / "vifasttts_demo" / "static"
+SOURCE = ROOT / "deploy" / "vifasttts_web" / "static"
 DEST = ROOT / "huggingface" / "space-static"
 PAGES = ("index.html", "demo.html")
 ASSET_DIRS = ("brand",)

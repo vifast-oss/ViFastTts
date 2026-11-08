@@ -25,7 +25,7 @@ Script sẽ:
 
 `extension/vendor/`, `extension/models/` không commit. Logo trong
 `extension/icons/` được resize từ brand dùng chung `resources/brand/`
-(cùng bộ với `deploy/vifasttts_demo/static/brand/`).
+(cùng bộ với `deploy/vifasttts_web/static/brand/`).
 
 ## Load extension
 

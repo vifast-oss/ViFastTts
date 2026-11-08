@@ -26,7 +26,7 @@ Script tự:
 3. tạo `.venv-demo` + cài `onnxruntime`, `fastapi`, `uvicorn`;
 4. chạy web demo ONNX, **không cần torch**.
 
-Không muốn tải script? Xem `deploy/vifasttts_demo/README.md` để chạy Docker hoặc
+Không muốn tải script? Xem `deploy/vifasttts_web/README.md` để chạy Docker hoặc
 `synthesize-onnx` thủ công.
 
 ## Demo online

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploy ViFastTts demo lên host jp (docker trực tiếp trên jp, không dùng LXD).
 #
-#   ./deploy/vifasttts_demo/deploy-jp.sh
+#   ./deploy/vifasttts_web/deploy-jp.sh
 #
 # Yêu cầu trên host jp:
 #   - docker + docker compose plugin
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-SRC="$ROOT/deploy/vifasttts_demo"
+SRC="$ROOT/deploy/vifasttts_web"
 JP_HOST="${JP_HOST:-root@jp}"
 REMOTE_APP="${REMOTE_APP:-/opt/vifasttts}"
 SITE="${SITE:-https://tts.vifast.org}"

@@ -73,7 +73,7 @@ phần WASM dùng**. Android/iOS/web/extension vẫn tự viết lại các lu�
 | 12 | Audio resample/drain | Android `resamplePcm`/`waitForPlayback`; iOS AVAudioPlayer; browser AudioContext | không thể share audio device; nhưng policy nên thống nhất | Không share code; ghi thành policy/test | — |
 | 13 | UI strings/status | mỗi UI tiếng Việt riêng | khó đồng bộ wording/error | String catalog JSON (chỉ khi cần i18n) | **P4** |
 | 14 | Theme tokens | `design/tokens.json`; `web/shared/theme.css`; `VfTheme.java`; iOS `Theme.swift` | màu/spacing lặp, lệch | Generate CSS/Java/Swift từ token | **P4** |
-| 15 | Python demo | `deploy/vifasttts_demo/app.py` + static | stack Python riêng, không link Rust | Chỉ share HTTP contract; không gộp code | — |
+| 15 | Python demo | `deploy/vifasttts_web/app.py` + static | stack Python riêng, không link Rust | Chỉ share HTTP contract; không gộp code | — |
 
 ### 3.1. Vì sao các default đang lệch
 
@@ -291,7 +291,7 @@ Chỉ nên share **dữ liệu vào/ra** của các phần này.
 | Extension | `extension/popup.js`, `offscreen.js`, `shared/*` | stream WebAudio, history, model cache | `ui-core` + Rust contract |
 | Android | `MainActivity.java`, `VfTheme.java` | View UI, AudioTrack, MediaStore, model | FFI contract; giữ UI/audio |
 | iOS | `ContentView.swift`, `TtsEngine.swift`, `RemoteTts.swift`, `ModelCatalog.swift` | SwiftUI, AVAudioPlayer, URLSession | FFI contract; giữ UI/audio |
-| Python demo | `deploy/vifasttts_demo/app.py` + static | custom reading/server | chỉ share HTTP contract |
+| Python demo | `deploy/vifasttts_web/app.py` + static | custom reading/server | chỉ share HTTP contract |
 
 ## 10. Kết quả phase 1 — lệnh kiểm
 

@@ -69,7 +69,7 @@ if (-not (Test-Path $venvPython)) {
     $prefix = @($py.Prefix)
     & $py.Exe @prefix -m venv $Venv
 }
-& $venvPython -m pip install --disable-pip-version-check -q -r (Join-Path $Root "deploy\vifasttts_demo\requirements.txt")
+& $venvPython -m pip install --disable-pip-version-check -q -r (Join-Path $Root "deploy\vifasttts_web\requirements.txt")
 if ($LASTEXITCODE -ne 0) { throw "Cài requirements thất bại." }
 
 $env:PYTHONPATH = Join-Path $Root "src"
@@ -77,4 +77,4 @@ $env:MODEL_DIR = $Models
 $hostAddr = if ($env:HOST) { $env:HOST } else { "127.0.0.1" }
 $port = if ($env:PORT) { $env:PORT } else { "8090" }
 Write-Host "Mở http://${hostAddr}:${port}  (Ctrl-C để dừng)"
-& (Join-Path $Venv "Scripts\uvicorn.exe") deploy.vifasttts_demo.app:app --host $hostAddr --port $port
+& (Join-Path $Venv "Scripts\uvicorn.exe") deploy.vifasttts_web.app:app --host $hostAddr --port $port

@@ -183,7 +183,7 @@ vị trí, và không có "từ lạ" với tiếng Việt chuẩn.
 | Model | Acoustic small **6,1M** (N0) / base **16,4M**; Vocos pretrained **13,5M** |
 | Sinh giọng | Web demo + `vifasttts synthesize` end-to-end (WAV 16-bit, 24 kHz); văn bản dài tự chia câu |
 | Runtime ONNX | `vifasttts synthesize-onnx` chạy acoustic + vocoder ONNX, iSTFT numpy (không cần PyTorch) |
-| Dịch vụ | FastAPI demo (`deploy/vifasttts_demo`, ONNX) · `vifasttts serve` · `synthesize-batch` · streaming |
+| Dịch vụ | FastAPI demo (`deploy/vifasttts_web`, ONNX) · `vifasttts serve` · `synthesize-batch` · streaming |
 | Xuất ONNX | fp32 / fp16 / int8, batch và độ dài **động** (đã kiểm bằng onnxruntime) |
 | Huấn luyện | Train acoustic + train vocoder (GAN tham chiếu) + cache feature |
 | Dữ liệu YouTube | `vifasttts youtube-fetch`: tải audio + phụ đề kênh của bạn → clip 24 kHz mono + manifest + SRT mở + dataset card (CC BY 4.0), báo cáo từ lạ (OOV) + `--overrides` |
@@ -375,7 +375,7 @@ src/vifasttts/
 configs/      base_24k.yaml + small_24k.yaml + large_24k.yaml + small_ngochuyen.yaml + ...
 tools/        parser_audit, compute_mel_stats, train_chunked, n0_social_card, ...
 resources/    brand/ (logo, favicon, OG image, manifest; xem resources/brand/README.md)
-deploy/       vifasttts_demo/ (FastAPI ONNX + Dockerfile + static page)
+deploy/       vifasttts_web/ (FastAPI ONNX + Dockerfile + static page)
 scripts/      fetch_ngochuyen_models.sh · run_ngochuyen_demo.sh · run_A2_fixgap.sh
 tests/        2.916 test: parser, normalizer, G2P, model, train/infer/export, ONNX, server
 docs/         toàn bộ tài liệu (xem mục 10 + docs/README.md); N0 deploy ở docs/handoff/N0_DEPLOY.md
