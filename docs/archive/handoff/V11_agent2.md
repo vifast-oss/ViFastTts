@@ -118,7 +118,7 @@ V11.B6–B11 + V11S.B3 (watchdog: step_of chịu last.pt hỏng · ghi checkpoin
 **Đánh đổi 55k vs 60k**: 55k tốt hơn ở mel_z (1,1848 vs 1,1954), pF1 (0,5884), gMAE (123,35), gap_z (2,1462), Δjit (0,0409) · 60k tốt hơn ở CER (0,1961), cer_prod (0,2013), tone_C (0,8180), length_ratio (0,9007). Có thể sinh thêm cặp A/B cho 60k nếu tai bạn muốn so 3 bản.
 
 **Release A/B (đã kiểm tải HTTP 200 + đúng byte)**: `demo-audio-20261014-w1` — 6 cặp câu giàu ngã/nặng, `w1_<i>_{base40k,A2_55k}.wav`
-→ `https://github.com/dvchd/ViFastTts/releases/download/demo-audio-20261014-w1/w1_1_base40k.wav` (và 11 file cùng dạng)
+→ `https://github.com/vifast-oss/ViFastTts/releases/download/demo-audio-20261014-w1/w1_1_base40k.wav` (và 11 file cùng dạng)
 
 ## PHẢN BIỆN NGOÀI (sub-agent 2, model mặc định — nghiên cứu E4: creak/F0/vocoder)
 

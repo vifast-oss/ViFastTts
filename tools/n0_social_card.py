@@ -121,7 +121,7 @@ def main() -> None:
     # footer
     d.rectangle((0, 1440, W, H), fill=(43, 20, 18))
     d.text((80, 1448), "CODE MỞ  ·  WEIGHTS RESEARCH  ·  CC-BY-NC-4.0", font=font(16, True), fill=(255, 224, 160))
-    d.text((80, 1471), "github.com/dvchd/ViFastTts   ·   tts.vifast.org", font=font(17), fill=(255, 244, 220))
+    d.text((80, 1471), "github.com/vifast-oss/ViFastTts   ·   tts.vifast.org", font=font(17), fill=(255, 244, 220))
     d.text((820, 1451), "N0  ·  2026", font=font(18, True), fill=(255, 224, 160))
 
     out = Path("artifacts/ngochuyen/vifasttts_model_flow.png")

@@ -13,7 +13,7 @@
 ## 1. Prod candidate (nội bộ)
 
 - Tag: `n0-ngochuyen-prod-v1`
-- URL: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
+- URL: https://github.com/vifast-oss/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
 - Asset chính: `n0_ngochuyen_prod_v1.zip` (129.507.134 B;
   sha256 `3c7673c98dc62892bb0a987eee5fb265728cf38bd35c80f98d017b586f294ea8`)
   + `prod_SHA256SUMS`.
@@ -35,7 +35,7 @@
 ## 2. Research
 
 - Tag: `n0-ngochuyen-research-v1`
-- URL: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
+- URL: https://github.com/vifast-oss/ViFastTts/releases/tag/n0-ngochuyen-research-v1
 - Asset: `n0_ngochuyen_research_v1.zip` (129.515.554 B;
   sha256 `152d9059aff380e2241e1cc6e995d8e57dbd0ece9688c6d370df352d48f0d4fa`)
   + `research_SHA256SUMS`; ONNX dùng chung `n0_onnx_fp32.zip` (N0 cũ, chưa Q).
@@ -46,7 +46,7 @@
 ## 3. Preview Q (tạm)
 
 - Tag: `q-preview-2026-10-27` (pre-release)
-- URL: https://github.com/dvchd/ViFastTts/releases/tag/q-preview-2026-10-27
+- URL: https://github.com/vifast-oss/ViFastTts/releases/tag/q-preview-2026-10-27
 - Chỉ 2 WAV để nghe A/B, **không phải asset triển khai**:
   - `init.wav` — Q-init, sha256 `85f8951c…e083a80`
   - `finetune.wav` — fine-tune 3k, sha256 `891d6d97…8c26199`
@@ -55,7 +55,7 @@
 ## 4. Mẫu nghe sẵn cho VPS (tạm)
 
 - Tag: `n0-demo-samples-v1` (pre-release)
-- URL: https://github.com/dvchd/ViFastTts/releases/tag/n0-demo-samples-v1
+- URL: https://github.com/vifast-oss/ViFastTts/releases/tag/n0-demo-samples-v1
 - Asset: `fresh01.wav` (230.956 B), `fresh02.wav` (205.356 B), `fresh04.wav` (264.236 B),
   `SHA256SUMS`; dùng cho 3 player `/static/samples/` trên VPS.
 - Không commit WAV; `scripts/fetch_demo_samples.sh` tải + kiểm SHA256 vào static.

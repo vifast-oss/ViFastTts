@@ -30,13 +30,13 @@ Có 2 luồng sử dụng rõ ràng:
 
 Chạy local trên macOS hoặc Linux:
 
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
 
 Chạy local trên Windows PowerShell:
 
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 powershell -ExecutionPolicy Bypass -File .\scripts\run_ngochuyen_demo.ps1
 
@@ -45,15 +45,15 @@ https://tts.vifast.org/
 
 Toàn bộ tài nguyên:
 
-- Mã nguồn: https://github.com/dvchd/ViFastTts
+- Mã nguồn: https://github.com/vifast-oss/ViFastTts
 - Hugging Face model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - Space nghe thử miễn phí: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo
 - Demo: https://tts.vifast.org/
-- Release research: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
-- Release prod candidate nội bộ: https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
+- Release research: https://github.com/vifast-oss/ViFastTts/releases/tag/n0-ngochuyen-research-v1
+- Release prod candidate nội bộ: https://github.com/vifast-oss/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
 - Hướng dẫn train lại: docs/TRAINING_N0.md trong repo
 - Model card: docs/NGOC_HUYEN.md trong repo
-- Ảnh sơ đồ: https://github.com/dvchd/ViFastTts/releases/download/n0-ngochuyen-research-v1/vifasttts_model_flow.png
+- Ảnh sơ đồ: https://github.com/vifast-oss/ViFastTts/releases/download/n0-ngochuyen-research-v1/vifasttts_model_flow.png
 
 Lưu ý: model mẫu Ngọc Huyền dùng dataset CC BY-NC 4.0, nên chỉ dùng cho nghiên cứu và phi thương mại, không dùng giả giọng, lừa đảo hoặc production thương mại. Code repo là MIT, quyền của dataset và giọng vẫn giữ nguyên.
 

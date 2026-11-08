@@ -46,7 +46,7 @@ adapter Q→K. Checkpoint `.pt` cũ vẫn là model K (dùng `--init-from` nếu
 Không cần train, không cần torch nếu dùng ONNX.
 
 ```bash
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh       # macOS / Linux
 # Windows PowerShell:
@@ -72,7 +72,7 @@ Nghỉ cố định là opt-in (`--fixed-pauses` / `pause_mode="fixed"`), mặc 
 Cần Python 3.11+, torch, MFA/aligner, audio + transcript.
 
 ```bash
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 python -m venv .venv
 source .venv/bin/activate              # Windows: .venv\Scripts\Activate.ps1
@@ -131,7 +131,7 @@ request giả để tăng số.
 
 ## Liên kết
 
-- Code: https://github.com/dvchd/ViFastTts
+- Code: https://github.com/vifast-oss/ViFastTts
 - Demo: https://tts.vifast.org/
 - Hugging Face: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 - Space demo: https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo

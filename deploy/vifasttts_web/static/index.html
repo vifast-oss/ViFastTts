@@ -465,6 +465,11 @@
     html { scroll-behavior:auto; }
     *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
   }
+
+/* link tro ve trang chu thuong hieu */
+.nav .nav-home, .site-nav .nav-home { font-weight: 600; opacity: .85; }
+.nav .nav-home:hover, .nav .nav-home:focus-visible,
+.site-nav .nav-home:hover, .site-nav .nav-home:focus-visible { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
 </style>
 <noscript><style>
   /* Không có JS: bỏ tab, hiện đủ mọi hướng dẫn cài thay vì chỉ panel đầu. */
@@ -500,6 +505,7 @@
       <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Tts</span></span>
     </a>
     <nav class="nav" aria-label="Điều hướng chính">
+      <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
       <a href="#nghe-thu">Nghe thử</a>
       <a href="#tinh-nang">Tính năng</a>
       <a href="#san-pham">Sản phẩm</a>
@@ -509,7 +515,7 @@
       <a href="#api">API</a>
     </nav>
     <span class="header-live" id="header-live" title="Demo API đang chạy"><span class="header-live-dot" aria-hidden="true"></span> <span id="header-live-label">API live</span></span>
-    <a class="ghost-btn" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">
+    <a class="ghost-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">
       <svg class="icon" aria-hidden="true"><use href="#i-github"></use></svg> GitHub
     </a>
   </div>
@@ -654,9 +660,9 @@
 
     <div class="release-bar">
       <strong>v0.3.5</strong><span class="dot" aria-hidden="true"></span><span>30/10/2026</span>
-      <a href="https://github.com/dvchd/ViFastTts/releases/tag/v0.3.5" target="_blank" rel="noopener">Release notes ↗</a>
+      <a href="https://github.com/vifast-oss/ViFastTts/releases/tag/v0.3.5" target="_blank" rel="noopener">Release notes ↗</a>
       <a href="https://tts.vifast.org/downloads/v0.3.5/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
-      <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Tài liệu cài đặt đầy đủ ↗</a>
+      <a href="https://github.com/vifast-oss/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Tài liệu cài đặt đầy đủ ↗</a>
     </div>
 
     <div class="platform-tabs" id="cai-dat" role="tablist" aria-label="Chọn nền tảng">
@@ -1145,7 +1151,7 @@ cd web-dist</code></pre></li>
           <li class="endpoint"><span class="method post">POST</span><div><code>/api/feedback</code><p>Góp ý/báo lỗi; nội dung chỉ admin xem.</p></div></li>
           <li class="endpoint"><span class="method">GET</span><div><code>/healthz</code><p>Trạng thái model, arch, vocab hash, alpha.</p></div></li>
         </ul>
-        <p class="api-note">Demo công khai: tối đa <b>3000 ký tự</b>, <b>6 lượt/phút/IP</b>, không lưu văn bản hay audio. Hợp đồng đầy đủ: <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/API_CONTRACT.md" target="_blank" rel="noopener">docs/API_CONTRACT.md ↗</a></p>
+        <p class="api-note">Demo công khai: tối đa <b>3000 ký tự</b>, <b>6 lượt/phút/IP</b>, không lưu văn bản hay audio. Hợp đồng đầy đủ: <a href="https://github.com/vifast-oss/ViFastTts/blob/main/docs/API_CONTRACT.md" target="_blank" rel="noopener">docs/API_CONTRACT.md ↗</a></p>
       </div>
       <div>
         <div class="code-panel">
@@ -1174,7 +1180,7 @@ open(<span class="c-str">"out.wav"</span>, <span class="c-str">"wb"</span>).writ
       <div class="quick-card">
         <h4>Quickstart demo Python</h4>
         <p>Cần Python ≥ 3.11; script tự tải ONNX (kiểm sha256), tạo venv và chạy web ở cổng 8090.</p>
-        <pre class="cmd"><code>git clone https://github.com/dvchd/ViFastTts.git
+        <pre class="cmd"><code>git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh</code></pre>
         <p style="margin-top:8px">Windows PowerShell:</p>
@@ -1190,7 +1196,7 @@ vifasttts synthesize-onnx \
   --vocoder vocoder.onnx \
   --text "Xin chào" \
   --output out.wav</code></pre>
-        <p style="margin-top:8px">Tài liệu: <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/PYTHON_ENGINE.md" target="_blank" rel="noopener">PYTHON_ENGINE.md ↗</a></p>
+        <p style="margin-top:8px">Tài liệu: <a href="https://github.com/vifast-oss/ViFastTts/blob/main/docs/PYTHON_ENGINE.md" target="_blank" rel="noopener">PYTHON_ENGINE.md ↗</a></p>
       </div>
     </div>
   </section>
@@ -1229,7 +1235,7 @@ vifasttts synthesize-onnx \
         </ul>
         <div class="product-actions">
           <a class="primary-btn" href="https://key.vifast.org/" target="_blank" rel="noopener">Mở ViFastKey <span aria-hidden="true">↗</span></a>
-          <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
     </div>
@@ -1387,8 +1393,9 @@ vifasttts synthesize-onnx \
     </div>
     <p>Code MIT · model/dataset CC BY-NC 4.0 · không dùng giả giọng, lừa đảo hoặc production thương mại. Model N0 Ngọc Huyền Q-init, ONNX FP32.</p>
     <div class="footer-links">
-      <a href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://github.com/dvchd/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
+      <a href="https://vifast.org">vifast.org</a>
+      <a href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/vifast-oss/ViFastTts/blob/main/docs/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
       <a href="https://huggingface.co/dvchd/vifasttts-ngochuyen-small" target="_blank" rel="noopener">Hugging Face</a>
       <a href="https://huggingface.co/spaces/dvchd/vifasttts-ngochuyen-demo" target="_blank" rel="noopener">Space</a>
       <a href="https://key.vifast.org/" target="_blank" rel="noopener">ViFastKey</a>

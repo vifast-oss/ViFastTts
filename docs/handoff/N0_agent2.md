@@ -165,10 +165,10 @@ Nếu cần production: xử lý license trước; không tự chuyển.
 ## 11. Releases (27/10/2026)
 
 - **Prod candidate nội bộ**: `n0-ngochuyen-prod-v1`
-  https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
+  https://github.com/vifast-oss/ViFastTts/releases/tag/n0-ngochuyen-prod-v1
   (`n0_ngochuyen_prod_v1.zip`, sha256 `3c7673c9…94ea8`).
 - **Research**: `n0-ngochuyen-research-v1`
-  https://github.com/dvchd/ViFastTts/releases/tag/n0-ngochuyen-research-v1
+  https://github.com/vifast-oss/ViFastTts/releases/tag/n0-ngochuyen-research-v1
   (`n0_ngochuyen_research_v1.zip`, sha256 `152d9059…f0d4fa`).
 - Cả hai gồm acoustic 60k, config/stats, Vocos pretrained, 10 demo; research thêm
   `TRAINING.md`/`REPORT.md`. **Không** kèm data gốc; **không** kèm Vocos fine-tune.

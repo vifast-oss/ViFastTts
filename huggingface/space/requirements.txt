@@ -2,4 +2,4 @@ gradio==5.50.0
 onnxruntime>=1.18,<2
 numpy>=1.26,<2.1
 huggingface_hub>=0.24
-vifasttts @ git+https://github.com/dvchd/ViFastTts.git@dda39cd
+vifasttts @ git+https://github.com/vifast-oss/ViFastTts.git@dda39cd

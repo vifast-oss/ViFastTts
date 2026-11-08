@@ -4,7 +4,7 @@
 
 # ViFastTts — Text-to-Speech tiếng Việt
 
-[![ci](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml/badge.svg)](https://github.com/dvchd/ViFastTts/actions/workflows/ci.yml)
+[![ci](https://github.com/vifast-oss/ViFastTts/actions/workflows/ci.yml/badge.svg)](https://github.com/vifast-oss/ViFastTts/actions/workflows/ci.yml)
 
 ## Tải và dùng trên Windows (không cần build)
 
@@ -113,7 +113,7 @@ hay audio mẫu.
 ## 0. Chạy demo bằng Python (tuỳ chọn, cho developer)
 
 ```bash
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
 # Windows PowerShell:
@@ -238,7 +238,7 @@ Yêu cầu Python ≥ 3.11.
 **Chỉ muốn tạo âm thanh ngay (ONNX, không torch):**
 
 ```bash
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
 # Windows:

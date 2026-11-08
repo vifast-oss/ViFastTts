@@ -10,7 +10,7 @@ Không upload thư mục `extension/`; phải upload file ZIP có `manifest.json
 **root**.
 
 ```text
-https://github.com/dvchd/ViFastTts/releases/download/v0.1.1/vifasttts-extension.zip
+https://github.com/vifast-oss/ViFastTts/releases/download/v0.1.1/vifasttts-extension.zip
 sha256 5ded1ce7d45479fa12df2d9e592ec260f96f60612d835573029f48f261017933
 ```
 
@@ -46,8 +46,8 @@ qua CLI.
    - Category: **Productivity** (hoặc Accessibility nếu phù hợp hơn).
    - Language: **Vietnamese**.
    - Homepage: `https://tts.vifast.org/`
-   - Support: `https://github.com/dvchd/ViFastTts/issues`
-   - Privacy policy: `https://github.com/dvchd/ViFastTts/blob/main/docs/EXTENSION_PRIVACY.md`
+   - Support: `https://github.com/vifast-oss/ViFastTts/issues`
+   - Privacy policy: `https://github.com/vifast-oss/ViFastTts/blob/main/docs/EXTENSION_PRIVACY.md`
 3. Screenshots:
    - Chrome yêu cầu ít nhất 1 ảnh **1280×800** hoặc **640×400**.
    - Nên có 3 ảnh: popup đọc text, đọc trang/bôi đen, cài đặt model.

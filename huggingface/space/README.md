@@ -22,6 +22,6 @@ Demo nghe thử model TTS tiếng Việt **small 6,1M acoustic**, 24 kHz, ONNX C
 - ONNX đang dùng là **N0 Q-init** (`vocab_version` + `vocab_hash`); Q = K cho giọng Bắc.
 - Free CPU Space có thể sleep khi không dùng; lần đầu có thể chậm do tải model/khởi động.
 
-Code: https://github.com/dvchd/ViFastTts
+Code: https://github.com/vifast-oss/ViFastTts
 Model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 Demo VPS: https://tts.vifast.org/

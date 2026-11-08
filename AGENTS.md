@@ -85,7 +85,7 @@ trước khi dùng nó để quyết định — bài học §34.3→§36.4); m�
   xoá sạch về sau bằng `gh release delete <tag> --yes` (không cần force-push).
   **Upload xong PHẢI kiểm chứng** (đã từng "nói upload" mà quên chạy): `gh release view <tag>
   --json assets` + tải thử `curl -sL -o /dev/null -w '%{http_code} %{size_download}' <url>`.
-  Link tải trực tiếp cho user: `https://github.com/dvchd/ViFastTts/releases/download/<tag>/<file>`.
+  Link tải trực tiếp cho user: `https://github.com/vifast-oss/ViFastTts/releases/download/<tag>/<file>`.
   Nhãn file ghi rõ model + biến thể (`v2b8_sh15_*` = model b8, làm nét α=1,5) + cập nhật phần
   **notes** của release thành mục lục mỗi khi thêm bản mới.
 - **Mỗi lần phát hành release mới** (tag/asset GitHub): bắt buộc cập nhật đồng thời

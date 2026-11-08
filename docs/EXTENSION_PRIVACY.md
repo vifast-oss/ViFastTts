@@ -75,11 +75,11 @@ release notes.
 
 ## Contact
 
-Open an issue at <https://github.com/dvchd/ViFastTts/issues> or use the feedback
+Open an issue at <https://github.com/vifast-oss/ViFastTts/issues> or use the feedback
 form at <https://tts.vifast.org/>. Do not include private text or
 tokens in a public issue.
 
 ## Model and dataset license
 
 The bundled sample voice is for research/non-commercial use; see
-`https://github.com/dvchd/ViFastTts/blob/main/docs/NGOC_HUYEN.md`.
+`https://github.com/vifast-oss/ViFastTts/blob/main/docs/NGOC_HUYEN.md`.

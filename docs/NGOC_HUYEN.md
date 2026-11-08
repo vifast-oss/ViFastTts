@@ -12,7 +12,7 @@
 ## Chạy thử nhanh
 
 ```bash
-git clone https://github.com/dvchd/ViFastTts.git
+git clone https://github.com/vifast-oss/ViFastTts.git
 cd ViFastTts
 ./scripts/run_ngochuyen_demo.sh
 # Windows PowerShell:

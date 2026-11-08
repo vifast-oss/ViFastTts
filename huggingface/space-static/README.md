@@ -26,6 +26,6 @@ Static demo miễn phí cho model TTS tiếng Việt small 6,1M, 24 kHz, ONNX CP
 - Hai file HTML được sinh từ `deploy/vifasttts_web/static/` bằng
   `tools/sync_space_static.py`; không sửa trực tiếp bản Space.
 
-Code: https://github.com/dvchd/ViFastTts
+Code: https://github.com/vifast-oss/ViFastTts
 Model: https://huggingface.co/dvchd/vifasttts-ngochuyen-small
 VPS demo: https://tts.vifast.org/
