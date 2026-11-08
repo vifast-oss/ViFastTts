@@ -5,7 +5,7 @@ Chỉ đổi text (metadata.csv + manifest.jsonl) và chia lại split; audio/ca
 
 Chạy:
     python tools/reparse_overrides.py --dataset data/codelung \
-        --overrides configs/overrides_tech_vi.json --val-videos 4 --seed 13
+        --overrides configs/overrides_vi.json --val-videos 4 --seed 13
 """
 
 from __future__ import annotations

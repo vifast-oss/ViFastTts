@@ -282,9 +282,9 @@ def test_fetch_dataset_retries_transient_error(tmp_path: Path, fake_ytdlp: Path,
     assert stats["clips"] == 2
 
 
-def test_overrides_tech_config_is_parseable():
+def test_overrides_config_is_parseable():
     payload = json.loads(
-        (Path(__file__).resolve().parents[1] / "configs" / "overrides_tech_vi.json")
+        (Path(__file__).resolve().parents[1] / "configs" / "overrides_vi.json")
         .read_text(encoding="utf-8")
     )
     assert payload, "file overrides mẫu không được rỗng"

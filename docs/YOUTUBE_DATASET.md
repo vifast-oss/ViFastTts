@@ -79,7 +79,7 @@ Chi tiết làm sạch:
   "đọc lên" để train; SRT giữ dạng chữ người đọc.
 - **Từ lạ (OOV)**: bảng chuẩn frontend phủ sẵn ~670 từ công nghệ + 31 acronym + tên chữ cái
   (`code→cốt`, `user→iu dơ`, `b→bê`...); phần còn lại in top từ lạ + ghi `oov_report.json`
-  để điền vào `--overrides` (mẫu: `configs/overrides_tech_vi.json` — `clot→cờ lốt`,
+  để điền vào `--overrides` (mẫu: `configs/overrides_vi.json` — `clot→cờ lốt`,
   `clon→cờ lon`, `grock→gờ rốc`...). Clip quá nhiều từ lạ bị lọc bằng `--max-fallback-ratio`.
 - **Mã chữ-số** (`--respell-codes`, mặc định bật): tách chữ-số dính liền và đọc lại —
   `Chương2→Chương hai`, `MP3→em pê ba`, `3D→ba dê`, `v2→vê hai`, `500k→năm trăm ca`,
@@ -180,11 +180,11 @@ vifasttts youtube-fetch "https://www.youtube.com/@<kênh>/videos" --out data/<ds
 # (2) QC từ lạ (OOV): tạo gói rà soát → nghe clip mẫu, điền filled.txt → merge vào overrides
 python tools/fallback_review.py --manifest data/<ds>/manifest.jsonl --out data/<ds>/review
 python tools/fallback_review.py --merge data/<ds>/review/filled.txt \
-  --overrides configs/overrides_tech_vi.json
+  --overrides configs/overrides_vi.json
 
 # (3) Cắt lại KHÔNG tải lại với overrides mới (giữ raw/, nới biên B3)
 vifasttts youtube-fetch "https://www.youtube.com/@<kênh>/videos" --out data/<ds> \
-  --overrides configs/overrides_tech_vi.json --recut
+  --overrides configs/overrides_vi.json --recut
 
 # (4) Lọc rẻ chất lượng clip (im lặng/clipping/RMS) rồi áp danh sách loại — B4
 python tools/clip_quality.py --manifest data/<ds>/manifest.jsonl \

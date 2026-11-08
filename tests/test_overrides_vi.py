@@ -12,8 +12,8 @@ from vifasttts.frontend.normalizer import NormalizerOptions, normalize_text
 from vifasttts.frontend.syllable import safe_parse_syllable
 
 ROOT = Path(__file__).resolve().parents[1]
-OVERRIDES = ROOT / "configs" / "overrides_tech_vi.json"
-DEPLOY_OVERRIDES = ROOT / "deploy" / "vifasttts_demo" / "configs" / "overrides_tech_vi.json"
+OVERRIDES = ROOT / "configs" / "overrides_vi.json"
+DEPLOY_OVERRIDES = ROOT / "deploy" / "vifasttts_demo" / "configs" / "overrides_vi.json"
 
 
 def _load() -> dict[str, str]:

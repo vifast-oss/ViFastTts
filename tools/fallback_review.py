@@ -9,7 +9,7 @@ Chạy:
     #    (mỗi dòng:  <từ>|<cách đọc tiếng Việt>     — dòng nào không điền thì bỏ trống)
     # 3) Merge vào overrides (kiểm tra mọi cách đọc phải parse được)
     python tools/fallback_review.py --merge data/codelung/review/filled.txt \
-        --overrides configs/overrides_tech_vi.json
+        --overrides configs/overrides_vi.json
 
 Gợi ý auto (cần nghe xác nhận): dạng "-ing"/"-ed"/"-s" nếu từ gốc có trong bảng
 `english_fallback`; từ viết tắt toàn hoa kiểm tra ACRONYM_READINGS.
@@ -161,7 +161,7 @@ def main() -> None:
     parser.add_argument("--top", type=int, default=400, help="Số từ nhiều nhất giữ lại")
     parser.add_argument("--min-count", type=int, default=2, help="Bỏ qua từ xuất hiện ít hơn")
     parser.add_argument("--merge", help="Đường dẫn filled.txt cần merge")
-    parser.add_argument("--overrides", default="configs/overrides_tech_vi.json",
+    parser.add_argument("--overrides", default="configs/overrides_vi.json",
                         help="File overrides JSON để merge vào")
     args = parser.parse_args()
 

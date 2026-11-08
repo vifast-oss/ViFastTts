@@ -63,7 +63,7 @@ tiếng** (`--min-log-energy -6`; không lọc thì 5,15% phần tử bị kẹp
   yamo, murai, flir, fen, ter, chffix, maxide` — clip chứa chúng tiếp tục bị loại khỏi acoustic/MFA).
 - Đồng bộ văn phong với bảng gốc (`window → uyn đâu`, `word → quớt`, `network → nét quớc`,
   `process → pờ rô séch`, …); cụm phụ âm tách bằng "ờ" (`product → pờ rô đắc`).
-- Merge: `overrides_tech_vi.json` **183 → 570 mục**; reparse text: **1.546 dòng đổi**.
+- Merge: `overrides_vi.json` (tên cũ `overrides_tech_vi.json`) **183 → 570 mục**; reparse text: **1.546 dòng đổi**.
 - **Fallback: 1,22% → 0,80% âm tiết**; `train_clean_v2` **24,39h → 27,28h** (thêm 684 clip);
   val_clean 4,42→4,90h; holdout_clean 3,50→3,93h. Corpus MFA: 8.723 → **9.619 clip** (36,1h).
 

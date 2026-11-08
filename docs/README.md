@@ -101,6 +101,8 @@
 | Tài liệu | Nội dung |
 | --- | --- |
 | `docs/TTS_ARCHITECTURE_RESEARCH.md` | Khảo sát họ kiến trúc TTS + đề xuất tương lai |
+| `docs/ENGLISH_FROM_VI.md` | Đọc tiếng Anh từ kiến trúc Việt: cơ chế 5 ID, thí nghiệm splice/N=0, inventory, kế hoạch M0–M2 |
+| `docs/MULTISPEAKER_EXPRESSIVE_RESEARCH.md` | Đa giọng Việt, Việt–Anh, biểu cảm, sắc thái đọc: model/dataset/license, kiến trúc, lộ trình R1–R4 |
 | `docs/SYLLABLE_SYSTEMS_RESEARCH.md` | So sánh mô hình tách/gộp âm tiết + audit biên |
 | `docs/VI_TTS_DATA_REFERENCE.md` | Model/dataset TTS tiếng Việt công khai |
 | `docs/SOCIAL_POST.md`, `docs/SOCIAL_POST_GROUPS.md` | Nội dung công bố (không phải trạng thái kỹ thuật) |

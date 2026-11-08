@@ -41,3 +41,16 @@ def test_validation_bat_gia_tri_sai():
 
     with pytest.raises(ValueError):
         _validate({"ps": "pi es"})
+
+
+def test_khoa_nhieu_tu():
+    """v18.30 (B3): khoá nhiều từ ("in xờ pếch") thay được, ưu tiên khoá dài, không phá từ đơn."""
+    table = {"in xờ pếch": "in sờ pếch tờ", "vps": "vi pi ét"}
+    assert apply_custom_reading("mở In Xờ Pếch lên", table) == "mở in sờ pếch tờ lên"
+    assert apply_custom_reading("VPS và in xờ pếch", table) == "vi pi ét và in sờ pếch tờ"
+
+
+def test_khoa_nhieu_tu_khong_khop_mot_phan():
+    """Không thay khi chỉ khớp một phần cụm (ranh giới từ)."""
+    table = {"in xờ pếch": "in sờ pếch tờ"}
+    assert apply_custom_reading("in xờ", table) == "in xờ"
