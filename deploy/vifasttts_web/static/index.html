@@ -314,7 +314,7 @@
   .quick-card p { margin:0 0 8px; color:var(--muted); font-size:.8rem; }
 
   /* ------------------------------------------------------------ products */
-  .product-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
   .product-card { position:relative; display:flex; flex-direction:column; gap:12px; overflow:hidden;
                   padding:clamp(22px,3vw,30px); border:1px solid var(--border); border-radius:20px;
                   background:var(--surface); box-shadow:0 18px 44px -34px rgba(90,45,25,.45); }
@@ -1205,37 +1205,51 @@ vifasttts synthesize-onnx \
     <div class="section-head" id="san-pham">
       <div>
         <div class="eyebrow">Sản phẩm</div>
-        <h2>Hai sản phẩm,<br>một hệ sinh thái.</h2>
+        <h2>Ba sản phẩm,<br>một hệ sinh thái.</h2>
       </div>
-      <p>Cùng chạy local-first, cùng mục tiêu tiếng Việt nhẹ và nhanh: một bên đọc thành tiếng, một bên gõ thành chữ.</p>
+      <p>Cùng local-first, cùng giấy phép MIT: một bên đọc thành tiếng, một bên gõ thành chữ, một bên giữ lõi hệ điều hành.</p>
     </div>
     <div class="product-grid">
       <article class="product-card current">
         <span class="p-tag">Đang xem · TTS</span>
         <h3>ViFastTts</h3>
-        <p>Giọng đọc tiếng Việt non-autoregressive, ONNX CPU, 24 kHz.</p>
+        <p>Giọng đọc tiếng Việt chạy CPU trên ONNX, 24 kHz.</p>
         <ul class="product-list">
           <li>Model Ngọc Huyền small 6,1M tham số</li>
           <li>Desktop, extension, Android, iOS Simulator</li>
           <li>API REST/stream, CLI server, Python, ONNX</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="#nghe-thu">Nghe thử</a>
-          <a class="text-btn" href="#tai-ve">Tải về <span aria-hidden="true">→</span></a>
+          <a class="primary-btn" href="https://tts.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
       <article class="product-card">
         <span class="p-tag">Cùng hệ sinh thái · Bộ gõ</span>
         <h3>ViFastKey</h3>
-        <p>Bộ gõ Telex, Simple Telex, VNI và VIQR trên lõi Rust nhỏ, chạy local.</p>
+        <p>Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic trên lõi Rust.</p>
         <ul class="product-list">
-          <li>WASM gõ thử ngay trong trình duyệt</li>
-          <li>C ABI cho IMK/TSF/Fcitx5/IBus</li>
-          <li>API Python, app desktop và mobile</li>
+          <li>Telex, Simple Telex, VNI, VIQR · 16 bảng mã</li>
+          <li>WASM gõ thử trong trình duyệt, C ABI, API Python</li>
+          <li>Windows, macOS, Linux, Android, iOS và demo UEFI</li>
         </ul>
         <div class="product-actions">
-          <a class="primary-btn" href="https://key.vifast.org/" target="_blank" rel="noopener">Mở ViFastKey <span aria-hidden="true">↗</span></a>
-          <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+          <a class="primary-btn" href="https://key.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+      <article class="product-card">
+        <span class="p-tag">Cùng hệ sinh thái · Hệ điều hành</span>
+        <h3>ViFastOs</h3>
+        <p>Microkernel viết bằng Rust, capability-based, chạy trên QEMU.</p>
+        <ul class="product-list">
+          <li>Capability, IPC + notification, no_std</li>
+          <li>riscv64, aarch64 và x86_64 (UEFI/OVMF)</li>
+          <li>Đang phát triển — chưa có bản phát hành</li>
+        </ul>
+        <div class="product-actions">
+          <a class="primary-btn" href="https://os.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="https://github.com/vifast-oss/ViFastOs" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </article>
     </div>
