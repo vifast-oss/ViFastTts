@@ -728,7 +728,7 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 </style><link rel="stylesheet" href="/admin/portal.css"></head><body><main>
 <h1><img class="mark" src="/static/brand/vifasttts-icon.svg" alt=""> ViFastTts · Thống kê</h1>
 {portal.panel_html()}
-<p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">về trang chủ</a></p>
+<p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">← Về trang chủ</a> · <a href="/logout">Đăng xuất</a></p>
 <div class="grid">
   <div class="card"><b>{stats['users_total']}</b><span>người dùng (hash IP)</span></div>
   <div class="card"><b>{stats['tts_total']}</b><span>lượt tạo audio</span></div>
