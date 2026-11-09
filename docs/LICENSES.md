@@ -1,6 +1,6 @@
 # Ghi chú giấy phép các thành phần tham chiếu
 
-ViFastTts (MIT) **không** nhúng code của các hệ G2P bên ngoài. Tài liệu này ghi lại giấy phép của các thành phần được tham chiếu/nghiên cứu trong `docs/G2P_VIETNAMESE.md` và `docs/TTS_ARCHITECTURE_RESEARCH.md`, để quyết định tích hợp về sau.
+ViFastTts (MIT hoặc Apache-2.0, người dùng chọn — xem `LICENSE-MIT` / `LICENSE-APACHE`) **không** nhúng code của các hệ G2P bên ngoài. Tài liệu này ghi lại giấy phép của các thành phần được tham chiếu/nghiên cứu trong `docs/G2P_VIETNAMESE.md` và `docs/TTS_ARCHITECTURE_RESEARCH.md`, để quyết định tích hợp về sau.
 
 ## Có thể dùng cho công cụ/tham chiếu (kể cả thương mại)
 
@@ -24,7 +24,7 @@ ViFastTts (MIT) **không** nhúng code của các hệ G2P bên ngoài. Tài li�
 
 ## Nguyên tắc của ViFastTts
 
-- Runtime chỉ dùng code trong `src/vifasttts` (MIT) + dependency đã liệt kê trong `pyproject.toml`.
+- Runtime chỉ dùng code trong `src/vifasttts` (MIT hoặc Apache-2.0) + dependency đã liệt kê trong `pyproject.toml`.
 - Mọi công cụ GPL chỉ chạy trong môi trường nghiên cứu/audit ngoài repo, không import vào package.
 - Dữ liệu giọng nói, lexicon và checkpoint do người dùng tạo có giấy phép riêng.
 

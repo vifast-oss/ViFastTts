@@ -106,7 +106,7 @@ hay audio mẫu.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-C6281E)](https://www.python.org/)
 [![ONNX](https://img.shields.io/badge/runtime-ONNX%20CPU-C6281E)](docs/DEPLOYMENT.md)
-[![Code MIT](https://img.shields.io/badge/code-MIT-1F2430)](LICENSE)
+[![Code MIT OR Apache-2.0](https://img.shields.io/badge/code-MIT%20OR%20Apache--2.0-1F2430)](#11-gi%E1%BA%A5y-ph%C3%A9p)
 [![Model research](https://img.shields.io/badge/model-research%20%2F%20non--commercial-b45309)](docs/NGOC_HUYEN.md)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow)](https://huggingface.co/dvchd/vifasttts-ngochuyen-small)
 
@@ -147,7 +147,7 @@ cache, train, eval, export. Bắt đầu ở `docs/TRAINING_N0.md` (N0) hoặc `
 
 > **Giấy phép model mẫu:** dataset `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0**.
 > Model Ngọc Huyền chỉ dùng **nghiên cứu/phi thương mại**; không dùng giả giọng, lừa đảo
-> hoặc production thương mại. Code repo là MIT.
+> hoặc production thương mại. Code repo là MIT hoặc Apache-2.0.
 
 ![Luồng model N0](https://huggingface.co/dvchd/vifasttts-ngochuyen-small/resolve/main/assets/og-image.png)
 
@@ -434,7 +434,8 @@ Mục lục đầy đủ + phân loại **hiện hành / tham chiếu / lịch s
 
 ## 11. Giấy phép
 
-**Code repo: MIT.** Dữ liệu giọng nói, lexicon, checkpoint và model mẫu có giấy phép riêng;
+**Code repo: MIT hoặc Apache-2.0** — người dùng chọn một trong hai (`LICENSE-MIT` /
+`LICENSE-APACHE`). Dữ liệu giọng nói, lexicon, checkpoint và model mẫu có giấy phép riêng;
 các công cụ tham chiếu (sea-g2p, MFA, vPhon...) giữ giấy phép gốc — xem `docs/LICENSES.md`.
 
 **Model Ngọc Huyền:** dataset `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0**; checkpoint/
