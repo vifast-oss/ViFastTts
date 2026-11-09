@@ -55,7 +55,7 @@ Toàn bộ tài nguyên:
 - Model card: docs/NGOC_HUYEN.md trong repo
 - Ảnh sơ đồ: https://github.com/vifast-oss/ViFastTts/releases/download/n0-ngochuyen-research-v1/vifasttts_model_flow.png
 
-Lưu ý: model mẫu Ngọc Huyền dùng dataset CC BY-NC 4.0, nên chỉ dùng cho nghiên cứu và phi thương mại, không dùng giả giọng, lừa đảo hoặc production thương mại. Code repo là MIT, quyền của dataset và giọng vẫn giữ nguyên.
+Lưu ý: model mẫu Ngọc Huyền dùng dataset CC BY-NC 4.0, nên chỉ dùng cho nghiên cứu và phi thương mại, không dùng giả giọng, lừa đảo hoặc production thương mại. Code repo là MIT hoặc Apache-2.0, quyền của dataset và giọng vẫn giữ nguyên.
 
 Ai quan tâm TTS tiếng Việt, muốn thử, góp ý hoặc tự train giọng của mình thì mình để hết trong repo. Feedback rất welcome.
 

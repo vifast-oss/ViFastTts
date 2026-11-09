@@ -58,5 +58,5 @@ cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cre
 cp resources/brand/{vifasttts-icon.svg,vifasttts-lockup.svg,vifasttts-lockup-cream.png,vifasttts-icon-192.png,vifasttts-icon-512.png,favicon.ico,favicon-16.png,favicon-32.png,apple-touch-icon.png,og-1200.png,site.webmanifest} huggingface/space-static/brand/
 ```
 
-Logo do chủ dự án cung cấp. Code repo là MIT; nhãn hiệu/logo không tự động thuộc phạm vi
-giấy phép MIT.
+Logo do chủ dự án cung cấp. Code repo là MIT hoặc Apache-2.0 (`LICENSE-MIT` / `LICENSE-APACHE`);
+nhãn hiệu/logo không tự động thuộc phạm vi hai giấy phép đó.

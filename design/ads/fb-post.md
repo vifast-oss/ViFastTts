@@ -26,7 +26,7 @@ Dùng để làm gì?
 
 👉 **Thử ngay, miễn phí: https://tts.vifast.org/**
 
-Lưu ý để dùng cho đúng: model mẫu đang chạy cho mục đích nghiên cứu / phi thương mại; vui lòng không dùng để giả giọng người khác. Code mở MIT — ai muốn tự train giọng của mình thì repo ở comment.
+Lưu ý để dùng cho đúng: model mẫu đang chạy cho mục đích nghiên cứu / phi thương mại; vui lòng không dùng để giả giọng người khác. Code mở MIT hoặc Apache-2.0 — ai muốn tự train giọng của mình thì repo ở comment.
 
 #ViFastTts #TTS #TextToSpeech #TiếngViệt #AITiếngViệt #MãNguồnMở
 

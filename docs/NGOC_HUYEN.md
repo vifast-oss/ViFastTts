@@ -7,7 +7,7 @@
 > **Model duy nhất được đóng gói kèm repo dưới dạng “model mẫu”.**
 > Dataset gốc `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0** → model/weights chỉ dùng
 > **nghiên cứu, phi thương mại**. Không dùng để giả giọng, lừa đảo, bán lại hoặc production
-> thương mại. Code repo là MIT; quyền của dataset/giọng vẫn giữ nguyên.
+> thương mại. Code repo là MIT hoặc Apache-2.0; quyền của dataset/giọng vẫn giữ nguyên.
 
 ## Chạy thử nhanh
 

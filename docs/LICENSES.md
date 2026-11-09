@@ -70,5 +70,5 @@ Chỉ tải nội dung bạn sở hữu hoặc có quyền; điều khoản dị
 ## Nhãn hiệu / logo
 
 Logo, wordmark và các asset trong `resources/brand/` do chủ dự án ViFastTts cung cấp.
-Giấy phép MIT của code **không** tự động cấp quyền sử dụng nhãn hiệu/logo để đại diện
+Giấy phép của code (MIT hoặc Apache-2.0) **không** tự động cấp quyền sử dụng nhãn hiệu/logo để đại diện
 cho sản phẩm khác, gây nhầm lẫn nguồn gốc hoặc quảng cáo thương mại.

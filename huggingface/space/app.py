@@ -86,7 +86,7 @@ with gr.Blocks(title="ViFastTts · Ngọc Huyền small") as demo:
                 "- Model tự nghỉ\n"
                 "- 3000 ký tự\n\n"
                 "**Không dùng để giả giọng, lừa đảo hoặc thương mại.** "
-                "Dataset gốc CC BY-NC 4.0; code MIT."
+                "Dataset gốc CC BY-NC 4.0; code MIT hoặc Apache-2.0."
             )
     examples = gr.Examples(
         examples=[

@@ -21,7 +21,7 @@ library_name: vifasttts
 > **Model nghiên cứu, KHÔNG production thương mại.**
 > Dataset `pnnbao-ump/ngochuyen_voice` là **CC BY-NC 4.0**. Không dùng để giả giọng,
 > lừa đảo, bán lại hoặc triển khai thương mại khi chưa có quyền riêng.
-> Code ViFastTts là MIT; quyền dataset/giọng vẫn giữ nguyên.
+> Code ViFastTts là MIT hoặc Apache-2.0; quyền dataset/giọng vẫn giữ nguyên.
 
 Model TTS tiếng Việt **một giọng nữ**, acoustic **small 6,1M tham số**, 24 kHz.
 Repo này chứa checkpoint, config, stats, ONNX FP32, bundle `.vfa/.vfts` và 10 câu demo.

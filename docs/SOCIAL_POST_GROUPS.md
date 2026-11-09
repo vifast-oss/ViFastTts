@@ -33,6 +33,6 @@ Mình tách rõ 2 luồng:
 
 Mã nguồn, model card, hướng dẫn train lại, bản ONNX, model trên kho model cộng đồng và Space nghe thử miễn phí mình đã để sẵn. Bài này mình không gắn link để đỡ bị hội nhóm ẩn bài. Ai cần link thì comment hoặc nhắn mình, mình gửi.
 
-Lưu ý: model mẫu dùng dataset CC BY-NC 4.0, nên chỉ dùng cho nghiên cứu và phi thương mại, không dùng giả giọng, lừa đảo hoặc production thương mại. Code repo là MIT, quyền của dataset và giọng vẫn giữ nguyên.
+Lưu ý: model mẫu dùng dataset CC BY-NC 4.0, nên chỉ dùng cho nghiên cứu và phi thương mại, không dùng giả giọng, lừa đảo hoặc production thương mại. Code repo là MIT hoặc Apache-2.0, quyền của dataset và giọng vẫn giữ nguyên.
 
 Ai đang làm TTS tiếng Việt, muốn góp ý hoặc tự train giọng của mình, mình rất muốn trao đổi thêm.
