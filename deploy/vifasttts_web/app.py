@@ -119,7 +119,8 @@ app = FastAPI(title="ViFastTts research demo", docs_url=None, redoc_url=None)
 
 # Đăng nhập quản trị bằng form + thống kê truy cập (dùng chung admin_portal.py).
 portal = Portal(site="tts.vifast.org", title="ViFastTts", db_path=DB_PATH,
-                accent="#C6281E", log=logger)
+                accent="#C6281E", log=logger,
+                favicon="/static/brand/favicon.ico", admin_key="tts")
 portal.install(app)
 
 
@@ -633,21 +634,22 @@ def _feedback_admin_rows(items: list[dict]) -> str:
         actions = []
         if status_key != "read":
             actions.append(
-                f"<form method='post' action='/admin/feedback/{item['id']}/read' style='display:inline'>"
-                f"<button class='tiny'>Đã đọc</button></form>"
+                f"<form method='post' action='/admin/feedback/{item['id']}/read' class='vf-form-inline'>"
+                f"<button class='vf-tiny'>Đã đọc</button></form>"
             )
         if status_key != "resolved":
             actions.append(
-                f"<form method='post' action='/admin/feedback/{item['id']}/resolved' style='display:inline'>"
-                f"<button class='tiny ok'>Đã xử lý</button></form>"
+                f"<form method='post' action='/admin/feedback/{item['id']}/resolved' class='vf-form-inline'>"
+                f"<button class='vf-tiny vf-tiny-ok'>Đã xử lý</button></form>"
             )
         if not actions:
-            actions.append("<span class='done'>Đã xử lý</span>")
+            actions.append("<span class='vf-muted'>Đã xử lý</span>")
+        pill = {"new": "vf-pill vf-pill-new"}.get(status_key, "vf-pill vf-pill-ok")
         rows.append(
-            f"<tr><td>{item['time']}</td><td><span class='cat'>{category}</span></td>"
-            f"<td class='msg'>{message}</td><td>{contact}</td><td>{html.escape(str(item['source']))}</td>"
-            f"<td><span class='st st-{status_key}'>{status}</span></td>"
-            f"<td class='actions'>{' '.join(actions)}</td></tr>"
+            f"<tr><td class='vf-mono'>{item['time']}</td><td><span class='vf-pill'>{category}</span></td>"
+            f"<td class='vf-msg'>{message}</td><td>{contact}</td><td>{html.escape(str(item['source']))}</td>"
+            f"<td><span class='{pill}'>{status}</span></td>"
+            f"<td>{' '.join(actions)}</td></tr>"
         )
     return "".join(rows) or "<tr><td colspan='7'>Chưa có góp ý nào.</td></tr>"
 
@@ -666,17 +668,17 @@ def _admin_html(stats: dict) -> str:
         suggestion_rows = "".join(
             f"<tr><td>{item['time']}</td><td>{html.escape(item['key'])}</td>"
             f"<td>{html.escape(item['value'])}</td><td>{html.escape(item['source'])}</td>"
-            f"<td><form method='post' action='/admin/suggestions/{item['id']}/approve' style='display:inline'>"
-            f"<button class='tiny ok'>Duyệt</button></form> "
-            f"<form method='post' action='/admin/suggestions/{item['id']}/reject' style='display:inline'>"
-            f"<button class='tiny no'>Từ chối</button></form></td></tr>"
+            f"<td><form method='post' action='/admin/suggestions/{item['id']}/approve' class='vf-form-inline'>"
+            f"<button class='vf-tiny vf-tiny-ok'>Duyệt</button></form> "
+            f"<form method='post' action='/admin/suggestions/{item['id']}/reject' class='vf-form-inline'>"
+            f"<button class='vf-tiny'>Từ chối</button></form></td></tr>"
             for item in pending
         ) or "<tr><td colspan='5'>Không có đề xuất chờ duyệt.</td></tr>"
     else:
         suggestion_rows = "".join(
             f"<tr><td>{item['time']}</td><td>{html.escape(item['key'])}</td>"
             f"<td>{html.escape(item['value'])}</td><td>{html.escape(item['source'])}</td>"
-            f"<td><button class='tiny' disabled title='Đặt ADMIN_PASSWORD để duyệt'>Duyệt</button></td></tr>"
+            f"<td><button class='vf-tiny' disabled title='Đặt ADMIN_PASSWORD để duyệt'>Duyệt</button></td></tr>"
             for item in pending
         ) or "<tr><td colspan='5'>Không có đề xuất chờ duyệt.</td></tr>"
     review_note = ("Đã bật duyệt vì có ADMIN_PASSWORD." if ADMIN_PASSWORD
@@ -700,72 +702,60 @@ def _admin_html(stats: dict) -> str:
         f"{label} {int(stats['downloads_by_platform'].get(key, 0))}"
         for key, label in DOWNLOAD_LABELS.items()
     )
-    return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="30">
-<title>ViFastTts · Thống kê</title>
-<link rel="icon" href="/static/brand/favicon.ico" sizes="any">
-<style>
-body{{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#FBF6EE;color:#1F2430;margin:0;padding:28px}}
-main{{max-width:980px;margin:0 auto}} h1{{letter-spacing:-.03em;margin:0 0 4px;display:flex;align-items:center;gap:9px}}
-.mark{{width:38px;height:38px;border-radius:9px;flex:0 0 auto}}
-.sub{{color:#637083;margin:0 0 20px}} .grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
-.card{{background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:14px}}
-.card b{{display:block;font-size:1.6rem;color:#C6281E}} .card span{{color:#637083;font-size:.84rem}}
-table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dbe3ea;border-radius:12px;overflow:hidden;margin-top:18px}}
-th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid #edf1f3;font-size:.86rem}}
-th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
-.note{{background:#fff8e8;border:1px solid #f0d49a;padding:10px 12px;border-radius:10px;color:#7a4b00;font-size:.86rem;margin-top:16px}}
-.tiny{{padding:4px 8px;font-size:.78rem;border-radius:7px;border:1px solid #cbd6df;background:#f4f7f8;cursor:pointer}}
-.tiny.ok{{background:#e5f5ec;border-color:#b8e2c8;color:#166534}} .tiny.no{{background:#fff0f0;border-color:#f0c4c4;color:#9b1c1c}}
-.tiny:disabled{{opacity:.45;cursor:not-allowed}}
-.msg{{max-width:390px;white-space:normal;line-height:1.45;overflow-wrap:anywhere}}
-.cat,.st{{display:inline-block;padding:2px 7px;border-radius:999px;font-size:.76rem;white-space:nowrap}}
-.cat{{background:#FDF0EB;color:#9B2C20}} .st-new{{background:#FFF4D6;color:#7A4B00}}
-.st-read{{background:#EAF2FF;color:#1D4ED8}} .st-resolved{{background:#E5F5EC;color:#166534}}
-.actions{{white-space:nowrap}} .actions form{{margin:0 2px 0 0}} .done{{color:#166534;font-size:.8rem;font-weight:700}}
-@media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}} table{{display:block;overflow-x:auto}}}}
-</style><link rel="stylesheet" href="/admin/portal.css"></head><body><main>
-<h1><img class="mark" src="/static/brand/vifasttts-icon.svg" alt=""> ViFastTts · Thống kê</h1>
+    content = f"""
 {portal.panel_html()}
-<p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">← Về trang chủ</a> · <a href="/logout">Đăng xuất</a></p>
-<div class="grid">
-  <div class="card"><b>{stats['users_total']}</b><span>người dùng (hash IP)</span></div>
-  <div class="card"><b>{stats['tts_total']}</b><span>lượt tạo audio</span></div>
-  <div class="card"><b>{stats['page_views']}</b><span>lượt xem trang</span></div>
-  <div class="card"><b>{stats['tts_today']}</b><span>lượt tạo hôm nay</span></div>
-  <div class="card"><b>{stats['tts_web']}</b><span>tạo trên web</span></div>
-  <div class="card"><b>{stats['tts_space']}</b><span>tạo qua Space</span></div>
-  <div class="card"><b>{stats['tts_api']}</b><span>tạo qua API</span></div>
-  <div class="card"><b>{stats['audio_seconds'] / 60:.1f} phút</b><span>audio đã tạo</span></div>
-  <div class="card"><b>{stats['avg_chars']}</b><span>ký tự / lượt</span></div>
-  <div class="card"><b>{stats['avg_elapsed']:.2f}s</b><span>xử lý / lượt</span></div>
-  <div class="card"><b>{stats['avg_rtf']:.3f}</b><span>RTF trung bình</span></div>
-  <div class="card"><b>{stats['suggestions_pending']}</b><span>đề xuất chờ duyệt</span></div>
-  <div class="card"><b>{stats['suggestions_approved']}</b><span>quy tắc đã duyệt</span></div>
-  <div class="card"><b>{stats['feedback_total']}</b><span>góp ý / báo lỗi</span></div>
-  <div class="card"><b>{stats['feedback_new']}</b><span>góp ý mới</span></div>
-  <div class="card"><b>{stats['downloads_total']}</b><span>lượt bấm tải</span></div>
-  <div class="card"><b>{stats['downloads_today']}</b><span>lượt bấm tải hôm nay</span></div>
+<h2 class="vf-h2">Tổng quan</h2>
+<div class="vf-cards">
+  <div class="vf-card"><span class="vf-card-label">Người dùng (hash IP)</span><span class="vf-card-value">{stats['users_total']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Lượt tạo audio</span><span class="vf-card-value">{stats['tts_total']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Lượt xem trang</span><span class="vf-card-value">{stats['page_views']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Tạo hôm nay</span><span class="vf-card-value">{stats['tts_today']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Tạo trên web</span><span class="vf-card-value">{stats['tts_web']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Tạo qua Space</span><span class="vf-card-value">{stats['tts_space']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Tạo qua API</span><span class="vf-card-value">{stats['tts_api']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Audio đã tạo</span><span class="vf-card-value">{stats['audio_seconds'] / 60:.1f} phút</span></div>
+  <div class="vf-card"><span class="vf-card-label">Ký tự / lượt</span><span class="vf-card-value">{stats['avg_chars']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Xử lý / lượt</span><span class="vf-card-value">{stats['avg_elapsed']:.2f}s</span></div>
+  <div class="vf-card"><span class="vf-card-label">RTF trung bình</span><span class="vf-card-value">{stats['avg_rtf']:.3f}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Đề xuất chờ duyệt</span><span class="vf-card-value">{stats['suggestions_pending']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Quy tắc đã duyệt</span><span class="vf-card-value">{stats['suggestions_approved']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Góp ý / báo lỗi</span><span class="vf-card-value">{stats['feedback_total']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Góp ý mới</span><span class="vf-card-value">{stats['feedback_new']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Lượt bấm tải</span><span class="vf-card-value">{stats['downloads_total']}</span></div>
+  <div class="vf-card"><span class="vf-card-label">Tải hôm nay</span><span class="vf-card-value">{stats['downloads_today']}</span></div>
 </div>
-<h2 style="margin:24px 0 4px">Lượt bấm tải theo nền tảng</h2>
-<p class="sub">{download_summary}</p>
-<h2 style="margin:24px 0 4px">Đề xuất cách đọc</h2>
-<p class="sub">{review_note}</p>
-<table><thead><tr><th>Thời điểm</th><th>Từ</th><th>Cách đọc</th><th>Nguồn</th><th>Duyệt</th></tr></thead>
-<tbody>{suggestion_rows}</tbody></table>
-<h2 style="margin:24px 0 4px">Góp ý & báo lỗi</h2>
-<p class="sub">{feedback_note}</p>
-<p class="sub">{feedback_summary}</p>
-<table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Nguồn</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
-<tbody>{feedback_rows}</tbody></table>
-<h2 style="margin:24px 0 4px">Lượt tạo gần đây</h2>
-<table><thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>RTF</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
-<tbody>{rows}</tbody></table>
-<div class="note">Số “người dùng” là ước lượng theo hash visitor/IP, không lưu IP/text TTS.
-Góp ý chỉ lưu nội dung bạn gửi và liên hệ (nếu có), chỉ admin đã đặt mật khẩu mới xem được.
-Lượt bấm tải chỉ ghi nền tảng/tên file/thời điểm, không lưu IP hay file. {auth_note}</div>
-</main></body></html>"""
+
+<h2 class="vf-h2">Lượt bấm tải theo nền tảng</h2>
+<p class="vf-muted">{download_summary}</p>
+
+<h2 class="vf-h2">Đề xuất cách đọc</h2>
+<p class="vf-muted">{review_note}</p>
+<div class="vf-scroll">
+  <table class="vf-table">
+    <thead><tr><th>Thời điểm</th><th>Từ</th><th>Cách đọc</th><th>Nguồn</th><th>Duyệt</th></tr></thead>
+    <tbody>{suggestion_rows}</tbody>
+  </table>
+</div>
+
+<h2 class="vf-h2">Góp ý &amp; báo lỗi</h2>
+<p class="vf-muted">{feedback_note}</p>
+<p class="vf-muted">{feedback_summary}</p>
+<div class="vf-scroll">
+  <table class="vf-table">
+    <thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Nguồn</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
+    <tbody>{feedback_rows}</tbody>
+  </table>
+</div>
+
+<h2 class="vf-h2">Lượt tạo gần đây</h2>
+<div class="vf-scroll">
+  <table class="vf-table">
+    <thead><tr><th>Thời điểm</th><th>Ẩn danh</th><th>Ký tự</th><th>Audio</th><th>Xử lý</th><th>RTF</th><th>Nguồn</th><th>Nghỉ cố định</th></tr></thead>
+    <tbody>{rows}</tbody>
+  </table>
+</div>
+"""
+    return portal.shell(content)
 
 
 _init_stats()
