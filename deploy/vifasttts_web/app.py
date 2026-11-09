@@ -8,7 +8,6 @@ from __future__ import annotations
 import base64
 import csv
 import hashlib
-import hmac
 import html
 import io
 import json
@@ -34,6 +33,8 @@ from fastapi.responses import (
     StreamingResponse,
 )
 from fastapi.staticfiles import StaticFiles
+
+from admin_portal import Portal
 from pydantic import BaseModel
 
 from vifasttts.frontend.normalizer import NormalizerOptions, normalize_text
@@ -115,6 +116,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger("vifasttts-demo")
 
 app = FastAPI(title="ViFastTts research demo", docs_url=None, redoc_url=None)
+
+# Đăng nhập quản trị bằng form + thống kê truy cập (dùng chung admin_portal.py).
+portal = Portal(site="tts.vifast.org", title="ViFastTts", db_path=DB_PATH,
+                accent="#C6281E", log=logger)
+portal.install(app)
+
+
+@app.middleware("http")
+async def _count_visit(request: Request, call_next):
+    """Ghi nhận lượt xem trang (bỏ qua bot/asset) cho bảng thống kê."""
+    response = await call_next(request)
+    portal.track(request, response.status_code)
+    return response
 
 # ── Bản phát hành công khai (proxy GitHub Releases, cache 10 phút) ──────────
 RELEASES_REPO = "vifast-oss/ViFastTts"
@@ -604,11 +618,8 @@ def _stats_payload() -> dict:
 
 
 def _admin_authorized(request: Request) -> bool:
-    if not ADMIN_PASSWORD:
-        return True
-    header = request.headers.get("authorization", "")
-    expected = "Basic " + base64.b64encode(f"admin:{ADMIN_PASSWORD}".encode()).decode("ascii")
-    return hmac.compare_digest(header, expected)
+    """Phiên đăng nhập bằng form (cookie ký HMAC); không dùng HTTP Basic."""
+    return portal.auth_ok(request)
 
 
 def _feedback_admin_rows(items: list[dict]) -> str:
@@ -648,7 +659,8 @@ def _admin_html(stats: dict) -> str:
         f"<td>{item.get('source', 'api')}</td><td>{'có' if item['fixed_pauses'] else 'không'}</td></tr>"
         for item in stats["recent"]
     ) or "<tr><td colspan='7'>Chưa có lượt tạo nào.</td></tr>"
-    auth_note = "Đang mở công khai, chưa đặt ADMIN_PASSWORD." if not ADMIN_PASSWORD else "Đã bật Basic Auth."
+    auth_note = ("Đang mở công khai, chưa đặt ADMIN_PASSWORD."
+                 if not ADMIN_PASSWORD else "Đã bật đăng nhập bằng mật khẩu.")
     pending = _pending_suggestions()
     if ADMIN_PASSWORD:
         suggestion_rows = "".join(
@@ -713,8 +725,9 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 .st-read{{background:#EAF2FF;color:#1D4ED8}} .st-resolved{{background:#E5F5EC;color:#166534}}
 .actions{{white-space:nowrap}} .actions form{{margin:0 2px 0 0}} .done{{color:#166534;font-size:.8rem;font-weight:700}}
 @media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}} table{{display:block;overflow-x:auto}}}}
-</style></head><body><main>
+</style><link rel="stylesheet" href="/admin/portal.css"></head><body><main>
 <h1><img class="mark" src="/static/brand/vifasttts-icon.svg" alt=""> ViFastTts · Thống kê</h1>
+{portal.panel_html()}
 <p class="sub">Cập nhật {stats['generated_at']} ({stats['timezone']}) · tự làm mới 30 giây · <a href="/">về trang chủ</a></p>
 <div class="grid">
   <div class="card"><b>{stats['users_total']}</b><span>người dùng (hash IP)</span></div>
@@ -1035,8 +1048,7 @@ def feedback(payload: FeedbackRequest, request: Request) -> dict:
 
 
 def _admin_denied() -> Response:
-    return Response(status_code=401, content="Cần đăng nhập admin.",
-                    headers={"WWW-Authenticate": 'Basic realm="vifasttts-admin"'})
+    return RedirectResponse("/login?next=/admin", status_code=303)
 
 
 @app.get("/admin", response_class=HTMLResponse)
@@ -1049,7 +1061,7 @@ def admin(request: Request) -> Response:
 @app.get("/admin.json")
 def admin_json(request: Request) -> Response:
     if not _admin_authorized(request):
-        return _admin_denied()
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     return Response(content=json.dumps(_stats_payload(), ensure_ascii=False),
                     media_type="application/json", headers={"Cache-Control": "no-store"})
 

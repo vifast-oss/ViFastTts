@@ -18,7 +18,10 @@ services:
       SYNTH_CHUNK_CHARS: "300"
       DATA_DIR: "/app/data"
       DOWNLOADS_DIR: "/app/downloads"
-      # ADMIN_PASSWORD: "..."   # bỏ trống = /admin mở công khai
+      # Bật /admin: đặt ADMIN_PASSWORD trong .env (bỏ trống = khoá quản trị).
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      STATS_SALT: "${STATS_SALT:-}"
+      ADMIN_TZ_OFFSET: "7"
     volumes:
       - ./data:/app/data
       - ./downloads:/app/downloads:ro

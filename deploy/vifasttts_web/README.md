@@ -59,7 +59,10 @@ base theo host). Sau khi sửa `static/index.html` hoặc `static/demo.html`:
 
 - `/admin` và `/admin.json`.
 - Mặc định mở công khai nếu `ADMIN_PASSWORD` chưa đặt.
-- Đặt `ADMIN_PASSWORD` trong compose để bật Basic Auth.
+- Đặt `ADMIN_PASSWORD` trong `.env` để bật form đăng nhập ở `/login` (bỏ trống = khoá `/admin`).
+- `/admin` có thêm bảng **thống kê truy cập** (hôm nay / 7 / 30 ngày, khách duy nhất,
+  biểu đồ 24 giờ và 14 ngày, trang xem nhiều, nguồn giới thiệu, thiết bị, trình duyệt,
+  ngôn ngữ, xuất CSV) do `admin_portal.py` dựng.
 - DB `data/stats.sqlite3`; compose bind mount `./data:/app/data`.
 - Web/Space dùng `visitor_id` localStorage; API thuần có thể gửi `visitor_id`; fallback IP.
 - Có tách lượt tạo theo `source = web | space | api`.
